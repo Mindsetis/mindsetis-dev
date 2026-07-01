@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { FormBanner } from '@/components/auth/FormBanner';
 import { SignInForm } from '@/components/auth/SignInForm';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { safeRedirectPath } from '@/lib/validation/common';
 
 type LoginPageProps = {
@@ -19,12 +19,18 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
         <h1 className="text-2xl font-semibold text-foreground">{t('signIn.title')}</h1>
-        <p className="text-sm text-muted">{t('signIn.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{t('signIn.subtitle')}</p>
       </div>
 
-      {error === 'invalid_link' ? <FormBanner>{t('errors.invalidLink')}</FormBanner> : null}
+      {error === 'invalid_link' ? (
+        <Alert variant="destructive">
+          <AlertDescription>{t('errors.invalidLink')}</AlertDescription>
+        </Alert>
+      ) : null}
       {reset === 'success' ? (
-        <FormBanner variant="success">{t('signIn.resetSuccess')}</FormBanner>
+        <Alert variant="success">
+          <AlertDescription>{t('signIn.resetSuccess')}</AlertDescription>
+        </Alert>
       ) : null}
 
       <SignInForm redirectTo={safeRedirectPath(redirectTo)} />

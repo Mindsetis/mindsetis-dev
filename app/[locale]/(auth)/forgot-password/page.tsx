@@ -15,7 +15,7 @@ export default async function ForgotPasswordPage({ params }: ForgotPasswordPageP
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
         <h1 className="text-2xl font-semibold text-foreground">{t('forgotPassword.title')}</h1>
-        <p className="text-sm text-muted">{t('forgotPassword.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{t('forgotPassword.subtitle')}</p>
       </div>
 
       <ForgotPasswordForm />

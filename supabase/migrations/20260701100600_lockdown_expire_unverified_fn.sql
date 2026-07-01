@@ -1,0 +1,70 @@
+-- =============================================================================
+-- Stage 0.7 follow-up — Lock down expire_unverified_access() from PostgREST
+-- =============================================================================
+-- QA finding: `public.expire_unverified_access()` (created in
+-- 20260701100500_rbac.sql, which already ran `revoke all on function
+-- public.expire_unverified_access() from public;`) was still directly
+-- callable by `anon`/`authenticated` via PostgREST RPC
+-- (`has_function_privilege('anon', 'public.expire_unverified_access()',
+-- 'EXECUTE')` = true; a direct RPC POST returned HTTP 204).
+--
+-- Root cause — the ALTER DEFAULT PRIVILEGES trap:
+--   Every Supabase project ships project-level
+--   `alter default privileges ... grant execute on functions to anon,
+--   authenticated, service_role;` (run once, in the `postgres`/managed-roles
+--   bootstrap, against the `public` schema owner). Default privileges are a
+--   *template* applied at CREATE FUNCTION time: the instant
+--   `expire_unverified_access()` was created, Postgres materialized a DIRECT
+--   EXECUTE grant to `anon` and `authenticated` on that specific function
+--   object — those grants are stored as ACL entries on the function itself,
+--   independent from (and NOT implied by) PUBLIC's privileges.
+--
+--   `revoke all on function ... from public;` only revokes the privilege
+--   held by the pseudo-role PUBLIC (i.e. "everyone with no explicit grant").
+--   It does NOT touch privileges that were separately, explicitly granted to
+--   `anon`/`authenticated` by the default-privileges template — those are
+--   distinct ACL entries and must be revoked from those roles BY NAME.
+--   This is why the original migration's `revoke ... from public` silently
+--   failed to close the hole: it revoked a grant that was never the one
+--   actually in effect.
+--
+--   Lesson for future migrations: any SECURITY DEFINER function that must
+--   NOT be client-callable via PostgREST RPC needs
+--     `revoke execute on function <fn> from public, anon, authenticated;`
+--   naming `anon`/`authenticated` explicitly — `revoke ... from public`
+--   alone is NOT sufficient on a Supabase project. This applies to
+--   cron-only / service-only functions in general, not just this one.
+--
+-- Idempotency: REVOKE of a privilege that is already absent is a documented
+-- Postgres no-op (no error, no state change), so this statement is safe to
+-- re-run on every `supabase db push` / migration replay.
+--
+-- Scope check (do NOT widen this beyond expire_unverified_access()):
+--   `is_verified_member(uuid)` / `is_mindsetter(uuid)` (and `is_staff(uuid)`)
+--   are SECURITY DEFINER *read-only* helpers that are evaluated INSIDE RLS
+--   policies (`using (... is_verified_member(auth.uid()) ...)` etc., see
+--   20260701100500_rbac.sql §4). Postgres evaluates a row-security policy's
+--   expression as the CURRENT caller (anon/authenticated), so EXECUTE on
+--   those helper functions MUST remain granted to anon/authenticated or
+--   every policy referencing them would fail to evaluate and every guarded
+--   table would become inaccessible. Those helpers are also harmless to
+--   expose directly via RPC (they only ever return a boolean derived from
+--   the caller-supplied uid, no side effects), unlike
+--   `expire_unverified_access()`, which performs a privileged WRITE and is
+--   meant to be invoked only by the pg_cron job (running as the function
+--   owner / DB owner), never by a client request. This migration therefore
+--   revokes EXECUTE on `expire_unverified_access()` ONLY.
+--
+-- service_role / owner (postgres) are intentionally left untouched:
+--   * service_role legitimately needs full access for any future
+--     server-triggered maintenance calls;
+--   * the function owner (postgres, the migration/bootstrap role) always
+--     retains implicit EXECUTE regardless of ACL entries, which is what lets
+--     the pg_cron job (`select public.expire_unverified_access();`,
+--     scheduled in 20260701100500_rbac.sql) keep running unaffected — pg_cron
+--     executes jobs as the role that scheduled them, not through PostgREST,
+--     so it is never subject to the anon/authenticated REVOKE below.
+-- =============================================================================
+
+revoke execute on function public.expire_unverified_access()
+  from public, anon, authenticated;

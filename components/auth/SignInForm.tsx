@@ -6,12 +6,21 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { signIn } from '@/app/[locale]/(auth)/actions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
 import { type SignInInput, signInSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
-import { AuthField, authInputClass } from './AuthField';
-import { FormBanner } from './FormBanner';
 
 type SignInFormProps = {
   /** Safe relative path to return to after signing in (already validated by the page). */
@@ -23,21 +32,16 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<SignInInput>({
+  const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: { email: '', password: '', redirectTo },
   });
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
     const result = await signIn(values);
     if (!result.ok) {
-      applyFieldErrors(setError, result.error.fieldErrors);
+      applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
       return;
     }
@@ -46,61 +50,67 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
   });
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      {formError ? <FormBanner>{formError}</FormBanner> : null}
+    <Form {...form}>
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+        {formError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        ) : null}
 
-      <input type="hidden" {...register('redirectTo')} />
+        <input type="hidden" {...form.register('redirectTo')} />
 
-      <AuthField label={t('fields.email')} htmlFor="email" error={errors.email?.message}>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? 'email-error' : undefined}
-          className={authInputClass}
-          {...register('email')}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('fields.email')}</FormLabel>
+              <FormControl>
+                <Input type="email" autoComplete="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </AuthField>
 
-      <AuthField label={t('fields.password')} htmlFor="password" error={errors.password?.message}>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          aria-invalid={!!errors.password}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-          className={authInputClass}
-          {...register('password')}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('fields.password')}</FormLabel>
+              <FormControl>
+                <Input type="password" autoComplete="current-password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </AuthField>
 
-      <div className="flex justify-end">
-        <Link
-          href="/forgot-password"
-          className="text-sm text-muted transition-colors hover:text-foreground"
-        >
-          {t('signIn.forgotPassword')}
-        </Link>
-      </div>
+        <div className="flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t('signIn.forgotPassword')}
+          </Link>
+        </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? t('signIn.submitting') : t('signIn.submit')}
-      </button>
+        <Button type="submit" size="lg" loading={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? t('signIn.submitting') : t('signIn.submit')}
+        </Button>
 
-      <p className="text-center text-sm text-muted">
-        {t('signIn.noAccount')}{' '}
-        <Link
-          href="/sign-up"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          {t('signIn.signUpLink')}
-        </Link>
-      </p>
-    </form>
+        <p className="text-center text-sm text-muted-foreground">
+          {t('signIn.noAccount')}{' '}
+          <Link
+            href="/sign-up"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {t('signIn.signUpLink')}
+          </Link>
+        </p>
+      </form>
+    </Form>
   );
 }

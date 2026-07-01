@@ -3,6 +3,15 @@
 > Source of truth: `docs/mindsetis-mvp-tz.md` (Technical Spec v1.0). When the spec and
 > this file disagree, the spec wins — but keep this file updated to match.
 
+## Working language (MUST)
+
+**Always reply to the user in Ukrainian.** All prose you address to the user — explanations,
+plans, questions, status reports, commit/PR summaries shown in chat — is written in Ukrainian,
+regardless of the language of the request. Code, identifiers, file paths, i18n keys, English-first
+UI copy (`messages/en.json`), git branch names, and Conventional Commit subjects stay in English
+per their own conventions. This applies to the main assistant and to every subagent's
+user-facing output.
+
 ## Overview
 
 Mindsetis Community is a member-first community platform: a catalog of users
@@ -40,7 +49,8 @@ push notifications, advanced analytics/referrals.
 | Video | Google Calendar API → auto Google Meet links |
 | Hosting | Vercel (Next.js) + Supabase Cloud |
 | AI search | OpenAI embeddings + pgvector cosine search + LLM interpretation |
-| Design | Figma (project design file, accessed via Figma MCP — design → code) |
+| Design | Figma — read-only via `figma-mcp-go` MCP (plugin bridge to the open Desktop file); design → code only |
+| Browser QA | Playwright MCP (`playwright`) — real Chromium E2E: navigate, click, fill forms, read console/network |
 
 ## Directory conventions
 
@@ -60,10 +70,15 @@ messages/es.json                 # readiness for Spanish
 components/ui/                    # shadcn/ui + UI Kit
 ```
 
-**Design source.** The project's Figma design lives in the file `Mindsetis (Copy)`
-(fileKey `YTzZZBAnoP6pGlmb1L6wiJ`), reachable through the Figma MCP server. Use it as the
-source of truth for how screens should look; pull tokens/components from the design system
-when translating designs to code.
+**Design source.** The project's Figma design is the source of truth for how screens should
+look. It's reached **only** through the `figma-mcp-go` MCP server (configured in `.mcp.json`),
+which talks to a plugin running inside the **open Figma Desktop file** — no fileKey/URL, no API
+token. A human must have Figma Desktop open with the plugin running for the tools to work. Do
+NOT use any other Figma MCP or the Figma REST API — `figma-mcp-go` is the single supported
+bridge. The workflow is **one-way: design → code** — we pull screens/tokens out of Figma and
+build them as code; we do not draw or edit designs back into Figma. Always go through the
+`figma-designer` subagent for this (it reads design-system tokens & components rather than
+hardcoding); don't call the Figma MCP tools directly from the main loop.
 
 ## Architecture rules (MUST)
 
@@ -154,8 +169,9 @@ completed items.
 ## Skills & subagents
 
 - Skills: `new-migration`, `scaffold-feature`, `add-i18n-keys`, `stripe-flow`, `todo-jobs`.
-- Subagents: `supabase-expert`, `nextjs-frontend`, `security-auditor`, `stripe-payments`,
-  `code-reviewer`, `qa`, `todo-jobs`, `git-manager`, `docs-writer`.
+- Subagents: `supabase-expert`, `nextjs-frontend`, `figma-designer`, `browser-tester`,
+  `security-auditor`, `stripe-payments`, `code-reviewer`, `qa`, `todo-jobs`, `git-manager`,
+  `docs-writer`.
 - Review loop: after a builder subagent finishes a stage, run `code-reviewer` (correctness/
   conventions) + `security-auditor` (RLS/money/auth) + `qa` (build, migrations, live RLS
   negative tests, secret-leak). They report findings and hand work back for rework; only
@@ -166,3 +182,15 @@ completed items.
 - `docs-writer` creates/updates/reads documentation (`docs/`, `README.md`, `CLAUDE.md`
   upkeep) and keeps it in sync with the code and spec — it never documents behavior the code
   lacks, and never edits `ROADMAP.md` status (that's `todo-jobs`).
+- `figma-designer` turns Figma designs into code via the `figma-mcp-go` MCP (plugin bridge to
+  the open Figma Desktop file, **read-only**). It reads screens/tokens into Next.js/Tailwind/
+  shadcn code — **design → code only**, it never creates or edits designs in Figma. Use it for
+  any UI task referencing the design; it needs Figma Desktop open with the plugin running.
+  It is the only path to Figma — don't use any other Figma MCP.
+- `browser-tester` runs live E2E checks via the `playwright` MCP (real Chromium). It brings the
+  app up (`npm run dev`), navigates routes, clicks buttons, fills/submits forms, and verifies
+  behavior against the accessibility snapshot plus console/network errors. Use it after a UI
+  stage is built (alongside `qa`) or when the user says "test in the browser / протести проєкт".
+  It reports PASS/FAIL with evidence and hands failures back; it never edits source. The
+  `playwright` server in `.mcp.json` must be approved once (`claude mcp list`) before its tools
+  work.

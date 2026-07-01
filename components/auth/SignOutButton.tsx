@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 
 import { signOut } from '@/app/[locale]/(auth)/actions';
+import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
 
 /** Small client island: signs the user out, then refreshes the (now signed-out) UI. */
@@ -25,13 +26,8 @@ export function SignOutButton() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleSignOut}
-      disabled={isPending}
-      className="text-sm font-medium text-muted transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-    >
+    <Button type="button" variant="nav" size="sm" onClick={handleSignOut} disabled={isPending}>
       {isPending ? t('signingOut') : t('signOut')}
-    </button>
+    </Button>
   );
 }

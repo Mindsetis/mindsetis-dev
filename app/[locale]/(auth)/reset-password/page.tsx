@@ -15,7 +15,7 @@ export default async function ResetPasswordPage({ params }: ResetPasswordPagePro
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
         <h1 className="text-2xl font-semibold text-foreground">{t('resetPassword.title')}</h1>
-        <p className="text-sm text-muted">{t('resetPassword.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{t('resetPassword.subtitle')}</p>
       </div>
 
       <ResetPasswordForm />

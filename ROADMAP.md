@@ -132,28 +132,61 @@ Supabase Auth with **email + password only** at this stage. Email confirmation r
 - [x] Every user starts as **Member** (`account_type = 'member'`); `verification_deadline = now() + 14 days` _(`handle_new_user` trigger, QA-verified on dev DB)_
 
 ### 0.7 — Roles & permissions (RBAC)
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Base permission matrix Member / Verified Member / Mindsetter + access middleware (§3.2).
 
-- [ ] Permission matrix implemented: browse (all), book 1:1 / create events / send Invite (Verified+), open own 1:1 (Mindsetter)
-- [ ] Staff roles (`admin` / `moderator`) via `staff_roles`, separate from `account_type`
-- [ ] Access **middleware** + server-side permission checks (RLS is the base line)
-- [ ] Verification status & role changes are **staff-only**
-- [ ] 14-day rule enforced as a **permission flag** (never data deletion), checked server-side
-- [ ] Helper(s) to resolve current user's effective permissions
+> Implemented the **strict** permission matrix — only `verification_status = 'verified'`
+> (not merely unverified-within-window) may book 1:1 / create events / send Invite;
+> open-own-1:1 & public profile require mindsetter **and** verified. Added
+> `profiles.access_restricted` flag, enforced staff/service-only via a column-guard
+> trigger; SQL helpers `is_verified_member` / `is_mindsetter`; tightened RLS on
+> `events` / `session_settings` / `availability_slots` inserts (+ `events` update).
+> `pg_cron` daily `expire-unverified-access` sweep flags expired-unverified accounts —
+> never deletes. Server layer: `resolvePermissions` resolver +
+> `requireVerifiedMember` / `requireMindsetter` / `requireStaff` /
+> `getEffectivePermissions` guards, role Zod enums, and an `/admin` staff-gate
+> middleware (defense-in-depth). Reviewed by `security-auditor` (clean) +
+> `code-reviewer` + `qa` (live RLS negative/positive tests all pass). One QA-caught
+> issue fixed: `expire_unverified_access()` EXECUTE explicitly revoked from
+> anon/authenticated in follow-up migration `20260701100600` (Supabase
+> ALTER DEFAULT PRIVILEGES trap — REVOKE FROM PUBLIC alone was insufficient).
+
+- [x] Permission matrix implemented: browse (all), book 1:1 / create events / send Invite (Verified+), open own 1:1 (Mindsetter)
+- [x] Staff roles (`admin` / `moderator`) via `staff_roles`, separate from `account_type`
+- [x] Access **middleware** + server-side permission checks (RLS is the base line)
+- [x] Verification status & role changes are **staff-only**
+- [x] 14-day rule enforced as a **permission flag** (never data deletion), checked server-side
+- [x] Helper(s) to resolve current user's effective permissions
 
 ### 0.8 — UI Kit / design system
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Design tokens + base components (§5.11), dark Masterclass/Netflix theme.
 
-- [ ] Tokens: typography scale, color palette (dark theme, black background), spacing, radius
-- [ ] Tailwind theme configured from tokens; shadcn/ui (Radix) initialized
-- [ ] Base components: Button, Input, Textarea, Select, Card, Badge, Avatar, Dialog, Toast
-- [ ] Component states (default/hover/focus/disabled/error/loading)
-- [ ] Responsive primitives + **sticky mobile CTA** pattern
-- [ ] Form primitives wired to React Hook Form + Zod
+> Design tokens pulled from the real Figma design source of truth — brand accent is
+> **cyan `#79b9e3`** (not the earlier placeholder Netflix-red), surfaces `#1a1a1a` on
+> `#000`, Cal Sans (display) + Manrope (body) via `next/font`. Tailwind v4 `@theme`
+> token rewrite (color/type/spacing scales; radius scale synthesized — no Figma radius
+> tokens found, flagged for a design back-check). shadcn-style UI Kit added in
+> `components/ui`: button (primary/secondary/outline/tertiary/ghost/link/nav variants +
+> loading state), input, textarea, select, card, badge, avatar, dialog, sonner/toast,
+> label, skeleton, alert, React Hook Form primitives, and a sticky mobile CTA pattern.
+> Auth forms migrated onto the new Form primitives (presentation-only change; superseded
+> `AuthField`/`FormBanner` removed). Reviewed by `code-reviewer` + `qa` (build green, 16
+> routes prerender, secret-leak clean, route smoke pass); rework applied — raw
+> `bg-accent` CTAs replaced with `Button` primary, dead code removed.
+
+- [x] Tokens: typography scale, color palette (dark theme, black background), spacing, radius
+- [x] Tailwind theme configured from tokens; shadcn/ui (Radix) initialized
+- [x] Base components: Button, Input, Textarea, Select, Card, Badge, Avatar, Dialog, Toast
+- [x] Component states (default/hover/focus/disabled/error/loading)
+- [x] Responsive primitives + **sticky mobile CTA** pattern
+- [x] Form primitives wired to React Hook Form + Zod
 
 ### 0.9 — Notifications infrastructure (email)
 **Status:** ⬜ Not started

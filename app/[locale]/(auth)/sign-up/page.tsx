@@ -15,7 +15,7 @@ export default async function SignUpPage({ params }: SignUpPageProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 text-center">
         <h1 className="text-2xl font-semibold text-foreground">{t('signUp.title')}</h1>
-        <p className="text-sm text-muted">{t('signUp.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">{t('signUp.subtitle')}</p>
       </div>
 
       <SignUpForm />

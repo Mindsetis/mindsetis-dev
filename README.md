@@ -90,6 +90,15 @@ See [`CLAUDE.md`](CLAUDE.md#directory-conventions) for the full directory conven
 `lib/validation/`, `supabase/migrations/`, `messages/…`). The app skeleton itself is
 **Stage 0.3**.
 
+## Further reading
+
+- [`docs/API_CONVENTIONS.md`](docs/API_CONVENTIONS.md) — Server Actions, `ActionResult`,
+  auth guards, rate limiting (Stage 0.5).
+- [`docs/RBAC.md`](docs/RBAC.md) — permission matrix, 14-day verification flag, staff roles,
+  `/admin` gate (Stage 0.7).
+- [`docs/UI_KIT.md`](docs/UI_KIT.md) — design tokens, component inventory, Form primitives
+  (Stage 0.8).
+
 ## Roadmap status
 
 Current focus: **Stage 0 — Foundation**. Track progress in [`ROADMAP.md`](ROADMAP.md).

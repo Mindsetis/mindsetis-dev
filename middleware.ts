@@ -1,3 +1,5 @@
+import type { CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 
@@ -17,6 +19,47 @@ const PROTECTED_PREFIXES = ['/account', '/dashboard', '/settings'];
  * `/reset-password` — that needs the recovery session, so signed-in users must reach it.
  */
 const AUTH_ONLY_PREFIXES = ['/login', '/sign-up', '/forgot-password'];
+
+/**
+ * Staff-only paths (back-office). Gated on a `staff_roles` row, not just being signed in.
+ * This is defense-in-depth ONLY — the real enforcement is `requireStaff()` at the page/
+ * Server Action level (see `lib/auth/guards.ts`), since middleware can't safely branch on
+ * `minRole` per-route and RLS is the actual data boundary.
+ */
+const STAFF_PREFIXES = ['/admin'];
+
+/** True when `userId` has a row in `staff_roles` (admin or moderator). */
+async function isStaffUser(
+  request: NextRequest,
+  response: NextResponse,
+  userId: string,
+): Promise<boolean> {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
+        },
+      },
+    },
+  );
+  // RLS policy `staff_roles_read_own_or_staff` lets the signed-in user read their own row;
+  // the explicit `.eq` keeps this a single-row lookup even for staff (whose policy branch
+  // additionally allows reading *all* rows).
+  const { data } = await supabase
+    .from('staff_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return Boolean(data);
+}
 
 /** Split `/en/account/x` → `{ locale: 'en', rest: '/account/x' }`. */
 function splitLocale(pathname: string): { locale: string; rest: string } {
@@ -55,6 +98,27 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     url.search = '';
     url.searchParams.set('redirectTo', rest);
     return NextResponse.redirect(url);
+  }
+
+  // Defense-in-depth only: the real enforcement is `requireStaff()` (see
+  // `lib/auth/guards.ts`) at the page/Server Action level, backed by RLS. This just keeps
+  // non-staff visitors from ever rendering the back-office shell. Scoped to `/admin` so
+  // normal routes never pay for the extra `staff_roles` lookup.
+  if (matchesPrefix(rest, STAFF_PREFIXES)) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}/login`;
+      url.search = '';
+      url.searchParams.set('redirectTo', rest);
+      return NextResponse.redirect(url);
+    }
+    const isStaff = await isStaffUser(request, response, user.id);
+    if (!isStaff) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}`;
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   if (user && matchesPrefix(rest, AUTH_ONLY_PREFIXES)) {

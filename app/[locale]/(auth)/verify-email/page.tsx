@@ -17,10 +17,10 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
   return (
     <div className="flex flex-col gap-4 text-center">
       <h1 className="text-2xl font-semibold text-foreground">{t('verifyEmail.title')}</h1>
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         {email ? t('verifyEmail.subtitle', { email }) : t('verifyEmail.subtitleGeneric')}
       </p>
-      <p className="text-sm text-muted">{t('verifyEmail.description')}</p>
+      <p className="text-sm text-muted-foreground">{t('verifyEmail.description')}</p>
       <Link
         href="/login"
         className="mt-2 text-sm font-medium text-foreground underline-offset-4 hover:underline"

@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 
 type HomePageProps = {
@@ -21,13 +22,10 @@ export default async function HomePage({ params }: HomePageProps) {
       <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
         {t('title')}
       </h1>
-      <p className="max-w-2xl text-lg text-muted">{t('subtitle')}</p>
-      <Link
-        href="/"
-        className="inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
-      >
-        {t('cta')}
-      </Link>
+      <p className="max-w-2xl text-lg text-muted-foreground">{t('subtitle')}</p>
+      <Button asChild variant="primary" size="lg">
+        <Link href="/">{t('cta')}</Link>
+      </Button>
     </section>
   );
 }

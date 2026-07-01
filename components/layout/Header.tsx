@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { SignOutButton } from '@/components/auth/SignOutButton';
+import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
 
@@ -19,7 +20,7 @@ export default async function Header() {
         <Link href="/" className="text-lg font-bold tracking-tight text-foreground">
           {t('brand')}
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium text-muted">
+        <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
           <Link href="/" className="transition-colors hover:text-foreground">
             {t('home')}
           </Link>
@@ -30,23 +31,20 @@ export default async function Header() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <span className="hidden text-sm text-muted sm:inline">{user.email}</span>
+              <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
               <SignOutButton />
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t('login')}
               </Link>
-              <Link
-                href="/sign-up"
-                className="inline-flex items-center justify-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
-              >
-                {t('signUp')}
-              </Link>
+              <Button asChild size="sm">
+                <Link href="/sign-up">{t('signUp')}</Link>
+              </Button>
             </>
           )}
         </div>

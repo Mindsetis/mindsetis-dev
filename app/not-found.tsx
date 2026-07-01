@@ -2,6 +2,8 @@ import '@/app/globals.css';
 
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
+
 /**
  * Global 404 fallback.
  *
@@ -17,15 +19,12 @@ export default function GlobalNotFound() {
     <html lang="en" className="dark">
       <body className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center text-foreground antialiased">
         <h1 className="text-2xl font-semibold">Page not found</h1>
-        <p className="max-w-md text-muted">
+        <p className="max-w-md text-muted-foreground">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
-        >
-          Back to home
-        </Link>
+        <Button asChild variant="primary">
+          <Link href="/">Back to home</Link>
+        </Button>
       </body>
     </html>
   );
