@@ -148,4 +148,9 @@ completed items.
 ## Skills & subagents
 
 - Skills: `new-migration`, `scaffold-feature`, `add-i18n-keys`, `stripe-flow`, `todo-jobs`.
-- Subagents: `supabase-expert`, `nextjs-frontend`, `security-auditor`, `stripe-payments`, `todo-jobs`.
+- Subagents: `supabase-expert`, `nextjs-frontend`, `security-auditor`, `stripe-payments`,
+  `code-reviewer`, `qa`, `todo-jobs`.
+- Review loop: after a builder subagent finishes a stage, run `code-reviewer` (correctness/
+  conventions) + `security-auditor` (RLS/money/auth) + `qa` (build, migrations, live RLS
+  negative tests, secret-leak). They report findings and hand work back for rework; only
+  commit after a clean pass.

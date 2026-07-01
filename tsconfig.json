@@ -13,20 +13,23 @@
     "incremental": true,
     "skipLibCheck": true,
     "noEmit": true,
-
     /* Strictness (§2.2 — TypeScript strict) */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+  "include": ["**/*.cts", "**/*.mts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", ".next", "out", "build", "supabase/functions"]
 }

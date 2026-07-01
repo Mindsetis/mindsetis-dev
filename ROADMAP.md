@@ -52,32 +52,41 @@ Domain, hosting, database, file storage, and CDN/edge per §2.1/§2.3.
 - [x] Secrets stored in env per environment; never in client bundle (§7) _(`.env.example`, `.gitignore`, `docs/SUPABASE_SETUP.md`)_
 
 ### 0.3 — App skeleton
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Next.js 15 App Router structure, routing, base layout/navigation, error boundaries, 404.
 
-- [ ] Next.js 15 App Router project (React 19, TS strict), Tailwind configured
-- [ ] Directory layout per `CLAUDE.md` (`app/[locale]/…`, `lib/…`, `components/ui/…`, `supabase/…`, `messages/…`)
-- [ ] Localized routing shell `app/[locale]/layout.tsx` + middleware
-- [ ] Base layout: header/footer, primary navigation, dark Masterclass/Netflix theme shell
-- [ ] `error.tsx` error boundary + `loading.tsx` states
-- [ ] `not-found.tsx` (404 skeleton) + generic error page
-- [ ] Four Supabase client helpers (browser / server / middleware / service) scaffolded
+- [x] Next.js 15 App Router project (React 19, TS strict), Tailwind configured _(next 15.5, react 19.2, tailwind v4)_
+- [x] Directory layout per `CLAUDE.md` (`app/[locale]/…`, `lib/…`, `components/ui/…`, `supabase/…`, `messages/…`)
+- [x] Localized routing shell `app/[locale]/layout.tsx` + middleware _(next-intl + Supabase session refresh composed)_
+- [x] Base layout: header/footer, primary navigation, dark Masterclass/Netflix theme shell
+- [x] `error.tsx` error boundary + `loading.tsx` states
+- [x] `not-found.tsx` (404 skeleton) + generic error page
+- [x] Four Supabase client helpers (browser / server / middleware / service) scaffolded _(service.ts `server-only`; no secret leak — QA verified)_
 
 ### 0.4 — Data model & DB schema
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Core schema and migrations for users, profiles, sessions, events, with relations (§3).
 Use the `new-migration` skill / `supabase-expert` subagent.
 
-- [ ] `is_staff(uuid)` helper + `set_updated_at()` trigger function
-- [ ] `profiles` (1:1 with `auth.users`) + `staff_roles` + `mindsetter_profiles` (§3.1)
-- [ ] `sessions` domain: `session_settings`, `availability_slots`, `sessions` (§3.3)
-- [ ] `events` domain: `events`, `event_participants` (§3.4)
-- [ ] Relations / FKs (`on delete cascade` where per spec) + indexes
-- [ ] RLS enabled on **every** table + baseline policies (§4); money tables service-role write only
-- [ ] Standard columns everywhere (`id`, `created_at`, `updated_at`) + `updated_at` triggers
-- [ ] Migrations committed under `supabase/migrations/`, applied to dev + staging
+> Reviewed by `security-auditor` (3 critical privilege-escalations found & fixed:
+> profiles self-verify, events self-publish, event_participants self-confirm) + `code-reviewer`,
+> then live RLS negative tests via `qa` — all abuse cases blocked/coerced on the dev DB.
+> Permission-matrix RLS gating (verified-member / mindsetter) deferred to **0.7** on purpose.
+
+- [x] `is_staff(uuid)` helper + `set_updated_at()` trigger function
+- [x] `profiles` (1:1 with `auth.users`) + `staff_roles` + `mindsetter_profiles` (§3.1)
+- [x] `sessions` domain: `session_settings`, `availability_slots`, `sessions` (§3.3)
+- [x] `events` domain: `events`, `event_participants` (§3.4)
+- [x] Relations / FKs (`on delete cascade` where per spec) + indexes
+- [x] RLS enabled on **every** table + baseline policies (§4); money tables service-role write only _(+ column-guard triggers for staff-only mutations)_
+- [x] Standard columns everywhere (`id`, `created_at`, `updated_at`) + `updated_at` triggers
+- [x] Migrations committed under `supabase/migrations/`, applied to dev + staging _(dev applied + QA-verified; staging project deferred with infra)_
 
 ### 0.5 — API layer & conventions
 **Status:** ⬜ Not started

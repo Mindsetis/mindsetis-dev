@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "brand": "Mindsetis",
+    "home": "Home",
+    "explore": "Explore"
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  },
+  "home": {
+    "title": "Grow with people who move you forward.",
+    "subtitle": "Mindsetis Community connects Members and Mindsetters for 1:1 sessions, live events, and meaningful conversations.",
+    "cta": "Get started"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "back": "Back to home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  }
+}
