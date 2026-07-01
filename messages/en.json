@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "brand": "Mindsetis",
+    "join": "Join",
+    "login": "Log in",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
+  },
+  "footer": {
+    "columns": {
+      "one": {
+        "title": "Column One",
+        "links": ["Link One", "Link Two", "Link Three", "Link Four", "Link Five"]
+      },
+      "two": {
+        "title": "Column Two",
+        "links": ["Link Six", "Link Seven", "Link Eight", "Link Nine", "Link Ten"]
+      }
+    },
+    "legal": {
+      "cookies": "Cookies Settings",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "newsletter": {
+      "alreadySubscribed": "You're already subscribed — thanks for sticking around!",
+      "consent": "By subscribing you agree to our Privacy Policy and provide consent to receive updates from our company.",
+      "emailLabel": "Email address",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "subtitle": "Join our newsletter to stay up to date on features and releases.",
+      "success": "Thanks for subscribing! We'll keep you posted."
+    },
+    "rights": "All rights reserved.",
+    "social": {
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "title": "Follow Us",
+      "x": "X",
+      "youtube": "Youtube"
+    }
+  },
+  "localeSwitcher": {
+    "en": "English",
+    "es": "Español",
+    "label": "Language"
+  },
+  "home": {
+    "hero": {
+      "clickToWatch": "Click for watching",
+      "continue": "Continue",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "or": "or",
+      "seeFeatures": "See platform features",
+      "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
+      "title": "Not everyone builds something from nothing.",
+      "tourLabel": "Take a 2-min platform tour",
+      "watchLabel": "Watch to understand why"
+    }
+  },
+  "onboarding": {
+    "back": "Back",
+    "close": "Close",
+    "finish": "Ok, continue registration",
+    "next": "Next",
+    "progressLabel": "Step {step} of {total}",
+    "screenshotPlaceholder": "Platform's screenshot",
+    "steps": {
+      "step1": {
+        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates — and book a real conversation.",
+        "title": "Book a 1:1 session with a Mindsetter."
+      },
+      "step2": {
+        "body": "Sensessions, Never Eat Alone, Masterminds — small group formats for real conversations. No pitch. No agenda. Just founders talking to founders.",
+        "title": "Join group events. Go deeper."
+      },
+      "step3": {
+        "body": "Every member is checked manually by the Mindsetis team. Passport and business verification. This is what makes the community worth joining.",
+        "title": "Everyone here is verified. No exceptions."
+      },
+      "step4": {
+        "body": "Every member is checked manually by the Mindsetis team. Passport and business verification. This is what makes the community worth joining.",
+        "title": "A few words about fraud prevention"
+      }
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "back": "Back to home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  },
+  "auth": {
+    "errors": {
+      "invalidLink": "Your link is invalid or expired."
+    },
+    "fields": {
+      "confirmPassword": "Confirm password",
+      "email": "Email",
+      "password": "Password"
+    },
+    "forgotPassword": {
+      "backToLogin": "Back to log in",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "successMessage": "If an account exists for that email, we've sent a password reset link.",
+      "title": "Reset your password"
+    },
+    "resetPassword": {
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "subtitle": "Choose a new password for your account.",
+      "title": "Set a new password"
+    },
+    "signIn": {
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "resetSuccess": "Password updated. Please sign in.",
+      "signUpLink": "Sign up",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "subtitle": "Sign in to continue to Mindsetis Community.",
+      "title": "Welcome back"
+    },
+    "signUp": {
+      "back": "Back",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithLinkedin": "Continue with Linkedin",
+      "fullName": "First name",
+      "haveAccount": "Already have an account?",
+      "hidePassword": "Hide password",
+      "loginLink": "Log in",
+      "passwordHints": {
+        "length": "At least 8 characters",
+        "letter": "Contains a letter",
+        "number": "Contains a number"
+      },
+      "showPassword": "Show password",
+      "stepLabel": "Step {step} of {total}",
+      "submit": "Continue",
+      "submitting": "Continuing…",
+      "title": "Create account",
+      "username": "Username"
+    },
+    "verifyEmail": {
+      "backToLogin": "Back to log in",
+      "description": "Click the link in the email to activate your account.",
+      "subtitle": "We've sent a confirmation link to {email}.",
+      "subtitleGeneric": "We've sent you a confirmation link.",
+      "title": "Check your inbox"
+    }
+  },
+  "email": {
+    "footer": {
+      "address": "Mindsetis Community",
+      "automated": "This is an automated message — please don't reply directly to this email.",
+      "unsubscribe": "Manage your email preferences"
+    },
+    "passwordReset": {
+      "body": "We received a request to reset the password for your Mindsetis Community account. Click the button below to choose a new one.",
+      "cta": "Reset password",
+      "expiry": "This link expires soon. If you didn't request a password reset, you can safely ignore this email.",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Reset your password",
+      "subject": "Reset your Mindsetis Community password"
+    },
+    "verification": {
+      "body": "Thanks for joining Mindsetis Community. Confirm your email address to activate your account.",
+      "cta": "Confirm email",
+      "expiry": "This link expires soon. If you didn't request this, you can safely ignore this email.",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Confirm your email",
+      "subject": "Confirm your email for Mindsetis Community"
+    }
+  }
+}

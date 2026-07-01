@@ -40,6 +40,16 @@ the project rules in `CLAUDE.md`.
 - RLS policy pattern: `for select using (auth.uid() = owner_col or is_staff(auth.uid()))`;
   writes restricted to the owner, staff, or service role as the spec dictates.
 
+## Hosted Supabase ONLY — never local (MUST)
+
+We work exclusively against the **cloud (hosted)** Supabase project. NEVER run or assume a
+local stack: no `supabase start`/`stop`/`db reset`, no Docker, no local Postgres/Studio/
+Inbucket, no `localhost:5432x`. Apply migrations to the hosted project only, via the guarded
+`npm run db:push` (never `supabase db reset`). Generate types with `npm run db:types`
+(`--linked`), never `--local`. Verify schema/RLS against the hosted project (Management API /
+psql / anon-vs-service-key probes). If you cannot push (no creds / not authorized), validate
+SQL statically and say so — do not spin up anything local as a workaround. See `CLAUDE.md`.
+
 ## Workflow
 
 1. Read the relevant part of the spec and any existing migrations before adding SQL.
@@ -47,4 +57,5 @@ the project rules in `CLAUDE.md`.
    add a new one.
 3. After writing money-related or role-related policies, hand off to `security-auditor`
    for review.
-4. Report the migration path and a short summary of tables/policies added.
+4. Report the migration path and a short summary of tables/policies added. Migrations are
+   applied to the hosted project via `npm run db:push` — never a local reset.

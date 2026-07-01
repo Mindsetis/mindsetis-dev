@@ -63,6 +63,59 @@ max_frequency = "1s"
 otp_length = 6
 otp_expiry = 3600
 
+# Custom SMTP relay for Supabase's BUILT-IN auth emails (confirm signup, reset
+# password, change email, magic link, invite). This does NOT replace those
+# emails with custom Resend templates — it only swaps the transport Supabase
+# Auth uses to send its own standard templates, so it stops hitting the
+# platform's shared-sender rate limit (`over_email_send_rate_limit`, HTTP 429).
+# Unrelated to `lib/email/` (the Resend-via-queue pipeline for
+# Mindsetis-originated transactional/notification emails — see
+# supabase/functions/process-email-queue) or to the `RESEND_API_KEY` /
+# `RESEND_FROM_EMAIL` values consumed by that Edge Function; the vars below
+# are read only by the Supabase Auth service itself.
+#
+# `enabled = false` locally on purpose — local dev sends through Inbucket
+# (`[local_smtp]` above) so you never burn real SMTP sends while iterating.
+# Enable the equivalent settings for the HOSTED project via
+# **Dashboard → Authentication → Emails → SMTP Settings** (the toggle below
+# only affects `supabase start`); see docs/SUPABASE_SETUP.md §3a.
+# Custom SMTP DEFERRED for now — registration uses Supabase's built-in default
+# email sender (no custom SMTP, no sending domain needed). Local dev still routes
+# auth emails through Inbucket via [local_smtp] above. Transactional/notification
+# emails (Resend) come later. Re-enable this block once a verified sending domain
+# is available (and set the equivalent fields in Dashboard for the hosted project).
+# [auth.email.smtp]
+# enabled = false
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+# admin_email = "env(SUPABASE_AUTH_SMTP_SENDER_EMAIL)"
+# sender_name = "Mindsetis"
+
+# Standard Supabase auth email templates — subject lines only (English-first,
+# per CLAUDE.md i18n rules; profile/app copy is localized separately via
+# next-intl, but these transactional auth emails stay in the app's source
+# language). Body content stays Supabase's own default template (no
+# `content_path` override) — we are intentionally NOT shipping custom HTML
+# for these, only a custom transport (SMTP) and subject line. Mirror any
+# change here in Dashboard → Authentication → Emails → Templates for the
+# hosted project (this file only governs `supabase start`).
+[auth.email.template.confirmation]
+subject = "Confirm your Mindsetis Community signup"
+
+[auth.email.template.recovery]
+subject = "Reset your Mindsetis Community password"
+
+[auth.email.template.email_change]
+subject = "Confirm your new email address"
+
+[auth.email.template.magic_link]
+subject = "Your Mindsetis Community sign-in link"
+
+[auth.email.template.invite]
+subject = "You've been invited to Mindsetis Community"
+
 [auth.sms]
 enable_signup = false
 enable_confirmations = false
@@ -75,6 +128,20 @@ enabled = false
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+
+[functions.process-email-queue]
+# Stage 0.9 — first Edge Function (supabase/functions/process-email-queue).
+# Auth is via its own `x-queue-secret` shared-secret header (checked against
+# QUEUE_TRIGGER_SECRET inside the function), not a Supabase Auth JWT, since
+# its only caller is pg_cron/pg_net (trigger_email_queue_processing() in
+# 20260701110100_email_queue_cron.sql) — no end-user session exists at call
+# time. verify_jwt must stay false both locally and on the hosted project
+# (`supabase functions deploy process-email-queue --no-verify-jwt`, or the
+# equivalent toggle in Dashboard -> Edge Functions -> process-email-queue),
+# otherwise pg_net's unauthenticated POST would be rejected before it ever
+# reaches this function's own secret check.
+enabled = true
+verify_jwt = false
 
 [analytics]
 enabled = false

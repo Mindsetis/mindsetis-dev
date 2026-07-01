@@ -18,6 +18,9 @@ next-env.d.ts
 # ── Testing / coverage ───────────────────────────────────────
 /coverage
 
+# ── Playwright MCP (browser-tester artifacts) ────────────────
+.playwright-mcp/
+
 # ── Env & secrets (NEVER commit) ─────────────────────────────
 .env
 .env.*
@@ -44,3 +47,7 @@ yarn-error.log*
 
 # ── Vercel ───────────────────────────────────────────────────
 .vercel
+
+# Figma/browser test screenshot artifacts
+.figma-shots-tmp/
+signup-checklist-*.png

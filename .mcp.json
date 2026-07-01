@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "figma-mcp-go": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@vkhanhqui/figma-mcp-go@latest"],
+      "env": {}
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {}
+    }
+  }
+}
