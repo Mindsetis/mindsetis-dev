@@ -41,25 +41,27 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
     : '/onboarding';
 
   return (
-    <div className="w-full px-4 py-10 sm:px-6 md:py-16">
-      {/* Top bar spans the full page width: "Back" sits at the left edge (outside the
-          centered form column), while the step indicator is centered on the page — matches
-          the desktop Figma frame. `relative` + absolute Back keeps the progress truly
-          centered regardless of the Back label width. */}
-      <div className="relative mb-8 flex items-center justify-center md:mb-12">
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
+      {/* Same max-width + padding as the Header, so "Back" lines up under the logo. On
+          desktop Back is absolutely pinned to that left edge while the step bar is centered
+          over the form and spans the form width; on mobile they sit inline (Back, then bar). */}
+      <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
         <Link
           href={backHref}
-          className="absolute left-0 flex items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground"
+          className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           {t('signUp.back')}
         </Link>
 
-        <RegistrationProgress
-          step={1}
-          total={TOTAL_STEPS}
-          label={t('signUp.stepLabel', { step: 1, total: TOTAL_STEPS })}
-        />
+        {/* Progress spans the form width (max-w-640) and is centered over the form. */}
+        <div className="w-full max-w-[640px] flex-1 md:flex-none">
+          <RegistrationProgress
+            step={1}
+            total={TOTAL_STEPS}
+            label={t('signUp.stepLabel', { step: 1, total: TOTAL_STEPS })}
+          />
+        </div>
       </div>
 
       {/* Centered form column. `text-h1`/`text-h3` are paired font-size+line-height tokens

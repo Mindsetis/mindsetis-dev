@@ -18,24 +18,27 @@ type RegistrationProgressProps = {
  */
 export function RegistrationProgress({ step, total, label }: RegistrationProgressProps) {
   return (
-    <div className="flex shrink-0 items-center gap-3">
-      <div role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={total}>
-        <span className="sr-only">{label}</span>
-        <div className="flex items-center gap-1" aria-hidden="true">
-          {Array.from({ length: total }, (_, index) => (
-            <span
-              key={index}
-              className={cn(
-                'h-1.5 w-8 rounded-full sm:w-12 md:w-20',
-                index < step ? 'bg-primary' : 'bg-card',
-              )}
-            />
-          ))}
-        </div>
+    <div className="flex w-full items-center gap-4">
+      <div
+        role="progressbar"
+        aria-valuenow={step}
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-label={label}
+        className="flex flex-1 items-center gap-2"
+      >
+        {/* Segments stretch to fill the container so the bar spans the form width. */}
+        {Array.from({ length: total }, (_, index) => (
+          <span
+            key={index}
+            aria-hidden="true"
+            className={cn('h-1.5 flex-1 rounded-full', index < step ? 'bg-primary' : 'bg-card')}
+          />
+        ))}
       </div>
       <span
         aria-hidden="true"
-        className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase"
+        className="text-tiny font-bold tracking-[0.3em] whitespace-nowrap text-muted-foreground uppercase"
       >
         {step}/{total}
       </span>
