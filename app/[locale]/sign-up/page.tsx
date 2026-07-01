@@ -41,12 +41,15 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
     : '/onboarding';
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 px-4 py-10 sm:px-6 md:py-16">
-      <div className="flex items-center justify-between gap-4 md:justify-end">
-        {/* Back is only in the mobile Figma frame — desktop has no back link. */}
+    <div className="w-full px-4 py-10 sm:px-6 md:py-16">
+      {/* Top bar spans the full page width: "Back" sits at the left edge (outside the
+          centered form column), while the step indicator is centered on the page — matches
+          the desktop Figma frame. `relative` + absolute Back keeps the progress truly
+          centered regardless of the Back label width. */}
+      <div className="relative mb-8 flex items-center justify-center md:mb-12">
         <Link
           href={backHref}
-          className="flex w-fit shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:hidden"
+          className="absolute left-0 flex items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           {t('signUp.back')}
@@ -59,13 +62,14 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
         />
       </div>
 
-      {/* `text-h1`/`text-h3` are paired font-size+line-height tokens (globals.css): mobile
-          renders at 32px/1.1, `md:text-h3` switches to 48px/0.9 — matches the Figma "MOB/H1"
-          (mobile) vs "H3 (PC)" (desktop, 90% line-height) text styles exactly, no manual
-          `leading-*` override needed. */}
-      <h1 className="font-display text-h1 text-foreground md:text-h3">{t('signUp.title')}</h1>
+      {/* Centered form column. `text-h1`/`text-h3` are paired font-size+line-height tokens
+          (globals.css): mobile 32px/1.1, `md:text-h3` 48px/0.9 — matches Figma "MOB/H1" vs
+          "H3 (PC)" exactly, no manual `leading-*` override needed. */}
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+        <h1 className="font-display text-h1 text-foreground md:text-h3">{t('signUp.title')}</h1>
 
-      <SignUpForm initialEmail={parsedEmail.success ? parsedEmail.data : undefined} />
+        <SignUpForm initialEmail={parsedEmail.success ? parsedEmail.data : undefined} />
+      </div>
     </div>
   );
 }
