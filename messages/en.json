@@ -11,6 +11,11 @@
   "footer": {
     "rights": "All rights reserved."
   },
+  "localeSwitcher": {
+    "en": "English",
+    "es": "Español",
+    "label": "Language"
+  },
   "home": {
     "title": "Grow with people who move you forward.",
     "subtitle": "Mindsetis Community connects Members and Mindsetters for 1:1 sessions, live events, and meaningful conversations.",
@@ -75,6 +80,31 @@
       "subtitle": "We've sent a confirmation link to {email}.",
       "subtitleGeneric": "We've sent you a confirmation link.",
       "title": "Check your inbox"
+    }
+  },
+  "email": {
+    "footer": {
+      "address": "Mindsetis Community",
+      "automated": "This is an automated message — please don't reply directly to this email.",
+      "unsubscribe": "Manage your email preferences"
+    },
+    "passwordReset": {
+      "body": "We received a request to reset the password for your Mindsetis Community account. Click the button below to choose a new one.",
+      "cta": "Reset password",
+      "expiry": "This link expires soon. If you didn't request a password reset, you can safely ignore this email.",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Reset your password",
+      "subject": "Reset your Mindsetis Community password"
+    },
+    "verification": {
+      "body": "Thanks for joining Mindsetis Community. Confirm your email address to activate your account.",
+      "cta": "Confirm email",
+      "expiry": "This link expires soon. If you didn't request this, you can safely ignore this email.",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Confirm your email",
+      "subject": "Confirm your email for Mindsetis Community"
     }
   }
 }

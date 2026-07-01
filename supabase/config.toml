@@ -76,6 +76,20 @@ client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 
+[functions.process-email-queue]
+# Stage 0.9 — first Edge Function (supabase/functions/process-email-queue).
+# Auth is via its own `x-queue-secret` shared-secret header (checked against
+# QUEUE_TRIGGER_SECRET inside the function), not a Supabase Auth JWT, since
+# its only caller is pg_cron/pg_net (trigger_email_queue_processing() in
+# 20260701110100_email_queue_cron.sql) — no end-user session exists at call
+# time. verify_jwt must stay false both locally and on the hosted project
+# (`supabase functions deploy process-email-queue --no-verify-jwt`, or the
+# equivalent toggle in Dashboard -> Edge Functions -> process-email-queue),
+# otherwise pg_net's unauthenticated POST would be rejected before it ever
+# reaches this function's own secret check.
+enabled = true
+verify_jwt = false
+
 [analytics]
 enabled = false
 

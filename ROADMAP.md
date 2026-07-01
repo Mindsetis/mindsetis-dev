@@ -189,24 +189,65 @@ Design tokens + base components (§5.11), dark Masterclass/Netflix theme.
 - [x] Form primitives wired to React Hook Form + Zod
 
 ### 0.9 — Notifications infrastructure (email)
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Transactional email service, templates, and queue (§6 Resend, §5.14 templates).
 
-- [ ] **Resend** integration (server-only) + verified sending domain
-- [ ] Base email templates (verification, password reset) — layout ready for later types
-- [ ] Templates structured to be **admin-manageable** later (§5.14) and i18n-aware
-- [ ] Sending abstraction + **queue / retry** (pg_cron / Edge Function) for reminders later
-- [ ] Logging of sends for observability (§7)
+> Auth emails (verification / password reset) intentionally **stay on Supabase's built-in
+> mailer** (it owns the OTP tokens); this stage builds the Resend-backed pipeline for our
+> **own** transactional emails (future reminders/notifications). Architecture: `lib/email`
+> (server-only) renders React Email templates (dark theme, cyan `#79b9e3`; BaseLayout +
+> Verification + PasswordReset + generic) to subject/html/text and **enqueues** a row into
+> `email_messages` via the service-role client (Zod-validated envelope + per-template props;
+> `dedup_key` idempotency on 23505). The project's **first Supabase Edge Function**
+> `process-email-queue` (Deno) drains the queue — atomic claim via `claim_due_email_messages`
+> (`FOR UPDATE SKIP LOCKED`), sends via Resend with an `Idempotency-Key`, exponential backoff,
+> terminal `failed` state, and **stale-`sending` reclaim** (rows stuck >10 min are re-claimed).
+> Triggered by `pg_cron` → `pg_net` (`trigger_email_queue_processing`, secret + URL from
+> `email_queue_settings`), guarded by an `x-queue-secret` shared secret (fail-closed).
+> `email_events` is the append-only send log (§7 observability). RLS mirrors the money-table
+> posture: staff-only SELECT, **no client writes**, `email_queue_settings` has zero policies.
+> Reviewed by `code-reviewer` (2 High fixed: stuck-`sending` reclaim + Resend Idempotency-Key)
+> + `security-auditor` (clean; 1 Low fixed: `actionUrl` restricted to http(s)) + `qa`
+> (build green, 16 routes, secret-leak clean, render smoke en/es, migrations statically
+> validated — live apply deferred: Supabase CLI absent in env) + `browser-tester` (i18n).
+> ⚠️ **Go-live gate:** delivery is gracefully **inert** until an operator deploys the Edge
+> Function, sets its secrets (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `QUEUE_TRIGGER_SECRET`),
+> and inserts the function URL + secret into `email_queue_settings` — documented in
+> `docs/SUPABASE_SETUP.md` §5. Verified sending domain in Resend is an operator step.
+
+- [x] **Resend** integration (server-only) + verified sending domain _(pipeline built; domain/keys are operator go-live steps, documented)_
+- [x] Base email templates (verification, password reset) — layout ready for later types _(React Email: BaseLayout + Verification + PasswordReset + generic)_
+- [x] Templates structured to be **admin-manageable** later (§5.14) and i18n-aware _(`registry.tsx` template_key indirection; `createTranslator` via `use-intl/core`)_
+- [x] Sending abstraction + **queue / retry** (pg_cron / Edge Function) for reminders later _(`email_messages` queue + `process-email-queue` Edge Function; backoff + stale-reclaim + Idempotency-Key)_
+- [x] Logging of sends for observability (§7) _(`email_events` append-only log; PATCH failures logged)_
 
 ### 0.10 — i18n infrastructure
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 next-intl library, dictionaries, and language routing (§5.12), English-first.
 
-- [ ] **next-intl** configured with `[locale]` segment routing + middleware
-- [ ] `messages/en.json` (source) + `messages/es.json` (readiness), structurally identical
-- [ ] Locale detection / switch; default English-first
-- [ ] Translation helpers for RSC (`getTranslations`) and client (`useTranslations`)
-- [ ] Convention: no hardcoded UI strings; use `add-i18n-keys` skill
-- [ ] Profile content stays in author's `content_locale` (not run through UI dictionaries)
+> Most infra pre-existed (next-intl plugin, `[locale]` routing, request config, middleware
+> composition, provider, RSC+client helpers). This stage closed the gaps: added a
+> `LocaleSwitcher` (client, UI Kit `Select`, `aria-label`, preserves path via
+> `@/i18n/navigation`, persists via `NEXT_LOCALE` + URL, hardened against stuck `isPending`
+> with a safety timeout) wired into the Header; made routing intent explicit
+> (`localePrefix: 'always'`, `localeDetection: false` for a deterministic **English-first**
+> default — bare paths always resolve to `en`); **fully translated `es.json` to real
+> Spanish** (was English placeholders) keeping it structurally identical to the `en` source;
+> and documented the conventions in `docs/I18N.md` (no hardcoded strings → `add-i18n-keys`;
+> profile/author content stays in `content_locale`, never run through UI dictionaries). No
+> profile UI exists yet to wire `content_locale` at the app level — captured as a convention.
+> Reviewed by `code-reviewer` + `qa` + `browser-tester` (live switch en↔es, path preserved,
+> cookie set, strings change; the earlier "es shows English" was fixed in rework).
+
+- [x] **next-intl** configured with `[locale]` segment routing + middleware _(pre-existing; made explicit)_
+- [x] `messages/en.json` (source) + `messages/es.json` (readiness), structurally identical _(es fully translated to real Spanish; 90 keys, identical paths/order)_
+- [x] Locale detection / switch; default English-first _(`LocaleSwitcher` in Header; `localeDetection: false`)_
+- [x] Translation helpers for RSC (`getTranslations`) and client (`useTranslations`) _(pre-existing, in use)_
+- [x] Convention: no hardcoded UI strings; use `add-i18n-keys` skill _(documented in `docs/I18N.md`)_
+- [x] Profile content stays in author's `content_locale` (not run through UI dictionaries) _(convention documented; `content_locale` in DB schema/trigger; no profile UI yet)_

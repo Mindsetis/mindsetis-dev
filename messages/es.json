@@ -1,80 +1,110 @@
 {
   "nav": {
     "brand": "Mindsetis",
-    "home": "Home",
-    "explore": "Explore",
-    "login": "Log in",
-    "signUp": "Sign up",
-    "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "home": "Inicio",
+    "explore": "Explorar",
+    "login": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar sesión",
+    "signingOut": "Cerrando sesión…"
   },
   "footer": {
-    "rights": "All rights reserved."
+    "rights": "Todos los derechos reservados."
+  },
+  "localeSwitcher": {
+    "en": "Inglés",
+    "es": "Español",
+    "label": "Idioma"
   },
   "home": {
-    "title": "Grow with people who move you forward.",
-    "subtitle": "Mindsetis Community connects Members and Mindsetters for 1:1 sessions, live events, and meaningful conversations.",
-    "cta": "Get started"
+    "title": "Crece junto a personas que te impulsan hacia adelante.",
+    "subtitle": "Mindsetis Community conecta a Members y Mindsetters para sesiones 1:1, eventos en vivo y conversaciones con sentido.",
+    "cta": "Comenzar"
   },
   "notFound": {
-    "title": "Page not found",
-    "description": "The page you're looking for doesn't exist or has been moved.",
-    "back": "Back to home"
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o ha sido movida.",
+    "back": "Volver al inicio"
   },
   "error": {
-    "title": "Something went wrong",
-    "description": "An unexpected error occurred. Please try again.",
-    "retry": "Try again"
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+    "retry": "Intentar de nuevo"
   },
   "auth": {
     "errors": {
-      "invalidLink": "Your link is invalid or expired."
+      "invalidLink": "Tu enlace no es válido o ha expirado."
     },
     "fields": {
-      "confirmPassword": "Confirm password",
-      "email": "Email",
-      "password": "Password"
+      "confirmPassword": "Confirmar contraseña",
+      "email": "Correo electrónico",
+      "password": "Contraseña"
     },
     "forgotPassword": {
-      "backToLogin": "Back to log in",
-      "submit": "Send reset link",
-      "submitting": "Sending…",
-      "subtitle": "Enter your email and we'll send you a reset link.",
-      "successMessage": "If an account exists for that email, we've sent a password reset link.",
-      "title": "Reset your password"
+      "backToLogin": "Volver a iniciar sesión",
+      "submit": "Enviar enlace de restablecimiento",
+      "submitting": "Enviando…",
+      "subtitle": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+      "successMessage": "Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer la contraseña.",
+      "title": "Restablece tu contraseña"
     },
     "resetPassword": {
-      "submit": "Update password",
-      "submitting": "Updating…",
-      "subtitle": "Choose a new password for your account.",
-      "title": "Set a new password"
+      "submit": "Actualizar contraseña",
+      "submitting": "Actualizando…",
+      "subtitle": "Elige una nueva contraseña para tu cuenta.",
+      "title": "Establece una nueva contraseña"
     },
     "signIn": {
-      "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?",
-      "resetSuccess": "Password updated. Please sign in.",
-      "signUpLink": "Sign up",
-      "submit": "Sign in",
-      "submitting": "Signing in…",
-      "subtitle": "Sign in to continue to Mindsetis Community.",
-      "title": "Welcome back"
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes una cuenta?",
+      "resetSuccess": "Contraseña actualizada. Por favor, inicia sesión.",
+      "signUpLink": "Regístrate",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión…",
+      "subtitle": "Inicia sesión para continuar en Mindsetis Community.",
+      "title": "Bienvenido de nuevo"
     },
     "signUp": {
-      "fullName": "Full name",
-      "haveAccount": "Already have an account?",
-      "loginLink": "Log in",
-      "submit": "Create account",
-      "submitting": "Creating account…",
-      "subtitle": "Join Mindsetis Community — members, mindsetters, and meaningful sessions.",
-      "title": "Create your account",
-      "username": "Username"
+      "fullName": "Nombre completo",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "loginLink": "Iniciar sesión",
+      "submit": "Crear cuenta",
+      "submitting": "Creando cuenta…",
+      "subtitle": "Únete a Mindsetis Community — members, mindsetters y sesiones con sentido.",
+      "title": "Crea tu cuenta",
+      "username": "Nombre de usuario"
     },
     "verifyEmail": {
-      "backToLogin": "Back to log in",
-      "description": "Click the link in the email to activate your account.",
-      "subtitle": "We've sent a confirmation link to {email}.",
-      "subtitleGeneric": "We've sent you a confirmation link.",
-      "title": "Check your inbox"
+      "backToLogin": "Volver a iniciar sesión",
+      "description": "Haz clic en el enlace del correo para activar tu cuenta.",
+      "subtitle": "Te hemos enviado un enlace de confirmación a {email}.",
+      "subtitleGeneric": "Te hemos enviado un enlace de confirmación.",
+      "title": "Revisa tu bandeja de entrada"
+    }
+  },
+  "email": {
+    "footer": {
+      "address": "Mindsetis Community",
+      "automated": "Este es un mensaje automático — no respondas directamente a este correo.",
+      "unsubscribe": "Gestiona tus preferencias de correo"
+    },
+    "passwordReset": {
+      "body": "Recibimos una solicitud para restablecer la contraseña de tu cuenta de Mindsetis Community. Haz clic en el botón de abajo para elegir una nueva.",
+      "cta": "Restablecer contraseña",
+      "expiry": "Este enlace caduca pronto. Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo con seguridad.",
+      "greeting": "Hola {name},",
+      "greetingGeneric": "Hola,",
+      "heading": "Restablece tu contraseña",
+      "subject": "Restablece tu contraseña de Mindsetis Community"
+    },
+    "verification": {
+      "body": "Gracias por unirte a Mindsetis Community. Confirma tu correo electrónico para activar tu cuenta.",
+      "cta": "Confirmar correo",
+      "expiry": "Este enlace caduca pronto. Si no solicitaste esto, puedes ignorar este correo con seguridad.",
+      "greeting": "Hola {name},",
+      "greetingGeneric": "Hola,",
+      "heading": "Confirma tu correo electrónico",
+      "subject": "Confirma tu correo para Mindsetis Community"
     }
   }
 }

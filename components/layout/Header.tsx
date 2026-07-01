@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { SignOutButton } from '@/components/auth/SignOutButton';
+import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
@@ -29,6 +30,7 @@ export default async function Header() {
           </Link>
         </nav>
         <div className="flex items-center gap-4">
+          <LocaleSwitcher />
           {user ? (
             <>
               <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>

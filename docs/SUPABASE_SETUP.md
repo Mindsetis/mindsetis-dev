@@ -146,7 +146,50 @@ if you point the app at the local stack.
 
 ---
 
-## 5. Environments
+## 5. Email queue Edge Function (stage 0.9)
+
+`supabase/functions/process-email-queue` is the first Edge Function, draining the
+`email_messages` queue (`supabase/migrations/20260701110000_email_queue.sql`) through Resend.
+It is triggered every minute by the `process-email-queue` pg_cron job via pg_net
+(`supabase/migrations/20260701110100_email_queue_cron.sql`), and ships **inert until an
+operator finishes setup** — same "off until configured" posture as Upstash rate-limiting.
+
+**Edge Function secrets** (separate from `.env.local` — the Next.js app never reads these):
+
+```bash
+supabase secrets set \
+  RESEND_API_KEY="..." \
+  RESEND_FROM_EMAIL="Mindsetis <no-reply@example.com>" \
+  QUEUE_TRIGGER_SECRET="$(openssl rand -hex 32)"
+```
+
+(`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are auto-injected into every Edge Function by
+the platform — do not set those explicitly.)
+
+**Deploy** (`--no-verify-jwt` since the function authenticates callers itself via
+`x-queue-secret`, not a Supabase Auth JWT — pg_cron/pg_net has no end-user session):
+
+```bash
+supabase functions deploy process-email-queue --no-verify-jwt
+```
+
+**Point the cron job at the deployed function** — run once via the Studio SQL editor (or any
+service-role connection; `email_queue_settings` has no client-reachable policies on purpose):
+
+```sql
+insert into email_queue_settings (key, value) values
+  ('edge_function_url', 'https://<project-ref>.functions.supabase.co/process-email-queue'),
+  ('trigger_secret', '<same value as QUEUE_TRIGGER_SECRET above>')
+on conflict (key) do update set value = excluded.value;
+```
+
+Until that insert happens, `trigger_email_queue_processing()` no-ops every minute (no error) —
+see the long comment at the top of `20260701110100_email_queue_cron.sql` for the full
+rationale.
+
+---
+
+## 6. Environments
 
 | Env         | Supabase project      | Notes                                        |
 | ----------- | --------------------- | -------------------------------------------- |

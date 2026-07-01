@@ -32,6 +32,15 @@ declare namespace NodeJS {
     readonly RESEND_API_KEY?: string;
     readonly RESEND_FROM_EMAIL?: string;
 
+    // Email queue (stage 0.9) — documented here to mirror .env.example, but
+    // NOT read by the Next.js app: QUEUE_TRIGGER_SECRET is an Edge Function
+    // secret (`supabase secrets set QUEUE_TRIGGER_SECRET=...`), consumed only
+    // by supabase/functions/process-email-queue/index.ts (Deno.env.get), and
+    // stored again as the `trigger_secret` row in `email_queue_settings` so
+    // pg_cron/pg_net can send it as the `x-queue-secret` header. See
+    // supabase/migrations/20260701110100_email_queue_cron.sql.
+    readonly QUEUE_TRIGGER_SECRET?: string;
+
     // OpenAI (stage 1.8)
     readonly OPENAI_API_KEY?: string;
 

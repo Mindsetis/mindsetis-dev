@@ -18,6 +18,9 @@ next-env.d.ts
 # ── Testing / coverage ───────────────────────────────────────
 /coverage
 
+# ── Playwright MCP (browser-tester artifacts) ────────────────
+.playwright-mcp/
+
 # ── Env & secrets (NEVER commit) ─────────────────────────────
 .env
 .env.*
