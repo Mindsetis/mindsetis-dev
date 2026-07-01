@@ -15,7 +15,7 @@ export default async function NotFound() {
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
       <p className="max-w-md text-muted-foreground">{t('description')}</p>
-      <Button asChild variant="primary">
+      <Button asChild variant="primary" size="sm">
         <Link href="/">{t('back')}</Link>
       </Button>
     </div>

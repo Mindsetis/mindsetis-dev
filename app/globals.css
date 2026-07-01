@@ -37,6 +37,9 @@
   --color-primary-hover: #9ad2ee;
   --color-primary-active: #5892c3;
   --color-primary-disabled: #556780;
+  /* End stop of the primary gradient (--gradient-primary below) and the hero headline's
+   * gradient-text accent — named so both usages stay in sync. */
+  --color-gradient-end: #21b8e6;
 
   /* ---- Semantic status --------------------------------------------------*/
   --color-destructive: #ff4c58;
@@ -48,6 +51,8 @@
   --color-border: #747474;
   --color-input: #747474;
   --color-ring: #79b9e3;
+  /* Input/textarea/select focus border (Figma: white, no ring/glow). */
+  --color-input-focus: #ffffff;
 
   /* ---- Typography --------------------------------------------------------
    * Display/headings: Cal Sans (400, wired to --font-cal-sans by next/font in
@@ -66,6 +71,9 @@
   --text-h2: 4.5rem; /* 72px */
   --text-h2--line-height: 0.9;
   --text-h2--font-weight: 400;
+  --text-h3: 3rem; /* 48px — "H3 (PC)" in Figma; used for the Welcome-screen hero headline */
+  --text-h3--line-height: 0.9;
+  --text-h3--font-weight: 400;
   --text-l: 2rem; /* 32px */
   --text-l--line-height: 1.15;
   --text-m: 1.375rem; /* 22px */
@@ -81,16 +89,24 @@
   --container-large: 80rem; /* 1280px */
 
   /* ---- Radius ------------------------------------------------------------
-   * NOTE: Figma had NO radius tokens — this scale is synthesized from the visual design
-   * (pill-ish 56px-tall primary buttons, ~12px card corners). Back-check against Figma
-   * once radius tokens/components are published.
+   * 12px confirmed against Figma for buttons/inputs (UI Kit audit). Card corners still
+   * use this same value as an assumption — back-check once card components are audited.
    */
   --radius: 0.75rem; /* 12px */
 
   /* ---- Effects ------------------------------------------------------------
    * Primary CTA soft cyan glow (Figma "drop shadow" effect → CSS box-shadow).
    */
-  --shadow-glow-primary: 0 4px 12.3px 0 rgb(111 186 237 / 0.8);
+  --shadow-glow-primary: 0 4px 12.3px 0 rgb(111 237 227 / 0.8);
+
+  /* Primary button gradient (Figma). Angle synthesized from the design preview —
+   * TODO confirm angle with designer. */
+  --gradient-primary: linear-gradient(
+    135deg,
+    #c3e4fa 0%,
+    #79b9e3 49%,
+    var(--color-gradient-end) 100%
+  );
 }
 
 /* Tailwind v4's built-in `rounded-*` scale is rederived from the single `--radius` token

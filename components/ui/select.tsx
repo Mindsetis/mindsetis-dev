@@ -29,12 +29,15 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        'flex w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none transition-colors',
+        'flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent text-foreground outline-none transition-colors',
         'data-[placeholder]:text-muted-foreground',
-        'focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40',
-        'aria-invalid:border-destructive aria-invalid:ring-destructive/40',
+        'focus-visible:border-input-focus',
+        'aria-invalid:border-destructive',
         'disabled:cursor-not-allowed disabled:opacity-60',
-        'data-[size=default]:h-11 data-[size=sm]:h-9',
+        // Default matches the shared 56px/16px-padding input standard; `sm` keeps its
+        // original compact sizing (not part of the Figma input spec).
+        'data-[size=default]:h-14 data-[size=default]:p-4 data-[size=default]:text-base data-[size=default]:font-medium',
+        'data-[size=sm]:h-9 data-[size=sm]:px-3 data-[size=sm]:py-2 data-[size=sm]:text-sm',
         '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground',
         className,
       )}

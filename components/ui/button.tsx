@@ -6,30 +6,39 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Mindsetis Button. Pill-shaped by default (spec: 56px-tall primary CTAs) — radius was
- * synthesized (no radius tokens in Figma); back-check once available.
+ * Mindsetis Button (Figma-aligned, UI Kit audit). Radius is 12px (`rounded-lg`), base
+ * type is 16px/bold across variants; `nav` keeps its own pill shape via variant override.
  */
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  'inline-flex shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-lg text-base font-bold transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   {
     variants: {
       variant: {
+        // Default/hover: gradient fill (angle unconfirmed — see --gradient-primary).
+        // Active/disabled: gradient is dropped in favor of a flat token color.
         primary:
-          'bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary-hover active:bg-primary-active disabled:bg-primary-disabled disabled:shadow-none',
+          'bg-[image:var(--gradient-primary)] text-primary-foreground shadow-glow-primary active:bg-[image:none] active:bg-primary-active disabled:bg-[image:none] disabled:bg-primary-disabled disabled:shadow-none',
         secondary:
           'bg-secondary text-secondary-foreground border border-border hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-secondary',
+        // Border + text color change on hover/active; background never changes.
         outline:
-          'border border-border bg-transparent text-foreground hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-transparent',
+          'border border-border bg-transparent text-border hover:border-foreground hover:text-foreground active:border-muted-foreground active:text-muted-foreground disabled:border-border disabled:text-border',
+        // Border stays a constant translucent white across all states; only text/icon
+        // color changes (distinct from `outline`, which instead animates the border).
         tertiary:
-          'border border-border bg-transparent text-foreground hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-transparent',
+          'border border-[#ffffff4d] bg-transparent text-foreground hover:text-muted-foreground active:text-primary disabled:text-border',
         ghost:
           'bg-transparent text-foreground hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-transparent',
-        link: 'rounded-none bg-transparent p-0 text-primary underline-offset-4 hover:underline disabled:text-muted-foreground',
+        link: 'rounded-none bg-transparent p-0 text-primary hover:text-primary-hover active:text-primary-active disabled:text-primary-disabled',
         nav: 'rounded-full bg-transparent text-muted-foreground hover:bg-white/[0.06] hover:text-foreground active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-transparent',
       },
       size: {
-        default: 'h-11 px-6 text-sm',
-        sm: 'h-9 px-4 text-tiny',
+        default: 'h-14 px-5 text-base',
+        // Figma "header mobile" Join CTA (46px tall, 24px horizontal padding). The UI Kit
+        // "Primary" component set (261:3431) defines a single 16px/bold text size for
+        // every state — there's no separate small type scale for buttons — so `sm` only
+        // shrinks the box, it doesn't override `text-base font-bold` from the base class.
+        sm: 'h-[46px] px-6',
         lg: 'h-14 px-8 text-base',
         icon: 'size-11 p-0',
       },

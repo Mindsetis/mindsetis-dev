@@ -88,6 +88,14 @@ hardcoding); don't call the Figma MCP tools directly from the main loop.
   are validated before use.
 - **Four separate Supabase clients** (browser / server / middleware / service). The
   service-role client is server-only and must NEVER end up in a client bundle.
+- **Hosted Supabase ONLY — never local (MUST).** We work exclusively against the cloud
+  (hosted) Supabase project. Do NOT run or rely on a local Supabase stack: no
+  `supabase start`/`stop`/`db reset`, no Docker, no local Postgres/Studio/Inbucket, no
+  `localhost:5432x`. Migrations are applied to the hosted project only, via the guarded
+  `npm run db:push` (never `supabase db reset`). Type generation uses `--linked`
+  (`npm run db:types`), not `--local`. RLS/schema verification runs against the hosted
+  project (Management API / psql / anon-vs-service-key probes) — never against a local DB.
+  This applies to the main assistant and every subagent (esp. `supabase-expert`, `qa`).
 
 ## Security rules (MUST — critical)
 

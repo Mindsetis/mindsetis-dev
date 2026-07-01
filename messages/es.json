@@ -1,15 +1,45 @@
 {
   "nav": {
     "brand": "Mindsetis",
-    "home": "Inicio",
-    "explore": "Explorar",
+    "join": "Unirse",
     "login": "Iniciar sesión",
-    "signUp": "Registrarse",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…"
   },
   "footer": {
-    "rights": "Todos los derechos reservados."
+    "columns": {
+      "one": {
+        "title": "Columna Uno",
+        "links": ["Enlace Uno", "Enlace Dos", "Enlace Tres", "Enlace Cuatro", "Enlace Cinco"]
+      },
+      "two": {
+        "title": "Columna Dos",
+        "links": ["Enlace Seis", "Enlace Siete", "Enlace Ocho", "Enlace Nueve", "Enlace Diez"]
+      }
+    },
+    "legal": {
+      "cookies": "Configuración de cookies",
+      "privacy": "Política de privacidad",
+      "terms": "Términos de servicio"
+    },
+    "newsletter": {
+      "alreadySubscribed": "Ya estás suscrito — ¡gracias por seguir con nosotros!",
+      "consent": "Al suscribirte aceptas nuestra Política de privacidad y das tu consentimiento para recibir novedades de nuestra empresa.",
+      "emailLabel": "Correo electrónico",
+      "placeholder": "Ingresa tu correo electrónico",
+      "subscribe": "Suscribirse",
+      "subtitle": "Únete a nuestro boletín para estar al día con las novedades y lanzamientos.",
+      "success": "¡Gracias por suscribirte! Te mantendremos informado."
+    },
+    "rights": "Todos los derechos reservados.",
+    "social": {
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "title": "Síguenos",
+      "x": "X",
+      "youtube": "Youtube"
+    }
   },
   "localeSwitcher": {
     "en": "Inglés",
@@ -17,9 +47,18 @@
     "label": "Idioma"
   },
   "home": {
-    "title": "Crece junto a personas que te impulsan hacia adelante.",
-    "subtitle": "Mindsetis Community conecta a Members y Mindsetters para sesiones 1:1, eventos en vivo y conversaciones con sentido.",
-    "cta": "Comenzar"
+    "hero": {
+      "clickToWatch": "Haz clic para ver",
+      "continue": "Continuar",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "or": "o",
+      "seeFeatures": "Ver funciones de la plataforma",
+      "subtitle": "Esta plataforma es para quienes actúan — quienes cambian el mundo a través de sus acciones y su mentalidad. Son los Mindsetters.",
+      "title": "No todos construyen algo de la nada.",
+      "tourLabel": "Haz un recorrido de 2 minutos por la plataforma",
+      "watchLabel": "Míralo para entender por qué"
+    }
   },
   "notFound": {
     "title": "Página no encontrada",

@@ -1,15 +1,45 @@
 {
   "nav": {
     "brand": "Mindsetis",
-    "home": "Home",
-    "explore": "Explore",
+    "join": "Join",
     "login": "Log in",
-    "signUp": "Sign up",
     "signOut": "Sign out",
     "signingOut": "Signing out…"
   },
   "footer": {
-    "rights": "All rights reserved."
+    "columns": {
+      "one": {
+        "title": "Column One",
+        "links": ["Link One", "Link Two", "Link Three", "Link Four", "Link Five"]
+      },
+      "two": {
+        "title": "Column Two",
+        "links": ["Link Six", "Link Seven", "Link Eight", "Link Nine", "Link Ten"]
+      }
+    },
+    "legal": {
+      "cookies": "Cookies Settings",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "newsletter": {
+      "alreadySubscribed": "You're already subscribed — thanks for sticking around!",
+      "consent": "By subscribing you agree to our Privacy Policy and provide consent to receive updates from our company.",
+      "emailLabel": "Email address",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "subtitle": "Join our newsletter to stay up to date on features and releases.",
+      "success": "Thanks for subscribing! We'll keep you posted."
+    },
+    "rights": "All rights reserved.",
+    "social": {
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "title": "Follow Us",
+      "x": "X",
+      "youtube": "Youtube"
+    }
   },
   "localeSwitcher": {
     "en": "English",
@@ -17,9 +47,18 @@
     "label": "Language"
   },
   "home": {
-    "title": "Grow with people who move you forward.",
-    "subtitle": "Mindsetis Community connects Members and Mindsetters for 1:1 sessions, live events, and meaningful conversations.",
-    "cta": "Get started"
+    "hero": {
+      "clickToWatch": "Click for watching",
+      "continue": "Continue",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "or": "or",
+      "seeFeatures": "See platform features",
+      "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
+      "title": "Not everyone builds something from nothing.",
+      "tourLabel": "Take a 2-min platform tour",
+      "watchLabel": "Watch to understand why"
+    }
   },
   "notFound": {
     "title": "Page not found",

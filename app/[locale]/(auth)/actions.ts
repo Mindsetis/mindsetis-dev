@@ -61,9 +61,35 @@ export const signUp = createAction(
     });
 
     if (error) {
+      // Never swallow the real reason — surface it in server logs (no PII beyond
+      // what Supabase itself put in `message`, which never includes the password).
+      console.error('[auth.signUp] Supabase signUp failed:', {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+
+      // Supabase signals throttling via HTTP 429 and/or an `over_*_rate_limit` code
+      // (e.g. too many confirmation emails sent to the same address/IP).
+      if (
+        error.status === 429 ||
+        error.code === 'over_email_send_rate_limit' ||
+        error.code === 'over_request_rate_limit' ||
+        /rate limit/i.test(error.message)
+      ) {
+        throw new ActionError(
+          'rate_limited',
+          'Too many sign-up attempts right now. Please try again in a little while.',
+        );
+      }
+
       // Supabase returns a generic message for already-registered emails only when
       // "Confirm email" is on; treat identity-collision signals as a conflict.
-      if (/already registered|already exists/i.test(error.message)) {
+      if (
+        error.code === 'user_already_exists' ||
+        error.code === 'email_exists' ||
+        /already registered|already exists/i.test(error.message)
+      ) {
         throw new ActionError('conflict', 'An account with this email already exists.');
       }
       throw new ActionError('internal_error', 'Could not create your account. Please try again.');

@@ -32,11 +32,16 @@ Determine the scope (which stage/feature/files) from the request or recent chang
 - Smoke-test key routes with `npm run dev` where feasible (e.g. `/` → locale redirect → 200).
 
 **Database (when migrations changed):**
-- Verify they apply cleanly (prefer the guarded `npm run db:push`, or a local `supabase db reset`).
-- Then probe the live DB via the Management API query endpoint or psql to confirm the schema
+- **Hosted Supabase ONLY — never local (see `CLAUDE.md`).** Do NOT run `supabase start`,
+  `supabase db reset`, Docker, or any local stack. Apply migrations to the hosted project
+  with the guarded `npm run db:push`. If you cannot/should not push (e.g. no credentials or
+  not authorized to touch the hosted DB), validate the migration SQL statically and clearly
+  state in the report that the live check was NOT run and must happen on the hosted project.
+- Then probe the hosted DB via the Management API query endpoint or psql to confirm the schema
   matches intent: extensions enabled, every table has RLS enabled, expected policies/triggers/
   indexes exist.
-- **RLS negative tests (critical for this project).** Actually attempt the abuse cases and
+- **RLS negative tests (critical for this project).** Run these against the hosted project
+  (anon-key vs service-key probes) — never a local DB. Actually attempt the abuse cases and
   confirm they FAIL. As an authenticated non-staff user (or simulating one), verify e.g.:
   self-inserting a `profiles` row with `verification_status='verified'` / `account_type='mindsetter'`
   is coerced/blocked; inserting an `events` row with `status='published'` is forced to `draft`;

@@ -1,3 +1,4 @@
+import { UserPlus } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import { SignOutButton } from '@/components/auth/SignOutButton';
@@ -7,45 +8,52 @@ import { Link } from '@/i18n/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
 
 /**
- * Primary site header. Server Component that reads the signed-in user server-side and
- * renders the matching auth state; the only client interactivity is the sign-out button
- * (mobile nav / full UI Kit land in Stage 0.8).
+ * Primary site header — Figma "Header PC" (desktop) / "header mobile" (mobile), Mindsetis
+ * design file. Server Component that reads the signed-in user server-side and renders the
+ * matching auth state; the only client interactivity is the sign-out button and the locale
+ * switcher.
+ *
+ * Note: the Figma design has no locale switcher (it predates the i18n work in stage 0.10).
+ * It's kept here — architecture/existing infra wins over pixel-matching an older mock.
  */
 export default async function Header() {
   const t = await getTranslations('nav');
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-lg font-bold tracking-tight text-foreground">
+    <header className="sticky top-0 z-40 bg-card">
+      <div className="mx-auto flex h-[70px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:h-[88px] lg:px-[70px]">
+        <Link
+          href="/"
+          className="font-display text-[1.5rem] leading-none font-normal text-primary lg:text-[2rem]"
+        >
           {t('brand')}
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <Link href="/" className="transition-colors hover:text-foreground">
-            {t('home')}
-          </Link>
-          <Link href="/" className="transition-colors hover:text-foreground">
-            {t('explore')}
-          </Link>
-        </nav>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-3 lg:gap-6">
           <LocaleSwitcher />
+
           {user ? (
             <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
+              <span className="hidden text-sm text-muted-foreground lg:inline">{user.email}</span>
               <SignOutButton />
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm font-bold text-muted-foreground transition-colors hover:text-foreground lg:text-base lg:font-medium lg:text-foreground"
               >
                 {t('login')}
               </Link>
-              <Button asChild size="sm">
-                <Link href="/sign-up">{t('signUp')}</Link>
+              {/* Figma: "header mobile" Join CTA = size sm (46px/px-6); "Header PC" Join
+                  CTA = size default (56px/px-5) — bump to the default box at `lg`. Text
+                  color/weight/gradient come from the (default) `primary` variant. */}
+              <Button asChild size="sm" className="lg:h-14 lg:px-5">
+                <Link href="/sign-up">
+                  <UserPlus className="hidden lg:inline" aria-hidden="true" />
+                  {t('join')}
+                </Link>
               </Button>
             </>
           )}

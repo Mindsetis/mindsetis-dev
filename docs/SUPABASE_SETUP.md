@@ -115,6 +115,68 @@ edit **Dashboard → Authentication → Email Templates** and point the link at:
 handler redirects into the localized app; on an invalid/expired link it redirects to
 `/{locale}/login?error=invalid_link`.
 
+### 3a. Auth emails (built-in Supabase) + Custom SMTP
+
+**All auth emails (confirm signup, reset password, change email, magic link, invite) are
+sent by Supabase Auth's own built-in mailer using the standard Supabase email templates —
+never by the `lib/email/` Resend-queue pipeline.** That pipeline (§5 below) is a separate,
+Mindsetis-originated system for booking/verification/reminder notifications; it never
+touches auth flows. Do not build custom Resend templates for sign-up confirmation, password
+reset, etc. — customize copy only via **Dashboard → Authentication → Emails → Templates**
+for the hosted project, not via `lib/email/`.
+
+**The problem:** Supabase's default shared email sender enforces a strict rate limit and
+returns `over_email_send_rate_limit` (HTTP 429) once you exceed a few emails per hour — too
+low for real sign-up/password-reset traffic. **The fix:** point Supabase Auth at your own
+SMTP relay (Resend) so it keeps sending its own standard templates, just through a transport
+with your account's higher limits.
+
+**Dashboard → Authentication → Emails → SMTP Settings** (hosted project — this is the
+only place custom SMTP is configured; this project has no local Supabase stack, so
+`supabase/config.toml`'s `[auth.email.smtp]` block is not used):
+
+1. Toggle **Enable Custom SMTP**.
+2. **Sender email** — an address on your **verified** Resend domain (Resend → Domains must
+   show the domain as verified before Supabase can send through it), e.g.
+   `no-reply@yourdomain.com`.
+3. **Sender name** — `Mindsetis` (or `Mindsetis Community`).
+4. **Host** — `smtp.resend.com`.
+5. **Port** — `465` (implicit TLS) or `587` (STARTTLS) — either works with Resend.
+6. **Username** — the literal string `resend` (not your Resend account email).
+7. **Password** — your Resend API key (`re_...`) — the same value as `RESEND_API_KEY`, or a
+   separate key scoped only to SMTP if you want to rotate/limit it independently.
+8. Save. Send a test email from the same screen to confirm delivery before relying on it.
+
+**Confirm email is ON:** **Dashboard → Authentication → Providers → Email** → **Confirm
+email** must stay enabled (this is already the default per §3 above) — this is what makes
+Supabase send the "Confirm signup" template on `auth.signUp()`.
+
+**Standard templates in play** (edit subject/body for the hosted project in
+**Dashboard → Authentication → Emails → Templates** — the `[auth.email.template.*]` block
+in `supabase/config.toml` is not read, since this project has no local Supabase stack):
+
+| Template                 | Triggered by                            | App entry point                                                 |
+| ------------------------ | --------------------------------------- | --------------------------------------------------------------- |
+| **Confirm signup**       | `supabase.auth.signUp()`                | `signUp` action, `app/[locale]/(auth)/actions.ts`               |
+| **Reset password**       | `supabase.auth.resetPasswordForEmail()` | `requestPasswordReset` action, same file                        |
+| **Change email address** | `supabase.auth.updateUser({ email })`   | not yet built in-app — no UI/action calls this today            |
+| **Magic link**           | `supabase.auth.signInWithOtp()`         | not used — the app is email+password only, no passwordless flow |
+
+For each template, make sure the confirmation link matches the token-hash style this app's
+`/api/auth/confirm` route handler expects (see the snippet in §3 above) — e.g. for **Change
+Email Address**: `{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/`.
+
+There is no local Inbucket/mail-testing inbox in this project — auth emails are always sent
+(and tested) through the hosted project, either via Supabase's built-in shared sender or, once
+configured, the custom SMTP relay above. Test by triggering the real flow (sign up / request a
+password reset) against your hosted **dev** project and checking the inbox of a real address
+you control.
+
+**Env vars** — see `.env.example` (`SUPABASE_AUTH_SMTP_PASS`, `SUPABASE_AUTH_SMTP_SENDER_EMAIL`).
+These are not read by the app at runtime — they exist only as a reminder of which values to
+paste into the hosted project's **SMTP Settings** form in the Dashboard (Supabase does not read
+your `.env.local` for hosted project settings).
+
 ### Google OAuth (via Supabase)
 
 Google sign-in is handled by **Supabase Auth** — you do **not** put Google creds in the
@@ -127,22 +189,26 @@ app `.env`. When you enable it:
    (`https://<ref>.supabase.co/auth/v1/callback`) as an authorized redirect URI.
 
 The app just calls `signInWithOAuth({ provider: 'google' })` — no app-side secret needed.
-Until then the provider stays disabled (`enable = false` in `supabase/config.toml`).
+Until then the provider stays disabled in **Dashboard → Authentication → Providers → Google**.
 
 ---
 
-## 4. Local stack (optional — needs Docker)
+## 4. Hosted Supabase only — no local stack
 
-To develop fully offline against a local Supabase (config in `supabase/config.toml`):
+This project works **exclusively against the hosted (cloud) Supabase project** — dev,
+staging, and prod are each a separate hosted project (§6 below). There is **no local
+Supabase stack**: do not run `supabase start`/`stop`/`db reset`, do not rely on Docker, and
+there is no local Postgres/Studio/Inbucket to develop or test against.
 
-```bash
-npm run db:start     # Postgres :54322 · API :54321 · Studio :54323 · Mail :54324
-npm run db:reset     # apply all migrations to the local DB
-npm run db:stop
-```
-
-Local anon/service keys are printed by `supabase start` — use those in a local `.env.local`
-if you point the app at the local stack.
+- Migrations are applied to the hosted project only, via the guarded `npm run db:push`
+  (§2 above) — never `supabase db reset`.
+- Typed DB bindings are generated against the linked hosted project:
+  `npm run db:types` (`supabase gen types typescript --linked`).
+- `supabase/config.toml` still ships in the repo (the Supabase CLI requires a config file
+  to run commands like `db push`/`db diff`/`gen types`), but its local-runtime sections
+  (`[api]`, `[db]`, `[local_smtp]`, `[auth.email.smtp]` local override, etc.) describe a
+  local stack this project never boots — ignore them when reasoning about actual behavior;
+  the Dashboard is authoritative for the hosted project's real settings.
 
 ---
 

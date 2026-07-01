@@ -12,6 +12,10 @@ description: >-
 Create `supabase/migrations/<timestamp>_<snake_name>.sql`. Prefer delegating deeper schema
 design to the `supabase-expert` subagent; use this skill for the correct boilerplate.
 
+> **Hosted Supabase ONLY.** Migrations are applied to the cloud (hosted) project via the
+> guarded `npm run db:push` — never a local stack (`supabase start`/`db reset`/Docker). See
+> `CLAUDE.md`.
+
 ## Steps
 
 1. **Name the file.** `supabase/migrations/<UTC timestamp: YYYYMMDDHHMMSS>_<snake_name>.sql`.

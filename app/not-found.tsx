@@ -22,7 +22,7 @@ export default function GlobalNotFound() {
         <p className="max-w-md text-muted-foreground">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <Button asChild variant="primary">
+        <Button asChild variant="primary" size="sm">
           <Link href="/">Back to home</Link>
         </Button>
       </body>

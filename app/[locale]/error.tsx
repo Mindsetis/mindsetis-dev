@@ -26,7 +26,7 @@ export default function Error({ error, reset }: ErrorPageProps) {
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
       <p className="max-w-md text-muted-foreground">{t('description')}</p>
-      <Button type="button" variant="primary" onClick={reset}>
+      <Button type="button" variant="primary" size="sm" onClick={reset}>
         {t('retry')}
       </Button>
     </div>
