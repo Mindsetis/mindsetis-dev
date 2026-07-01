@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+coverage
+lib/supabase/types.gen.ts
+package-lock.json
+supabase/.branches
+supabase/.temp
+
+# Project-authored docs & tooling config (not governed by Prettier)
+.claude/
+CLAUDE.md
+ROADMAP.md
+docs/mindsetis-mvp-tz.md
