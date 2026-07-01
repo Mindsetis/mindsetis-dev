@@ -60,6 +60,32 @@
       "watchLabel": "Míralo para entender por qué"
     }
   },
+  "onboarding": {
+    "back": "Atrás",
+    "close": "Cerrar",
+    "finish": "Sí, continuar con el registro",
+    "next": "Siguiente",
+    "progressLabel": "Paso {step} de {total}",
+    "screenshotPlaceholder": "Captura de la plataforma",
+    "steps": {
+      "step1": {
+        "body": "Los Mindsetters son fundadores verificados que comparten su experiencia. Explora perfiles, encuentra a alguien afín y reserva una conversación real.",
+        "title": "Reserva una sesión 1:1 con un Mindsetter."
+      },
+      "step2": {
+        "body": "Sensessions, Never Eat Alone, Masterminds — formatos de grupos reducidos para conversaciones reales. Sin propuestas comerciales. Sin agenda. Solo fundadores hablando con fundadores.",
+        "title": "Únete a eventos grupales. Profundiza."
+      },
+      "step3": {
+        "body": "Cada miembro es verificado manualmente por el equipo de Mindsetis. Verificación de pasaporte y de negocio. Esto es lo que hace que valga la pena unirse a la comunidad.",
+        "title": "Aquí todos están verificados. Sin excepciones."
+      },
+      "step4": {
+        "body": "Cada miembro es verificado manualmente por el equipo de Mindsetis. Verificación de pasaporte y de negocio. Esto es lo que hace que valga la pena unirse a la comunidad.",
+        "title": "Unas palabras sobre la prevención de fraude"
+      }
+    }
+  },
   "notFound": {
     "title": "Página no encontrada",
     "description": "La página que buscas no existe o ha sido movida.",
@@ -104,13 +130,23 @@
       "title": "Bienvenido de nuevo"
     },
     "signUp": {
-      "fullName": "Nombre completo",
+      "back": "Atrás",
+      "continueWithGoogle": "Continuar con Google",
+      "continueWithLinkedin": "Continuar con Linkedin",
+      "fullName": "Nombre",
       "haveAccount": "¿Ya tienes una cuenta?",
+      "hidePassword": "Ocultar contraseña",
       "loginLink": "Iniciar sesión",
-      "submit": "Crear cuenta",
-      "submitting": "Creando cuenta…",
-      "subtitle": "Únete a Mindsetis Community — members, mindsetters y sesiones con sentido.",
-      "title": "Crea tu cuenta",
+      "passwordHints": {
+        "length": "Al menos 8 caracteres",
+        "letter": "Contiene una letra",
+        "number": "Contiene un número"
+      },
+      "showPassword": "Mostrar contraseña",
+      "stepLabel": "Paso {step} de {total}",
+      "submit": "Continuar",
+      "submitting": "Continuando…",
+      "title": "Crear cuenta",
       "username": "Nombre de usuario"
     },
     "verifyEmail": {

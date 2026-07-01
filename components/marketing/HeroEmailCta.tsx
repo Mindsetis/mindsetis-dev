@@ -20,8 +20,9 @@ import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/mar
 /**
  * Hero "quick start" email capture — Figma "Frame 276" (Welcome Screen, below the CTA
  * button). There's no dedicated "start with email" Server Action yet, so this validates the
- * email client-side and hands the visitor to the real sign-up flow — the only concrete next
- * step that exists today.
+ * email client-side and hands the visitor straight into sign-up, carrying the email along as
+ * a query param so `SignUpForm` can prefill it (Zod-validated again at that boundary via
+ * `emailSchema.safeParse` in `app/[locale]/sign-up/page.tsx`).
  */
 export function HeroEmailCta() {
   const t = useTranslations('home.hero');
@@ -32,8 +33,8 @@ export function HeroEmailCta() {
     defaultValues: { email: '' },
   });
 
-  const onSubmit = form.handleSubmit(() => {
-    router.push('/sign-up');
+  const onSubmit = form.handleSubmit(({ email }) => {
+    router.push(`/sign-up?email=${encodeURIComponent(email)}`);
   });
 
   return (
@@ -61,9 +62,9 @@ export function HeroEmailCta() {
 
         <Button
           type="submit"
-          variant="outline"
+          variant="primaryOutline"
           size="lg"
-          className="w-full border-primary text-primary shadow-glow-primary hover:bg-primary/10"
+          className="w-full"
           loading={form.formState.isSubmitting}
         >
           {t('continue')}

@@ -46,10 +46,18 @@ export default async function Header() {
               >
                 {t('login')}
               </Link>
-              {/* Figma: "header mobile" Join CTA = size sm (46px/px-6); "Header PC" Join
-                  CTA = size default (56px/px-5) — bump to the default box at `lg`. Text
-                  color/weight/gradient come from the (default) `primary` variant. */}
-              <Button asChild size="sm" className="lg:h-14 lg:px-5">
+              {/* Figma: "header mobile" Join CTA (168:3071) = 46px tall, 24px horizontal
+                  padding, 8px radius, hug-content width (measures ~81px for "Join") — matches
+                  size `sm` (h-[46px] px-6) plus a local radius override (base Button radius
+                  is 12px). "Header PC" Join CTA (387:1603) = 56px tall, 12px radius (already
+                  matches `lg`), and a FIXED 199px width (not hug-content, unlike every other
+                  Button usage) — set explicitly at `lg` since Tailwind can't express "hug on
+                  mobile, fixed on desktop" via the size prop alone. */}
+              <Button
+                asChild
+                size="sm"
+                className="rounded-[8px] lg:h-14 lg:w-[199px] lg:rounded-lg lg:px-5"
+              >
                 <Link href="/sign-up">
                   <UserPlus className="hidden lg:inline" aria-hidden="true" />
                   {t('join')}

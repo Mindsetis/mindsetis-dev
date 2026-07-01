@@ -12,8 +12,8 @@ import { HeroEmailCta } from './HeroEmailCta';
  *
  * The "video" thumbnail is a static placeholder — the design has a "Click for watching"
  * card but no actual video asset/URL to wire up. Swap in a real video player once that
- * content exists. Likewise "See platform features" links to sign-up for now: there's no
- * dedicated features/tour page in the app yet.
+ * content exists. "See platform features" routes into the onboarding tour
+ * (`/onboarding`); the email capture below routes straight into `/sign-up` instead.
  */
 export async function HeroSection() {
   const t = await getTranslations('home.hero');
@@ -52,7 +52,7 @@ export async function HeroSection() {
         </p>
 
         <Link
-          href="/sign-up"
+          href="/onboarding"
           className="flex h-14 w-full items-center justify-between rounded-xl border border-border px-5 text-base font-bold text-foreground transition-colors hover:bg-white/[0.06]"
         >
           {t('seeFeatures')}

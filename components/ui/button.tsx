@@ -14,10 +14,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Default/hover: gradient fill (angle unconfirmed — see --gradient-primary).
-        // Active/disabled: gradient is dropped in favor of a flat token color.
+        // Figma: mobile Primary CTA (e.g. header "Join") is a flat `--color-primary` fill
+        // with no gradient/glow; the gradient + soft glow only appear on desktop (`md:`+).
+        // Default/hover at `md:` and up: gradient fill (angle unconfirmed — see
+        // --gradient-primary). Active/disabled always drop the gradient for a flat token
+        // color, on every breakpoint.
         primary:
-          'bg-[image:var(--gradient-primary)] text-primary-foreground shadow-glow-primary active:bg-[image:none] active:bg-primary-active disabled:bg-[image:none] disabled:bg-primary-disabled disabled:shadow-none',
+          'bg-primary text-primary-foreground md:bg-[image:var(--gradient-primary)] md:shadow-glow-primary active:bg-primary-active active:bg-[image:none] disabled:bg-primary-disabled disabled:bg-[image:none] disabled:shadow-none',
         secondary:
           'bg-secondary text-secondary-foreground border border-border hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-secondary',
         // Border + text color change on hover/active; background never changes.
@@ -27,6 +30,12 @@ const buttonVariants = cva(
         // color changes (distinct from `outline`, which instead animates the border).
         tertiary:
           'border border-[#ffffff4d] bg-transparent text-foreground hover:text-muted-foreground active:text-primary disabled:text-border',
+        // Figma "Secondary - 2a" outline CTA (e.g. sign-up "Continue", onboarding "Next",
+        // hero "Continue"): primary-colored border/text with the same soft cyan glow as the
+        // solid `primary` variant. Previously duplicated inline (`border-primary text-primary
+        // shadow-glow-primary hover:bg-primary/10`) in three places — centralized here.
+        primaryOutline:
+          'border border-primary bg-transparent text-primary shadow-glow-primary hover:bg-primary/10 active:bg-primary/15 disabled:border-primary-disabled disabled:text-primary-disabled disabled:shadow-none',
         ghost:
           'bg-transparent text-foreground hover:bg-white/[0.06] active:bg-white/[0.1] disabled:text-muted-foreground disabled:hover:bg-transparent',
         link: 'rounded-none bg-transparent p-0 text-primary hover:text-primary-hover active:text-primary-active disabled:text-primary-disabled',

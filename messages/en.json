@@ -60,6 +60,32 @@
       "watchLabel": "Watch to understand why"
     }
   },
+  "onboarding": {
+    "back": "Back",
+    "close": "Close",
+    "finish": "Ok, continue registration",
+    "next": "Next",
+    "progressLabel": "Step {step} of {total}",
+    "screenshotPlaceholder": "Platform's screenshot",
+    "steps": {
+      "step1": {
+        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates — and book a real conversation.",
+        "title": "Book a 1:1 session with a Mindsetter."
+      },
+      "step2": {
+        "body": "Sensessions, Never Eat Alone, Masterminds — small group formats for real conversations. No pitch. No agenda. Just founders talking to founders.",
+        "title": "Join group events. Go deeper."
+      },
+      "step3": {
+        "body": "Every member is checked manually by the Mindsetis team. Passport and business verification. This is what makes the community worth joining.",
+        "title": "Everyone here is verified. No exceptions."
+      },
+      "step4": {
+        "body": "Every member is checked manually by the Mindsetis team. Passport and business verification. This is what makes the community worth joining.",
+        "title": "A few words about fraud prevention"
+      }
+    }
+  },
   "notFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has been moved.",
@@ -104,13 +130,23 @@
       "title": "Welcome back"
     },
     "signUp": {
-      "fullName": "Full name",
+      "back": "Back",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithLinkedin": "Continue with Linkedin",
+      "fullName": "First name",
       "haveAccount": "Already have an account?",
+      "hidePassword": "Hide password",
       "loginLink": "Log in",
-      "submit": "Create account",
-      "submitting": "Creating account…",
-      "subtitle": "Join Mindsetis Community — members, mindsetters, and meaningful sessions.",
-      "title": "Create your account",
+      "passwordHints": {
+        "length": "At least 8 characters",
+        "letter": "Contains a letter",
+        "number": "Contains a number"
+      },
+      "showPassword": "Show password",
+      "stepLabel": "Step {step} of {total}",
+      "submit": "Continue",
+      "submitting": "Continuing…",
+      "title": "Create account",
       "username": "Username"
     },
     "verifyEmail": {
