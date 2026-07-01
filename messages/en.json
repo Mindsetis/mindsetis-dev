@@ -2,7 +2,11 @@
   "nav": {
     "brand": "Mindsetis",
     "home": "Home",
-    "explore": "Explore"
+    "explore": "Explore",
+    "login": "Log in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
   },
   "footer": {
     "rights": "All rights reserved."
@@ -21,5 +25,56 @@
     "title": "Something went wrong",
     "description": "An unexpected error occurred. Please try again.",
     "retry": "Try again"
+  },
+  "auth": {
+    "errors": {
+      "invalidLink": "Your link is invalid or expired."
+    },
+    "fields": {
+      "confirmPassword": "Confirm password",
+      "email": "Email",
+      "password": "Password"
+    },
+    "forgotPassword": {
+      "backToLogin": "Back to log in",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "successMessage": "If an account exists for that email, we've sent a password reset link.",
+      "title": "Reset your password"
+    },
+    "resetPassword": {
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "subtitle": "Choose a new password for your account.",
+      "title": "Set a new password"
+    },
+    "signIn": {
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "resetSuccess": "Password updated. Please sign in.",
+      "signUpLink": "Sign up",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "subtitle": "Sign in to continue to Mindsetis Community.",
+      "title": "Welcome back"
+    },
+    "signUp": {
+      "fullName": "Full name",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "subtitle": "Join Mindsetis Community — members, mindsetters, and meaningful sessions.",
+      "title": "Create your account",
+      "username": "Username"
+    },
+    "verifyEmail": {
+      "backToLogin": "Back to log in",
+      "description": "Click the link in the email to activate your account.",
+      "subtitle": "We've sent a confirmation link to {email}.",
+      "subtitleGeneric": "We've sent you a confirmation link.",
+      "title": "Check your inbox"
+    }
   }
 }

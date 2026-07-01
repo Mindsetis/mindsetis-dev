@@ -92,8 +92,28 @@ At this stage auth is **email + password with email confirmation** (Stage 0.6).
 
 **Dashboard → Authentication → URL Configuration**:
 
-- **Site URL:** `http://localhost:3000` (dev) / your staging URL.
+- **Site URL:** `http://localhost:3000` (dev) / your staging URL. Must match
+  `NEXT_PUBLIC_SITE_URL` in `.env.local` — the app builds email-redirect links from it.
 - **Redirect URLs:** add `http://localhost:3000/**` (and the staging equivalent).
+
+### Email confirmation & password-reset links
+
+The app handles both email links at **`/api/auth/confirm`** (a Route Handler, outside the
+i18n middleware). It accepts either Supabase link style:
+
+- `?token_hash=…&type=…` → `verifyOtp` — **recommended**, and
+- `?code=…` → `exchangeCodeForSession` (PKCE / default `ConfirmationURL`) — also supported,
+
+so the **default email templates work out of the box**. For the cleaner token-hash flow,
+edit **Dashboard → Authentication → Email Templates** and point the link at:
+
+```
+{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/
+```
+
+(and `type=recovery&next=/reset-password` for the "Reset Password" template). On success the
+handler redirects into the localized app; on an invalid/expired link it redirects to
+`/{locale}/login?error=invalid_link`.
 
 ### Google OAuth (via Supabase)
 

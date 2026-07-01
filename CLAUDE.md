@@ -40,6 +40,7 @@ push notifications, advanced analytics/referrals.
 | Video | Google Calendar API → auto Google Meet links |
 | Hosting | Vercel (Next.js) + Supabase Cloud |
 | AI search | OpenAI embeddings + pgvector cosine search + LLM interpretation |
+| Design | Figma (project design file, accessed via Figma MCP — design → code) |
 
 ## Directory conventions
 
@@ -58,6 +59,11 @@ messages/en.json                 # i18n source (English-first)
 messages/es.json                 # readiness for Spanish
 components/ui/                    # shadcn/ui + UI Kit
 ```
+
+**Design source.** The project's Figma design lives in the file `Mindsetis (Copy)`
+(fileKey `YTzZZBAnoP6pGlmb1L6wiJ`), reachable through the Figma MCP server. Use it as the
+source of truth for how screens should look; pull tokens/components from the design system
+when translating designs to code.
 
 ## Architecture rules (MUST)
 
@@ -149,8 +155,14 @@ completed items.
 
 - Skills: `new-migration`, `scaffold-feature`, `add-i18n-keys`, `stripe-flow`, `todo-jobs`.
 - Subagents: `supabase-expert`, `nextjs-frontend`, `security-auditor`, `stripe-payments`,
-  `code-reviewer`, `qa`, `todo-jobs`.
+  `code-reviewer`, `qa`, `todo-jobs`, `git-manager`, `docs-writer`.
 - Review loop: after a builder subagent finishes a stage, run `code-reviewer` (correctness/
   conventions) + `security-auditor` (RLS/money/auth) + `qa` (build, migrations, live RLS
   negative tests, secret-leak). They report findings and hand work back for rework; only
   commit after a clean pass.
+- `git-manager` owns all git — branches (`feature/stage-<X.Y>-<slug>`, never on `main`),
+  Conventional Commits with the Co-Authored-By trailer, and status/history reporting. It
+  creates the commit only after the review loop passes clean; it refuses to stage secrets.
+- `docs-writer` creates/updates/reads documentation (`docs/`, `README.md`, `CLAUDE.md`
+  upkeep) and keeps it in sync with the code and spec — it never documents behavior the code
+  lacks, and never edits `ROADMAP.md` status (that's `todo-jobs`).

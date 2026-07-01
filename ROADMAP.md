@@ -89,32 +89,47 @@ Use the `new-migration` skill / `supabase-expert` subagent.
 - [x] Migrations committed under `supabase/migrations/`, applied to dev + staging _(dev applied + QA-verified; staging project deferred with infra)_
 
 ### 0.5 — API layer & conventions
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Server Actions / Route Handlers conventions, validation, and error handling (§2.2, §7).
 
-- [ ] RSC + **Server Actions** as default; Route Handlers (`app/api/…`) for webhooks
-- [ ] **Zod** validation at every boundary; shared schemas in `lib/validation/`
-- [ ] Standard result/error shape + typed errors; consistent error handling helper
-- [ ] Auth/permission guard pattern for actions (server-side gates)
-- [ ] Correct Supabase client per context; service role never client-side
-- [ ] Redis rate-limit helper wired for sensitive endpoints
-- [ ] Convention doc / examples for adding a new action (feeds `scaffold-feature`)
+> Reviewed by `code-reviewer` + `security-auditor` + `qa` (build green, no secret leak,
+> service-role client never bundled). Rework applied: single `safeRedirectPath` helper,
+> per-account (per-email) rate-limit ceiling, `NEXT_PUBLIC_SITE_URL` fail-fast.
+> ⚠️ Rate limiter fails **open** until Upstash env is set — configure Upstash before any
+> public deployment of auth (documented go-live gate in `docs/API_CONVENTIONS.md`).
+
+- [x] RSC + **Server Actions** as default; Route Handlers (`app/api/…`) for webhooks _(`createAction` wrapper + `app/api/auth/confirm`)_
+- [x] **Zod** validation at every boundary; shared schemas in `lib/validation/`
+- [x] Standard result/error shape + typed errors; consistent error handling helper _(`lib/api`: `ActionResult`, `ok`/`err`, `ActionError`)_
+- [x] Auth/permission guard pattern for actions (server-side gates) _(`lib/auth/guards.ts`; full matrix in 0.7)_
+- [x] Correct Supabase client per context; service role never client-side _(QA + security-auditor verified)_
+- [x] Redis rate-limit helper wired for sensitive endpoints _(`lib/rate-limit.ts`; graceful no-op until Upstash)_
+- [x] Convention doc / examples for adding a new action (feeds `scaffold-feature`) _(`docs/API_CONVENTIONS.md`)_
 
 ### 0.6 — Auth & sessions
-**Status:** ⬜ Not started
+**Status:** ✅ Done
+**Started:** 2026-07-01
+**Completed:** 2026-07-01
 
 Supabase Auth with **email + password only** at this stage. Email confirmation required.
 
 > Note: **Google OAuth ("Continue with Google") is deferred** — not part of this stage.
 > Keep the code structured so the Google provider can be added later without rework.
+>
+> Reviewed by `code-reviewer` + `security-auditor` + `qa`. QA applied the signup trigger to
+> the dev DB and verified live: profile auto-created with `verification_deadline ≈ now()+14d`,
+> unique username, and RLS negative tests blocking self-verify / self-promote. One High
+> finding fixed (reset-password now signs out so the success flow is reachable).
 
-- [ ] Supabase Auth: email + password sign-up / sign-in
-- [ ] **Email confirmation** flow (verify link) before full access
-- [ ] Session handling via `@supabase/ssr` + middleware session refresh
-- [ ] Password reset flow
-- [ ] Protected routes / redirect logic for unauthenticated users
-- [ ] Every user starts as **Member** (`account_type = 'member'`); `verification_deadline = now() + 14 days`
+- [x] Supabase Auth: email + password sign-up / sign-in _(`app/[locale]/(auth)` actions + forms)_
+- [x] **Email confirmation** flow (verify link) before full access _(`/api/auth/confirm`: verifyOtp + PKCE)_
+- [x] Session handling via `@supabase/ssr` + middleware session refresh
+- [x] Password reset flow _(request email → recovery session → set new password → sign out)_
+- [x] Protected routes / redirect logic for unauthenticated users _(middleware prefix gating; expands in 0.7)_
+- [x] Every user starts as **Member** (`account_type = 'member'`); `verification_deadline = now() + 14 days` _(`handle_new_user` trigger, QA-verified on dev DB)_
 
 ### 0.7 — Roles & permissions (RBAC)
 **Status:** ⬜ Not started
