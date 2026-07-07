@@ -136,6 +136,7 @@
       "fullName": "Nombre",
       "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
+      "lastName": "Apellido",
       "loginLink": "Iniciar sesión",
       "passwordHints": {
         "length": "Al menos 8 caracteres",

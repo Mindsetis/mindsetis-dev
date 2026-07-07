@@ -23,11 +23,9 @@ const TOTAL_STEPS = 4;
  * keeps that shared shell untouched for the other auth screens instead of changing their
  * look too. The global `Header`/`Footer` (root `[locale]` layout) still wrap this page.
  *
- * Per the mobile frame being the layout source of truth: the desktop Figma frame shows two
- * separate name fields ("First Name" / "Second name"), but that conflicts with the mobile
- * frame's single name field, which matches `signUpSchema.fullName` — the desktop layout here
- * reuses the mobile structure (one name field) scaled into a wider, centered column, not the
- * desktop frame's own two-field composition.
+ * The form now collects two separate, required name fields ("First name" / "Second name"),
+ * matching `signUpSchema.fullName` / `signUpSchema.lastName` and the desktop Figma frame's
+ * two-field composition.
  */
 export default async function SignUpPage({ params, searchParams }: SignUpPageProps) {
   const { locale } = await params;

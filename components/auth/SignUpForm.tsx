@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { type Resolver, useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { signUp } from '@/app/[locale]/(auth)/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,23 +28,6 @@ import { OAuthButtons } from './OAuthButtons';
 type SignUpFormProps = {
   /** Prefilled from the onboarding flow's query param, if the visitor came from there. */
   initialEmail?: string;
-};
-
-/**
- * `fullName` is optional in `signUpSchema`, but an empty text input always submits `''`
- * (never `undefined`). Normalize the blank-optional field to `undefined` before handing off
- * to the (unmodified) Zod resolver, so leaving it blank doesn't trip the schema's checks.
- *
- * NOTE: username is intentionally NOT collected here — it's auto-derived on signup and the
- * user picks a final, availability-checked handle during onboarding (avoids the confusing
- * silent-rename when a typed username collides).
- */
-const signUpResolver: Resolver<SignUpInput> = (values, context, options) => {
-  const normalized = {
-    ...values,
-    fullName: values.fullName?.trim() ? values.fullName : undefined,
-  };
-  return zodResolver(signUpSchema)(normalized, context, options);
 };
 
 /**
@@ -108,13 +91,17 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // NOTE: username is intentionally NOT collected here — it's auto-derived on signup and
+  // the user picks a final, availability-checked handle during onboarding (avoids the
+  // confusing silent-rename when a typed username collides).
   const form = useForm<SignUpInput>({
-    resolver: signUpResolver,
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: initialEmail ?? '',
       password: '',
       confirmPassword: '',
       fullName: '',
+      lastName: '',
     },
   });
   const passwordValue = useWatch({ control: form.control, name: 'password' }) ?? '';
@@ -174,13 +161,27 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
             name="fullName"
             render={({ field }) => (
               <FormItem>
-                {/* Figma labels this "First name *" (required), but `fullName` is optional
-                    in `signUpSchema` — showing a required-looking asterisk on an optional
-                    field would be misleading, so it's dropped here (same precedent as the
-                    password-hint copy adjustment below). */}
-                <FormLabel>{t('signUp.fullName')}</FormLabel>
+                <FormLabel>
+                  {t('signUp.fullName')} <span className="text-primary">*</span>
+                </FormLabel>
                 <FormControl>
-                  <Input type="text" autoComplete="name" {...field} />
+                  <Input type="text" autoComplete="given-name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  {t('signUp.lastName')} <span className="text-primary">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input type="text" autoComplete="family-name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
