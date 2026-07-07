@@ -6,7 +6,19 @@ import type { InterestOption } from '@/components/member-profile/InterestsPicker
 import { MemberProfileForm } from '@/components/member-profile/MemberProfileForm';
 import { Link, redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
+import type { LanguageValue } from '@/lib/constants/languages';
 import { createClient } from '@/lib/supabase/server';
+
+/** Shape of `profiles.socials` (jsonb) as written by `saveMemberProfile`. */
+type SocialsJson = {
+  linkedin?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  threads?: string;
+  youtube?: string;
+  website?: string;
+};
 
 type MemberProfilePageProps = {
   params: Promise<{ locale: string }>;
@@ -38,11 +50,26 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   }
 
   const supabase = await createClient();
-  const { data: interestsData } = await supabase
-    .from('interests')
-    .select('id, category, label, sort_order')
-    .order('sort_order', { ascending: true });
+  // Fetched together: the interests catalog (for the picker), this step's already-saved
+  // `profiles` columns, and the caller's current `profile_interests` picks — all needed so a
+  // user revisiting this page (Back, or before step 3 exists) sees their previously-submitted
+  // data instead of a blank form (see `MemberProfileForm`'s `initial*` props).
+  const [{ data: interestsData }, { data: profileData }, { data: profileInterestsData }] =
+    await Promise.all([
+      supabase
+        .from('interests')
+        .select('id, category, label, sort_order')
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('profiles')
+        .select('country, city, bio, about, languages, avatar_url, socials')
+        .eq('id', session.user.id)
+        .maybeSingle(),
+      supabase.from('profile_interests').select('interest_id').eq('profile_id', session.user.id),
+    ]);
   const interests = (interestsData ?? []) as InterestOption[];
+  const socials = (profileData?.socials ?? {}) as SocialsJson;
+  const initialInterestIds = (profileInterestsData ?? []).map((row) => row.interest_id);
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
@@ -71,7 +98,18 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
           {t('memberProfile.title')}
         </h1>
 
-        <MemberProfileForm interests={interests} initialUsername={session.profile.username} />
+        <MemberProfileForm
+          interests={interests}
+          initialUsername={session.profile.username}
+          initialCountry={profileData?.country ?? undefined}
+          initialCity={profileData?.city ?? undefined}
+          initialLanguages={(profileData?.languages ?? undefined) as LanguageValue[] | undefined}
+          initialBio={profileData?.bio ?? undefined}
+          initialAbout={profileData?.about ?? undefined}
+          initialInterestIds={initialInterestIds}
+          initialAvatarUrl={profileData?.avatar_url ?? undefined}
+          initialSocials={socials}
+        />
       </div>
     </div>
   );

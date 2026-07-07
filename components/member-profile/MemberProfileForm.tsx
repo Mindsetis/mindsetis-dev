@@ -24,52 +24,95 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
-import { SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
+import { type LanguageValue, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
 import {
+  createMemberProfileSchema,
   MAX_ABOUT_LENGTH,
   MAX_BIO_LENGTH,
   type MemberProfileInput,
-  memberProfileSchema,
   OPTIONAL_SOCIAL_FIELDS,
 } from '@/lib/validation/member-profile';
+
+/** Matches `profiles.socials` jsonb shape written by `saveMemberProfile`. */
+type InitialSocials = {
+  linkedin?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  threads?: string;
+  youtube?: string;
+  website?: string;
+};
 
 type MemberProfileFormProps = {
   interests: InterestOption[];
   /** Prefilled from the caller's already-auto-provisioned `profiles.username`. */
   initialUsername: string;
+  /**
+   * The rest of this step's already-saved `profiles`/`profile_interests` data, when the
+   * caller revisits this page after a previous submission (Back, or just navigating back
+   * before step 3 exists) — `undefined`/omitted fields fall back to an empty value, same as
+   * a brand-new profile. See `app/[locale]/member-profile/page.tsx`.
+   */
+  initialCountry?: string;
+  initialCity?: string;
+  initialLanguages?: LanguageValue[];
+  initialBio?: string;
+  initialAbout?: string;
+  initialInterestIds?: string[];
+  /** Already-saved photo, if any — shown as the initial preview (`AvatarUpload`) and makes
+   *  the photo field optional on resubmission (see `createMemberProfileSchema`). */
+  initialAvatarUrl?: string | null;
+  initialSocials?: InitialSocials;
 };
 
 /**
  * Registration wizard step 2/4 ("Member profile") form — mirrors `SignUpForm.tsx`'s
- * structure (RHF + `zodResolver` sharing `memberProfileSchema`, `applyFieldErrors` wiring
- * server-side field errors back onto the form, `primaryOutline`/`lg` submit button).
+ * structure (RHF + `zodResolver` over `createMemberProfileSchema(...)`, `applyFieldErrors`
+ * wiring server-side field errors back onto the form, `primaryOutline`/`lg` submit button).
  *
  * The avatar `File` and the `languages`/`interestIds` arrays are submitted via a manually
  * built `FormData` (rather than a plain object) so the Server Action can receive the real
  * `File` — `createAction` already accepts either shape (see `lib/api/action.ts`).
  */
-export function MemberProfileForm({ interests, initialUsername }: MemberProfileFormProps) {
+export function MemberProfileForm({
+  interests,
+  initialUsername,
+  initialCountry,
+  initialCity,
+  initialLanguages,
+  initialBio,
+  initialAbout,
+  initialInterestIds,
+  initialAvatarUrl,
+  initialSocials,
+}: MemberProfileFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
+  // A photo is only mandatory the first time through this step — once `profiles.avatar_url`
+  // is already set, resubmitting shouldn't force picking a new file (see
+  // `createMemberProfileSchema`'s doc comment).
+  const hasExistingAvatar = Boolean(initialAvatarUrl);
+
   const form = useForm<MemberProfileInput>({
-    resolver: zodResolver(memberProfileSchema),
+    resolver: zodResolver(createMemberProfileSchema({ avatarRequired: !hasExistingAvatar })),
     defaultValues: {
       username: initialUsername,
-      country: '',
-      city: '',
-      languages: [],
-      bio: '',
-      about: '',
-      interestIds: [],
-      linkedin: '',
-      instagram: '',
-      facebook: '',
-      tiktok: '',
-      threads: '',
-      youtube: '',
-      website: '',
+      country: initialCountry ?? '',
+      city: initialCity ?? '',
+      languages: initialLanguages ?? [],
+      bio: initialBio ?? '',
+      about: initialAbout ?? '',
+      interestIds: initialInterestIds ?? [],
+      linkedin: initialSocials?.linkedin ?? '',
+      instagram: initialSocials?.instagram ?? '',
+      facebook: initialSocials?.facebook ?? '',
+      tiktok: initialSocials?.tiktok ?? '',
+      threads: initialSocials?.threads ?? '',
+      youtube: initialSocials?.youtube ?? '',
+      website: initialSocials?.website ?? '',
     },
   });
 
@@ -86,7 +129,10 @@ export function MemberProfileForm({ interests, initialUsername }: MemberProfileF
     for (const language of values.languages) formData.append('languages', language);
     formData.append('bio', values.bio);
     if (values.about) formData.append('about', values.about);
-    formData.append('avatar', values.avatar);
+    // Omitted entirely when the caller didn't pick a new file — the Server Action then
+    // reuses the existing `profiles.avatar_url` (see `saveMemberProfile`) instead of
+    // requiring a re-upload on every resubmission of this step.
+    if (values.avatar) formData.append('avatar', values.avatar);
     for (const id of values.interestIds) formData.append('interestIds', id);
     formData.append('linkedin', values.linkedin);
     for (const field of OPTIONAL_SOCIAL_FIELDS) {
@@ -246,13 +292,15 @@ export function MemberProfileForm({ interests, initialUsername }: MemberProfileF
             render={({ field }) => (
               <FormItem>
                 <FormLabel variant="boldSpacing">
-                  {t('memberProfile.photo.label')} <span className="text-primary">*</span>
+                  {t('memberProfile.photo.label')}
+                  {!hasExistingAvatar && <span className="text-primary">*</span>}
                 </FormLabel>
                 <AvatarUpload
                   file={field.value ?? null}
                   onFileChange={(file) => field.onChange(file)}
                   triggerLabel={t('memberProfile.photo.upload')}
                   replaceLabel={t('memberProfile.photo.replace')}
+                  initialAvatarUrl={initialAvatarUrl}
                 />
                 <FieldHint>{t('memberProfile.photo.hint')}</FieldHint>
                 <FormMessage />

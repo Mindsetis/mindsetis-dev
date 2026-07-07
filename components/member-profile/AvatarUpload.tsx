@@ -15,6 +15,12 @@ type AvatarUploadProps = {
   triggerLabel: string;
   replaceLabel: string;
   disabled?: boolean;
+  /**
+   * The profile's already-saved `avatar_url` (editing an existing profile — see
+   * `MemberProfileForm`'s `initialAvatarUrl` prop). Shown as the thumbnail until the caller
+   * picks a new `file`, at which point the local object-URL preview below takes over.
+   */
+  initialAvatarUrl?: string | null;
 };
 
 /**
@@ -23,7 +29,8 @@ type AvatarUploadProps = {
  * `<input type="file">` + preview thumbnail (no cropping/drag-drop, per the task scope).
  * The actual Storage upload happens server-side in the Server Action; this component only
  * hands the raw `File` up to the form (RHF field value), plus renders a local
- * `URL.createObjectURL` preview.
+ * `URL.createObjectURL` preview (falling back to `initialAvatarUrl` — the already-saved
+ * photo — when no new file has been picked yet).
  */
 export function AvatarUpload({
   file,
@@ -31,6 +38,7 @@ export function AvatarUpload({
   triggerLabel,
   replaceLabel,
   disabled,
+  initialAvatarUrl,
 }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   // Created during render (not via a setState-in-effect, which would trigger an extra
@@ -44,10 +52,13 @@ export function AvatarUpload({
     };
   }, [previewUrl]);
 
+  const displayUrl = previewUrl ?? initialAvatarUrl ?? null;
+  const hasPhoto = Boolean(file ?? initialAvatarUrl);
+
   return (
     <div className="flex items-center gap-4">
       <Avatar className="size-20">
-        {previewUrl ? <AvatarImage src={previewUrl} alt="" /> : null}
+        {displayUrl ? <AvatarImage src={displayUrl} alt="" /> : null}
         <AvatarFallback>
           <User className="size-8 text-muted-foreground" aria-hidden="true" />
         </AvatarFallback>
@@ -60,7 +71,7 @@ export function AvatarUpload({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
       >
-        {file ? replaceLabel : triggerLabel}
+        {hasPhoto ? replaceLabel : triggerLabel}
       </Button>
 
       <input
