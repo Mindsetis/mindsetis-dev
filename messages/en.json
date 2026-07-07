@@ -113,6 +113,45 @@
       "successMessage": "If an account exists for that email, we've sent a password reset link.",
       "title": "Reset your password"
     },
+    "memberProfile": {
+      "about": "About",
+      "bio": {
+        "charCount": "{count}/{max}",
+        "label": "BIO"
+      },
+      "city": "City",
+      "country": "Country",
+      "interests": {
+        "all": "All",
+        "count": "{selected}/{max} selected",
+        "hint": "It helps us match you with relevant Mindsetters and events. You can add up to 10.",
+        "title": "Choose your interests"
+      },
+      "languages": {
+        "empty": "No language found.",
+        "hint": "You can select more than one",
+        "label": "Language you speak",
+        "placeholder": "Select languages",
+        "remove": "Remove {label}",
+        "searchPlaceholder": "Search languages"
+      },
+      "photo": {
+        "hint": "Only PNG or JPEG",
+        "label": "Profile photo",
+        "replace": "Replace photo",
+        "upload": "Upload photo"
+      },
+      "socials": {
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "linkedin": "Linkedin URL",
+        "threads": "Threads",
+        "tiktok": "Tik-tok",
+        "website": "Website URL",
+        "youtube": "Youtube"
+      },
+      "title": "Set your identity"
+    },
     "resetPassword": {
       "submit": "Update password",
       "submitting": "Updating…",
