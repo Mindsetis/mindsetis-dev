@@ -4,8 +4,9 @@
  * Server Action for the registration wizard's step 2/4 ("Member profile" — see
  * `page.tsx`). Validates the full step-2 form, uploads a newly-picked avatar `File` to the
  * `avatars` Storage bucket (public-read, write-own-folder) — or reuses the caller's existing
- * `avatar_url` when resubmitting without picking a new one — upserts `profiles`, and
- * atomically replaces the caller's `profile_interests` selection.
+ * `avatar_url` when resubmitting without picking a new one — and upserts `profiles`
+ * (`interests` is just another plain column on that row, a `text[]` of code-defined slugs;
+ * see `lib/constants/interests.ts`).
  */
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
@@ -89,6 +90,7 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
       country: input.country,
       city: input.city,
       languages: input.languages,
+      interests: input.interestIds,
       bio: input.bio,
       about: input.about?.trim() || null,
       avatar_url: avatarUrl,
@@ -106,21 +108,6 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
       });
     }
     throw new ActionError('internal_error', 'Could not save your profile. Please try again.');
-  }
-
-  // 3. Replace-all interests atomically via the `replace_profile_interests` DB function
-  //    (see `supabase/migrations/20260707150500_fix_profile_interests_race_and_avatar_public_read.sql`),
-  //    which locks
-  //    the profile row, deletes the caller's existing selections, and inserts the new set as
-  //    a single transaction — no partial-loss window if the insert half fails, and the row
-  //    lock also closes the race on the max-10 cap under concurrent requests.
-  const { error: interestsError } = await supabase.rpc('replace_profile_interests', {
-    p_profile_id: user.id,
-    p_interest_ids: input.interestIds,
-  });
-  if (interestsError) {
-    console.error('[member-profile] saving interests failed:', interestsError);
-    throw new ActionError('internal_error', 'Could not save your interests. Please try again.');
   }
 
   return { username: input.username };

@@ -15,6 +15,7 @@
  */
 import { z } from 'zod';
 
+import { INTEREST_VALUES } from '@/lib/constants/interests';
 import { LANGUAGE_VALUES } from '@/lib/constants/languages';
 
 import { usernameSchema } from './common';
@@ -100,7 +101,7 @@ export function createMemberProfileSchema({
       avatar: avatarFileSchema,
       // Not marked `*` on the Figma frame — 0 to `MAX_INTERESTS` selections are allowed.
       interestIds: z
-        .array(z.string().uuid())
+        .array(z.enum(INTEREST_VALUES))
         .max(MAX_INTERESTS, `You can select up to ${MAX_INTERESTS} interests.`),
       linkedin: z.string().trim().min(1, 'Linkedin URL is required.').url('Enter a valid URL.'),
       instagram: optionalUrlSchema,

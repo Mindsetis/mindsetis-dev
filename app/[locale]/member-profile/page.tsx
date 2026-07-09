@@ -2,10 +2,11 @@ import { ArrowLeft } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
-import type { InterestOption } from '@/components/member-profile/InterestsPicker';
 import { MemberProfileForm } from '@/components/member-profile/MemberProfileForm';
 import { Link, redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
+import type { InterestValue } from '@/lib/constants/interests';
+import { INTEREST_VALUES } from '@/lib/constants/interests';
 import type { LanguageValue } from '@/lib/constants/languages';
 import { createClient } from '@/lib/supabase/server';
 
@@ -32,9 +33,9 @@ const TOTAL_STEPS = 4;
  * that step's page shell (Back link + `RegistrationProgress` + centered `max-w-[640px]`
  * form column) rather than inventing a new layout.
  *
- * Requires a signed-in user (this writes to `profiles`/`profile_interests` for the caller) —
- * redirect to `/login` defends this at the page level; `middleware.ts` (`PROTECTED_PREFIXES`)
- * does the same before the page even renders.
+ * Requires a signed-in user (this writes to `profiles` for the caller) — redirect to
+ * `/login` defends this at the page level; `middleware.ts` (`PROTECTED_PREFIXES`) does the
+ * same before the page even renders.
  */
 export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
   const { locale } = await params;
@@ -50,26 +51,23 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   }
 
   const supabase = await createClient();
-  // Fetched together: the interests catalog (for the picker), this step's already-saved
-  // `profiles` columns, and the caller's current `profile_interests` picks — all needed so a
-  // user revisiting this page (Back, or before step 3 exists) sees their previously-submitted
-  // data instead of a blank form (see `MemberProfileForm`'s `initial*` props).
-  const [{ data: interestsData }, { data: profileData }, { data: profileInterestsData }] =
-    await Promise.all([
-      supabase
-        .from('interests')
-        .select('id, category, label, sort_order')
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('profiles')
-        .select('country, city, bio, about, languages, avatar_url, socials')
-        .eq('id', session.user.id)
-        .maybeSingle(),
-      supabase.from('profile_interests').select('interest_id').eq('profile_id', session.user.id),
-    ]);
-  const interests = (interestsData ?? []) as InterestOption[];
+  // This step's already-saved `profiles` columns, so a user revisiting this page (Back, or
+  // before step 3 exists) sees their previously-submitted data instead of a blank form (see
+  // `MemberProfileForm`'s `initial*` props).
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('country, city, bio, about, languages, interests, avatar_url, socials')
+    .eq('id', session.user.id)
+    .maybeSingle();
   const socials = (profileData?.socials ?? {}) as SocialsJson;
-  const initialInterestIds = (profileInterestsData ?? []).map((row) => row.interest_id);
+  // Guard against a slug that's no longer in the code-defined catalog (e.g. a tag renamed
+  // or removed from `lib/constants/interests.ts` after this profile saved it) — an unknown
+  // slug would otherwise reach `memberProfileActionSchema`'s `z.enum(INTEREST_VALUES)` on
+  // resubmission and block saving, with no chip visible in the picker to let the user drop it.
+  const knownInterestValues = new Set<string>(INTEREST_VALUES);
+  const initialInterestIds = ((profileData?.interests ?? []) as string[]).filter(
+    (value): value is InterestValue => knownInterestValues.has(value),
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
@@ -99,7 +97,6 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
         </h1>
 
         <MemberProfileForm
-          interests={interests}
           initialUsername={session.profile.username}
           initialCountry={profileData?.country ?? undefined}
           initialCity={profileData?.city ?? undefined}
