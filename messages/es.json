@@ -113,6 +113,55 @@
       "successMessage": "Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer la contraseña.",
       "title": "Restablece tu contraseña"
     },
+    "memberProfile": {
+      "about": {
+        "label": "Acerca de mí",
+        "placeholder": "Límite de caracteres: {max} caracteres"
+      },
+      "bio": {
+        "charCount": "{count}/{max}",
+        "label": "BIO",
+        "placeholder": "Límite de caracteres: {max} caracteres"
+      },
+      "city": {
+        "label": "Ciudad",
+        "placeholder": "Nueva York"
+      },
+      "country": {
+        "label": "País",
+        "placeholder": "EE. UU."
+      },
+      "interests": {
+        "all": "Todos",
+        "hint": "Nos ayuda a conectarte con Mindsetters y eventos relevantes. Puedes añadir hasta 10.",
+        "title": "Elige tus intereses"
+      },
+      "languages": {
+        "empty": "No se encontró ningún idioma.",
+        "hint": "Puedes seleccionar más de uno",
+        "label": "Idioma que hablas",
+        "placeholder": "Selecciona idiomas",
+        "remove": "Quitar {label}",
+        "searchPlaceholder": "Buscar idiomas"
+      },
+      "photo": {
+        "hint": "Solo PNG o JPEG",
+        "label": "Foto de perfil",
+        "replace": "Cambiar foto",
+        "upload": "Subir foto"
+      },
+      "socials": {
+        "facebook": "URL de Facebook",
+        "instagram": "URL de Instagram",
+        "linkedin": "URL de Linkedin",
+        "placeholder": "Enlace",
+        "threads": "URL de Threads",
+        "tiktok": "URL de Tik-tok",
+        "website": "URL del sitio web",
+        "youtube": "URL de Youtube"
+      },
+      "title": "Define tu identidad"
+    },
     "resetPassword": {
       "submit": "Actualizar contraseña",
       "submitting": "Actualizando…",
@@ -136,6 +185,7 @@
       "fullName": "Nombre",
       "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
+      "lastName": "Apellido",
       "loginLink": "Iniciar sesión",
       "passwordHints": {
         "length": "Al menos 8 caracteres",
@@ -147,7 +197,8 @@
       "submit": "Continuar",
       "submitting": "Continuando…",
       "title": "Crear cuenta",
-      "username": "Nombre de usuario"
+      "username": "Nombre de usuario",
+      "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Volver a iniciar sesión",

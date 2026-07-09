@@ -42,11 +42,11 @@ function emailBucket(prefix: string, email: string): string {
 /**
  * Create an account. Supabase sends a confirmation email; the profile row (with the
  * 14-day verification deadline) is created by the `handle_new_user` DB trigger, which
- * reads `username` / `full_name` from the user metadata passed here.
+ * reads `username` / `full_name` / `last_name` from the user metadata passed here.
  */
 export const signUp = createAction(
   signUpSchema,
-  async ({ email, password, username, fullName }) => {
+  async ({ email, password, username, fullName, lastName }) => {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -55,7 +55,8 @@ export const signUp = createAction(
         emailRedirectTo: siteUrl('/api/auth/confirm?next=/'),
         data: {
           ...(username ? { username } : {}),
-          ...(fullName ? { full_name: fullName } : {}),
+          full_name: fullName,
+          last_name: lastName,
         },
       },
     });
