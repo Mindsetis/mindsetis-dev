@@ -8,7 +8,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { saveMemberProfile } from '@/app/[locale]/member-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { AvatarUpload } from '@/components/member-profile/AvatarUpload';
-import { type InterestOption, InterestsPicker } from '@/components/member-profile/InterestsPicker';
+import { InterestsPicker } from '@/components/member-profile/InterestsPicker';
 import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
+import type { InterestValue } from '@/lib/constants/interests';
 import { type LanguageValue, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
 import {
   createMemberProfileSchema,
@@ -45,21 +46,20 @@ type InitialSocials = {
 };
 
 type MemberProfileFormProps = {
-  interests: InterestOption[];
   /** Prefilled from the caller's already-auto-provisioned `profiles.username`. */
   initialUsername: string;
   /**
-   * The rest of this step's already-saved `profiles`/`profile_interests` data, when the
-   * caller revisits this page after a previous submission (Back, or just navigating back
-   * before step 3 exists) — `undefined`/omitted fields fall back to an empty value, same as
-   * a brand-new profile. See `app/[locale]/member-profile/page.tsx`.
+   * The rest of this step's already-saved `profiles` data, when the caller revisits this
+   * page after a previous submission (Back, or just navigating back before step 3 exists) —
+   * `undefined`/omitted fields fall back to an empty value, same as a brand-new profile. See
+   * `app/[locale]/member-profile/page.tsx`.
    */
   initialCountry?: string;
   initialCity?: string;
   initialLanguages?: LanguageValue[];
   initialBio?: string;
   initialAbout?: string;
-  initialInterestIds?: string[];
+  initialInterestIds?: InterestValue[];
   /** Already-saved photo, if any — shown as the initial preview (`AvatarUpload`) and makes
    *  the photo field optional on resubmission (see `createMemberProfileSchema`). */
   initialAvatarUrl?: string | null;
@@ -76,7 +76,6 @@ type MemberProfileFormProps = {
  * `File` — `createAction` already accepts either shape (see `lib/api/action.ts`).
  */
 export function MemberProfileForm({
-  interests,
   initialUsername,
   initialCountry,
   initialCity,
@@ -172,7 +171,12 @@ export function MemberProfileForm({
                   {t('signUp.username')} <span className="text-primary">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input type="text" autoComplete="username" {...field} />
+                  <Input
+                    type="text"
+                    autoComplete="username"
+                    placeholder={t('signUp.usernamePlaceholder')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -185,10 +189,15 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('memberProfile.country')} <span className="text-primary">*</span>
+                  {t('memberProfile.country.label')} <span className="text-primary">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input type="text" autoComplete="country-name" {...field} />
+                  <Input
+                    type="text"
+                    autoComplete="country-name"
+                    placeholder={t('memberProfile.country.placeholder')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -201,10 +210,15 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('memberProfile.city')} <span className="text-primary">*</span>
+                  {t('memberProfile.city.label')} <span className="text-primary">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input type="text" autoComplete="address-level2" {...field} />
+                  <Input
+                    type="text"
+                    autoComplete="address-level2"
+                    placeholder={t('memberProfile.city.placeholder')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -252,7 +266,12 @@ export function MemberProfileForm({
                   </span>
                 </div>
                 <FormControl>
-                  <Textarea className="min-h-[130px]" maxLength={MAX_BIO_LENGTH} {...field} />
+                  <Textarea
+                    className="min-h-[130px]"
+                    maxLength={MAX_BIO_LENGTH}
+                    placeholder={t('memberProfile.bio.placeholder', { max: MAX_BIO_LENGTH })}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -265,7 +284,7 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between gap-2">
-                  <FormLabel>{t('memberProfile.about')}</FormLabel>
+                  <FormLabel>{t('memberProfile.about.label')}</FormLabel>
                   <span className="text-tiny text-muted-foreground">
                     {t('memberProfile.bio.charCount', {
                       count: aboutValue.length,
@@ -277,6 +296,7 @@ export function MemberProfileForm({
                   <Textarea
                     className="min-h-[130px]"
                     maxLength={MAX_ABOUT_LENGTH}
+                    placeholder={t('memberProfile.about.placeholder', { max: MAX_ABOUT_LENGTH })}
                     {...field}
                     value={field.value ?? ''}
                   />
@@ -314,16 +334,12 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel variant="boldSpacing">{t('memberProfile.interests.title')}</FormLabel>
-                <FieldHint>{t('memberProfile.interests.hint')}</FieldHint>
                 <InterestsPicker
-                  interests={interests}
                   value={field.value}
                   onChange={field.onChange}
                   allCategoryLabel={t('memberProfile.interests.all')}
-                  countLabel={(selected, max) =>
-                    t('memberProfile.interests.count', { selected, max })
-                  }
                 />
+                <FieldHint>{t('memberProfile.interests.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}
@@ -338,7 +354,12 @@ export function MemberProfileForm({
                   {t('memberProfile.socials.linkedin')} <span className="text-primary">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input type="url" autoComplete="url" {...field} />
+                  <Input
+                    type="url"
+                    autoComplete="url"
+                    placeholder={t('memberProfile.socials.placeholder')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -356,7 +377,13 @@ export function MemberProfileForm({
                     {t(`memberProfile.socials.${social}`)}
                   </FormLabel>
                   <FormControl>
-                    <Input type="url" autoComplete="url" {...field} value={field.value ?? ''} />
+                    <Input
+                      type="url"
+                      autoComplete="url"
+                      placeholder={t('memberProfile.socials.placeholder')}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -114,16 +114,25 @@
       "title": "Reset your password"
     },
     "memberProfile": {
-      "about": "About",
+      "about": {
+        "label": "About",
+        "placeholder": "Character limit: {max} characters"
+      },
       "bio": {
         "charCount": "{count}/{max}",
-        "label": "BIO"
+        "label": "BIO",
+        "placeholder": "Character limit: {max} characters"
       },
-      "city": "City",
-      "country": "Country",
+      "city": {
+        "label": "City",
+        "placeholder": "New York"
+      },
+      "country": {
+        "label": "Country",
+        "placeholder": "USA"
+      },
       "interests": {
         "all": "All",
-        "count": "{selected}/{max} selected",
         "hint": "It helps us match you with relevant Mindsetters and events. You can add up to 10.",
         "title": "Choose your interests"
       },
@@ -142,13 +151,14 @@
         "upload": "Upload photo"
       },
       "socials": {
-        "facebook": "Facebook",
-        "instagram": "Instagram",
+        "facebook": "Facebook URL",
+        "instagram": "Instagram URL",
         "linkedin": "Linkedin URL",
-        "threads": "Threads",
-        "tiktok": "Tik-tok",
+        "placeholder": "Link",
+        "threads": "Threads URL",
+        "tiktok": "Tik-tok URL",
         "website": "Website URL",
-        "youtube": "Youtube"
+        "youtube": "Youtube URL"
       },
       "title": "Set your identity"
     },
@@ -187,7 +197,8 @@
       "submit": "Continue",
       "submitting": "Continuing…",
       "title": "Create account",
-      "username": "Username"
+      "username": "Username",
+      "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Back to log in",

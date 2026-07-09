@@ -114,16 +114,25 @@
       "title": "Restablece tu contraseña"
     },
     "memberProfile": {
-      "about": "Acerca de mí",
+      "about": {
+        "label": "Acerca de mí",
+        "placeholder": "Límite de caracteres: {max} caracteres"
+      },
       "bio": {
         "charCount": "{count}/{max}",
-        "label": "BIO"
+        "label": "BIO",
+        "placeholder": "Límite de caracteres: {max} caracteres"
       },
-      "city": "Ciudad",
-      "country": "País",
+      "city": {
+        "label": "Ciudad",
+        "placeholder": "Nueva York"
+      },
+      "country": {
+        "label": "País",
+        "placeholder": "EE. UU."
+      },
       "interests": {
         "all": "Todos",
-        "count": "{selected}/{max} seleccionados",
         "hint": "Nos ayuda a conectarte con Mindsetters y eventos relevantes. Puedes añadir hasta 10.",
         "title": "Elige tus intereses"
       },
@@ -142,13 +151,14 @@
         "upload": "Subir foto"
       },
       "socials": {
-        "facebook": "Facebook",
-        "instagram": "Instagram",
+        "facebook": "URL de Facebook",
+        "instagram": "URL de Instagram",
         "linkedin": "URL de Linkedin",
-        "threads": "Threads",
-        "tiktok": "Tik-tok",
+        "placeholder": "Enlace",
+        "threads": "URL de Threads",
+        "tiktok": "URL de Tik-tok",
         "website": "URL del sitio web",
-        "youtube": "Youtube"
+        "youtube": "URL de Youtube"
       },
       "title": "Define tu identidad"
     },
@@ -187,7 +197,8 @@
       "submit": "Continuar",
       "submitting": "Continuando…",
       "title": "Crear cuenta",
-      "username": "Nombre de usuario"
+      "username": "Nombre de usuario",
+      "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Volver a iniciar sesión",
