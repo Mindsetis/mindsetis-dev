@@ -20,7 +20,10 @@ export const signUpSchema = z
     password: passwordSchema,
     confirmPassword: z.string(),
     username: usernameSchema.optional(),
-    fullName: z.string().trim().max(120, 'Name is too long.').optional(),
+    // `fullName` maps to `profiles.full_name` and holds only the first name (form label
+    // "First name") — `last_name` is the sibling column for the surname.
+    fullName: z.string().trim().min(1, 'First name is required.').max(120, 'Name is too long.'),
+    lastName: z.string().trim().min(1, 'Second name is required.').max(120, 'Name is too long.'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match.',

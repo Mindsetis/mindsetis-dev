@@ -251,3 +251,31 @@ next-intl library, dictionaries, and language routing (§5.12), English-first.
 - [x] Translation helpers for RSC (`getTranslations`) and client (`useTranslations`) _(pre-existing, in use)_
 - [x] Convention: no hardcoded UI strings; use `add-i18n-keys` skill _(documented in `docs/I18N.md`)_
 - [x] Profile content stays in author's `content_locale` (not run through UI dictionaries) _(convention documented; `content_locale` in DB schema/trigger; no profile UI yet)_
+
+---
+
+## Stage 1 — Onboarding & Profiles
+
+Member/Mindsetter registration onboarding flow and profile data model, building on the
+auth/RBAC/UI Kit foundation from Stage 0 (per `docs/mindsetis-mvp-tz.md` §5.2 "Реєстрація та
+онбординг (member-first)", §5.5 "Профіль Member (короткий)", §8 stage 1.2).
+
+### 1.1 — Member profile (onboarding step 2/4)
+**Status:** 🔄 In progress
+**Started:** 2026-07-07
+
+Step 2 of the 4-step registration wizard (step 1 — sign-up form — done in Stage 0.6, with
+i18n/email infra from 0.9–0.10). Collects username, country, city, languages spoken
+(multi-select), bio (required, max 300 chars), about (optional, max 300 chars), profile
+photo/avatar upload, interests (multi-select chips across categories, max 10), and social
+links (LinkedIn required; Instagram/Facebook/TikTok/Threads/YouTube/Website optional) — all
+persisted to the `profiles` table (plus new `interests`/`profile_interests` tables for the
+interests multi-select).
+
+- [ ] Migration: `profiles.country`/`profiles.city` (replacing single location field), `profiles.about`, `profiles.languages`, new `interests` + `profile_interests` tables with RLS
+- [ ] Zod validation schema for the step-2 form (required vs optional fields per the asterisk fields on the Figma frame)
+- [ ] Step-2 form component + page (reusing existing `RegistrationProgress` at step 2/4, page shell from step 1)
+- [ ] New UI pieces: bold letter-spaced label variant, multi-select language control, interest chip/toggle component, avatar/photo upload control, taller BIO/About textarea
+- [ ] Server Action to persist profile fields + interest selections + avatar upload to Storage
+- [ ] i18n keys (`messages/en.json` source + `messages/es.json` mirror)
+- [ ] Review loop (`code-reviewer`, `security-auditor` for new RLS, `qa`) + `browser-tester` smoke check
