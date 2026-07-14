@@ -97,6 +97,21 @@
     "retry": "Intentar de nuevo"
   },
   "auth": {
+    "buildProfile": {
+      "company": {
+        "label": "Empresa",
+        "placeholder": "El nombre de tu empresa"
+      },
+      "industry": {
+        "label": "Industria",
+        "placeholder": "p. ej. Fintech"
+      },
+      "role": {
+        "label": "Rol / Puesto",
+        "placeholder": "p. ej. Fundador"
+      },
+      "title": "¿Qué estás construyendo?"
+    },
     "errors": {
       "invalidLink": "Tu enlace no es válido o ha expirado."
     },
@@ -206,6 +221,11 @@
       "subtitle": "Te hemos enviado un enlace de confirmación a {email}.",
       "subtitleGeneric": "Te hemos enviado un enlace de confirmación.",
       "title": "Revisa tu bandeja de entrada"
+    },
+    "welcome": {
+      "browseCta": "Explorar la comunidad",
+      "subtitle": "Ya eres miembro de la comunidad.",
+      "title": "¡Felicidades!"
     }
   },
   "email": {

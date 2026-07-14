@@ -97,6 +97,21 @@
     "retry": "Try again"
   },
   "auth": {
+    "buildProfile": {
+      "company": {
+        "label": "Company",
+        "placeholder": "Your company name"
+      },
+      "industry": {
+        "label": "Industry",
+        "placeholder": "e.g. Fintech"
+      },
+      "role": {
+        "label": "Role / Position",
+        "placeholder": "e.g. Founder"
+      },
+      "title": "What do you build?"
+    },
     "errors": {
       "invalidLink": "Your link is invalid or expired."
     },
@@ -206,6 +221,11 @@
       "subtitle": "We've sent a confirmation link to {email}.",
       "subtitleGeneric": "We've sent you a confirmation link.",
       "title": "Check your inbox"
+    },
+    "welcome": {
+      "browseCta": "Browse the community",
+      "subtitle": "You are now a member of the community.",
+      "title": "Congrats!"
     }
   },
   "email": {

@@ -51,8 +51,8 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   }
 
   const supabase = await createClient();
-  // This step's already-saved `profiles` columns, so a user revisiting this page (Back, or
-  // before step 3 exists) sees their previously-submitted data instead of a blank form (see
+  // This step's already-saved `profiles` columns, so a user revisiting this page (e.g. Back
+  // from step 3) sees their previously-submitted data instead of a blank form (see
   // `MemberProfileForm`'s `initial*` props).
   const { data: profileData } = await supabase
     .from('profiles')

@@ -50,8 +50,8 @@ type MemberProfileFormProps = {
   initialUsername: string;
   /**
    * The rest of this step's already-saved `profiles` data, when the caller revisits this
-   * page after a previous submission (Back, or just navigating back before step 3 exists) —
-   * `undefined`/omitted fields fall back to an empty value, same as a brand-new profile. See
+   * page after a previous submission (e.g. Back from step 3) — `undefined`/omitted fields
+   * fall back to an empty value, same as a brand-new profile. See
    * `app/[locale]/member-profile/page.tsx`.
    */
   initialCountry?: string;
@@ -146,10 +146,8 @@ export function MemberProfileForm({
       return;
     }
 
-    // Steps 3/4 of the wizard aren't built yet — land on the homepage, same fallback
-    // `SignUpForm` uses when there's nowhere further to send the user.
-    router.push('/');
-    router.refresh();
+    // Step 3/4 — "What do you build?" (stage 1.2 registration-wizard reorder).
+    router.push('/build-profile');
   });
 
   return (

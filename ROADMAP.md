@@ -279,3 +279,62 @@ interests multi-select).
 - [ ] Server Action to persist profile fields + interest selections + avatar upload to Storage
 - [ ] i18n keys (`messages/en.json` source + `messages/es.json` mirror)
 - [ ] Review loop (`code-reviewer`, `security-auditor` for new RLS, `qa`) + `browser-tester` smoke check
+
+### 1.2 — Registration wizard: full 4-step reorder + Congrats screen (Figma alignment)
+**Status:** 🔄 In progress
+**Started:** 2026-07-14
+
+Reorders the registration wizard to match the Figma "Registration" flow exactly (per §5.2 ТЗ
+"Реєстрація та онбординг" + Figma frames `Registration 1/4` → `Member profile 2/4` →
+`Member profile 3/4` → `Member profile 4/4` → `Congrats screen`). Steps 1 (sign-up, Stage 0.6)
+and 2 (member-profile, Stage 1.1) exist but out of Figma order: email confirmation currently
+fires right after Step 1 instead of being Step 4/4, there is no Step 3/4, and there is no
+post-confirmation "Congrats screen" — confirming the email link today just redirects to `/`.
+
+- [ ] New Step 3/4 page "What do you build?" (Company, Role/Position, Industry) — new page + Server Action + Zod schema, `RegistrationProgress` step={3}; migration for the new profile columns with RLS
+- [ ] Move the "Check your inbox" email-confirmation screen to be Step 4/4 (currently shown right after Step 1) — `RegistrationProgress` step={4} on `/verify-email`
+- [ ] **Auth architecture (decided 2026-07-14):** disable `enable_confirmations` in `supabase/config.toml` so `signUp()` creates a session immediately — Steps 2–3 run as a logged-in-but-unconfirmed user. Defer sending the actual confirmation email until Step 4 (`supabase.auth.resend({ type: 'signup', email })` or equivalent) instead of at Step 1. All confirmed/verified-only gates (booking, session creation, future profile publishing) check `email_confirmed_at` / `verification_status` / `is_public` flags directly — never session existence — consistent with the existing 14-day verification-flag pattern (§3.2).
+- [ ] New "Congrats screen" page shown after email confirmation (`/api/auth/confirm` should redirect here instead of `/`) — "You are now a member of the community" + CTAs (Find Mindsetter / Invite to event / Find event / "Find out who a Mindsetter is")
+- [ ] Update the `next` redirect param in `app/[locale]/(auth)/actions.ts` `signUp()` and the `/api/auth/confirm` route accordingly
+- [ ] i18n keys for the new Step 3/4 and Congrats screen copy (`messages/en.json` source + `messages/es.json` mirror)
+- [ ] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough of Steps 1→2→3→4→confirm→Congrats
+
+Out of scope for this stage (separate future stage per Figma): the "Find out who a Mindsetter is" fork into the 6-step extended Mindsetter wizard (Roles/Superpowers/Promo video/etc.), and the "I'm on the way" lead-capture flow from spec §5.2 (clarified 2026-07-14: a lightweight name+email capture for visitors not ready to register — written straight to a separate `leads` table, no Supabase Auth account created, passed to the team for manual follow-up; likely reuses the email field already on the first onboarding-tour slide in Figma, fired independently of whether the visitor completes the full wizard) — deferred to its own future stage, not built as part of 1.2.
+
+### 1.3 — "I'm on the way" lead capture
+**Status:** 🔄 In progress
+**Started:** 2026-07-14
+
+Lightweight escape-hatch from spec §5.2 ("«I'm on the way» → запис у `leads` одразу (навіть якщо
+далі не пройде), передається команді") for visitors not ready to complete the full registration
+wizard — name + email only, no Supabase Auth account created, stored separately, surfaced to the
+team for manual follow-up. Not a numbered step in the 4-step wizard and has no dedicated Figma
+frame (clarified 2026-07-14) — most likely reuses the email field already on the first
+onboarding-tour slide in Figma ("Onboarding - 1"), fired independently of whether the visitor
+continues into the full wizard.
+
+- [ ] Migration: `leads` table (`name`, `email`, `source`, `created_at`) with RLS — anon/public INSERT allowed (no auth required), SELECT restricted to staff via `is_staff()`
+- [ ] Zod schema + rate-limited Server Action to capture a lead (name + email), independent of the sign-up flow
+- [ ] Wire the capture point into the onboarding-tour intro slide (or wherever product decides) — fire-and-forget, does not block or replace full registration
+- [ ] i18n keys (`messages/en.json` source + `messages/es.json` mirror)
+- [ ] Staff-facing lead list/queue is OUT of scope here — deferred to the admin-panel stage (§5.14); this stage only captures and stores leads
+- [ ] Review loop (`code-reviewer`, `security-auditor` — public unauthenticated INSERT endpoint, `qa`) + `browser-tester` smoke check
+
+### 1.4 — Registration steps: pixel-accurate styling from Figma
+**Status:** 🔄 In progress
+**Started:** 2026-07-14
+
+Visual polish pass across the full registration wizard (Steps 1–4, `RegistrationProgress`
+component, and the Step 3/4 + Congrats screen built in Stage 1.2) to match the Figma
+"Registration" frames exactly — spacing, typography, colors, control states (focus/error/disabled),
+and desktop (1440px) + mobile breakpoints per the corresponding Figma frames found during the
+Stage 1.2 Figma audit (`Registration 1/4`, `Member profile 2/4`, `Member profile 3/4`,
+`Member profile 4/4`, `Congrats screen`, plus their 1440px desktop variants). Functional
+behavior stays as already implemented — this stage is styling/visual-fidelity only, not new
+functionality.
+
+- [ ] Diff each step's current implementation against its Figma frame (via `figma-designer`) and list concrete visual deltas per step
+- [ ] Fix spacing/typography/color deltas in `/sign-up`, `/member-profile`, and the new Step 3/4 + Congrats screen from Stage 1.2
+- [ ] Verify/fix the `RegistrationProgress` step-indicator styling (note: Stage 1.2's Figma audit found the progress badge text is inconsistently synced to step number in several Figma frames — use frame name + left-to-right order as ground truth, not the badge text)
+- [ ] Verify responsive behavior at mobile + 1440px desktop breakpoints against the corresponding Figma frame variants
+- [ ] `browser-tester` visual walkthrough of Steps 1→4 on both breakpoints

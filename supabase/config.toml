@@ -57,7 +57,25 @@ password_requirements = ""
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = true
+# Stage 1.2 auth architecture decision (2026-07-14, see ROADMAP.md §1.2): signUp()
+# creates a session immediately (no double opt-in gate) so Steps 2-3 of the
+# registration wizard can run as a logged-in-but-unconfirmed user; the actual
+# confirmation email is now sent explicitly at Step 4 via
+# `supabase.auth.resend({ type: 'signup', email })` instead of at signUp() time.
+# `false` here keeps `supabase start` (local dev) behaving the same way for parity.
+#
+# IMPORTANT: this value is LOCAL-DEV-ONLY documentation. It does NOT change the
+# hosted project's behavior by itself — `supabase db push` never touches auth
+# config, and this repo intentionally has no script that runs
+# `supabase config push` (that command pushes the ENTIRE config.toml — including
+# `site_url = "http://localhost:3000"`, storage limits, disabled Google OAuth,
+# disabled SMTP, etc. — to the hosted project, which would clobber unrelated
+# production settings; CLAUDE.md/db-push guard pattern deliberately does not
+# extend to auth config). The hosted project's real toggle is manual:
+# Dashboard -> Authentication -> Providers -> Email -> "Confirm email" (turn OFF).
+# See docs/SUPABASE_SETUP.md §3 (currently still describes the pre-1.2
+# "Confirm email ON" architecture and needs a follow-up doc update).
+enable_confirmations = false
 secure_password_change = false
 max_frequency = "1s"
 otp_length = 6

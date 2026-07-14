@@ -15,8 +15,10 @@ import { z } from 'zod';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
+import { siteUrl } from '@/lib/auth/site-url';
 import { assertWithinRateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -24,59 +26,71 @@ import {
   signUpSchema,
 } from '@/lib/validation/auth';
 
-/** Absolute URL for email redirect links (must be a real, reachable origin). */
-function siteUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!base) {
-    // Misconfiguration, not a user error — fail loudly in the server log.
-    throw new Error('NEXT_PUBLIC_SITE_URL is not set; cannot build auth redirect links.');
-  }
-  return `${base.replace(/\/$/, '')}${path}`;
-}
-
 /** Per-account rate-limit bucket (hashed so raw emails never land in Redis keys). */
 function emailBucket(prefix: string, email: string): string {
   return `${prefix}:${createHash('sha256').update(email).digest('hex')}`;
 }
 
 /**
- * Create an account. Supabase sends a confirmation email; the profile row (with the
- * 14-day verification deadline) is created by the `handle_new_user` DB trigger, which
- * reads `username` / `full_name` / `last_name` from the user metadata passed here.
+ * Create an account. The profile row (with the 14-day verification deadline) is created by
+ * the `handle_new_user` DB trigger (an `AFTER INSERT on auth.users` trigger — fires no matter
+ * which API path inserted the row, admin or anon), which reads `username` / `full_name` /
+ * `last_name` from the user metadata passed here.
+ *
+ * Confirmation-email architecture (stage 1.2 registration-wizard reorder, reworked): the
+ * client-SDK `supabase.auth.signUp()` used previously sends the confirmation email
+ * unconditionally and synchronously whenever the hosted project's "Confirm email" setting is
+ * on, with no option to suppress it — that made it impossible to defer the actual send to step
+ * 3 (`app/[locale]/build-profile/actions.ts`'s `resendConfirmationEmail`) the way this wizard
+ * needs. So account creation now goes through the **service-role Admin API** instead:
+ *
+ *   1. `service.auth.admin.createUser({ email_confirm: false, ... })` creates the user and
+ *      explicitly marks it unconfirmed — `email_confirm: false` overrides the project's global
+ *      autoconfirm setting for this one user and, per the Admin API, never sends any email
+ *      itself. This leaves a genuinely-pending signup for step 3's `resend({ type: 'signup' })`
+ *      to redeliver — the real first confirmation email is sent exactly once, from step 3.
+ *   2. The Admin API alone does not establish a session/cookies, so we immediately follow up
+ *      with an ordinary anon-client `signInWithPassword()` to sign the caller in for the rest
+ *      of the wizard (steps 2/3 need `requireUser()` to succeed). This sign-in only succeeds
+ *      once the hosted project's "Confirm email" toggle is switched OFF in the Dashboard
+ *      (Authentication → Providers → Email) — with it ON, GoTrue still blocks a password
+ *      sign-in for an unconfirmed user, so we fall back to `needsEmailConfirmation: true` and
+ *      let the caller bounce to `/verify-email` (step 4) exactly like before that toggle is
+ *      flipped, instead of throwing.
+ *
+ * `emailRedirectTo` for the real (step-3) send still points at the wizard's Congrats screen
+ * (`/welcome`); it is not passed here because this call never triggers a send.
  */
 export const signUp = createAction(
   signUpSchema,
   async ({ email, password, username, fullName, lastName }) => {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signUp({
+    const service = createServiceClient();
+    const { data: createData, error: createError } = await service.auth.admin.createUser({
       email,
       password,
-      options: {
-        emailRedirectTo: siteUrl('/api/auth/confirm?next=/'),
-        data: {
-          ...(username ? { username } : {}),
-          full_name: fullName,
-          last_name: lastName,
-        },
+      email_confirm: false,
+      user_metadata: {
+        ...(username ? { username } : {}),
+        full_name: fullName,
+        last_name: lastName,
       },
     });
 
-    if (error) {
+    if (createError) {
       // Never swallow the real reason — surface it in server logs (no PII beyond
       // what Supabase itself put in `message`, which never includes the password).
-      console.error('[auth.signUp] Supabase signUp failed:', {
-        status: error.status,
-        code: error.code,
-        message: error.message,
+      console.error('[auth.signUp] admin.createUser failed:', {
+        status: createError.status,
+        code: createError.code,
+        message: createError.message,
       });
 
-      // Supabase signals throttling via HTTP 429 and/or an `over_*_rate_limit` code
-      // (e.g. too many confirmation emails sent to the same address/IP).
+      // Supabase signals throttling via HTTP 429 and/or an `over_*_rate_limit` code.
       if (
-        error.status === 429 ||
-        error.code === 'over_email_send_rate_limit' ||
-        error.code === 'over_request_rate_limit' ||
-        /rate limit/i.test(error.message)
+        createError.status === 429 ||
+        createError.code === 'over_email_send_rate_limit' ||
+        createError.code === 'over_request_rate_limit' ||
+        /rate limit/i.test(createError.message)
       ) {
         throw new ActionError(
           'rate_limited',
@@ -84,20 +98,58 @@ export const signUp = createAction(
         );
       }
 
-      // Supabase returns a generic message for already-registered emails only when
-      // "Confirm email" is on; treat identity-collision signals as a conflict.
+      // Treat identity-collision signals as a conflict.
       if (
-        error.code === 'user_already_exists' ||
-        error.code === 'email_exists' ||
-        /already registered|already exists/i.test(error.message)
+        createError.code === 'user_already_exists' ||
+        createError.code === 'email_exists' ||
+        /already registered|already exists/i.test(createError.message)
       ) {
         throw new ActionError('conflict', 'An account with this email already exists.');
       }
       throw new ActionError('internal_error', 'Could not create your account. Please try again.');
     }
 
-    // With email confirmation on, `data.session` is null until the link is clicked.
-    return { needsEmailConfirmation: data.session === null, email };
+    // Establish the real session/cookies for the rest of the wizard. This is the anon client
+    // on purpose — signInWithPassword() is what sets the request's auth cookies; the
+    // service-role client never touches cookies.
+    const supabase = await createClient();
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError || !signInData.session) {
+      // Expected until the hosted project's "Confirm email" toggle is switched off: GoTrue
+      // still gates password sign-in on confirmation while that global setting is on. Treat
+      // this as "needs email confirmation" rather than an error — step 4 (`/verify-email`)
+      // is a valid landing spot with no session yet, same as the pre-rework flow.
+      if (
+        signInError?.code === 'email_not_confirmed' ||
+        /email not confirmed/i.test(signInError?.message ?? '')
+      ) {
+        return { needsEmailConfirmation: true, email };
+      }
+      console.error('[auth.signUp] post-create signInWithPassword failed:', {
+        status: signInError?.status,
+        code: signInError?.code,
+        message: signInError?.message,
+      });
+      // The auth user was created but is now unreachable (no session, can't retry sign-up —
+      // the email is taken). Roll it back so the visitor can simply try signing up again
+      // instead of getting permanently stuck on a `conflict` error with no way in.
+      if (createData.user) {
+        const { error: deleteError } = await service.auth.admin.deleteUser(createData.user.id);
+        if (deleteError) {
+          console.error('[auth.signUp] rollback deleteUser failed:', {
+            status: deleteError.status,
+            message: deleteError.message,
+          });
+        }
+      }
+      throw new ActionError('internal_error', 'Could not create your account. Please try again.');
+    }
+
+    return { needsEmailConfirmation: false, email };
   },
   { rateLimit: { key: 'auth:sign-up', limit: 5, window: '10 m' } },
 );

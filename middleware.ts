@@ -12,12 +12,19 @@ const intlMiddleware = createIntlMiddleware(routing);
  * Paths (locale-stripped) that require a signed-in user. Unauthenticated visitors are sent
  * to /login with a `redirectTo` back to where they were going. Expand in stage 0.7 (RBAC).
  *
- * `/member-profile` (registration wizard step 2/4) writes to the caller's own `profiles`
- * row and uploads to their own Storage folder, so it needs a signed-in user like the rest of
- * this list — defense-in-depth on top of the page's own `getSessionContext()` redirect and
- * the Server Action's `requireUser()`.
+ * `/member-profile` (registration wizard step 2/4) and `/build-profile` (step 3/4) write to
+ * the caller's own `profiles` row (the latter also re-sends the confirmation email for their
+ * own account), so both need a signed-in user like the rest of this list —
+ * defense-in-depth on top of each page's own `getSessionContext()` redirect and the Server
+ * Action's `requireUser()`.
  */
-const PROTECTED_PREFIXES = ['/account', '/dashboard', '/settings', '/member-profile'];
+const PROTECTED_PREFIXES = [
+  '/account',
+  '/dashboard',
+  '/settings',
+  '/member-profile',
+  '/build-profile',
+];
 
 /**
  * Auth-only paths a signed-in user shouldn't see (already authenticated). Note: NOT

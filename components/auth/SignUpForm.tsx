@@ -115,10 +115,14 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
       return;
     }
     if (result.data.needsEmailConfirmation) {
+      // No session yet (current hosted "Confirm email" setting — see `signUp()`'s doc
+      // comment) — steps 2/3 need a signed-in caller, so there's nowhere else to send this
+      // visitor yet. Once that setting is flipped, `needsEmailConfirmation` is false here and
+      // the branch below continues the wizard into step 2 instead.
       router.push(`/verify-email?email=${encodeURIComponent(result.data.email)}`);
       return;
     }
-    router.push('/');
+    router.push('/member-profile');
     router.refresh();
   });
 

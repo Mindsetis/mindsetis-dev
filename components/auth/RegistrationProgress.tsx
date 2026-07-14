@@ -8,13 +8,14 @@ type RegistrationProgressProps = {
 };
 
 /**
- * Segmented step indicator + "1/4" — Figma "Registration" (mobile `165:2853`, node
+ * Segmented step indicator + "n/total" — Figma "Registration" (mobile `165:2853`, node
  * `401:6989`) / "Registration 1/4 - 1440 px" (desktop `387:1725`, node `387:1911`).
  *
- * Purely decorative/static: this app doesn't (yet) implement the multi-step registration
- * funnel the design implies (account → verify → profile → …) — only step 1 ("Create
- * account") exists today, so this always renders `1/4` and never advances. Distinct from the
- * onboarding flow's own stepper (`OnboardingFlow.tsx`), which tracks its own real state.
+ * Used by all four registration-wizard steps — `/sign-up` (1), `/member-profile` (2),
+ * `/build-profile` (3), `/verify-email` (4) — each passing its own `step`/`label`; there's no
+ * internal state here, the caller (the URL/page) is the source of truth for which step is
+ * "current". Distinct from the onboarding flow's own stepper (`OnboardingFlow.tsx`), which
+ * tracks its own real state.
  */
 export function RegistrationProgress({ step, total, label }: RegistrationProgressProps) {
   return (

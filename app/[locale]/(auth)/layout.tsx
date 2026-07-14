@@ -9,9 +9,11 @@ type AuthLayoutProps = {
 };
 
 /**
- * Centered auth shell shared by /login, /forgot-password, /reset-password, and
- * /verify-email. (/sign-up lives outside this group — it's full-bleed with no card.)
- * Server Component — the interactive bits live in the client forms.
+ * Centered auth shell shared by /login, /forgot-password, and /reset-password. (/sign-up,
+ * /member-profile, /build-profile, and /verify-email — the registration wizard's steps —
+ * live outside this group: they share their own Back-link + `RegistrationProgress` shell
+ * instead of this bordered card.) Server Component — the interactive bits live in the client
+ * forms.
  */
 export default async function AuthLayout({ children, params }: AuthLayoutProps) {
   const { locale } = await params;
