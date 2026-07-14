@@ -303,8 +303,9 @@ post-confirmation "Congrats screen" — confirming the email link today just red
 Out of scope for this stage (separate future stage per Figma): the "Find out who a Mindsetter is" fork into the 6-step extended Mindsetter wizard (Roles/Superpowers/Promo video/etc.), and the "I'm on the way" lead-capture flow from spec §5.2 (clarified 2026-07-14: a lightweight name+email capture for visitors not ready to register — written straight to a separate `leads` table, no Supabase Auth account created, passed to the team for manual follow-up; likely reuses the email field already on the first onboarding-tour slide in Figma, fired independently of whether the visitor completes the full wizard) — deferred to its own future stage, not built as part of 1.2.
 
 ### 1.3 — "I'm on the way" lead capture
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Started:** 2026-07-14
+**Completed:** 2026-07-14
 
 Lightweight escape-hatch from spec §5.2 ("«I'm on the way» → запис у `leads` одразу (навіть якщо
 далі не пройде), передається команді") for visitors not ready to complete the full registration
