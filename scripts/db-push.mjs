@@ -73,10 +73,18 @@ if (ACCESS_TOKEN) childEnv.SUPABASE_ACCESS_TOKEN = ACCESS_TOKEN;
 
 function run(args, label) {
   console.log(`\n→ ${label}`);
+  // On Windows, `npx` resolves to `npx.cmd`. Node's spawnSync cannot exec a
+  // .cmd file directly without a shell (fails with ENOENT/EINVAL on current
+  // Node releases), so `shell: true` is required on win32. This only ever
+  // shells out to a fixed argv (`npx --yes supabase <subcommand>`) plus a
+  // regex-validated project ref and a password sourced from local
+  // `.env.local` — never untrusted/remote input — so the shell-escaping
+  // caveat behind Node's DEP0190 advisory does not apply here.
   const res = spawnSync('npx', ['--yes', 'supabase', ...args], {
     cwd: ROOT,
     env: childEnv,
     stdio: 'inherit',
+    shell: process.platform === 'win32',
   });
   if (res.status !== 0) die(`\`supabase ${args[0]}\` exited with code ${res.status ?? 'null'}.`);
 }
