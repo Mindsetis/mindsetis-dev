@@ -281,9 +281,10 @@ interests multi-select).
 - [ ] Review loop (`code-reviewer`, `security-auditor` for new RLS, `qa`) + `browser-tester` smoke check
 
 ### 1.2 — Registration wizard: full 4-step reorder + Congrats screen (Figma alignment)
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Started:** 2026-07-14
-_Code complete and reviewed (commit 0603854); live E2E re-check pending SUPABASE_SECRET_KEY + hosted "Confirm email" toggle._
+**Completed:** 2026-07-14
+_Live E2E passed against the hosted Supabase project (`browser-tester`): real signup through all 4 steps to `/welcome` confirmed working. Final commits on `feature/stage-1.4-registration-styling`: `0603854` (original 4-step build), `8fa3ff9` (auto-confirm rework + security fixes)._
 
 Reorders the registration wizard to match the Figma "Registration" flow exactly (per §5.2 ТЗ
 "Реєстрація та онбординг" + Figma frames `Registration 1/4` → `Member profile 2/4` →
@@ -294,7 +295,7 @@ post-confirmation "Congrats screen" — confirming the email link today just red
 
 - [x] New Step 3/4 page "What do you build?" (Company, Role/Position, Industry) — new page + Server Action + Zod schema, `RegistrationProgress` step={3}; migration for the new profile columns with RLS
 - [x] Move the "Check your inbox" email-confirmation screen to be Step 4/4 (currently shown right after Step 1) — `RegistrationProgress` step={4} on `/verify-email`
-- [x] **Auth architecture (decided 2026-07-14):** implemented via service-role Admin API (`admin.createUser({ email_confirm: false })` + `signInWithPassword()`) rather than the originally-sketched `enable_confirmations=false` config approach — Steps 2–3 run as a logged-in-but-unconfirmed user; confirmation email still sent at Step 4. All confirmed/verified-only gates (booking, session creation, future profile publishing) check `email_confirmed_at` / `verification_status` / `is_public` flags directly — never session existence — consistent with the existing 14-day verification-flag pattern (§3.2).
+- [x] **Auth architecture (final, live-tested, decided/reworked 2026-07-14):** signup auto-confirms the user at creation via the service-role Admin API (`admin.createUser({ email_confirm: true })`), giving an immediate session with no confirmation gate at all. This replaces the originally-planned `email_confirm: false` + hosted "Confirm email" toggle-flip approach, which live testing proved infeasible: Supabase's `signInWithPassword()` unconditionally rejects an `email_confirm:false` user regardless of that project-level toggle. Step 4 ("Check your inbox") and its email are now purely informational — a "Welcome to Mindsetis" email sent via this project's own `email_messages` queue (not Supabase Auth's `resend()`) — with an always-available "Continue" button straight to `/welcome`, not a gate waiting for an email click. **Accepted tradeoff (product decision, recorded 2026-07-14):** since there is no email-ownership verification at signup anymore, someone could sign up with an email address they don't control ("email squatting"). Mitigation shipped: `updatePassword` resets the 14-day `verification_deadline` and clears `access_restricted` on a completed password-reset (strong proof of real ownership), so a legitimate owner reclaiming a squatted address isn't immediately access-restricted. Full email-ownership gating before session grant was considered and explicitly rejected as out of scope for MVP.
 - [x] New "Congrats screen" page shown after email confirmation (`/api/auth/confirm` should redirect here instead of `/`) — "You are now a member of the community" + CTAs (Find Mindsetter / Invite to event / Find event / "Find out who a Mindsetter is")
 - [x] Update the `next` redirect param in `app/[locale]/(auth)/actions.ts` `signUp()` and the `/api/auth/confirm` route accordingly
 - [x] i18n keys for the new Step 3/4 and Congrats screen copy (`messages/en.json` source + `messages/es.json` mirror)
