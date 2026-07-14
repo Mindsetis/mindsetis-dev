@@ -231,11 +231,12 @@
     "verifyEmail": {
       "backToLogin": "Back to log in",
       "changeIt": "Change it",
+      "continue": "Continue",
       "resend": "Resend email",
       "resending": "Sending…",
-      "resendSuccess": "Confirmation email sent.",
-      "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",
-      "title": "Check your inbox",
+      "resendSuccess": "Welcome email sent.",
+      "subtitle": "We sent a welcome email to this address for your records. No need to click anything — you're all set to continue.",
+      "title": "Welcome email sent",
       "wrongEmail": "Wrong email?"
     },
     "welcome": {
@@ -267,6 +268,14 @@
       "greetingGeneric": "Hi there,",
       "heading": "Confirm your email",
       "subject": "Confirm your email for Mindsetis Community"
+    },
+    "welcome": {
+      "body": "Thanks for joining Mindsetis Community — your account is ready to go. Jump back in whenever you're ready.",
+      "cta": "Go to Mindsetis Community",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Welcome to Mindsetis Community",
+      "subject": "Welcome to Mindsetis Community"
     }
   }
 }

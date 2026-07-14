@@ -2,7 +2,8 @@ import { ArrowLeft } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
-import { ResendConfirmationButton } from '@/components/auth/ResendConfirmationButton';
+import { ResendWelcomeEmailButton } from '@/components/auth/ResendWelcomeEmailButton';
+import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
 
@@ -14,9 +15,19 @@ type VerifyEmailPageProps = {
 const TOTAL_STEPS = 4;
 
 /**
- * Registration wizard step 4/4 — "Check your inbox" (Figma "Registration" flow, the final
+ * Registration wizard step 4/4 — "Welcome email sent" (Figma "Registration" flow, the final
  * "Member profile 4/4" frame). Reached after step 3 (`/build-profile`) saves and (re-)sends
- * the sign-up confirmation email.
+ * the "Welcome to Mindsetis" email.
+ *
+ * NOT a confirmation gate: the account is auto-confirmed and already has a live session by
+ * step 1 (`(auth)/actions.ts#signUp`'s doc comment — `signInWithPassword()` unconditionally
+ * rejects an unconfirmed Admin-API-created user regardless of the hosted project's global
+ * "Confirm email" toggle, so auto-confirming at creation is the only viable path). The email
+ * sent from here is purely informational (`lib/auth/send-welcome-email.ts`, this project's own
+ * `email_messages` queue, not Supabase Auth's mailer) — there is nothing to wait for, so a
+ * "Continue" button always proceeds straight to `/welcome` with no click-through required.
+ * "Resend email" (`ResendWelcomeEmailButton`) is kept as a courtesy re-send, demoted to a
+ * secondary action below Continue.
  *
  * Moved out of the `(auth)` route group (stage 1.2 reorder) — that group's shared bordered-
  * card layout (`(auth)/layout.tsx`) was fine for a standalone static screen, but this step
@@ -25,24 +36,14 @@ const TOTAL_STEPS = 4;
  * for (see `sign-up/page.tsx`'s doc comment). The URL itself (`/verify-email`) is unchanged —
  * route groups don't appear in the path — so no links elsewhere needed updating.
  *
- * Copy restructure (stage 1.4 Figma audit): eyebrow = the resolved email address itself, a
- * single H1 + subtitle (no embedded email — replaces the old two-paragraph subtitle+
- * description), a "Resend email" button (`ResendConfirmationButton`, backed by the new
- * `verify-email/actions.ts` Server Action), and a "Wrong email? Change it" link back to
- * `/sign-up` to restart with a corrected address. `text-center` is dropped from the shell to
- * match the left-aligned pattern the other three steps already use.
- *
- * This page is reachable in two states (see `verify-email/actions.ts`'s doc comment too):
- *   (a) the caller has a live session (completed steps 1-3 normally) — `getCurrentUser()`
- *       resolves the email server-side, no `?email=` needed.
- *   (b) no session yet — the interim fallback while the hosted "Confirm email" toggle isn't
- *       flipped (see `SignUpForm.tsx`'s doc comment) — the email arrives via `?email=`.
+ * `getCurrentUser()` resolves the email server-side for the normal case (a live session from
+ * completing steps 1-3); `?email=` remains a fallback for the unusual case of an
+ * expired/cleared session (mirrors `SignUpForm.tsx`'s error-recovery use of the same param).
  * Session email wins if somehow both are present.
  *
  * "Back to log in" isn't on this Figma frame — kept rather than removed outright (a user who
- * already confirmed a previous session and lands back on this URL by mistake still needs a
- * way out), but demoted to a small tertiary link below the two new primary actions instead of
- * competing with them for attention.
+ * lands back on this URL with no session at all still needs a way out), but demoted to a
+ * small tertiary link below the primary actions instead of competing with them for attention.
  */
 export default async function VerifyEmailPage({ params, searchParams }: VerifyEmailPageProps) {
   const { locale } = await params;
@@ -86,7 +87,11 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
           <p className="text-body font-medium text-foreground">{t('verifyEmail.subtitle')}</p>
         </div>
 
-        <ResendConfirmationButton email={resolvedEmail} />
+        <Button asChild variant="primaryOutline" size="lg" className="w-full">
+          <Link href="/welcome">{t('verifyEmail.continue')}</Link>
+        </Button>
+
+        <ResendWelcomeEmailButton />
 
         <p className="text-sm text-muted-foreground">
           {t('verifyEmail.wrongEmail')}{' '}

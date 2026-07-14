@@ -81,6 +81,20 @@ export const genericEmailPropsSchema = z.object({
 export type GenericEmailProps = z.infer<typeof genericEmailPropsSchema>;
 
 /**
+ * `welcome` template props — post-signup informational/receipt email (registration wizard
+ * step 3). NOT a confirmation gate: `actionUrl` is a plain link back to the app (the Congrats
+ * screen, `/welcome`), not a token link — nothing about the account depends on this ever
+ * being clicked. See `lib/auth/send-welcome-email.ts` for the sender and
+ * `app/[locale]/(auth)/actions.ts#signUp`'s doc comment for why the account no longer needs
+ * one.
+ */
+export const welcomeEmailPropsSchema = z.object({
+  actionUrl: httpUrlSchema,
+  userName: z.string().trim().min(1).max(200).optional(),
+});
+export type WelcomeEmailProps = z.infer<typeof welcomeEmailPropsSchema>;
+
+/**
  * `template_key` -> props-schema map. The single source of truth for which template
  * keys exist; `lib/email/registry.tsx` maps the same keys to renderers, and
  * `email_messages.template_key` (free text in the DB) is expected to only ever contain
@@ -90,6 +104,7 @@ export const emailTemplatePropsSchema = {
   verification: verificationEmailPropsSchema,
   password_reset: passwordResetEmailPropsSchema,
   generic: genericEmailPropsSchema,
+  welcome: welcomeEmailPropsSchema,
 } as const;
 
 export type EmailTemplateKey = keyof typeof emailTemplatePropsSchema;

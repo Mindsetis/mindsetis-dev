@@ -5,49 +5,46 @@
  * `page.tsx`). Persists `company` / `role` / `industry` onto the caller's own `profiles`
  * row (RLS: `profiles_update_own`, column-agnostic — no new policy needed, see
  * `supabase/migrations/20260714101121_profiles_step3_build_fields.sql`), then (best-effort)
- * sends the sign-up confirmation email so step 4 (`/verify-email`) has a real link to point
- * at — see `sendConfirmationEmailBestEffort`'s doc comment.
+ * sends the "Welcome to Mindsetis" email so step 4 (`/verify-email`) reflects a real send —
+ * see `sendWelcomeEmailBestEffort`'s doc comment.
  */
 import { createHash } from 'node:crypto';
-
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
-import { sendSignUpConfirmationEmail } from '@/lib/auth/send-confirmation-email';
+import { sendWelcomeEmail } from '@/lib/auth/send-welcome-email';
 import { assertWithinRateLimit } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { buildProfileSchema } from '@/lib/validation/build-profile';
 
 /**
- * Send the sign-up confirmation email via `sendSignUpConfirmationEmail()` right before the
- * wizard moves on to step 4 ("Check your inbox").
+ * Send the "Welcome to Mindsetis" email via `sendWelcomeEmail()` right before the wizard
+ * moves on to step 4 ("Welcome email sent").
  *
- * This is the FIRST confirmation-email send in the wizard (not the only one anymore — stage
- * 1.4 adds a second, user-triggered send path, `app/[locale]/verify-email/actions.ts`'s
- * `resendConfirmationEmail`, behind the "Resend email" button on step 4 itself): step 1
- * (`app/[locale]/(auth)/actions.ts`'s `signUp()`) creates the account via the service-role
- * Admin API with `email_confirm: false`, which never sends anything itself, so this call is
- * the first real delivery — addressed at the wizard's actual final destination (`/welcome`,
- * the Congrats screen).
+ * This is the FIRST welcome-email send in the wizard (not the only one — step 4 adds a
+ * second, user-triggered send path, `app/[locale]/verify-email/actions.ts`'s
+ * `resendWelcomeEmail`, behind the "Resend email" button on step 4 itself). Purely
+ * informational, not a confirmation gate: step 1 (`app/[locale]/(auth)/actions.ts`'s
+ * `signUp()`) already auto-confirms and signs the account in, so this send has no bearing on
+ * whether the caller can continue the wizard.
  *
  * Rate-limited per-email (not just best-effort): resubmitting step 3 must not be able to
  * trigger unlimited real email sends. Deliberately non-fatal either way — a rate-limit hit or
- * a transient `resend()` error is logged and swallowed, never surfaced to the caller, because
- * completing step 3 and reaching step 4 must never fail just because a resend couldn't go out.
+ * a transient enqueue error is logged and swallowed, never surfaced to the caller, because
+ * completing step 3 and reaching step 4 must never fail just because a send couldn't go out.
  * Contrast with `verify-email/actions.ts`'s version, which is a manually-triggered retry the
  * user is actively waiting on — there, a rate-limit hit IS surfaced.
  */
-async function sendConfirmationEmailBestEffort(
-  supabase: SupabaseClient,
+async function sendWelcomeEmailBestEffort(
   email: string | undefined,
+  userName: string | undefined,
 ): Promise<void> {
   if (!email) return;
 
   try {
     await assertWithinRateLimit(
-      `build-profile:resend-confirmation:${createHash('sha256').update(email).digest('hex')}`,
+      `build-profile:resend-welcome:${createHash('sha256').update(email).digest('hex')}`,
       { limit: 4, window: '1 h' },
     );
   } catch (error) {
@@ -55,20 +52,16 @@ async function sendConfirmationEmailBestEffort(
     // (e.g. a transient Redis/Upstash failure) must not fail step 3 either, so it's logged at
     // `error` and swallowed the same way — never rethrown.
     if (error instanceof ActionError && error.code === 'rate_limited') {
-      console.warn('[build-profile] resend confirmation email skipped: rate-limited', { email });
+      console.warn('[build-profile] welcome email skipped: rate-limited', { email });
     } else {
-      console.error('[build-profile] resend confirmation email rate-limit check failed:', error);
+      console.error('[build-profile] welcome email rate-limit check failed:', error);
     }
     return;
   }
 
-  const { error } = await sendSignUpConfirmationEmail(supabase, email);
+  const { error } = await sendWelcomeEmail(email, userName);
   if (error) {
-    console.error('[build-profile] resend confirmation email failed:', {
-      status: error.status,
-      code: error.code,
-      message: error.message,
-    });
+    console.error('[build-profile] welcome email enqueue failed:', { message: error.message });
   }
 }
 
@@ -93,7 +86,9 @@ export const saveBuildProfile = createAction(buildProfileSchema, async (input) =
     throw new ActionError('internal_error', 'Could not save your profile. Please try again.');
   }
 
-  await sendConfirmationEmailBestEffort(supabase, user.email);
+  const userName =
+    typeof user.user_metadata.full_name === 'string' ? user.user_metadata.full_name : undefined;
+  await sendWelcomeEmailBestEffort(user.email, userName);
 
   return { email: user.email ?? null };
 });

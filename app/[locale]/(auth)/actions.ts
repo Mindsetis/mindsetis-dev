@@ -37,29 +37,25 @@ function emailBucket(prefix: string, email: string): string {
  * which API path inserted the row, admin or anon), which reads `username` / `full_name` /
  * `last_name` from the user metadata passed here.
  *
- * Confirmation-email architecture (stage 1.2 registration-wizard reorder, reworked): the
- * client-SDK `supabase.auth.signUp()` used previously sends the confirmation email
- * unconditionally and synchronously whenever the hosted project's "Confirm email" setting is
- * on, with no option to suppress it — that made it impossible to defer the actual send to step
- * 3 (`app/[locale]/build-profile/actions.ts`'s `resendConfirmationEmail`) the way this wizard
- * needs. So account creation now goes through the **service-role Admin API** instead:
+ * Account creation goes through the **service-role Admin API**, auto-confirmed:
  *
- *   1. `service.auth.admin.createUser({ email_confirm: false, ... })` creates the user and
- *      explicitly marks it unconfirmed — `email_confirm: false` overrides the project's global
- *      autoconfirm setting for this one user and, per the Admin API, never sends any email
- *      itself. This leaves a genuinely-pending signup for step 3's `resend({ type: 'signup' })`
- *      to redeliver — the real first confirmation email is sent exactly once, from step 3.
+ *   1. `service.auth.admin.createUser({ email_confirm: true, ... })` creates the user AND
+ *      marks it confirmed immediately. This was empirically re-verified (direct Admin API
+ *      call, not assumed): `signInWithPassword()` unconditionally rejects a user created with
+ *      `email_confirm: false` with `email_not_confirmed`, REGARDLESS of the hosted project's
+ *      global "Confirm email" toggle — that toggle only affects the self-serve `/signup`
+ *      endpoint's auto-confirm behavior, not the Admin API path or password sign-in's
+ *      confirmation check. So "create unconfirmed, sign in anyway" is not achievable on this
+ *      platform; auto-confirming at creation is the only way to get a working session right
+ *      after signup. The wizard still sends a "Welcome to Mindsetis" email once step 3
+ *      completes (`app/[locale]/build-profile/actions.ts`, via
+ *      `lib/auth/send-welcome-email.ts`) — purely informational now, not a confirmation gate.
  *   2. The Admin API alone does not establish a session/cookies, so we immediately follow up
  *      with an ordinary anon-client `signInWithPassword()` to sign the caller in for the rest
- *      of the wizard (steps 2/3 need `requireUser()` to succeed). This sign-in only succeeds
- *      once the hosted project's "Confirm email" toggle is switched OFF in the Dashboard
- *      (Authentication → Providers → Email) — with it ON, GoTrue still blocks a password
- *      sign-in for an unconfirmed user, so we fall back to `needsEmailConfirmation: true` and
- *      let the caller bounce to `/verify-email` (step 4) exactly like before that toggle is
- *      flipped, instead of throwing.
- *
- * `emailRedirectTo` for the real (step-3) send still points at the wizard's Congrats screen
- * (`/welcome`); it is not passed here because this call never triggers a send.
+ *      of the wizard (steps 2/3 need `requireUser()` to succeed). Since the account is already
+ *      confirmed, this now succeeds deterministically — any failure here is a genuine
+ *      unexpected error, not an interim/expected state, so it's handled the same way as any
+ *      other post-create failure below (rollback + `internal_error`).
  */
 export const signUp = createAction(
   signUpSchema,
@@ -68,7 +64,7 @@ export const signUp = createAction(
     const { data: createData, error: createError } = await service.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: true,
       user_metadata: {
         ...(username ? { username } : {}),
         full_name: fullName,
@@ -119,24 +115,16 @@ export const signUp = createAction(
     });
 
     if (signInError || !signInData.session) {
-      // Expected until the hosted project's "Confirm email" toggle is switched off: GoTrue
-      // still gates password sign-in on confirmation while that global setting is on. Treat
-      // this as "needs email confirmation" rather than an error — step 4 (`/verify-email`)
-      // is a valid landing spot with no session yet, same as the pre-rework flow.
-      if (
-        signInError?.code === 'email_not_confirmed' ||
-        /email not confirmed/i.test(signInError?.message ?? '')
-      ) {
-        return { needsEmailConfirmation: true, email };
-      }
+      // Now a genuine unexpected error — the account was created confirmed, so
+      // signInWithPassword() should succeed deterministically (empirically verified). Log it
+      // and roll back the orphaned auth user (no session, can't retry sign-up — the email is
+      // taken) so the visitor can simply try signing up again instead of getting permanently
+      // stuck on a `conflict` error with no way in.
       console.error('[auth.signUp] post-create signInWithPassword failed:', {
         status: signInError?.status,
         code: signInError?.code,
         message: signInError?.message,
       });
-      // The auth user was created but is now unreachable (no session, can't retry sign-up —
-      // the email is taken). Roll it back so the visitor can simply try signing up again
-      // instead of getting permanently stuck on a `conflict` error with no way in.
       if (createData.user) {
         const { error: deleteError } = await service.auth.admin.deleteUser(createData.user.id);
         if (deleteError) {
@@ -149,7 +137,7 @@ export const signUp = createAction(
       throw new ActionError('internal_error', 'Could not create your account. Please try again.');
     }
 
-    return { needsEmailConfirmation: false, email };
+    return { email };
   },
   { rateLimit: { key: 'auth:sign-up', limit: 5, window: '10 m' } },
 );
@@ -208,6 +196,15 @@ export const requestPasswordReset = createAction(
 /**
  * Set a new password. Requires the recovery session established by clicking the reset link
  * (the `/api/auth/confirm` handler exchanges the token before redirecting here).
+ *
+ * Also resets the caller's 14-day verification clock (`profiles.verification_deadline`) and
+ * clears `access_restricted` if set — mitigation for `signUp()`'s email-squatting tradeoff
+ * (see that function's doc comment): since signup now auto-confirms with zero proof of email
+ * ownership, someone could register a victim's address before the real owner ever does. A
+ * completed password-reset IS a strong "you actually control this inbox" proof (Supabase's
+ * own recovery-link flow), so it's the right moment to restart the clock from here rather than
+ * leaving it dated to whenever the account was originally (possibly maliciously) created —
+ * otherwise a reclaiming victim could already be `access_restricted` on day one.
  */
 export const updatePassword = createAction(
   resetPasswordSchema,
@@ -225,6 +222,24 @@ export const updatePassword = createAction(
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
       throw new ActionError('internal_error', 'Could not update your password. Please try again.');
+    }
+
+    // `access_restricted` is staff-/service-role-only (`guard_profiles_protected_columns()`),
+    // so this reset needs the service-role client — narrow and justified here: it only ever
+    // touches the caller's own row (`user.id`), resolved from their own just-verified recovery
+    // session, never arbitrary input.
+    const service = createServiceClient();
+    const { error: profileError } = await service
+      .from('profiles')
+      .update({
+        verification_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        access_restricted: false,
+      })
+      .eq('id', user.id);
+    if (profileError) {
+      // Non-fatal: the password change itself already succeeded — don't fail the whole action
+      // over this courtesy reset.
+      console.error('[auth.updatePassword] verification_deadline reset failed:', profileError);
     }
 
     // End the temporary recovery session so the user must sign in with the new password.

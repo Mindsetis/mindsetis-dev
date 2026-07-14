@@ -6,15 +6,21 @@ import { createClient } from '@/lib/supabase/server';
 import { safeRedirectPath } from '@/lib/validation/common';
 
 /**
- * Email link handler — confirms sign-ups and establishes the recovery session for password
- * resets. Lives under `/api` so the i18n middleware doesn't rewrite it (see `middleware.ts`
- * matcher). Supports both Supabase link styles:
+ * Email link handler — establishes the recovery session for password resets
+ * (`requestPasswordReset` in `app/[locale]/(auth)/actions.ts` points `redirectTo` here with
+ * `?next=/reset-password`). Lives under `/api` so the i18n middleware doesn't rewrite it (see
+ * `middleware.ts` matcher). Supports both Supabase link styles:
  *
  *   • `?token_hash=…&type=…`  → verifyOtp (recommended email-template style)
  *   • `?code=…`               → exchangeCodeForSession (PKCE / default ConfirmationURL)
  *
  * On success it redirects to `next` (a safe relative path), prefixed with the default
  * locale so the localized app renders without an extra redirect hop.
+ *
+ * NOT used by the sign-up wizard: accounts are auto-confirmed at creation
+ * (`(auth)/actions.ts#signUp`'s doc comment) and the post-signup "Welcome to Mindsetis" email
+ * (`lib/auth/send-welcome-email.ts`) is an ordinary informational send with a plain link, not
+ * a token link through this handler. Kept exclusively for the password-reset flow.
  */
 
 function localized(path: string, origin: string): URL {

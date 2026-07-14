@@ -114,14 +114,9 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
       setFormError(result.error.message);
       return;
     }
-    if (result.data.needsEmailConfirmation) {
-      // No session yet (current hosted "Confirm email" setting — see `signUp()`'s doc
-      // comment) — steps 2/3 need a signed-in caller, so there's nowhere else to send this
-      // visitor yet. Once that setting is flipped, `needsEmailConfirmation` is false here and
-      // the branch below continues the wizard into step 2 instead.
-      router.push(`/verify-email?email=${encodeURIComponent(result.data.email)}`);
-      return;
-    }
+    // signUp() always returns a live session now (the account is auto-confirmed at creation —
+    // see `(auth)/actions.ts#signUp`'s doc comment), so success here always means "continue the
+    // wizard into step 2".
     router.push('/member-profile');
     router.refresh();
   });

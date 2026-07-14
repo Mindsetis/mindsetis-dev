@@ -59,10 +59,14 @@ export function BuildProfileForm({
       role: initialRole ?? '',
       // A pre-1.4 profile may have a free-text value that isn't in the fixed catalog anymore —
       // treat anything outside `INDUSTRY_VALUES` as "no selection" rather than crashing the
-      // enum-typed field or silently submitting an invalid value.
+      // enum-typed field or silently submitting an invalid value. Defaults to `''` rather than
+      // `undefined` so `Select` is controlled from the first render — an initially-`undefined`
+      // value flips it from uncontrolled to controlled the moment a user picks something,
+      // which React warns about; `''` never matches an `IndustryValue`, so it still fails Zod
+      // validation the same way `undefined` would if left unselected.
       industry: (INDUSTRY_VALUES as readonly string[]).includes(initialIndustry ?? '')
         ? (initialIndustry as IndustryValue)
-        : undefined,
+        : ('' as IndustryValue),
     },
   });
 
@@ -76,7 +80,7 @@ export function BuildProfileForm({
       return;
     }
 
-    // Step 4/4 — "Check your inbox" (see `saveBuildProfile`'s confirmation-email re-send).
+    // Step 4/4 — "Welcome email sent" (see `saveBuildProfile`'s welcome-email send).
     const query = result.data.email ? `?email=${encodeURIComponent(result.data.email)}` : '';
     router.push(`/verify-email${query}`);
   });
