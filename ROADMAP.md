@@ -326,8 +326,9 @@ into the full wizard.
 - [x] Review loop (`code-reviewer`, `security-auditor` — public unauthenticated INSERT endpoint, `qa`) + `browser-tester` smoke check
 
 ### 1.4 — Registration steps: pixel-accurate styling from Figma
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Started:** 2026-07-14
+**Completed:** 2026-07-14
 
 Visual polish pass across the full registration wizard (Steps 1–4, `RegistrationProgress`
 component, and the Step 3/4 + Congrats screen built in Stage 1.2) to match the Figma
@@ -344,14 +345,14 @@ mismatch, and a missing progress indicator on the Congrats screen. Product decid
 of this into 1.4 rather than defer it; the new items below (all to be implemented next) sit
 alongside the original pure-styling checklist.
 
-- [ ] Diff each step's current implementation against its Figma frame (via `figma-designer`) and list concrete visual deltas per step
-- [ ] Fix spacing/typography/color deltas in `/sign-up`, `/member-profile`, and the new Step 3/4 + Congrats screen from Stage 1.2
-- [ ] Verify/fix the `RegistrationProgress` step-indicator styling (note: Stage 1.2's Figma audit found the progress badge text is inconsistently synced to step number in several Figma frames — use frame name + left-to-right order as ground truth, not the badge text)
-- [ ] Verify responsive behavior at mobile + 1440px desktop breakpoints against the corresponding Figma frame variants
-- [ ] `browser-tester` visual walkthrough of Steps 1→4 on both breakpoints
-- [ ] `RegistrationProgress` step-indicator: 3 visual states (done/current/future — Figma shows current step as a two-layer translucent glow, not solid fill like done), correct height (12px) and gap (4px)
-- [ ] Step 1 (`/sign-up`): add missing eyebrow text ("Let's start") + subtitle ("Your info is saved right away — even if you don't finish now.") per Figma, new i18n keys
-- [ ] Step 3 (`/build-profile`): mark Company/Role/Industry as required (asterisk + Zod validation) per Figma, matching label copy ("Your role" not "Role / Position"); change Industry from free-text input to a fixed-option select (code-defined array, following the same "code-defined list over DB table" precedent as the interests catalog refactor, not free text)
-- [ ] Step 4 (`/verify-email`): restructure copy (eyebrow = the email address, single subtitle without embedded email), add a "Resend email" button (new reusable Server Action, rate-limited) and a "Wrong email? Change it" link (back to `/sign-up` to restart with a corrected address)
-- [ ] Congrats screen (`/welcome`): add the `RegistrationProgress` step 4/4 indicator (present in Figma, currently missing from code)
-- [ ] Spacing/typography fixes: field-block-to-submit-button gap (16px not 24px), mobile H1 line-height (100% not 110%), remove `text-center` on `/verify-email` and `/welcome` to match the left-aligned pattern used by the other steps
+- [x] Diff each step's current implementation against its Figma frame (via `figma-designer`) and list concrete visual deltas per step
+- [x] Fix spacing/typography/color deltas in `/sign-up`, `/member-profile`, and the new Step 3/4 + Congrats screen from Stage 1.2
+- [x] Verify/fix the `RegistrationProgress` step-indicator styling (note: Stage 1.2's Figma audit found the progress badge text is inconsistently synced to step number in several Figma frames — use frame name + left-to-right order as ground truth, not the badge text)
+- [x] Verify responsive behavior at mobile + 1440px desktop breakpoints against the corresponding Figma frame variants
+- [x] `browser-tester` visual walkthrough of Steps 1→4 on both breakpoints
+- [x] `RegistrationProgress` step-indicator: 3 visual states (done/current/future — Figma shows current step as a two-layer translucent glow, not solid fill like done), correct height (12px) and gap (4px)
+- [x] Step 1 (`/sign-up`): add missing eyebrow text ("Let's start") + subtitle ("Your info is saved right away — even if you don't finish now.") per Figma, new i18n keys
+- [x] Step 3 (`/build-profile`): mark Company/Role/Industry as required (asterisk + Zod validation) per Figma, matching label copy ("Your role" not "Role / Position"); change Industry from free-text input to a fixed-option select (code-defined array, following the same "code-defined list over DB table" precedent as the interests catalog refactor, not free text)
+- [x] Step 4 (`/verify-email`): restructure copy (eyebrow = the email address, single subtitle without embedded email), add a "Resend email" button (new reusable Server Action, rate-limited) and a "Wrong email? Change it" link (back to `/sign-up` to restart with a corrected address)
+- [x] Congrats screen (`/welcome`): add the `RegistrationProgress` step 4/4 indicator (present in Figma, currently missing from code)
+- [x] Spacing/typography fixes: field-block-to-submit-button gap (16px not 24px), mobile H1 line-height (100% not 110%), remove `text-center` on `/verify-email` and `/welcome` to match the left-aligned pattern used by the other steps
