@@ -52,6 +52,17 @@
       "continue": "Continuar",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
+      "imOnTheWay": {
+        "description": "Déjanos tu nombre y correo electrónico — nuestro equipo se pondrá en contacto contigo personalmente.",
+        "emailLabel": "Correo electrónico",
+        "emailPlaceholder": "tu@ejemplo.com",
+        "nameLabel": "Nombre",
+        "namePlaceholder": "Tu nombre",
+        "submit": "Avisar al equipo",
+        "success": "Gracias — nos pondremos en contacto pronto.",
+        "title": "¿Aún no estás listo para registrarte?",
+        "trigger": "Ya voy en camino"
+      },
       "or": "o",
       "seeFeatures": "Ver funciones de la plataforma",
       "subtitle": "Esta plataforma es para quienes actúan — quienes cambian el mundo a través de sus acciones y su mentalidad. Son los Mindsetters.",

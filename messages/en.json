@@ -52,6 +52,17 @@
       "continue": "Continue",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
+      "imOnTheWay": {
+        "description": "Leave your name and email — our team will personally follow up with you.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@example.com",
+        "nameLabel": "Name",
+        "namePlaceholder": "Your name",
+        "submit": "Notify the team",
+        "success": "Thanks — we'll be in touch soon.",
+        "title": "Not ready to sign up yet?",
+        "trigger": "I'm on the way"
+      },
       "or": "or",
       "seeFeatures": "See platform features",
       "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",

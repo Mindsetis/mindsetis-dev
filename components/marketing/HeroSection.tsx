@@ -4,16 +4,20 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 import { HeroEmailCta } from './HeroEmailCta';
+import { LeadCaptureDialog } from './LeadCaptureDialog';
 
 /**
  * Welcome-screen hero — Figma "Welcome Screen - 1440 px" (desktop) / "Welcome Screen"
- * (mobile), Mindsetis design file. Server Component; the only client island is the email
- * capture form at the bottom (`HeroEmailCta`).
+ * (mobile), Mindsetis design file. Server Component; the client islands are the email
+ * capture form at the bottom (`HeroEmailCta`) and the "I'm on the way" lead-capture escape
+ * hatch (`LeadCaptureDialog`) rendered just below it.
  *
  * The "video" thumbnail is a static placeholder — the design has a "Click for watching"
  * card but no actual video asset/URL to wire up. Swap in a real video player once that
  * content exists. "See platform features" routes into the onboarding tour
  * (`/onboarding`); the email capture below routes straight into `/sign-up` instead.
+ * `LeadCaptureDialog` is a separate, lower-commitment path (spec §5.2) — it never routes
+ * into `/sign-up` and has no dedicated Figma frame (deliberate UI freedom, ROADMAP 1.3).
  */
 export async function HeroSection() {
   const t = await getTranslations('home.hero');
@@ -63,6 +67,7 @@ export async function HeroSection() {
       </div>
 
       <HeroEmailCta />
+      <LeadCaptureDialog />
     </section>
   );
 }
