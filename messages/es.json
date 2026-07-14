@@ -115,10 +115,10 @@
       },
       "industry": {
         "label": "Industria",
-        "placeholder": "p. ej. Fintech"
+        "placeholder": "Selecciona una industria"
       },
       "role": {
-        "label": "Rol / Puesto",
+        "label": "Tu rol",
         "placeholder": "p. ej. Fundador"
       },
       "title": "¿Qué estás construyendo?"
@@ -208,6 +208,7 @@
       "back": "Atrás",
       "continueWithGoogle": "Continuar con Google",
       "continueWithLinkedin": "Continuar con Linkedin",
+      "eyebrow": "Empecemos",
       "fullName": "Nombre",
       "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
@@ -222,16 +223,20 @@
       "stepLabel": "Paso {step} de {total}",
       "submit": "Continuar",
       "submitting": "Continuando…",
+      "subtitle": "Tu información se guarda de inmediato, incluso si no terminas ahora.",
       "title": "Crear cuenta",
       "username": "Nombre de usuario",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Volver a iniciar sesión",
-      "description": "Haz clic en el enlace del correo para activar tu cuenta.",
-      "subtitle": "Te hemos enviado un enlace de confirmación a {email}.",
-      "subtitleGeneric": "Te hemos enviado un enlace de confirmación.",
-      "title": "Revisa tu bandeja de entrada"
+      "changeIt": "Cámbialo",
+      "resend": "Reenviar correo",
+      "resending": "Enviando…",
+      "resendSuccess": "Correo de confirmación enviado.",
+      "subtitle": "Te enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta y continuar.",
+      "title": "Revisa tu bandeja de entrada",
+      "wrongEmail": "¿Correo equivocado?"
     },
     "welcome": {
       "browseCta": "Explorar la comunidad",

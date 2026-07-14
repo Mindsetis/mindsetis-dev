@@ -152,7 +152,9 @@ export function MemberProfileForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      {/* Outer gap is 16px (Figma's field-block-to-submit-button spacing) — the fields
+          themselves keep their own tighter 12px (`gap-3`) rhythm in the wrapper below. */}
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>

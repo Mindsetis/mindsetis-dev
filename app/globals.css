@@ -125,7 +125,7 @@
 @media (max-width: 767px) {
   :root {
     --text-h1: 2rem; /* 32px */
-    --text-h1--line-height: 1.1;
+    --text-h1--line-height: 1; /* 100% — matches Figma's mobile H1 32px/32px exactly */
     --text-body: 1rem; /* 16px */
     --text-tiny: 0.75rem; /* 12px */
   }

@@ -18,7 +18,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useRouter } from '@/i18n/navigation';
+import { INDUSTRIES, INDUSTRY_VALUES, type IndustryValue } from '@/lib/constants/industries';
 import { type BuildProfileInput, buildProfileSchema } from '@/lib/validation/build-profile';
 
 type BuildProfileFormProps = {
@@ -31,7 +39,9 @@ type BuildProfileFormProps = {
 /**
  * Registration wizard step 3/4 ("What do you build?") form — mirrors
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but simpler:
- * three optional plain-text fields, no file upload or multi-select controls.
+ * three required fields, no file upload or multi-select controls. Company/Role stay plain
+ * text; Industry (stage 1.4 Figma audit) is a fixed-option `Select` sourced from the
+ * code-defined `INDUSTRIES` catalog (`lib/constants/industries.ts`) instead of free text.
  */
 export function BuildProfileForm({
   initialCompany,
@@ -47,7 +57,12 @@ export function BuildProfileForm({
     defaultValues: {
       company: initialCompany ?? '',
       role: initialRole ?? '',
-      industry: initialIndustry ?? '',
+      // A pre-1.4 profile may have a free-text value that isn't in the fixed catalog anymore —
+      // treat anything outside `INDUSTRY_VALUES` as "no selection" rather than crashing the
+      // enum-typed field or silently submitting an invalid value.
+      industry: (INDUSTRY_VALUES as readonly string[]).includes(initialIndustry ?? '')
+        ? (initialIndustry as IndustryValue)
+        : undefined,
     },
   });
 
@@ -68,7 +83,9 @@ export function BuildProfileForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      {/* Outer gap is 16px (Figma's field-block-to-submit-button spacing) — the fields
+          themselves keep their own tighter 12px (`gap-3`) rhythm in the wrapper below. */}
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
@@ -81,7 +98,9 @@ export function BuildProfileForm({
             name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('buildProfile.company.label')}</FormLabel>
+                <FormLabel>
+                  {t('buildProfile.company.label')} <span className="text-primary">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="text"
@@ -100,7 +119,9 @@ export function BuildProfileForm({
             name="role"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('buildProfile.role.label')}</FormLabel>
+                <FormLabel>
+                  {t('buildProfile.role.label')} <span className="text-primary">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="text"
@@ -119,14 +140,23 @@ export function BuildProfileForm({
             name="industry"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('buildProfile.industry.label')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder={t('buildProfile.industry.placeholder')}
-                    {...field}
-                  />
-                </FormControl>
+                <FormLabel>
+                  {t('buildProfile.industry.label')} <span className="text-primary">*</span>
+                </FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('buildProfile.industry.placeholder')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {INDUSTRIES.map((industry) => (
+                      <SelectItem key={industry.value} value={industry.value}>
+                        {industry.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

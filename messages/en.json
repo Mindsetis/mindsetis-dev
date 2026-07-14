@@ -115,10 +115,10 @@
       },
       "industry": {
         "label": "Industry",
-        "placeholder": "e.g. Fintech"
+        "placeholder": "Select an industry"
       },
       "role": {
-        "label": "Role / Position",
+        "label": "Your role",
         "placeholder": "e.g. Founder"
       },
       "title": "What do you build?"
@@ -208,6 +208,7 @@
       "back": "Back",
       "continueWithGoogle": "Continue with Google",
       "continueWithLinkedin": "Continue with Linkedin",
+      "eyebrow": "Let's start",
       "fullName": "First name",
       "haveAccount": "Already have an account?",
       "hidePassword": "Hide password",
@@ -222,16 +223,20 @@
       "stepLabel": "Step {step} of {total}",
       "submit": "Continue",
       "submitting": "Continuing…",
+      "subtitle": "Your info is saved right away — even if you don't finish now.",
       "title": "Create account",
       "username": "Username",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Back to log in",
-      "description": "Click the link in the email to activate your account.",
-      "subtitle": "We've sent a confirmation link to {email}.",
-      "subtitleGeneric": "We've sent you a confirmation link.",
-      "title": "Check your inbox"
+      "changeIt": "Change it",
+      "resend": "Resend email",
+      "resending": "Sending…",
+      "resendSuccess": "Confirmation email sent.",
+      "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",
+      "title": "Check your inbox",
+      "wrongEmail": "Wrong email?"
     },
     "welcome": {
       "browseCta": "Browse the community",
