@@ -279,3 +279,107 @@ interests multi-select).
 - [ ] Server Action to persist profile fields + interest selections + avatar upload to Storage
 - [ ] i18n keys (`messages/en.json` source + `messages/es.json` mirror)
 - [ ] Review loop (`code-reviewer`, `security-auditor` for new RLS, `qa`) + `browser-tester` smoke check
+
+### 1.2 — Registration wizard: full 4-step reorder + Congrats screen (Figma alignment)
+**Status:** ✅ Done
+**Started:** 2026-07-14
+**Completed:** 2026-07-14
+_Live E2E passed against the hosted Supabase project (`browser-tester`): real signup through all 4 steps to `/welcome` confirmed working. Final commits on `feature/stage-1.4-registration-styling`: `0603854` (original 4-step build), `8fa3ff9` (auto-confirm rework + security fixes)._
+
+Reorders the registration wizard to match the Figma "Registration" flow exactly (per §5.2 ТЗ
+"Реєстрація та онбординг" + Figma frames `Registration 1/4` → `Member profile 2/4` →
+`Member profile 3/4` → `Member profile 4/4` → `Congrats screen`). Steps 1 (sign-up, Stage 0.6)
+and 2 (member-profile, Stage 1.1) exist but out of Figma order: email confirmation currently
+fires right after Step 1 instead of being Step 4/4, there is no Step 3/4, and there is no
+post-confirmation "Congrats screen" — confirming the email link today just redirects to `/`.
+
+- [x] New Step 3/4 page "What do you build?" (Company, Role/Position, Industry) — new page + Server Action + Zod schema, `RegistrationProgress` step={3}; migration for the new profile columns with RLS
+- [x] Move the "Check your inbox" email-confirmation screen to be Step 4/4 (currently shown right after Step 1) — `RegistrationProgress` step={4} on `/verify-email`
+- [x] **Auth architecture (final, live-tested, decided/reworked 2026-07-14):** signup auto-confirms the user at creation via the service-role Admin API (`admin.createUser({ email_confirm: true })`), giving an immediate session with no confirmation gate at all. This replaces the originally-planned `email_confirm: false` + hosted "Confirm email" toggle-flip approach, which live testing proved infeasible: Supabase's `signInWithPassword()` unconditionally rejects an `email_confirm:false` user regardless of that project-level toggle. Step 4 ("Check your inbox") and its email are now purely informational — a "Welcome to Mindsetis" email sent via this project's own `email_messages` queue (not Supabase Auth's `resend()`) — with an always-available "Continue" button straight to `/welcome`, not a gate waiting for an email click. **Accepted tradeoff (product decision, recorded 2026-07-14):** since there is no email-ownership verification at signup anymore, someone could sign up with an email address they don't control ("email squatting"). Mitigation shipped: `updatePassword` resets the 14-day `verification_deadline` and clears `access_restricted` on a completed password-reset (strong proof of real ownership), so a legitimate owner reclaiming a squatted address isn't immediately access-restricted. Full email-ownership gating before session grant was considered and explicitly rejected as out of scope for MVP.
+- [x] New "Congrats screen" page shown after email confirmation (`/api/auth/confirm` should redirect here instead of `/`) — "You are now a member of the community" + CTAs (Find Mindsetter / Invite to event / Find event / "Find out who a Mindsetter is")
+- [x] Update the `next` redirect param in `app/[locale]/(auth)/actions.ts` `signUp()` and the `/api/auth/confirm` route accordingly
+- [x] i18n keys for the new Step 3/4 and Congrats screen copy (`messages/en.json` source + `messages/es.json` mirror)
+- [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough of Steps 1→2→3→4→confirm→Congrats
+
+Out of scope for this stage (separate future stage per Figma): the "Find out who a Mindsetter is" fork into the 6-step extended Mindsetter wizard (Roles/Superpowers/Promo video/etc.), and the "I'm on the way" lead-capture flow from spec §5.2 (clarified 2026-07-14: a lightweight name+email capture for visitors not ready to register — written straight to a separate `leads` table, no Supabase Auth account created, passed to the team for manual follow-up; likely reuses the email field already on the first onboarding-tour slide in Figma, fired independently of whether the visitor completes the full wizard) — deferred to its own future stage, not built as part of 1.2.
+
+### 1.3 — "I'm on the way" lead capture
+**Status:** ✅ Done
+**Started:** 2026-07-14
+**Completed:** 2026-07-14
+
+Lightweight escape-hatch from spec §5.2 ("«I'm on the way» → запис у `leads` одразу (навіть якщо
+далі не пройде), передається команді") for visitors not ready to complete the full registration
+wizard — name + email only, no Supabase Auth account created, stored separately, surfaced to the
+team for manual follow-up. Not a numbered step in the 4-step wizard and has no dedicated Figma
+frame (clarified 2026-07-14) — since there was no Figma frame to drive the placement, the
+implementation made a deliberate product decision instead: a new, separate "I'm on the way"
+trigger (a small dialog/modal with name+email fields) added to the landing page's `HeroSection`
+component, right next to the existing `HeroEmailCta` (a different, unrelated, email-only feature
+that routes into the full `/sign-up` flow), fired independently of whether the visitor continues
+into the full wizard.
+
+- [x] Migration: `leads` table (`name`, `email`, `source`, `created_at`) with RLS — anon/public INSERT allowed (no auth required), SELECT restricted to staff via `is_staff()`
+- [x] Zod schema + rate-limited Server Action to capture a lead (name + email), independent of the sign-up flow
+- [x] Wire the capture point into the onboarding-tour intro slide (or wherever product decides) — fire-and-forget, does not block or replace full registration
+- [x] i18n keys (`messages/en.json` source + `messages/es.json` mirror)
+- [ ] Staff-facing lead list/queue is OUT of scope here — deferred to the admin-panel stage (§5.14); this stage only captures and stores leads
+- [x] Review loop (`code-reviewer`, `security-auditor` — public unauthenticated INSERT endpoint, `qa`) + `browser-tester` smoke check
+
+### 1.4 — Registration steps: pixel-accurate styling from Figma
+**Status:** ✅ Done
+**Started:** 2026-07-14
+**Completed:** 2026-07-14
+
+Visual polish pass across the full registration wizard (Steps 1–4, `RegistrationProgress`
+component, and the Step 3/4 + Congrats screen built in Stage 1.2) to match the Figma
+"Registration" frames exactly — spacing, typography, colors, control states (focus/error/disabled),
+and desktop (1440px) + mobile breakpoints per the corresponding Figma frames found during the
+Stage 1.2 Figma audit (`Registration 1/4`, `Member profile 2/4`, `Member profile 3/4`,
+`Member profile 4/4`, `Congrats screen`, plus their 1440px desktop variants). Functional
+behavior stays as already implemented — this stage is styling/visual-fidelity only, not new
+functionality.
+
+**Scope expanded 2026-07-14:** a follow-up Figma audit found real content/functionality gaps
+against the design (not just visual deltas) — missing copy, missing controls, a required-field
+mismatch, and a missing progress indicator on the Congrats screen. Product decided to fold all
+of this into 1.4 rather than defer it; the new items below (all to be implemented next) sit
+alongside the original pure-styling checklist.
+
+- [x] Diff each step's current implementation against its Figma frame (via `figma-designer`) and list concrete visual deltas per step
+- [x] Fix spacing/typography/color deltas in `/sign-up`, `/member-profile`, and the new Step 3/4 + Congrats screen from Stage 1.2
+- [x] Verify/fix the `RegistrationProgress` step-indicator styling (note: Stage 1.2's Figma audit found the progress badge text is inconsistently synced to step number in several Figma frames — use frame name + left-to-right order as ground truth, not the badge text)
+- [x] Verify responsive behavior at mobile + 1440px desktop breakpoints against the corresponding Figma frame variants
+- [x] `browser-tester` visual walkthrough of Steps 1→4 on both breakpoints
+- [x] `RegistrationProgress` step-indicator: 3 visual states (done/current/future — Figma shows current step as a two-layer translucent glow, not solid fill like done), correct height (12px) and gap (4px)
+- [x] Step 1 (`/sign-up`): add missing eyebrow text ("Let's start") + subtitle ("Your info is saved right away — even if you don't finish now.") per Figma, new i18n keys
+- [x] Step 3 (`/build-profile`): mark Company/Role/Industry as required (asterisk + Zod validation) per Figma, matching label copy ("Your role" not "Role / Position"); change Industry from free-text input to a fixed-option select (code-defined array, following the same "code-defined list over DB table" precedent as the interests catalog refactor, not free text)
+- [x] Step 4 (`/verify-email`): restructure copy (eyebrow = the email address, single subtitle without embedded email), add a "Resend email" button (new reusable Server Action, rate-limited) and a "Wrong email? Change it" link (back to `/sign-up` to restart with a corrected address)
+- [x] Congrats screen (`/welcome`): add the `RegistrationProgress` step 4/4 indicator (present in Figma, currently missing from code)
+- [x] Spacing/typography fixes: field-block-to-submit-button gap (16px not 24px), mobile H1 line-height (100% not 110%), remove `text-center` on `/verify-email` and `/welcome` to match the left-aligned pattern used by the other steps
+
+### 1.5 — Real email verification, moved to step 2 (revert auto-confirm workaround)
+**Status:** 🔄 In progress
+**Started:** 2026-07-15
+
+Implementation + Figma audit + full review loop (code-reviewer ×2, security-auditor, qa, browser-tester) complete and passing. Two follow-ups surfaced during review, both non-blocking and NOT part of this stage's original scope: (1) rate-limiting across the app (including the new `signUp()`/`resendConfirmationEmail` per-email buckets) is currently a no-op because `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` are unset in this environment (pre-existing gap, tracked under stage 0.2's deferred Upstash infra) — real enforcement needs that provisioned; (2) `app/[locale]/build-profile/actions.ts` still hand-rolls its own per-email hash bucket instead of the new shared `emailBucket` helper (`lib/rate-limit.ts`) — harmless, optional cleanup. `browser-tester` could not observe the literal sign-up-submit→redirect live (blocked by Supabase's own strict built-in email-send quota during testing, not a code defect) — confirmed via source and direct navigation instead.
+
+Follow-up live verification (2026-07-15): the user completed the last remaining checklist item (Supabase Dashboard → Email Templates → "Confirm signup" now points at `/api/auth/confirm?token_hash=...&type=email&next=/member-profile`) and configured Custom SMTP via Resend. A full live end-to-end test then found the code path itself is fully correct — verified by bypassing SMTP with the Admin API's `generate_link` to mint a real token, hitting `/api/auth/confirm` directly, and confirming it sets a real session cookie and lands on `/member-profile` (step 3) rendering the actual form, not a login bounce. However, an actual `signUp()` call still fails with a 500 (`Error sending confirmation email`) because Resend rejects the send: **the `mindsetis.com` sending domain is not yet verified in the Resend account** (`smtp_admin_email` is `no-reply@mindsetis.com`). GoTrue rolls back user creation entirely when the mailer fails, so this is safe (no orphaned/broken accounts), but real sign-up is non-functional until the domain is verified. Remaining step: verify `mindsetis.com` in the Resend dashboard (resend.com/domains → add the DNS records Resend provides), then re-run a real signup→email→click test to close this out.
+
+Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ email_confirm: true })` + immediate sign-in, because `signInWithPassword()` unconditionally rejects an `email_confirm:false` user regardless of the Supabase project's "Confirm email" toggle — that made the *original* placement (confirmation gate at step 4, after the profile is already filled while signed in) infeasible without either an unconfirmed session or losing the wizard's session mid-flow. Product now wants confirmation restored as a **real gate** — moved to **step 2** (right after sign-up, before any profile data is collected), so the session-before-confirmed conflict never arises: `verifyOtp()` (fired when the user clicks the email link) both confirms the account **and** establishes the session, so steps 3–4 proceed authenticated exactly as they do today. Steps 3 (member-profile) and 4 (build-profile) keep their current content/order, just renumbered.
+
+- [x] `Dashboard → Authentication → Providers → Email` → turn **Confirm email** back ON (per `docs/SUPABASE_SETUP.md` §3 — believed disabled during the stage 1.2 workaround; verify current state on the hosted project first)
+- [x] `signUp` (`app/[locale]/(auth)/actions.ts`): revert from `service.auth.admin.createUser({ email_confirm: true })` + follow-up `signInWithPassword()` back to a plain anon-client `supabase.auth.signUp()` (no immediate session — return `{ email }` only) so Supabase's own "Confirm signup" mailer fires (per `docs/SUPABASE_SETUP.md` §3a, already routed through the Resend SMTP relay — no `lib/email/` queue involved)
+- [x] `SignUpForm.tsx`: redirect to `/verify-email?email=...` instead of `/member-profile` after successful sign-up
+- [x] `/verify-email` page: renumber `RegistrationProgress` from `step={4}` to `step={2}`; back-link target `/build-profile` → `/sign-up`; remove the "Continue" button that currently skips straight to `/welcome` with no confirmation (this becomes a real blocking gate — no session, no bypass)
+- [x] `/verify-email` resend action: swap `ResendWelcomeEmailButton`/`resendWelcomeEmail` (which requires a session and resends the informational welcome email) for a pre-session "resend confirmation email" action using `supabase.auth.resend({ type: 'signup', email })`, rate-limited the same way, keyed off the `?email=` param (no session exists yet at this step)
+- [x] `/api/auth/confirm` route: currently documented as "NOT used by the sign-up wizard" — re-wire it into the wizard for `type=email`/`type=signup` confirmations, redirecting to `/member-profile` (step 3) on success instead of only serving the password-reset flow; update its doc comment
+- [x] `Dashboard → Authentication → Email Templates` → "Confirm signup" template: point the link at `{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/member-profile` (per `docs/SUPABASE_SETUP.md` §3, not yet done since the wizard didn't use this route)
+- [x] `/member-profile` page: renumber `step={2}` → `step={3}`; back-link target `/sign-up` → `/verify-email`
+- [x] `/build-profile` page: renumber `step={3}` → `step={4}`; back-link target stays `/member-profile` (unchanged, still the previous step)
+- [x] `/welcome` (Congrats screen): no renumbering needed (`step={4}`/`total=4` already correct as the "wizard complete" state) — just re-verify it still reads right as the screen after step 4/build-profile
+- [x] Re-review the "email squatting" mitigation from stage 1.2 (`updatePassword` resetting `verification_deadline`/`access_restricted`) — decide whether it's still needed now that email ownership is verified again before any session exists, or safe/harmless to leave as defense-in-depth
+- [x] Update stale doc comments referencing the auto-confirm architecture: `(auth)/actions.ts#signUp`, `verify-email/actions.ts` (or its replacement), `verify-email/page.tsx`, `app/api/auth/confirm/route.ts`, and the ROADMAP 1.2 entry itself (add a note that it was superseded by 1.5, don't delete the historical record)
+- [x] Migration/data check: any existing hosted-project users created via the auto-confirm path stay confirmed (no retroactive re-verification) — confirm this is fine as a one-time MVP-stage transition, not a live-migration concern
+- [x] i18n: update `signUp.stepLabel`-driven copy if any step-specific strings (e.g. verify-email eyebrow/subtitle) assumed the old step-4 framing
+- [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths

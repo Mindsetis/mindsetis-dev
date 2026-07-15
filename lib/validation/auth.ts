@@ -44,6 +44,12 @@ export const forgotPasswordSchema = z.object({
 });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
+/** Input for `resendConfirmationEmail` (`/verify-email`, stage 1.5) — email only, no session. */
+export const resendConfirmationEmailSchema = z.object({
+  email: emailSchema,
+});
+export type ResendConfirmationEmailInput = z.infer<typeof resendConfirmationEmailSchema>;
+
 export const resetPasswordSchema = z
   .object({
     password: passwordSchema,

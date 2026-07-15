@@ -7,6 +7,7 @@ import type { EmailLocale, EmailTemplateKey, EmailTemplatePropsMap } from '@/lib
 import { GenericEmail, genericEmailSubject } from './templates/generic-email';
 import { PasswordResetEmail, passwordResetEmailSubject } from './templates/password-reset-email';
 import { VerificationEmail, verificationEmailSubject } from './templates/verification-email';
+import { WelcomeEmail, welcomeEmailSubject } from './templates/welcome-email';
 
 export interface EmailTemplateDefinition<K extends EmailTemplateKey> {
   render(props: EmailTemplatePropsMap[K], locale: EmailLocale): ReactElement;
@@ -37,5 +38,9 @@ export const emailTemplateRegistry: { [K in EmailTemplateKey]: EmailTemplateDefi
   generic: {
     render: (props, locale) => <GenericEmail {...props} locale={locale} />,
     subject: (props) => genericEmailSubject(props),
+  },
+  welcome: {
+    render: (props, locale) => <WelcomeEmail {...props} locale={locale} />,
+    subject: (_props, locale) => welcomeEmailSubject(locale),
   },
 };

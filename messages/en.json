@@ -52,6 +52,17 @@
       "continue": "Continue",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
+      "imOnTheWay": {
+        "description": "Leave your name and email — our team will personally follow up with you.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "you@example.com",
+        "nameLabel": "Name",
+        "namePlaceholder": "Your name",
+        "submit": "Notify the team",
+        "success": "Thanks — we'll be in touch soon.",
+        "title": "Not ready to sign up yet?",
+        "trigger": "I'm on the way"
+      },
       "or": "or",
       "seeFeatures": "See platform features",
       "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
@@ -97,6 +108,21 @@
     "retry": "Try again"
   },
   "auth": {
+    "buildProfile": {
+      "company": {
+        "label": "Company",
+        "placeholder": "Your company name"
+      },
+      "industry": {
+        "label": "Industry",
+        "placeholder": "Select an industry"
+      },
+      "role": {
+        "label": "Your role",
+        "placeholder": "e.g. Founder"
+      },
+      "title": "What do you build?"
+    },
     "errors": {
       "invalidLink": "Your link is invalid or expired."
     },
@@ -182,6 +208,7 @@
       "back": "Back",
       "continueWithGoogle": "Continue with Google",
       "continueWithLinkedin": "Continue with Linkedin",
+      "eyebrow": "Let's start",
       "fullName": "First name",
       "haveAccount": "Already have an account?",
       "hidePassword": "Hide password",
@@ -196,16 +223,25 @@
       "stepLabel": "Step {step} of {total}",
       "submit": "Continue",
       "submitting": "Continuing…",
+      "subtitle": "Your info is saved right away — even if you don't finish now.",
       "title": "Create account",
       "username": "Username",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Back to log in",
-      "description": "Click the link in the email to activate your account.",
-      "subtitle": "We've sent a confirmation link to {email}.",
-      "subtitleGeneric": "We've sent you a confirmation link.",
-      "title": "Check your inbox"
+      "changeIt": "Change it",
+      "resend": "Resend email",
+      "resending": "Sending…",
+      "resendSuccess": "Confirmation email sent.",
+      "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",
+      "title": "Check your inbox",
+      "wrongEmail": "Wrong email?"
+    },
+    "welcome": {
+      "browseCta": "Browse the community",
+      "subtitle": "You are now a member of the community.",
+      "title": "Congrats!"
     }
   },
   "email": {
@@ -231,6 +267,14 @@
       "greetingGeneric": "Hi there,",
       "heading": "Confirm your email",
       "subject": "Confirm your email for Mindsetis Community"
+    },
+    "welcome": {
+      "body": "Thanks for joining Mindsetis Community — your account is ready to go. Jump back in whenever you're ready.",
+      "cta": "Go to Mindsetis Community",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "heading": "Welcome to Mindsetis Community",
+      "subject": "Welcome to Mindsetis Community"
     }
   }
 }

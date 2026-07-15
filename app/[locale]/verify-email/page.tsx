@@ -1,0 +1,112 @@
+import { ArrowLeft } from 'lucide-react';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+
+import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
+import { ResendConfirmationEmailButton } from '@/components/auth/ResendConfirmationEmailButton';
+import { Link } from '@/i18n/navigation';
+import { getCurrentUser } from '@/lib/auth/guards';
+
+type VerifyEmailPageProps = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ email?: string }>;
+};
+
+const TOTAL_STEPS = 4;
+
+/**
+ * Registration wizard step 2/4 — "Check your inbox" (Figma "Registration" flow). Reached
+ * right after step 1 (`/sign-up`) creates the (unconfirmed) account.
+ *
+ * A REAL blocking confirmation gate (stage 1.5 rework — this used to be step 4/4 and was
+ * purely informational, skippable via a "Continue" button, because signup auto-confirmed at
+ * creation; see git history / `(auth)/actions.ts#signUp`'s doc comment for that now-removed
+ * architecture). `supabase.auth.signUp()` (anon client, `(auth)/actions.ts#signUp`) now creates
+ * an unconfirmed user with NO session — the visitor must click the confirmation link mailed to
+ * them, which hits `/api/auth/confirm` and calls `verifyOtp()`, establishing both the
+ * confirmation AND a real session in one step. There is therefore intentionally no "Continue"
+ * button here: nothing to proceed into without a session, and no bypass is meant to exist.
+ * Once the link is clicked, `/api/auth/confirm` redirects straight into step 3
+ * (`/member-profile`, via the `next=/member-profile` query param baked into the Supabase Auth
+ * "Confirm signup" email template — a dashboard config, not code).
+ *
+ * Moved out of the `(auth)` route group (stage 1.2 reorder) — that group's shared bordered-
+ * card layout (`(auth)/layout.tsx`) was fine for a standalone static screen, but this step
+ * needs the same Back-link + `RegistrationProgress` + centered `max-w-[640px]` shell as the
+ * other steps, same reasoning `/sign-up` and `/member-profile` already live outside that group
+ * for (see `sign-up/page.tsx`'s doc comment). The URL itself (`/verify-email`) is unchanged —
+ * route groups don't appear in the path.
+ *
+ * There is normally no session at this point (that's the whole point of the gate), so `?email=`
+ * — set by `SignUpForm.tsx`'s redirect — is the primary source for the displayed address.
+ * `getCurrentUser()` stays as a defensive fallback for the unusual case of landing back here
+ * with a still-live session (e.g. browser Back after confirming); session email wins if somehow
+ * both are present.
+ *
+ * "Back to log in" isn't on this Figma frame — kept rather than removed outright (a visitor who
+ * lands back on this URL with no session at all still needs a way out), demoted to a small
+ * tertiary link below the primary actions instead of competing with them for attention.
+ */
+export default async function VerifyEmailPage({ params, searchParams }: VerifyEmailPageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const { email } = await searchParams;
+  const t = await getTranslations('auth');
+
+  const user = await getCurrentUser();
+  const resolvedEmail = user?.email ?? email;
+
+  return (
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
+      <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
+        <Link
+          href="/sign-up"
+          className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {t('signUp.back')}
+        </Link>
+
+        <div className="w-full max-w-[640px] flex-1 md:flex-none">
+          <RegistrationProgress
+            step={2}
+            total={TOTAL_STEPS}
+            label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}
+          />
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          {resolvedEmail ? (
+            <span className="text-tiny font-bold tracking-[0.3em] text-primary uppercase">
+              {resolvedEmail}
+            </span>
+          ) : null}
+          <h1 className="font-display text-h1 text-foreground md:text-h3">
+            {t('verifyEmail.title')}
+          </h1>
+          <p className="text-body font-medium text-foreground">{t('verifyEmail.subtitle')}</p>
+        </div>
+
+        {resolvedEmail ? <ResendConfirmationEmailButton email={resolvedEmail} /> : null}
+
+        <p className="text-sm text-muted-foreground">
+          {t('verifyEmail.wrongEmail')}{' '}
+          <Link
+            href="/sign-up"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t('verifyEmail.changeIt')}
+          </Link>
+        </p>
+
+        <Link
+          href="/login"
+          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          {t('verifyEmail.backToLogin')}
+        </Link>
+      </div>
+    </div>
+  );
+}

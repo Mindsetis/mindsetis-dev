@@ -1,0 +1,44 @@
+/**
+ * Typography tokens.
+ *
+ * Display/headings: Cal Sans (400, wired to --font-cal-sans by next/font in
+ * app/[locale]/layout.tsx). Body/UI: Manrope (400/500/700, --font-manrope).
+ * `--font-sans` / `--font-display` are the semantic tokens components should use; both
+ * carry an explicit fallback chain so the build never breaks if a font variable is
+ * unavailable at runtime.
+ */
+@theme {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-cal-sans), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale (desktop). Mobile overrides for h1/body/tiny below. */
+  --text-h1: 5.5rem; /* 88px */
+  --text-h1--line-height: 0.9;
+  --text-h1--font-weight: 400;
+  --text-h2: 4.5rem; /* 72px */
+  --text-h2--line-height: 0.9;
+  --text-h2--font-weight: 400;
+  --text-h3: 3rem; /* 48px — "H3 (PC)" in Figma; used for the Welcome-screen hero headline */
+  --text-h3--line-height: 0.9;
+  --text-h3--font-weight: 400;
+  --text-l: 2rem; /* 32px */
+  --text-l--line-height: 1.15;
+  --text-m: 1.375rem; /* 22px */
+  --text-m--line-height: 1.3;
+  --text-body: 1rem; /* 16px */
+  --text-body--line-height: 1.5;
+  --text-tiny: 0.875rem; /* 14px */
+  --text-tiny--line-height: 1.4;
+}
+
+/* Mobile type scale (spec: h1 32px, body 16px, tiny 12px on mobile). Real CSS custom
+ * properties, so overriding them here re-resolves every `text-h1`/`text-body`/`text-tiny`
+ * utility below the breakpoint — no duplicate utility classes needed. */
+@media (max-width: 767px) {
+  :root {
+    --text-h1: 2rem; /* 32px */
+    --text-h1--line-height: 1; /* 100% — matches Figma's mobile H1 32px/32px exactly */
+    --text-body: 1rem; /* 16px */
+    --text-tiny: 0.75rem; /* 12px */
+  }
+}

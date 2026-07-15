@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * Server Action for the registration wizard's step 2/4 ("Member profile" — see
+ * Server Action for the registration wizard's step 3/4 ("Member profile" — see
  * `page.tsx`). Validates the full step-2 form, uploads a newly-picked avatar `File` to the
  * `avatars` Storage bucket (public-read, write-own-folder) — or reuses the caller's existing
  * `avatar_url` when resubmitting without picking a new one — and upserts `profiles`

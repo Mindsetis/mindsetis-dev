@@ -114,17 +114,18 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
       setFormError(result.error.message);
       return;
     }
-    if (result.data.needsEmailConfirmation) {
-      router.push(`/verify-email?email=${encodeURIComponent(result.data.email)}`);
-      return;
-    }
-    router.push('/');
-    router.refresh();
+    // signUp() no longer returns a session — the account is unconfirmed until the visitor
+    // clicks the link in their inbox (see `(auth)/actions.ts#signUp`'s doc comment). Success
+    // here just means the account was created; send them to the blocking verification step
+    // (step 2) with the address so it can be displayed there.
+    router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
+      {/* Outer gap is 16px (Figma's field-block-to-submit-button spacing) — the fields
+          themselves keep their own tighter 12px (`gap-3`) rhythm in the wrapper below. */}
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>

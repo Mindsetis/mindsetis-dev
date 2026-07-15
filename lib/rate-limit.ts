@@ -9,6 +9,8 @@
  */
 import 'server-only';
 
+import { createHash } from 'node:crypto';
+
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -93,6 +95,16 @@ export async function assertWithinRateLimit(
   if (!success) {
     throw new ActionError('rate_limited', 'Too many attempts. Please try again in a moment.');
   }
+}
+
+/**
+ * Per-account rate-limit bucket (hashed so raw emails never land in Redis keys). Use for any
+ * per-email ceiling that must hold across IPs (e.g. throttling sign-in, sign-up, or
+ * confirmation/reset email resends for one target address), paired with an IP-based limit via
+ * `enforceRateLimit`/`createAction`'s `rateLimit` option.
+ */
+export function emailBucket(prefix: string, email: string): string {
+  return `${prefix}:${createHash('sha256').update(email).digest('hex')}`;
 }
 
 /** Best-effort client IP from proxy headers (Vercel/Cloudflare). Falls back to a constant. */

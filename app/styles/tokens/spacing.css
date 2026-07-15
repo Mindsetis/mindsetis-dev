@@ -1,0 +1,8 @@
+/**
+ * Layout constants (observed in design, not tokenized in Figma).
+ */
+@theme {
+  --spacing-page: 4rem; /* 64px */
+  --spacing-section: 5rem; /* 80px */
+  --container-large: 80rem; /* 1280px */
+}

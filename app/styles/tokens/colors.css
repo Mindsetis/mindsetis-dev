@@ -1,0 +1,47 @@
+/**
+ * Color tokens — dark Masterclass/Netflix theme, single mode (no light palette). Values
+ * pulled from the Figma design source of truth (`Mindsetis (Copy)`). Brand accent is
+ * cyan/sky-blue (#79b9e3) — NOT Netflix-red.
+ */
+@theme {
+  /* ---- Base surfaces --------------------------------------------------- */
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+
+  --color-card: #1a1a1a;
+  --color-card-foreground: #ffffff;
+  --color-popover: #1a1a1a;
+  --color-popover-foreground: #ffffff;
+
+  --color-muted: #1a1a1a;
+  --color-muted-foreground: #a5a5a5;
+
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #ffffff;
+
+  --color-accent: #1a1a1a;
+  --color-accent-foreground: #ffffff;
+
+  /* ---- Brand / primary (cyan) ------------------------------------------ */
+  --color-primary: #79b9e3;
+  --color-primary-foreground: #000000;
+  --color-primary-hover: #9ad2ee;
+  --color-primary-active: #5892c3;
+  --color-primary-disabled: #556780;
+  /* End stop of the primary gradient (--gradient-primary in effects.css) and the hero
+   * headline's gradient-text accent — named so both usages stay in sync. */
+  --color-gradient-end: #21b8e6;
+
+  /* ---- Semantic status --------------------------------------------------*/
+  --color-destructive: #ff4c58;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #08d6ad;
+  --color-success-foreground: #000000;
+
+  /* ---- Structural --------------------------------------------------------*/
+  --color-border: #747474;
+  --color-input: #747474;
+  --color-ring: #79b9e3;
+  /* Input/textarea/select focus border (Figma: white, no ring/glow). */
+  --color-input-focus: #ffffff;
+}

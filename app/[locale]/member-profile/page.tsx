@@ -28,14 +28,18 @@ type MemberProfilePageProps = {
 const TOTAL_STEPS = 4;
 
 /**
- * Registration wizard step 2/4 — "Member profile" (Figma `71:452` mobile / `387:2142`
- * desktop). Reached right after sign-up (step 1, `app/[locale]/sign-up/page.tsx`); shares
- * that step's page shell (Back link + `RegistrationProgress` + centered `max-w-[640px]`
- * form column) rather than inventing a new layout.
+ * Registration wizard step 3/4 — "Member profile" (Figma `71:452` mobile / `387:2142`
+ * desktop). Reached right after email confirmation (step 2, `/verify-email`) — stage 1.5
+ * renumbered the wizard to put the blocking confirmation gate second, right after sign-up,
+ * before profile data collection; this step's URL/content are unchanged, only its position in
+ * the sequence moved. Shares the wizard's page shell (Back link + `RegistrationProgress` +
+ * centered `max-w-[640px]` form column) rather than inventing a new layout.
  *
  * Requires a signed-in user (this writes to `profiles` for the caller) — redirect to
  * `/login` defends this at the page level; `middleware.ts` (`PROTECTED_PREFIXES`) does the
- * same before the page even renders.
+ * same before the page even renders. By the time a visitor reaches this page, `/api/auth/confirm`
+ * has already established a real, confirmed session (see that route's doc comment) — no change
+ * needed to this guard itself, it already worked exactly this way.
  */
 export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
   const { locale } = await params;
@@ -51,8 +55,8 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   }
 
   const supabase = await createClient();
-  // This step's already-saved `profiles` columns, so a user revisiting this page (Back, or
-  // before step 3 exists) sees their previously-submitted data instead of a blank form (see
+  // This step's already-saved `profiles` columns, so a user revisiting this page (e.g. Back
+  // from step 3) sees their previously-submitted data instead of a blank form (see
   // `MemberProfileForm`'s `initial*` props).
   const { data: profileData } = await supabase
     .from('profiles')
@@ -75,7 +79,7 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
           why Back is pinned to the logo's left edge on desktop but inline on mobile). */}
       <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
         <Link
-          href="/sign-up"
+          href="/verify-email"
           className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
@@ -84,9 +88,9 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
 
         <div className="w-full max-w-[640px] flex-1 md:flex-none">
           <RegistrationProgress
-            step={2}
+            step={3}
             total={TOTAL_STEPS}
-            label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}
+            label={t('signUp.stepLabel', { step: 3, total: TOTAL_STEPS })}
           />
         </div>
       </div>

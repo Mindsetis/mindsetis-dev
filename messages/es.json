@@ -52,6 +52,17 @@
       "continue": "Continuar",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
+      "imOnTheWay": {
+        "description": "Déjanos tu nombre y correo electrónico — nuestro equipo se pondrá en contacto contigo personalmente.",
+        "emailLabel": "Correo electrónico",
+        "emailPlaceholder": "tu@ejemplo.com",
+        "nameLabel": "Nombre",
+        "namePlaceholder": "Tu nombre",
+        "submit": "Avisar al equipo",
+        "success": "Gracias — nos pondremos en contacto pronto.",
+        "title": "¿Aún no estás listo para registrarte?",
+        "trigger": "Ya voy en camino"
+      },
       "or": "o",
       "seeFeatures": "Ver funciones de la plataforma",
       "subtitle": "Esta plataforma es para quienes actúan — quienes cambian el mundo a través de sus acciones y su mentalidad. Son los Mindsetters.",
@@ -97,6 +108,21 @@
     "retry": "Intentar de nuevo"
   },
   "auth": {
+    "buildProfile": {
+      "company": {
+        "label": "Empresa",
+        "placeholder": "El nombre de tu empresa"
+      },
+      "industry": {
+        "label": "Industria",
+        "placeholder": "Selecciona una industria"
+      },
+      "role": {
+        "label": "Tu rol",
+        "placeholder": "p. ej. Fundador"
+      },
+      "title": "¿Qué estás construyendo?"
+    },
     "errors": {
       "invalidLink": "Tu enlace no es válido o ha expirado."
     },
@@ -182,6 +208,7 @@
       "back": "Atrás",
       "continueWithGoogle": "Continuar con Google",
       "continueWithLinkedin": "Continuar con Linkedin",
+      "eyebrow": "Empecemos",
       "fullName": "Nombre",
       "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
@@ -196,16 +223,25 @@
       "stepLabel": "Paso {step} de {total}",
       "submit": "Continuar",
       "submitting": "Continuando…",
+      "subtitle": "Tu información se guarda de inmediato, incluso si no terminas ahora.",
       "title": "Crear cuenta",
       "username": "Nombre de usuario",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
       "backToLogin": "Volver a iniciar sesión",
-      "description": "Haz clic en el enlace del correo para activar tu cuenta.",
-      "subtitle": "Te hemos enviado un enlace de confirmación a {email}.",
-      "subtitleGeneric": "Te hemos enviado un enlace de confirmación.",
-      "title": "Revisa tu bandeja de entrada"
+      "changeIt": "Cámbialo",
+      "resend": "Reenviar correo",
+      "resending": "Enviando…",
+      "resendSuccess": "Correo de confirmación enviado.",
+      "subtitle": "Te enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta y continuar.",
+      "title": "Revisa tu bandeja de entrada",
+      "wrongEmail": "¿Correo equivocado?"
+    },
+    "welcome": {
+      "browseCta": "Explorar la comunidad",
+      "subtitle": "Ya eres miembro de la comunidad.",
+      "title": "¡Felicidades!"
     }
   },
   "email": {
@@ -231,6 +267,14 @@
       "greetingGeneric": "Hola,",
       "heading": "Confirma tu correo electrónico",
       "subject": "Confirma tu correo para Mindsetis Community"
+    },
+    "welcome": {
+      "body": "Gracias por unirte a Mindsetis Community — tu cuenta ya está lista. Vuelve cuando quieras.",
+      "cta": "Ir a Mindsetis Community",
+      "greeting": "Hola {name},",
+      "greetingGeneric": "Hola,",
+      "heading": "Bienvenido a Mindsetis Community",
+      "subject": "Bienvenido a Mindsetis Community"
     }
   }
 }

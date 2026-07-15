@@ -8,131 +8,25 @@
  * Figma design source of truth (`Mindsetis (Copy)`). Brand accent is cyan/sky-blue
  * (#79b9e3) — NOT Netflix-red.
  *
- * Tailwind v4 is CSS-first: there is no `tailwind.config.js`. Every token below is a real
- * CSS custom property emitted by `@theme`, so utilities like `bg-primary`, `text-h1`, or
- * `max-w-large` are generated straight from this file.
+ * Tailwind v4 is CSS-first: there is no `tailwind.config.js`. Every token is a real CSS
+ * custom property emitted by `@theme` in the imported files below, so utilities like
+ * `bg-primary`, `text-h1`, or `max-w-large` are generated straight from them.
+ *
+ * Tokens are split by concern for easy editing:
+ *   styles/tokens/colors.css      — surfaces, brand/primary, semantic status, structural
+ *   styles/tokens/typography.css  — fonts + type scale (desktop & mobile)
+ *   styles/tokens/spacing.css     — page/section spacing, container widths
+ *   styles/tokens/radius.css      — corner radius scale
+ *   styles/tokens/effects.css     — shadows, gradients
+ *   styles/base.css               — base element styles (body, ...)
+ *
+ * To change an existing value, edit it in the matching file. To add a new token category,
+ * create a new file under styles/ and add an @import for it below.
  */
-@theme {
-  /* ---- Base surfaces --------------------------------------------------- */
-  --color-background: #000000;
-  --color-foreground: #ffffff;
+@import './styles/tokens/colors.css';
+@import './styles/tokens/typography.css';
+@import './styles/tokens/spacing.css';
+@import './styles/tokens/radius.css';
+@import './styles/tokens/effects.css';
 
-  --color-card: #1a1a1a;
-  --color-card-foreground: #ffffff;
-  --color-popover: #1a1a1a;
-  --color-popover-foreground: #ffffff;
-
-  --color-muted: #1a1a1a;
-  --color-muted-foreground: #a5a5a5;
-
-  --color-secondary: #1a1a1a;
-  --color-secondary-foreground: #ffffff;
-
-  --color-accent: #1a1a1a;
-  --color-accent-foreground: #ffffff;
-
-  /* ---- Brand / primary (cyan) ------------------------------------------ */
-  --color-primary: #79b9e3;
-  --color-primary-foreground: #000000;
-  --color-primary-hover: #9ad2ee;
-  --color-primary-active: #5892c3;
-  --color-primary-disabled: #556780;
-  /* End stop of the primary gradient (--gradient-primary below) and the hero headline's
-   * gradient-text accent — named so both usages stay in sync. */
-  --color-gradient-end: #21b8e6;
-
-  /* ---- Semantic status --------------------------------------------------*/
-  --color-destructive: #ff4c58;
-  --color-destructive-foreground: #ffffff;
-  --color-success: #08d6ad;
-  --color-success-foreground: #000000;
-
-  /* ---- Structural --------------------------------------------------------*/
-  --color-border: #747474;
-  --color-input: #747474;
-  --color-ring: #79b9e3;
-  /* Input/textarea/select focus border (Figma: white, no ring/glow). */
-  --color-input-focus: #ffffff;
-
-  /* ---- Typography --------------------------------------------------------
-   * Display/headings: Cal Sans (400, wired to --font-cal-sans by next/font in
-   * app/[locale]/layout.tsx). Body/UI: Manrope (400/500/700, --font-manrope).
-   * `--font-sans` / `--font-display` are the semantic tokens components should use; both
-   * carry an explicit fallback chain so the build never breaks if a font variable is
-   * unavailable at runtime.
-   */
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: var(--font-cal-sans), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-
-  /* Type scale (desktop). Mobile overrides for h1/body/tiny below. */
-  --text-h1: 5.5rem; /* 88px */
-  --text-h1--line-height: 0.9;
-  --text-h1--font-weight: 400;
-  --text-h2: 4.5rem; /* 72px */
-  --text-h2--line-height: 0.9;
-  --text-h2--font-weight: 400;
-  --text-h3: 3rem; /* 48px — "H3 (PC)" in Figma; used for the Welcome-screen hero headline */
-  --text-h3--line-height: 0.9;
-  --text-h3--font-weight: 400;
-  --text-l: 2rem; /* 32px */
-  --text-l--line-height: 1.15;
-  --text-m: 1.375rem; /* 22px */
-  --text-m--line-height: 1.3;
-  --text-body: 1rem; /* 16px */
-  --text-body--line-height: 1.5;
-  --text-tiny: 0.875rem; /* 14px */
-  --text-tiny--line-height: 1.4;
-
-  /* ---- Layout constants (observed in design, not tokenized in Figma) ---- */
-  --spacing-page: 4rem; /* 64px */
-  --spacing-section: 5rem; /* 80px */
-  --container-large: 80rem; /* 1280px */
-
-  /* ---- Radius ------------------------------------------------------------
-   * 12px confirmed against Figma for buttons/inputs (UI Kit audit). Card corners still
-   * use this same value as an assumption — back-check once card components are audited.
-   */
-  --radius: 0.75rem; /* 12px */
-
-  /* ---- Effects ------------------------------------------------------------
-   * Primary CTA soft cyan glow (Figma "drop shadow" effect → CSS box-shadow).
-   */
-  --shadow-glow-primary: 0 4px 12.3px 0 rgb(111 237 227 / 0.8);
-
-  /* Primary button gradient (Figma). Angle synthesized from the design preview —
-   * TODO confirm angle with designer. */
-  --gradient-primary: linear-gradient(
-    135deg,
-    #c3e4fa 0%,
-    #79b9e3 49%,
-    var(--color-gradient-end) 100%
-  );
-}
-
-/* Tailwind v4's built-in `rounded-*` scale is rederived from the single `--radius` token
- * above, shadcn-style, so every consumer (Card, Dialog, Input, Badge, Button…) stays in
- * sync if `--radius` changes. */
-@theme inline {
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 3px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
-/* Mobile type scale (spec: h1 32px, body 16px, tiny 12px on mobile). Real CSS custom
- * properties, so overriding them here re-resolves every `text-h1`/`text-body`/`text-tiny`
- * utility below the breakpoint — no duplicate utility classes needed. */
-@media (max-width: 767px) {
-  :root {
-    --text-h1: 2rem; /* 32px */
-    --text-h1--line-height: 1.1;
-    --text-body: 1rem; /* 16px */
-    --text-tiny: 0.75rem; /* 12px */
-  }
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
-}
+@import './styles/base.css';
