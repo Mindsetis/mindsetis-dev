@@ -14,9 +14,12 @@ type BuildProfilePageProps = {
 const TOTAL_STEPS = 4;
 
 /**
- * Registration wizard step 3/4 — "What do you build?" (Figma "Member profile 3/4"). Reached
- * right after step 2 (`/member-profile`); shares that step's page shell (Back link +
- * `RegistrationProgress` + centered `max-w-[640px]` form column).
+ * Registration wizard step 4/4 — "What do you build?" (Figma "Member profile 3/4"). Reached
+ * right after step 3 (`/member-profile`); shares that step's page shell (Back link +
+ * `RegistrationProgress` + centered `max-w-[640px]` form column). Now the wizard's LAST step
+ * (stage 1.5 renumbered email verification to step 2, `/verify-email` — see that page's doc
+ * comment) — completing this form moves on to the Congrats screen (`/welcome`), not back to
+ * verification (see `BuildProfileForm.tsx`'s submit handler).
  *
  * Requires a signed-in user (this writes to `profiles` for the caller), same defense-in-depth
  * as `/member-profile`: page-level redirect here, `middleware.ts` (`PROTECTED_PREFIXES`)
@@ -55,9 +58,9 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
 
         <div className="w-full max-w-[640px] flex-1 md:flex-none">
           <RegistrationProgress
-            step={3}
+            step={4}
             total={TOTAL_STEPS}
-            label={t('signUp.stepLabel', { step: 3, total: TOTAL_STEPS })}
+            label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
           />
         </div>
       </div>

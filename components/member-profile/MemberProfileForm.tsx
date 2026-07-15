@@ -67,7 +67,7 @@ type MemberProfileFormProps = {
 };
 
 /**
- * Registration wizard step 2/4 ("Member profile") form — mirrors `SignUpForm.tsx`'s
+ * Registration wizard step 3/4 ("Member profile") form — mirrors `SignUpForm.tsx`'s
  * structure (RHF + `zodResolver` over `createMemberProfileSchema(...)`, `applyFieldErrors`
  * wiring server-side field errors back onto the form, `primaryOutline`/`lg` submit button).
  *
@@ -146,7 +146,7 @@ export function MemberProfileForm({
       return;
     }
 
-    // Step 3/4 — "What do you build?" (stage 1.2 registration-wizard reorder).
+    // Step 4/4 — "What do you build?" (stage 1.5 registration-wizard renumbering).
     router.push('/build-profile');
   });
 

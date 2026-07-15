@@ -1,5 +1,5 @@
 /**
- * Build-profile boundary schema — registration wizard step 3/4 ("What do you build?", Figma
+ * Build-profile boundary schema — registration wizard step 4/4 ("What do you build?", Figma
  * "Member profile 3/4"). Shared between the client form (`zodResolver`) and the Server Action
  * (`saveBuildProfile`), same pattern as `lib/validation/member-profile.ts`.
  *

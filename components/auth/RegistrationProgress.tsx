@@ -11,8 +11,8 @@ type RegistrationProgressProps = {
  * Segmented step indicator + "n/total" — Figma "Registration" (mobile `165:2853`, node
  * `401:6989`) / "Registration 1/4 - 1440 px" (desktop `387:1725`, node `387:1911`).
  *
- * Used by all four registration-wizard steps — `/sign-up` (1), `/member-profile` (2),
- * `/build-profile` (3), `/verify-email` (4) — each passing its own `step`/`label`; there's no
+ * Used by all four registration-wizard steps — `/sign-up` (1), `/verify-email` (2),
+ * `/member-profile` (3), `/build-profile` (4) — each passing its own `step`/`label`; there's no
  * internal state here, the caller (the URL/page) is the source of truth for which step is
  * "current". Distinct from the onboarding flow's own stepper (`OnboardingFlow.tsx`), which
  * tracks its own real state.

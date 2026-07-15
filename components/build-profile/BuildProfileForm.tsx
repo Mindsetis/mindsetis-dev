@@ -37,7 +37,7 @@ type BuildProfileFormProps = {
 };
 
 /**
- * Registration wizard step 3/4 ("What do you build?") form — mirrors
+ * Registration wizard step 4/4 ("What do you build?") form — mirrors
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but simpler:
  * three required fields, no file upload or multi-select controls. Company/Role stay plain
  * text; Industry (stage 1.4 Figma audit) is a fixed-option `Select` sourced from the
@@ -80,9 +80,11 @@ export function BuildProfileForm({
       return;
     }
 
-    // Step 4/4 — "Welcome email sent" (see `saveBuildProfile`'s welcome-email send).
-    const query = result.data.email ? `?email=${encodeURIComponent(result.data.email)}` : '';
-    router.push(`/verify-email${query}`);
+    // This is now the wizard's last step (stage 1.5 renumbering moved email verification to
+    // step 2, `/verify-email` — see that page's doc comment), so a successful save moves on to
+    // the Congrats screen, not back to verification. `saveBuildProfile`'s welcome-email send is
+    // unrelated to navigation here — it's a fire-and-forget informational email, not a gate.
+    router.push('/welcome');
   });
 
   return (

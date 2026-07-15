@@ -1,12 +1,13 @@
 'use server';
 
 /**
- * Server Action for the registration wizard's step 3/4 ("What do you build?" — see
- * `page.tsx`). Persists `company` / `role` / `industry` onto the caller's own `profiles`
- * row (RLS: `profiles_update_own`, column-agnostic — no new policy needed, see
+ * Server Action for the registration wizard's step 4/4 ("What do you build?" — see
+ * `page.tsx`, the last step now that `/verify-email` is step 2). Persists `company` / `role` /
+ * `industry` onto the caller's own `profiles` row (RLS: `profiles_update_own`,
+ * column-agnostic — no new policy needed, see
  * `supabase/migrations/20260714101121_profiles_step3_build_fields.sql`), then (best-effort)
- * sends the "Welcome to Mindsetis" email so step 4 (`/verify-email`) reflects a real send —
- * see `sendWelcomeEmailBestEffort`'s doc comment.
+ * sends the informational "Welcome to Mindsetis" email before the wizard redirects to
+ * `/welcome` — see `sendWelcomeEmailBestEffort`'s doc comment.
  */
 import { createHash } from 'node:crypto';
 
@@ -20,21 +21,18 @@ import { buildProfileSchema } from '@/lib/validation/build-profile';
 
 /**
  * Send the "Welcome to Mindsetis" email via `sendWelcomeEmail()` right before the wizard
- * moves on to step 4 ("Welcome email sent").
+ * redirects to the Congrats screen (`/welcome`) — this is the wizard's last step (4/4).
  *
- * This is the FIRST welcome-email send in the wizard (not the only one — step 4 adds a
- * second, user-triggered send path, `app/[locale]/verify-email/actions.ts`'s
- * `resendWelcomeEmail`, behind the "Resend email" button on step 4 itself). Purely
- * informational, not a confirmation gate: step 1 (`app/[locale]/(auth)/actions.ts`'s
- * `signUp()`) already auto-confirms and signs the account in, so this send has no bearing on
- * whether the caller can continue the wizard.
+ * Purely informational, not a confirmation gate: the real confirmation gate already happened
+ * back at step 2 (`/verify-email`, `app/[locale]/verify-email/actions.ts`'s
+ * `resendConfirmationEmail` resends *that* one via `supabase.auth.resend({ type: 'signup' })`
+ * — a different mechanism entirely). By the time this action runs, the caller already has a
+ * real, confirmed session, so this send has no bearing on whether they can continue.
  *
- * Rate-limited per-email (not just best-effort): resubmitting step 3 must not be able to
+ * Rate-limited per-email (not just best-effort): resubmitting this step must not be able to
  * trigger unlimited real email sends. Deliberately non-fatal either way — a rate-limit hit or
  * a transient enqueue error is logged and swallowed, never surfaced to the caller, because
- * completing step 3 and reaching step 4 must never fail just because a send couldn't go out.
- * Contrast with `verify-email/actions.ts`'s version, which is a manually-triggered retry the
- * user is actively waiting on — there, a rate-limit hit IS surfaced.
+ * finishing the wizard must never fail just because this courtesy send couldn't go out.
  */
 async function sendWelcomeEmailBestEffort(
   email: string | undefined,

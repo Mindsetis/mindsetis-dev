@@ -114,11 +114,11 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
       setFormError(result.error.message);
       return;
     }
-    // signUp() always returns a live session now (the account is auto-confirmed at creation —
-    // see `(auth)/actions.ts#signUp`'s doc comment), so success here always means "continue the
-    // wizard into step 2".
-    router.push('/member-profile');
-    router.refresh();
+    // signUp() no longer returns a session — the account is unconfirmed until the visitor
+    // clicks the link in their inbox (see `(auth)/actions.ts#signUp`'s doc comment). Success
+    // here just means the account was created; send them to the blocking verification step
+    // (step 2) with the address so it can be displayed there.
+    router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
   });
 
   return (

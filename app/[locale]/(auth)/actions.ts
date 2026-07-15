@@ -9,14 +9,12 @@
  * Google OAuth is deferred: add a `signInWithGoogle` action + provider config later without
  * touching this file's structure.
  */
-import { createHash } from 'node:crypto';
-
 import { z } from 'zod';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { siteUrl } from '@/lib/auth/site-url';
-import { assertWithinRateLimit } from '@/lib/rate-limit';
+import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
@@ -26,67 +24,71 @@ import {
   signUpSchema,
 } from '@/lib/validation/auth';
 
-/** Per-account rate-limit bucket (hashed so raw emails never land in Redis keys). */
-function emailBucket(prefix: string, email: string): string {
-  return `${prefix}:${createHash('sha256').update(email).digest('hex')}`;
-}
-
 /**
  * Create an account. The profile row (with the 14-day verification deadline) is created by
  * the `handle_new_user` DB trigger (an `AFTER INSERT on auth.users` trigger — fires no matter
  * which API path inserted the row, admin or anon), which reads `username` / `full_name` /
  * `last_name` from the user metadata passed here.
  *
- * Account creation goes through the **service-role Admin API**, auto-confirmed:
+ * Account creation goes through the **ordinary anon-client `signUp()`** (stage 1.5 rework —
+ * this used to auto-confirm via the service-role Admin API + an immediate
+ * `signInWithPassword()`; that hack is gone now that email verification is a real, blocking
+ * step of the wizard):
  *
- *   1. `service.auth.admin.createUser({ email_confirm: true, ... })` creates the user AND
- *      marks it confirmed immediately. This was empirically re-verified (direct Admin API
- *      call, not assumed): `signInWithPassword()` unconditionally rejects a user created with
- *      `email_confirm: false` with `email_not_confirmed`, REGARDLESS of the hosted project's
- *      global "Confirm email" toggle — that toggle only affects the self-serve `/signup`
- *      endpoint's auto-confirm behavior, not the Admin API path or password sign-in's
- *      confirmation check. So "create unconfirmed, sign in anyway" is not achievable on this
- *      platform; auto-confirming at creation is the only way to get a working session right
- *      after signup. The wizard still sends a "Welcome to Mindsetis" email once step 3
- *      completes (`app/[locale]/build-profile/actions.ts`, via
- *      `lib/auth/send-welcome-email.ts`) — purely informational now, not a confirmation gate.
- *   2. The Admin API alone does not establish a session/cookies, so we immediately follow up
- *      with an ordinary anon-client `signInWithPassword()` to sign the caller in for the rest
- *      of the wizard (steps 2/3 need `requireUser()` to succeed). Since the account is already
- *      confirmed, this now succeeds deterministically — any failure here is a genuine
- *      unexpected error, not an interim/expected state, so it's handled the same way as any
- *      other post-create failure below (rollback + `internal_error`).
+ *   - With the hosted project's "Confirm email" toggle ON (re-enabled for this stage), `signUp()`
+ *     creates an **unconfirmed** user and returns `{ user, session: null }` — no session is
+ *     established here on purpose. Supabase emails the visitor a confirmation link; clicking it
+ *     hits `/api/auth/confirm`, whose `verifyOtp()` call both confirms the account AND
+ *     establishes the real session in one step (distinct from `signInWithPassword()`, which was
+ *     the mechanism that forced the old auto-confirm workaround). By the time the visitor lands
+ *     back in the wizard (step 3, `/member-profile`), they have a real, confirmed session.
+ *   - This function itself therefore returns `{ email }` only — no session/cookies to report.
+ *     The caller (`SignUpForm`) redirects to `/verify-email?email=…` unconditionally on success.
+ *   - No service-role client is needed here anymore — `signUp()` is a plain anon-client call,
+ *     so there's no orphaned-user rollback case either (nothing partially succeeds: either the
+ *     anon `signUp()` call creates the user, or it doesn't).
  */
 export const signUp = createAction(
   signUpSchema,
   async ({ email, password, username, fullName, lastName }) => {
-    const service = createServiceClient();
-    const { data: createData, error: createError } = await service.auth.admin.createUser({
+    // Per-email ceiling (holds across IPs) on top of createAction's per-IP limit below.
+    // `signUp()` is a plain anon-client call now (stage 1.5 rework), and GoTrue re-triggers the
+    // confirmation email when `signUp()` is called again for an address with an existing
+    // pending, unconfirmed signup — without this, the per-IP limit alone is trivially bypassed
+    // with multiple IPs, making this an unthrottled mail-bombing vector against any address.
+    await assertWithinRateLimit(emailBucket('auth:sign-up:email', email), {
+      limit: 4,
+      window: '1 h',
+    });
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: {
-        ...(username ? { username } : {}),
-        full_name: fullName,
-        last_name: lastName,
+      options: {
+        data: {
+          ...(username ? { username } : {}),
+          full_name: fullName,
+          last_name: lastName,
+        },
       },
     });
 
-    if (createError) {
+    if (error) {
       // Never swallow the real reason — surface it in server logs (no PII beyond
       // what Supabase itself put in `message`, which never includes the password).
-      console.error('[auth.signUp] admin.createUser failed:', {
-        status: createError.status,
-        code: createError.code,
-        message: createError.message,
+      console.error('[auth.signUp] signUp failed:', {
+        status: error.status,
+        code: error.code,
+        message: error.message,
       });
 
       // Supabase signals throttling via HTTP 429 and/or an `over_*_rate_limit` code.
       if (
-        createError.status === 429 ||
-        createError.code === 'over_email_send_rate_limit' ||
-        createError.code === 'over_request_rate_limit' ||
-        /rate limit/i.test(createError.message)
+        error.status === 429 ||
+        error.code === 'over_email_send_rate_limit' ||
+        error.code === 'over_request_rate_limit' ||
+        /rate limit/i.test(error.message)
       ) {
         throw new ActionError(
           'rate_limited',
@@ -94,47 +96,30 @@ export const signUp = createAction(
         );
       }
 
-      // Treat identity-collision signals as a conflict.
+      // Treat identity-collision signals as a conflict. `user_already_exists` / `email_exists`
+      // are shared `ErrorCode`s across every Supabase Auth API path (Admin and anon alike, per
+      // `@supabase/auth-js`'s `error-codes.ts`), so this mapping is unchanged from the old
+      // Admin-API call.
       if (
-        createError.code === 'user_already_exists' ||
-        createError.code === 'email_exists' ||
-        /already registered|already exists/i.test(createError.message)
+        error.code === 'user_already_exists' ||
+        error.code === 'email_exists' ||
+        /already registered|already exists/i.test(error.message)
       ) {
         throw new ActionError('conflict', 'An account with this email already exists.');
       }
       throw new ActionError('internal_error', 'Could not create your account. Please try again.');
     }
 
-    // Establish the real session/cookies for the rest of the wizard. This is the anon client
-    // on purpose — signInWithPassword() is what sets the request's auth cookies; the
-    // service-role client never touches cookies.
-    const supabase = await createClient();
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError || !signInData.session) {
-      // Now a genuine unexpected error — the account was created confirmed, so
-      // signInWithPassword() should succeed deterministically (empirically verified). Log it
-      // and roll back the orphaned auth user (no session, can't retry sign-up — the email is
-      // taken) so the visitor can simply try signing up again instead of getting permanently
-      // stuck on a `conflict` error with no way in.
-      console.error('[auth.signUp] post-create signInWithPassword failed:', {
-        status: signInError?.status,
-        code: signInError?.code,
-        message: signInError?.message,
-      });
-      if (createData.user) {
-        const { error: deleteError } = await service.auth.admin.deleteUser(createData.user.id);
-        if (deleteError) {
-          console.error('[auth.signUp] rollback deleteUser failed:', {
-            status: deleteError.status,
-            message: deleteError.message,
-          });
-        }
-      }
-      throw new ActionError('internal_error', 'Could not create your account. Please try again.');
+    // `signUp()`'s own doc comment (`@supabase/auth-js`): when the project has BOTH "Confirm
+    // email" and "Confirm phone" enabled and the address already belongs to a *confirmed*
+    // account, Supabase deliberately returns NO error — instead an obfuscated/fake `user` is
+    // returned to avoid leaking existence via an error message. The one detectable signal is an
+    // EMPTY `identities` array (a genuinely new signup always has at least one identity). Catch
+    // that here so a duplicate signup still surfaces the same `conflict` the explicit-error path
+    // above handles (matches this project's existing signup UX, which never treated "email
+    // already registered" as an enumeration concern the way password-reset does).
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      throw new ActionError('conflict', 'An account with this email already exists.');
     }
 
     return { email };
@@ -198,13 +183,20 @@ export const requestPasswordReset = createAction(
  * (the `/api/auth/confirm` handler exchanges the token before redirecting here).
  *
  * Also resets the caller's 14-day verification clock (`profiles.verification_deadline`) and
- * clears `access_restricted` if set — mitigation for `signUp()`'s email-squatting tradeoff
- * (see that function's doc comment): since signup now auto-confirms with zero proof of email
- * ownership, someone could register a victim's address before the real owner ever does. A
- * completed password-reset IS a strong "you actually control this inbox" proof (Supabase's
- * own recovery-link flow), so it's the right moment to restart the clock from here rather than
- * leaving it dated to whenever the account was originally (possibly maliciously) created —
- * otherwise a reclaiming victim could already be `access_restricted` on day one.
+ * clears `access_restricted` if set. This predates stage 1.5's real-verification rework (it
+ * used to mitigate signup's old auto-confirm-with-zero-proof-of-ownership tradeoff — see
+ * `signUp()`'s doc comment history); now that `signUp()` requires a clicked confirmation link
+ * before a session ever exists, session/account-takeover via email squatting is gone (an
+ * attacker can never obtain a session for an email they don't own). That said, this doesn't
+ * fully close the door on the underlying scenario: `handle_new_user()` is an `AFTER INSERT on
+ * auth.users` trigger that still fires at `signUp()` time, before any confirmation, inserting a
+ * `profiles` row from attacker-supplied `full_name`/`last_name` metadata — and that row is
+ * publicly readable pre-confirmation per the existing `profiles_read` RLS policy. That's a
+ * separate, still-open, pre-existing consideration this action isn't trying to fix. Left in
+ * place anyway as harmless defense-in-depth: a completed password-reset is still a strong "you
+ * actually control this inbox" proof (Supabase's own recovery-link flow), so restarting the
+ * clock here rather than leaving it dated to account-creation time is still a reasonable
+ * courtesy for someone reclaiming/recovering access.
  */
 export const updatePassword = createAction(
   resetPasswordSchema,

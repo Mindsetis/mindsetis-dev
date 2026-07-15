@@ -231,12 +231,11 @@
     "verifyEmail": {
       "backToLogin": "Volver a iniciar sesión",
       "changeIt": "Cámbialo",
-      "continue": "Continuar",
       "resend": "Reenviar correo",
       "resending": "Enviando…",
-      "resendSuccess": "Correo de bienvenida enviado.",
-      "subtitle": "Te enviamos un correo de bienvenida a esta dirección como registro. No es necesario hacer clic en nada — ya puedes continuar.",
-      "title": "Correo de bienvenida enviado",
+      "resendSuccess": "Correo de confirmación enviado.",
+      "subtitle": "Te enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta y continuar.",
+      "title": "Revisa tu bandeja de entrada",
       "wrongEmail": "¿Correo equivocado?"
     },
     "welcome": {

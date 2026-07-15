@@ -1,5 +1,5 @@
 /**
- * Member-profile boundary schema — registration wizard step 2/4 ("Member profile", Figma
+ * Member-profile boundary schema — registration wizard step 3/4 ("Member profile", Figma
  * `71:452` mobile / `387:2142` desktop). `memberProfileSchema` is shared between the client
  * form (`zodResolver`) and the Server Action, so both sides agree on required-vs-optional
  * exactly as marked on the Figma frame (`*` = required).

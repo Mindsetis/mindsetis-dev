@@ -231,12 +231,11 @@
     "verifyEmail": {
       "backToLogin": "Back to log in",
       "changeIt": "Change it",
-      "continue": "Continue",
       "resend": "Resend email",
       "resending": "Sending…",
-      "resendSuccess": "Welcome email sent.",
-      "subtitle": "We sent a welcome email to this address for your records. No need to click anything — you're all set to continue.",
-      "title": "Welcome email sent",
+      "resendSuccess": "Confirmation email sent.",
+      "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",
+      "title": "Check your inbox",
       "wrongEmail": "Wrong email?"
     },
     "welcome": {

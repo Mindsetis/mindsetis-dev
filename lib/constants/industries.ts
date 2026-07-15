@@ -1,5 +1,5 @@
 /**
- * Curated "industry" catalog for the registration wizard's step 3/4 form ("What do you
+ * Curated "industry" catalog for the registration wizard's step 4/4 form ("What do you
  * build?", Figma "Member profile 3/4"). No fixed catalog was visible in the design (per the
  * stage 1.4 Figma audit — "use your judgment"), so this is a deliberately small, curated list
  * of common industries. Mirrors `lib/constants/languages.ts` / `lib/constants/interests.ts`: a

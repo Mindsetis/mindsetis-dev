@@ -17,21 +17,16 @@ export interface SendWelcomeEmailResult {
  * `email_messages`, drained by the `process-email-queue` Edge Function over Resend) — NOT
  * Supabase Auth's confirmation-email system.
  *
- * Purely informational, not a gate: the account is auto-confirmed at signup
- * (`admin.createUser({ email_confirm: true })`, see `app/[locale]/(auth)/actions.ts#signUp`'s
- * doc comment) and already has a live session, so there is nothing left to "confirm" — this
- * reads like an ordinary SaaS receipt/welcome email, `actionUrl` just links back to the
+ * Purely informational, not a gate: by the time this fires the caller already has a real,
+ * confirmed session (the actual confirmation gate is `/verify-email`, step 2 of the wizard —
+ * a completely separate mechanism, Supabase Auth's own `signUp`/`resend` confirmation email).
+ * This reads like an ordinary SaaS receipt/welcome email, `actionUrl` just links back to the
  * wizard's Congrats screen (`/welcome`).
  *
- * Shared by two callers with different rate-limit/error-handling policies around the same
- * underlying send — `app/[locale]/build-profile/actions.ts`'s `sendWelcomeEmailBestEffort`
- * (silent, best-effort, fired automatically when step 3 completes) and
- * `app/[locale]/verify-email/actions.ts`'s `resendWelcomeEmail` (a user-triggered retry on
- * step 4, whose failures ARE surfaced back to the caller). Each applies its own policy around
- * this shared primitive rather than duplicating the `enqueueEmail` call + redirect URL
- * construction. Errors are caught and returned rather than thrown (mirrors the old
- * `supabase.auth.resend()`-based helper's `{ error }` shape) so both call sites can keep their
- * existing swallow-vs-surface branching unchanged.
+ * Sole caller: `app/[locale]/build-profile/actions.ts`'s `sendWelcomeEmailBestEffort`, fired
+ * best-effort right after the wizard's final step (step 4/4) saves successfully, just before
+ * redirecting to `/welcome`. Errors are caught and returned rather than thrown so the caller
+ * can log-and-swallow them without ever failing the wizard over a send that didn't go out.
  */
 export async function sendWelcomeEmail(
   email: string,
