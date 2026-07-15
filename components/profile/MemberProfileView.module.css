@@ -1,0 +1,186 @@
+/**
+ * Page-specific LIGHT-theme styles for `MemberProfileView` (Figma node `401:6375` preview /
+ * `383:4667` public). The rest of the app is the dark Masterclass/Netflix theme (see
+ * `app/styles/tokens/*.css`) — this single screen is a deliberate white `#FFFFFF` section per
+ * Figma, confirmed with the user. Rather than scattering this design's one-off hex values /
+ * gradients / non-token border-radii as ad-hoc Tailwind arbitrary-value utilities across the
+ * component markup, they're isolated here in a co-located CSS Module (no CSS Module precedent
+ * elsewhere in the repo yet, but it's a standard, zero-config Next.js feature and keeps this
+ * light-theme override scoped to just this component instead of polluting the global
+ * dark-theme token files that every other screen relies on).
+ *
+ * Where a Figma value happens to already match an existing dark-theme token 1:1 (this design
+ * was clearly drawn from the same brand palette), the rule below reuses `var(--color-*)` /
+ * `var(--gradient-*)` instead of repeating the hex — see the comment on each such rule.
+ *
+ * `!important` is used only on the Button-based overrides (`.editButton`/`.shareButton`/
+ * `.inviteButton`): `components/ui/button.tsx`'s `cva` variants already ship their own
+ * `bg-*`/`border-*`/`text-*` Tailwind utility classes, which are NOT recognized/stripped by
+ * `tailwind-merge` when combined with an opaque CSS Module class name (unlike two Tailwind
+ * utility classes, which `cn()` can resolve for us) — `!important` guarantees this design's
+ * colors win regardless of stylesheet-injection order, without having to fight the shared
+ * Button component's default `variant="primary"` styling.
+ */
+
+.section {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* ---- Preview banner (variant="preview" only) ---------------------------------------- */
+
+.banner {
+  /* Spec only said "dark background" (no specific hex) — reuses the app's existing dark
+     card surface token so the banner reads as part of the same dark chrome surrounding this
+     one light page, rather than inventing a new dark value. */
+  background-color: var(--color-card);
+  min-height: 80px;
+}
+
+.bannerText {
+  color: rgb(255 255 255 / 75%);
+}
+
+.bannerHighlight {
+  /* #79B9E3 in the spec is exactly the app's existing --color-primary brand blue. */
+  color: var(--color-primary);
+}
+
+.editButton {
+  /* Gradient 1px border with a fully transparent fill, via the padding-box/border-box
+     double-background trick (works regardless of whatever sits behind the button). Spec's
+     stops (#C3E4F9 0% -> #79B9E3 49.5% -> #21B8E6 100%) are a near-exact match for the
+     existing --gradient-primary token (effects.css: 49% instead of 49.5%, otherwise
+     identical stops/colors) — reused here instead of duplicating a second gradient. */
+  background:
+    linear-gradient(#0000, #0000) padding-box,
+    var(--gradient-primary) border-box !important;
+  border: 1px solid transparent !important;
+  color: var(--color-primary) !important;
+}
+.editButton:hover {
+  opacity: 0.9;
+}
+
+.shareButton {
+  /* #747474 is exactly the app's existing --color-border token. */
+  background: transparent !important;
+  border: 1px solid var(--color-border) !important;
+  color: #ffffff !important;
+}
+.shareButton:hover {
+  background: rgb(255 255 255 / 6%) !important;
+}
+
+/* ---- Hero ----------------------------------------------------------------------------- */
+
+.portraitFrame,
+.portraitPlaceholder {
+  border-radius: 30px;
+  background-color: #f4f4f4;
+}
+
+.pillVerified {
+  /* #08D6AD is exactly the app's existing --color-success token. */
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  background-color: transparent;
+}
+
+.pillHandle {
+  /* #5892C3 is exactly the app's existing --color-primary-active token. */
+  border: 1px solid var(--color-primary-active);
+  color: var(--color-primary-active);
+  background-color: #ffffff;
+}
+
+.heroName {
+  /* Figma: 88px desktop / 40px mobile. Deliberately NOT the shared --text-h1 token: that
+     token's own mobile override (typography.css) resolves to 32px on narrow viewports,
+     which doesn't match this screen's 40px mobile spec — a dedicated rule avoids a mismatch
+     either here or on every other page that legitimately wants the 32px mobile h1. */
+  font-size: 40px;
+  line-height: 0.9;
+  color: #000000;
+}
+@media (min-width: 768px) {
+  .heroName {
+    font-size: 88px;
+  }
+}
+
+.metaPill {
+  background-color: #f4f4f4;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  color: #000000;
+}
+
+.inviteButton {
+  /* No existing token matches this exact diagonal white -> #87BCD7 gradient (closest
+     confirmed token, --gradient-primary, uses different stops/colors entirely) — a genuinely
+     new one-off for this button only. */
+  background: linear-gradient(135deg, #ffffff 0%, #87bcd7 100%) !important;
+  border: none !important;
+  color: #000000 !important;
+}
+.inviteButton:hover {
+  opacity: 0.92;
+}
+
+.socialIconButton {
+  background-color: #f4f4f4;
+  border: 1px solid #dddddd;
+  color: #000000;
+}
+.socialIconButton:hover {
+  background-color: #ececec;
+}
+
+.websitePill {
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  color: #000000;
+}
+
+/* ---- "ABOUT" card ----------------------------------------------------------------------- */
+
+.aboutCard {
+  background-color: #f4f4f4;
+  border-radius: 30px;
+  padding: 24px;
+}
+@media (min-width: 768px) {
+  .aboutCard {
+    padding: 50px 70px;
+  }
+}
+
+.eyebrow {
+  /* Reuses --color-border (#747474) — same neutral gray as .shareButton's border above, and
+     the closest existing token to a muted label color for this light section (the app's own
+     `text-muted-foreground`, #a5a5a5, is tuned for a BLACK background and reads too faint on
+     white, so it's intentionally not reused here). */
+  color: var(--color-border);
+  letter-spacing: 0.3em;
+}
+
+/* ---- "Beyond Business" (interests) ------------------------------------------------------- */
+
+.interestCard {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+  padding: 24px;
+}
+@media (min-width: 768px) {
+  .interestCard {
+    border-radius: 24px;
+    padding: 32px;
+  }
+}
+
+.interestPill {
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  color: #000000;
+}

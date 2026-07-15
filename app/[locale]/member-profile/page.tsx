@@ -10,8 +10,12 @@ import { INTEREST_VALUES } from '@/lib/constants/interests';
 import type { LanguageValue } from '@/lib/constants/languages';
 import { createClient } from '@/lib/supabase/server';
 
-/** Shape of `profiles.socials` (jsonb) as written by `saveMemberProfile`. */
-type SocialsJson = {
+/**
+ * Shape of `profiles.socials` (jsonb) as written by `saveMemberProfile`. Exported so the
+ * "Member Profile" view page (stage 1.6, `components/profile/MemberProfileView.tsx`) can
+ * reuse the exact same shape instead of redefining it.
+ */
+export type SocialsJson = {
   linkedin?: string;
   instagram?: string;
   facebook?: string;
