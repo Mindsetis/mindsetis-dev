@@ -1,0 +1,16 @@
+/**
+ * Visual effects — shadows and gradients.
+ */
+@theme {
+  /* Primary CTA soft cyan glow (Figma "drop shadow" effect → CSS box-shadow). */
+  --shadow-glow-primary: 0 4px 12.3px 0 rgb(111 237 227 / 0.8);
+
+  /* Primary button gradient (Figma). Angle synthesized from the design preview —
+   * TODO confirm angle with designer. */
+  --gradient-primary: linear-gradient(
+    135deg,
+    #c3e4fa 0%,
+    #79b9e3 49%,
+    var(--color-gradient-end) 100%
+  );
+}
