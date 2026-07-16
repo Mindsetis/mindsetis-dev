@@ -385,9 +385,9 @@ Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ 
 - [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths
 
 ### 1.6 — Registration wizard: copy/UI tweaks (Figma follow-ups)
-**Status:** 🔄 In progress _(reopened 2026-07-16 — see "Who is Mindsetter?" popup follow-up below)_
+**Status:** ✅ Done
 **Started:** 2026-07-16
-**Completed:** 2026-07-16 _(historical — stage was reopened same-day, see note)_
+**Completed:** 2026-07-16
 
 Batch of small copy and UI adjustments across the registration wizard, requested by the user
 directly (not yet scoped/estimated). **Note:** every new/changed button below links to the
@@ -482,7 +482,7 @@ popover and shows the single chosen label, no removable chips).
 
 **Review loop:**
 - [x] `code-reviewer` + `security-auditor` (password-validation regex change touches auth) + `qa` review loop, then commit via `git-manager`
-- [~] Follow-up review loop for the reopened "Who is Mindsetter?" popup expansion (`code-reviewer` + `qa`; no new auth/RLS/money surface, `security-auditor` not required this round), then commit via `git-manager`
+- [x] Follow-up review loop for the reopened "Who is Mindsetter?" popup expansion (`code-reviewer` + `qa`; no new auth/RLS/money surface, `security-auditor` not required this round), then commit via `git-manager`
 
 `code-reviewer` (2026-07-16): one Medium must-fix — `IndustryCombobox` was wrapped in
 `FormControl` in `BuildProfileForm.tsx`, breaking label/`aria-describedby` association (Radix
