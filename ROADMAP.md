@@ -385,9 +385,9 @@ Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ 
 - [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths
 
 ### 1.6 — Registration wizard: copy/UI tweaks (Figma follow-ups)
-**Status:** ✅ Done
+**Status:** 🔄 In progress _(reopened 2026-07-16 — see "Who is Mindsetter?" popup follow-up below)_
 **Started:** 2026-07-16
-**Completed:** 2026-07-16
+**Completed:** 2026-07-16 _(historical — stage was reopened same-day, see note)_
 
 Batch of small copy and UI adjustments across the registration wizard, requested by the user
 directly (not yet scoped/estimated). **Note:** every new/changed button below links to the
@@ -482,6 +482,7 @@ popover and shows the single chosen label, no removable chips).
 
 **Review loop:**
 - [x] `code-reviewer` + `security-auditor` (password-validation regex change touches auth) + `qa` review loop, then commit via `git-manager`
+- [~] Follow-up review loop for the reopened "Who is Mindsetter?" popup expansion (`code-reviewer` + `qa`; no new auth/RLS/money surface, `security-auditor` not required this round), then commit via `git-manager`
 
 `code-reviewer` (2026-07-16): one Medium must-fix — `IndustryCombobox` was wrapped in
 `FormControl` in `BuildProfileForm.tsx`, breaking label/`aria-describedby` association (Radix
@@ -504,3 +505,48 @@ cleaned up afterward). One pre-existing issue noted but not blocking: `npm run f
 fails on ~100 files even on a clean `HEAD` with none of this stage's changes — a repo-wide
 `core.autocrlf`/Prettier line-ending mismatch, unrelated to stage 1.6, tracked separately
 (needs a `.gitattributes` `eol=lf` or `core.autocrlf=input` fix at some point).
+
+Implementation follow-up (2026-07-16, reopened): the "Who is Mindsetter?" popup was built as a
+minimal placeholder (title + one button) because the full design wasn't available yet. The
+user pointed to Figma Frame 267 (near the Congrats screen), which has the complete design.
+Audit findings: the popup needs a description under the title; a dark checklist card labeled
+"A MINDSETTER IS" with 3 checkmark bullets ("A business owner, founder or CEO", "Verified by
+the Mindsetis team", "Ready to share real experience"); 3 feature callouts (heading + body
+each) — "Your own personal site", "Earn from sessions" (mentions a 15%/85% platform/creator
+split), "Build your personal brand"; TWO footer buttons instead of one — a new primary button
+"Cool, I want to become a Mindsetter" (fixing the Figma source's "Mindseter" typo) alongside
+the existing "Understand, I want to be a Member" secondary button; and a circular close (X)
+button in the header. User decided: the new "Cool, I want to become a Mindsetter" button also
+links to `/` as a placeholder (same as the rest of stage 1.6's new buttons — no real route
+decided yet); and the non-standard circular close button + the "Understand..." button's
+Figma resting-state style (white text on a grey border, which doesn't match any existing
+`Button` variant exactly) should be built as new, purpose-built components for this popup
+rather than reusing/overriding the shared `Button`/`Dialog` defaults. Figma also had a
+hidden/clipped orphan sub-form (Title/Description/Link fields) accidentally nested inside the
+checklist card in the design file — confirmed via screenshot it never renders, explicitly NOT
+part of this popup, do not build it. Figma's 3-item checklist lays out vertically on mobile,
+horizontally in one row on desktop (responsive difference, not a separate variant).
+
+Popup expansion checklist:
+- [x] Add popup description text under the title
+- [x] Add the dark "A MINDSETTER IS" checklist card (3 checkmark bullets), responsive:
+  vertical stack on mobile, single horizontal row on desktop
+- [x] Add the 3 feature callouts (heading + body pairs): "Your own personal site", "Earn from
+  sessions" (15%/85% split), "Build your personal brand"
+- [x] Add second footer button "Cool, I want to become a Mindsetter" (placeholder link to `/`,
+  same as other stage-1.6 buttons), positioned alongside the existing "Understand, I want to
+  be a Member" button (stacked on mobile, side-by-side on desktop per Figma)
+- [x] Build a custom circular close (X) button matching Figma (not the default Dialog close button)
+- [x] Build/adjust button styling so "Understand, I want to be a Member" matches Figma's
+  resting-state look (white text, grey border) as its own purpose-built style, not a
+  shared-variant override
+- [x] i18n keys for all new popup copy
+
+Implemented (2026-07-16) as a new `components/auth/WhoIsMindsetterDialog.tsx` component
+(swapped into `WelcomeCtas.tsx` in place of the inline placeholder). Close button: a plain
+`&lt;button&gt;` inside `DialogClose asChild` with `showCloseButton={false}` on `DialogContent`
+(32×32, `rounded-full border-border bg-background`, lucide `X`, sr-only label via new
+`modal.close` i18n key). "Understand..." button: `variant="outline"` + a local
+`className="text-foreground"` override (no changes to the shared `button.tsx` variants).
+Breakpoint used for the mobile/desktop checklist-card and footer-button layout: `md:`
+(matching `OAuthButtons.tsx`'s existing convention). `typecheck`/`lint`/`build` all clean.

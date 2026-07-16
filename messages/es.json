@@ -245,7 +245,30 @@
         "seeProfile": "Ver cómo se ve mi página de perfil"
       },
       "modal": {
+        "becomeMindsetter": "Genial, quiero ser Mindsetter",
+        "checklist": {
+          "experience": "Listo para compartir experiencia real",
+          "label": "Un Mindsetter es",
+          "owner": "Un empresario, fundador o CEO",
+          "verified": "Verificado por el equipo de Mindsetis"
+        },
+        "close": "Cerrar",
         "confirm": "Entendido, quiero ser Miembro",
+        "description": "Un Mindsetter es un empresario verificado que abre sesiones 1:1 — comparte experiencia real con otros fundadores que la necesitan.",
+        "features": {
+          "brand": {
+            "body": "Nada de crear contenido sin parar. Tu perfil habla por ti — muestra quién eres y qué has construido.",
+            "title": "Construye tu marca personal"
+          },
+          "earn": {
+            "body": "Define tu propio precio. Gratis o de pago — tú eliges. La plataforma se queda el 15%, tú te quedas el 85%.",
+            "title": "Gana con tus sesiones"
+          },
+          "site": {
+            "body": "Tu perfil de Mindsetis se ve como un sitio web personal premium. Roles, logros, trayectoria, filosofía — todo en un solo lugar.",
+            "title": "Tu propio sitio personal"
+          }
+        },
         "title": "¿Qué es un Mindsetter?"
       },
       "title": "¡Felicidades! Ya eres miembro de la comunidad."

@@ -245,7 +245,30 @@
         "seeProfile": "See how looks my profile page"
       },
       "modal": {
+        "becomeMindsetter": "Cool, I want to become a Mindsetter",
+        "checklist": {
+          "experience": "Ready to share real experience",
+          "label": "A Mindsetter is",
+          "owner": "A business owner, founder or CEO",
+          "verified": "Verified by the Mindsetis team"
+        },
+        "close": "Close",
         "confirm": "Understand, I want to be a Member",
+        "description": "A Mindsetter is a verified business owner who opens 1:1 sessions — sharing real experience with other founders who need it.",
+        "features": {
+          "brand": {
+            "body": "No more content grind. Your profile does the work — it shows who you are and what you've built.",
+            "title": "Build your personal brand"
+          },
+          "earn": {
+            "body": "Set your own price. Free or paid — your choice. Platform takes 15%, you keep 85%.",
+            "title": "Earn from sessions"
+          },
+          "site": {
+            "body": "Your Mindsetis profile looks like a premium personal website. Roles, wins, timeline, philosophy — all in one place.",
+            "title": "Your own personal site"
+          }
+        },
         "title": "Who is Mindsetter?"
       },
       "title": "Congratulations! You are now a member of the community."

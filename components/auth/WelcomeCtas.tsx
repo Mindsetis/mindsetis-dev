@@ -5,14 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Link } from '@/i18n/navigation';
+
+import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
 
 /**
  * Congrats-screen ("/welcome") CTAs — stage 1.6 copy/UI follow-up, replacing the old single
@@ -22,9 +17,9 @@ import { Link } from '@/i18n/navigation';
  * there's no Mindsetter-matching, event-invite, event-catalog, or profile-preview route in the
  * codebase yet. Wire these up to their real destinations once those pages exist.
  *
- * The "Find out who a Mindsetter is" button opens a minimal "Who is Mindsetter?" modal (no
- * body-copy spec beyond the title + one button yet). Confirming it ("Understand, I want to be a
- * Member") closes the modal and permanently swaps that same button slot for "See how looks my
+ * The "Find out who a Mindsetter is" button opens the full "Who is Mindsetter?" modal (see
+ * `WhoIsMindsetterDialog`, built from Figma Frame 267). Confirming it ("Understand, I want to be
+ * a Member") closes the modal and permanently swaps that same button slot for "See how looks my
  * profile page" — tracked only as local client state (`dismissed`), not persisted anywhere,
  * since the task only calls for this to hold for the current page view.
  *
@@ -88,26 +83,14 @@ export function WelcomeCtas() {
         )}
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('welcome.modal.title')}</DialogTitle>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              onClick={() => {
-                setModalOpen(false);
-                setDismissed(true);
-              }}
-            >
-              {t('welcome.modal.confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <WhoIsMindsetterDialog
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onConfirm={() => {
+          setModalOpen(false);
+          setDismissed(true);
+        }}
+      />
     </>
   );
 }
