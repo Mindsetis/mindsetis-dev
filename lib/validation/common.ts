@@ -17,13 +17,14 @@ export const emailSchema = z
 
 /**
  * Password policy for sign-up / reset. Min 8 (stronger than Supabase's default 6),
- * max 72 (bcrypt truncates beyond this). At least one letter and one number.
+ * max 72 (bcrypt truncates beyond this). At least one uppercase letter and one number
+ * (matches the sign-up UI copy, "At least 1 uppercase letter").
  */
 export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters.')
   .max(72, 'Password must be at most 72 characters.')
-  .regex(/[A-Za-z]/, 'Include at least one letter.')
+  .regex(/[A-Z]/, 'Include at least one uppercase letter.')
   .regex(/[0-9]/, 'Include at least one number.');
 
 /** Password field for sign-in — presence only (never reveal the policy to attackers). */

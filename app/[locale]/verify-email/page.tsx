@@ -42,9 +42,9 @@ const TOTAL_STEPS = 4;
  * with a still-live session (e.g. browser Back after confirming); session email wins if somehow
  * both are present.
  *
- * "Back to log in" isn't on this Figma frame — kept rather than removed outright (a visitor who
- * lands back on this URL with no session at all still needs a way out), demoted to a small
- * tertiary link below the primary actions instead of competing with them for attention.
+ * Stage 1.6: the "Back to log in" tertiary link (added in stage 1.5 as an escape hatch for a
+ * visitor with no session at all landing here) was removed per the user's copy tweaks — the
+ * "Wrong email? Change it" link back to `/sign-up` remains the only way out of this step.
  */
 export default async function VerifyEmailPage({ params, searchParams }: VerifyEmailPageProps) {
   const { locale } = await params;
@@ -99,13 +99,6 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
             {t('verifyEmail.changeIt')}
           </Link>
         </p>
-
-        <Link
-          href="/login"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-        >
-          {t('verifyEmail.backToLogin')}
-        </Link>
       </div>
     </div>
   );

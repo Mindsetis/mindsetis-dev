@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { type SignUpInput, signUpSchema } from '@/lib/validation/auth';
 
@@ -32,17 +32,16 @@ type SignUpFormProps = {
 
 /**
  * Live password requirement checklist — Figma "input password" shows three hint lines
- * ("At least 8 characters" / "At least 1 uppercase latter" / "At least 1 number") next to an
- * info icon. The middle line is adjusted to "Contains a letter" here: `passwordSchema`
- * (`lib/validation/common.ts`) only requires *a* letter, not specifically an uppercase one —
- * showing the Figma copy verbatim would tell users a rule that isn't actually enforced.
+ * ("At least 8 characters" / "At least 1 uppercase letter" / "At least 1 number") next to an
+ * info icon. The uppercase-letter hint mirrors `passwordSchema`'s `/[A-Z]/` regex
+ * (`lib/validation/common.ts`), so the enforced rule and the displayed copy stay in sync.
  */
 function PasswordRequirements({ password }: { password: string }) {
   const t = useTranslations('auth');
 
   const requirements = [
     { key: 'length', met: password.length >= 8 },
-    { key: 'letter', met: /[A-Za-z]/.test(password) },
+    { key: 'letter', met: /[A-Z]/.test(password) },
     { key: 'number', met: /[0-9]/.test(password) },
   ] as const;
 
@@ -223,7 +222,11 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('fields.confirmPassword')} <span className="text-primary">*</span>
+                  {/* Stage 1.6: "Repeat Password" — dedicated key (not the shared
+                      `fields.confirmPassword` also used by `ResetPasswordForm`) so that
+                      screen's "Confirm password" label is unaffected by this sign-up-only
+                      copy change. */}
+                  {t('signUp.confirmPassword')} <span className="text-primary">*</span>
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
@@ -253,16 +256,7 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
         >
           {form.formState.isSubmitting ? t('signUp.submitting') : t('signUp.submit')}
         </Button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          {t('signUp.haveAccount')}{' '}
-          <Link
-            href="/login"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            {t('signUp.loginLink')}
-          </Link>
-        </p>
+        {/* Stage 1.6: "Already have an account? Log in" removed per the user's copy tweaks. */}
       </form>
     </Form>
   );

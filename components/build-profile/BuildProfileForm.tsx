@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/build-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { IndustryCombobox } from '@/components/build-profile/IndustryCombobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,13 +19,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useRouter } from '@/i18n/navigation';
 import { INDUSTRIES, INDUSTRY_VALUES, type IndustryValue } from '@/lib/constants/industries';
 import { type BuildProfileInput, buildProfileSchema } from '@/lib/validation/build-profile';
@@ -40,8 +34,10 @@ type BuildProfileFormProps = {
  * Registration wizard step 4/4 ("What do you build?") form — mirrors
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but simpler:
  * three required fields, no file upload or multi-select controls. Company/Role stay plain
- * text; Industry (stage 1.4 Figma audit) is a fixed-option `Select` sourced from the
- * code-defined `INDUSTRIES` catalog (`lib/constants/industries.ts`) instead of free text.
+ * text; Industry (stage 1.4 Figma audit) is a fixed-option `IndustryCombobox` (stage 1.6:
+ * Popover + searchable `Command` list, matching `LanguagesMultiSelect`'s visual language but
+ * single-select) sourced from the code-defined `INDUSTRIES` catalog
+ * (`lib/constants/industries.ts`) instead of free text.
  */
 export function BuildProfileForm({
   initialCompany,
@@ -149,20 +145,15 @@ export function BuildProfileForm({
                 <FormLabel>
                   {t('buildProfile.industry.label')} <span className="text-primary">*</span>
                 </FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('buildProfile.industry.placeholder')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {INDUSTRIES.map((industry) => (
-                      <SelectItem key={industry.value} value={industry.value}>
-                        {industry.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <IndustryCombobox
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={INDUSTRIES}
+                  placeholder={t('buildProfile.industry.placeholder')}
+                  searchPlaceholder={t('buildProfile.industry.searchPlaceholder')}
+                  emptyLabel={t('buildProfile.industry.empty')}
+                  invalid={!!form.formState.errors.industry}
+                />
                 <FormMessage />
               </FormItem>
             )}

@@ -114,8 +114,10 @@
         "placeholder": "El nombre de tu empresa"
       },
       "industry": {
+        "empty": "No se encontró ninguna industria.",
         "label": "Industria",
-        "placeholder": "Selecciona una industria"
+        "placeholder": "Selecciona una industria",
+        "searchPlaceholder": "Buscar industrias"
       },
       "role": {
         "label": "Tu rol",
@@ -206,30 +208,26 @@
     },
     "signUp": {
       "back": "Atrás",
+      "confirmPassword": "Repetir contraseña",
       "continueWithGoogle": "Continuar con Google",
       "continueWithLinkedin": "Continuar con Linkedin",
-      "eyebrow": "Empecemos",
       "fullName": "Nombre",
-      "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
       "lastName": "Apellido",
-      "loginLink": "Iniciar sesión",
       "passwordHints": {
         "length": "Al menos 8 caracteres",
-        "letter": "Contiene una letra",
-        "number": "Contiene un número"
+        "letter": "Al menos 1 letra mayúscula",
+        "number": "Al menos 1 número"
       },
       "showPassword": "Mostrar contraseña",
       "stepLabel": "Paso {step} de {total}",
       "submit": "Continuar",
       "submitting": "Continuando…",
-      "subtitle": "Tu información se guarda de inmediato, incluso si no terminas ahora.",
       "title": "Crear cuenta",
       "username": "Nombre de usuario",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
-      "backToLogin": "Volver a iniciar sesión",
       "changeIt": "Cámbialo",
       "resend": "Reenviar correo",
       "resending": "Enviando…",
@@ -239,9 +237,18 @@
       "wrongEmail": "¿Correo equivocado?"
     },
     "welcome": {
-      "browseCta": "Explorar la comunidad",
-      "subtitle": "Ya eres miembro de la comunidad.",
-      "title": "¡Felicidades!"
+      "ctas": {
+        "findEvent": "Buscar un evento de Mindsetis",
+        "findMindsetter": "Buscar un Mindsetter para mí",
+        "findMindsetterInfo": "Descubre qué es un Mindsetter",
+        "inviteEvent": "Invitar a un evento de Mindsetis",
+        "seeProfile": "Ver cómo se ve mi página de perfil"
+      },
+      "modal": {
+        "confirm": "Entendido, quiero ser Miembro",
+        "title": "¿Qué es un Mindsetter?"
+      },
+      "title": "¡Felicidades! Ya eres miembro de la comunidad."
     }
   },
   "email": {

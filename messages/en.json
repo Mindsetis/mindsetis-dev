@@ -114,8 +114,10 @@
         "placeholder": "Your company name"
       },
       "industry": {
+        "empty": "No industry found.",
         "label": "Industry",
-        "placeholder": "Select an industry"
+        "placeholder": "Select an industry",
+        "searchPlaceholder": "Search industries"
       },
       "role": {
         "label": "Your role",
@@ -206,30 +208,26 @@
     },
     "signUp": {
       "back": "Back",
+      "confirmPassword": "Repeat Password",
       "continueWithGoogle": "Continue with Google",
       "continueWithLinkedin": "Continue with Linkedin",
-      "eyebrow": "Let's start",
       "fullName": "First name",
-      "haveAccount": "Already have an account?",
       "hidePassword": "Hide password",
       "lastName": "Second name",
-      "loginLink": "Log in",
       "passwordHints": {
         "length": "At least 8 characters",
-        "letter": "Contains a letter",
-        "number": "Contains a number"
+        "letter": "At least 1 uppercase letter",
+        "number": "At least 1 number"
       },
       "showPassword": "Show password",
       "stepLabel": "Step {step} of {total}",
       "submit": "Continue",
       "submitting": "Continuing…",
-      "subtitle": "Your info is saved right away — even if you don't finish now.",
       "title": "Create account",
       "username": "Username",
       "usernamePlaceholder": "@anakondra"
     },
     "verifyEmail": {
-      "backToLogin": "Back to log in",
       "changeIt": "Change it",
       "resend": "Resend email",
       "resending": "Sending…",
@@ -239,9 +237,18 @@
       "wrongEmail": "Wrong email?"
     },
     "welcome": {
-      "browseCta": "Browse the community",
-      "subtitle": "You are now a member of the community.",
-      "title": "Congrats!"
+      "ctas": {
+        "findEvent": "Find Mindsetis event",
+        "findMindsetter": "Find Mindseter for me",
+        "findMindsetterInfo": "Find out who a Mindsetter is",
+        "inviteEvent": "Invite on Mindsetis event",
+        "seeProfile": "See how looks my profile page"
+      },
+      "modal": {
+        "confirm": "Understand, I want to be a Member",
+        "title": "Who is Mindsetter?"
+      },
+      "title": "Congratulations! You are now a member of the community."
     }
   },
   "email": {

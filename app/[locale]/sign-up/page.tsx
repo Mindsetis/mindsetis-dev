@@ -67,13 +67,9 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
           "H3 (PC)" exactly, no manual `leading-*` override needed. */}
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-2">
-          {/* Eyebrow — same "tiny spacing" recipe as `RegistrationProgress`'s step-count text
-              (`text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase`). */}
-          <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
-            {t('signUp.eyebrow')}
-          </span>
+          {/* Stage 1.6: the "Let's start" eyebrow and "Your info is saved right away…"
+              subtitle were removed per the user's copy tweaks — only the heading remains. */}
           <h1 className="font-display text-h1 text-foreground md:text-h3">{t('signUp.title')}</h1>
-          <p className="text-body font-medium text-foreground">{t('signUp.subtitle')}</p>
         </div>
 
         <SignUpForm initialEmail={parsedEmail.success ? parsedEmail.data : undefined} />

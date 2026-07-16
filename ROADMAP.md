@@ -383,3 +383,124 @@ Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ 
 - [x] Migration/data check: any existing hosted-project users created via the auto-confirm path stay confirmed (no retroactive re-verification) — confirm this is fine as a one-time MVP-stage transition, not a live-migration concern
 - [x] i18n: update `signUp.stepLabel`-driven copy if any step-specific strings (e.g. verify-email eyebrow/subtitle) assumed the old step-4 framing
 - [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths
+
+### 1.6 — Registration wizard: copy/UI tweaks (Figma follow-ups)
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-16
+
+Batch of small copy and UI adjustments across the registration wizard, requested by the user
+directly (not yet scoped/estimated). **Note:** every new/changed button below links to the
+homepage for now — destinations are placeholders pending a product decision on real routes,
+not final. The step-3 upload icon SVG is recorded verbatim below so implementation doesn't
+need to ask again.
+
+Implementation follow-up (2026-07-16, resolved 2026-07-16): the step-1 password-hint copy now
+reads "At least 1 uppercase letter", but `passwordSchema` (`lib/validation/common.ts`) still
+validated via `/[A-Za-z]/` (any-case letter) — a password with only lowercase letters
+satisfied this requirement even though the UI claimed it needed an uppercase letter.
+Decision: tightened the regex to `/[A-Z]/` to match the copy. Updated `SignUpForm.tsx`'s
+local hint check (same regex) and removed the now-resolved JSDoc flag.
+
+Implementation follow-up (2026-07-16): the step-4 "Industry" checklist item originally said
+"reuse the existing country select used in step 3, made single-select" — turned out step 3's
+Country field is a plain text `Input`, not a select, so that reference didn't exist. User
+clarified (2026-07-16) the actual reference is step 3's **language** control — the
+`LanguagesMultiSelect` combobox (`components/member-profile/LanguagesMultiSelect.tsx`:
+Popover + searchable `Command` list, chevron trigger, checkbox-style selected indicator).
+Industry currently uses a plain Radix `Select`/`SelectTrigger` (`BuildProfileForm.tsx`) — the
+item now means: give Industry the same Popover+searchable-Command visual/interaction style as
+`LanguagesMultiSelect`, but constrained to picking exactly one option (select closes the
+popover and shows the single chosen label, no removable chips).
+
+**Step 1 — account creation (name, password, email):**
+- [x] Remove the "Let's start" text
+- [x] Remove the "Your info is saved right away — even if you don't finish now." text
+- [x] Change copy "Contains a letter" → "At least 1 uppercase letter"
+- [x] Change copy "Contains a number" → "At least 1 number"
+- [x] Change copy "Confirm password" → "Repeat Password"
+- [x] Remove "Already have an account? Log in"
+
+**Step 2 — email confirmation screen (`/verify-email`):**
+- [x] Remove "Back to log in"
+
+**Step 3 — additional profile data (`/member-profile`):**
+- [x] Photo upload field: add an icon to the left of the upload button's text. Exact SVG
+  (16×16, `viewBox="0 0 16 16"`, `fill="white"`) provided by the user:
+  ```svg
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.9987 4.00004C8.46536 4.00004 7.9987 4.46671 7.9987 5.00004C7.9987 5.53337 8.46536 6.00004 8.9987 6.00004C9.53203 6.00004 9.9987 5.53337 9.9987 5.00004C9.9987 4.46671 9.53203 4.00004 8.9987 4.00004ZM12.6654 1.33337H3.33203C2.1987 1.33337 1.33203 2.20004 1.33203 3.33337V12.6667C1.33203 13.8 2.1987 14.6667 3.33203 14.6667H12.6654C13.7987 14.6667 14.6654 13.8 14.6654 12.6667V3.33337C14.6654 2.20004 13.7987 1.33337 12.6654 1.33337ZM13.332 9.26671L12.0654 8.00004C11.2654 7.26671 9.9987 7.26671 9.26536 8.00004L8.66536 8.60004L6.73203 6.66671C5.93203 5.93337 4.66536 5.93337 3.93203 6.66671L2.66536 7.93337V3.33337C2.66536 2.93337 2.93203 2.66671 3.33203 2.66671H12.6654C13.0654 2.66671 13.332 2.93337 13.332 3.33337V9.26671Z" fill="white" />
+  </svg>
+  ```
+- [x] Hide the photo preview by default; only render it once the user has actually uploaded a photo
+
+**Step 4 — company info (`/build-profile`):**
+- [x] "Industry" select: replace the current plain Radix `Select`/`SelectTrigger` with the same
+  Popover + searchable `Command` combobox visual/interaction style as
+  `LanguagesMultiSelect` (`components/member-profile/LanguagesMultiSelect.tsx`), constrained to
+  a single choice (closes on select, shows one chosen label, no removable chips) — see
+  implementation follow-up note above for the clarified reference. Built as a new sibling
+  component `components/build-profile/IndustryCombobox.tsx` (no generic combobox existed yet
+  to reuse); wired into `BuildProfileForm.tsx` in place of the old `Select`.
+
+**Step 5 — Welcome / Congrats screen (`/welcome`, last step):**
+- [x] Remove the `lucide-circle-check` icon
+- [x] Change text "Congrats!" → "Congratulations! You are now a member of the community."
+- [x] Remove the separate "You are now a member of the community." line (merged into the
+  heading above instead)
+- [x] Remove the "Browse the community" button
+- [x] Add a button: "Find Mindseter for me" (user's exact wording — likely typo for
+  "Mindsetter"; confirm spelling with the user before implementing)
+- [x] Add a button: "Invite on Mindsetis event"
+- [x] Add a button: "Find Mindsetis event"
+- [x] Add a button: "Find out who a Mindsetter is" — opens a "Who is Mindsetter?" popup/modal
+  (already designed in Figma, in the frame directly below this last registration screen's
+  frame). Inside the popup, a button "Understand, I want to be a Member" closes the popup AND
+  swaps the "Find out who a Mindsetter is" button (same position) for a new button "See how
+  looks my profile page"
+
+**Before implementing:**
+- [x] Check the Figma file (via `figma-designer`) for every changed/added element above —
+  especially the new step-5 buttons and the step-4 single-select — for whether the design
+  calls for an icon that isn't captured yet in this checklist; add it here if so
+
+  Figma audit findings (2026-07-16): Step 3 upload button icon confirmed matching the recorded
+  SVG (Figma's own asset there is a generic `scenery` picture-glyph, same concept). Step 4
+  Industry select needs no new icon — Figma just shows the standard trailing chevron
+  (`input drop-down`), same as any other select field; Figma's "Country" field itself is a
+  plain text input with no chevron, so it isn't a real reference — the code's existing
+  country-input styling is what actually exists to compare against (see the open Industry
+  question below). Step 5 DOES need icons not yet in the checklist — added as new items below.
+
+**Step 5 icons (added after Figma audit, 2026-07-16):**
+- [x] "Find Mindseter for me" — leading search/magnifying-glass icon (`lucide-react` `Search`)
+- [x] "Invite on Mindsetis event" — leading person+plus icon (Figma: `user-add-fill`; `lucide-react` `UserPlus`)
+- [x] "Find Mindsetis event" — leading search/magnifying-glass icon (borderless/tertiary button style in Figma; `lucide-react` `Search`, `variant="ghost"`)
+- [x] "Find out who a Mindsetter is" — trailing circular icon with an arrow (Figma: `arrow-left-long-line`, rendered pointing right; `lucide-react` ships this natively as `CircleArrowRight`, no custom wrapper needed)
+- [x] "See how looks my profile page" (popup replacement button) — leading ID-card/profile icon (Figma: `account-pin-box-fill`; `lucide-react` `IdCard`)
+- [x] Popup "Understand, I want to be a Member" — confirmed no icon in Figma, no change needed
+
+**Review loop:**
+- [x] `code-reviewer` + `security-auditor` (password-validation regex change touches auth) + `qa` review loop, then commit via `git-manager`
+
+`code-reviewer` (2026-07-16): one Medium must-fix — `IndustryCombobox` was wrapped in
+`FormControl` in `BuildProfileForm.tsx`, breaking label/`aria-describedby` association (Radix
+`Slot` merges those onto a single child, but `IndustryCombobox` doesn't forward them);
+`LanguagesMultiSelect`'s established pattern in `MemberProfileForm.tsx` deliberately renders
+outside `FormControl` for this reason. **Fixed:** removed the `FormControl` wrapper to match.
+`typecheck`/`lint` re-verified clean after the fix. Everything else from that review was
+optional/non-blocking (Dialog missing a `DialogDescription`, reset-password form lacking a
+live password-hint checklist, a documented duplication between `LanguagesMultiSelect` and
+`IndustryCombobox` worth a future shared-combobox extraction, and a request to double-check
+the "Find Mindseter" spelling with the user before merge — see the step-5 checklist item,
+already flagged there as the user's exact wording).
+`security-auditor` (2026-07-16): clean, no Medium+ findings; confirmed the password-regex
+tightening applies consistently to both sign-up and password-reset (shared `passwordSchema`),
+no client/server validation drift, no secret/service-role leakage in new client components.
+`qa` (2026-07-16): **PASSED** — typecheck/lint/build/secret-leak scan all green; live smoke
+test against the hosted Supabase project covered all 5 wizard steps (real authenticated
+session for steps 3–5 via the same Admin-API `generateLink` technique as stage 1.5, test user
+cleaned up afterward). One pre-existing issue noted but not blocking: `npm run format:check`
+fails on ~100 files even on a clean `HEAD` with none of this stage's changes — a repo-wide
+`core.autocrlf`/Prettier line-ending mismatch, unrelated to stage 1.6, tracked separately
+(needs a `.gitattributes` `eol=lf` or `core.autocrlf=input` fix at some point).
