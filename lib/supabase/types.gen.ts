@@ -306,6 +306,30 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          registered: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          registered?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          registered?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mindsetter_profiles: {
         Row: {
           created_at: string | null
@@ -401,12 +425,14 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          industry: string | null
           interests: string[] | null
           is_blocked: boolean | null
           job_title: string | null
           languages: string[] | null
           last_name: string | null
           onboarding_step: number | null
+          role: string | null
           socials: Json | null
           tagline: string | null
           updated_at: string | null
@@ -428,12 +454,14 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          industry?: string | null
           interests?: string[] | null
           is_blocked?: boolean | null
           job_title?: string | null
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          role?: string | null
           socials?: Json | null
           tagline?: string | null
           updated_at?: string | null
@@ -455,12 +483,14 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          industry?: string | null
           interests?: string[] | null
           is_blocked?: boolean | null
           job_title?: string | null
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          role?: string | null
           socials?: Json | null
           tagline?: string | null
           updated_at?: string | null

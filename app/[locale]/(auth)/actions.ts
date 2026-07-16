@@ -122,6 +122,22 @@ export const signUp = createAction(
       throw new ActionError('conflict', 'An account with this email already exists.');
     }
 
+    // Best-effort: flip the matching `leads` row (spec §5.2, reworked stage 1.7 — homepage
+    // hero "signup intent" capture, `recordSignupIntent` in `app/[locale]/actions.ts`) to
+    // `registered = true`, now that this email has actually completed account registration.
+    // Service-role client is required — `leads` has no anon/authenticated UPDATE policy at
+    // all (the `registered` flip is deliberately server-only). Non-fatal and expected to be a
+    // no-op most of the time: most sign-ups never went through the homepage hero field, so
+    // there's usually no matching row to update.
+    const leadsService = createServiceClient();
+    const { error: leadError } = await leadsService
+      .from('leads')
+      .update({ registered: true })
+      .eq('email', email);
+    if (leadError) {
+      console.error('[auth.signUp] leads.registered update failed:', leadError);
+    }
+
     return { email };
   },
   { rateLimit: { key: 'auth:sign-up', limit: 5, window: '10 m' } },

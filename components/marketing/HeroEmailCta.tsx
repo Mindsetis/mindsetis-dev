@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
+import { recordSignupIntent } from '@/app/[locale]/actions';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -19,10 +20,14 @@ import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/mar
 
 /**
  * Hero "quick start" email capture — Figma "Frame 276" (Welcome Screen, below the CTA
- * button). There's no dedicated "start with email" Server Action yet, so this validates the
- * email client-side and hands the visitor straight into sign-up, carrying the email along as
- * a query param so `SignUpForm` can prefill it (Zod-validated again at that boundary via
- * `emailSchema.safeParse` in `app/[locale]/sign-up/page.tsx`).
+ * button). Validates the email client-side, best-effort records it as a "signup intent" lead
+ * (`recordSignupIntent`, spec §5.2 reworked stage 1.7) via the unauthenticated Server Action
+ * (the write itself runs as service-role — see that action's doc comment), then hands
+ * the visitor into sign-up regardless of whether that best-effort call succeeded — carrying
+ * the email along as a query param so `SignUpForm` can prefill it (Zod-validated again at
+ * that boundary via `emailSchema.safeParse` in `app/[locale]/sign-up/page.tsx`). A failure to
+ * record the lead is not the visitor's problem (nothing looked wrong to them — they're still
+ * headed to sign-up), so it's only logged, never surfaced as an error toast.
  */
 export function HeroEmailCta() {
   const t = useTranslations('home.hero');
@@ -33,7 +38,11 @@ export function HeroEmailCta() {
     defaultValues: { email: '' },
   });
 
-  const onSubmit = form.handleSubmit(({ email }) => {
+  const onSubmit = form.handleSubmit(async ({ email }) => {
+    const result = await recordSignupIntent({ email });
+    if (!result.ok) {
+      console.error('[HeroEmailCta] recordSignupIntent failed:', result.error);
+    }
     router.push(`/sign-up?email=${encodeURIComponent(email)}`);
   });
 

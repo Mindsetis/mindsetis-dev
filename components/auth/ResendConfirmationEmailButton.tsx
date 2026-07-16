@@ -22,7 +22,7 @@ type ResendConfirmationEmailButtonProps = {
  * email — a genuine retry of the blocking confirmation link, not a courtesy re-send of an
  * informational email (that's `build-profile/actions.ts`'s separate, still-correct welcome-email
  * send, unrelated to this button). Failures (including a rate-limit hit) surface via a `sonner`
- * toast — same pattern as `components/marketing/LeadCaptureDialog.tsx`. The action itself never
+ * toast — same pattern as any other client-island Server Action call in this codebase. The action itself never
  * reveals whether the resend actually went out (enumeration protection), so success here always
  * shows the same generic "sent" toast regardless of what happened server-side.
  */

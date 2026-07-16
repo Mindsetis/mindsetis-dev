@@ -550,3 +550,114 @@ Implemented (2026-07-16) as a new `components/auth/WhoIsMindsetterDialog.tsx` co
 `className="text-foreground"` override (no changes to the shared `button.tsx` variants).
 Breakpoint used for the mobile/desktop checklist-card and footer-button layout: `md:`
 (matching `OAuthButtons.tsx`'s existing convention). `typecheck`/`lint`/`build` all clean.
+
+### 1.7 — "I'm on the way" lead capture: full rework (supersedes 1.3's popup)
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-16
+
+Replaces stage 1.3's approach entirely (that section is left intact below as historical
+record — not deleted, not rewritten). Stage 1.3 built a separate popup
+(`LeadCaptureDialog.tsx`) with its own Name + Email fields, triggered by a standalone
+"I'm on the way" link, writing to a `leads` table (`id`, `name`, `email`, `source`,
+`created_at`, `updated_at`).
+
+User's exact request (2026-07-16): no separate fields, popups, or pages at all. Only the
+existing homepage hero email field + "Continue" button
+(`components/marketing/HeroEmailCta.tsx` — already exists, currently just client-side
+validates the email and routes to `/sign-up?email=...` with zero DB write) should write the
+email to a table when the visitor submits it. Add a `registered` boolean column: when the
+visitor enters their email on the homepage and proceeds to the first registration step, the
+row is written with `registered = false`; if they go on to actually complete account
+registration, the same row's `registered` flips to `true`; if they never complete
+registration, it stays `false`.
+
+User decision: reuse/rework the existing `leads` table rather than create a new one — drop
+`name`/`source`, add `registered boolean not null default false`, add a uniqueness
+constraint on `email` (resubmitting just upserts the existing row, no duplicates).
+
+- [x] Migration: alter `leads` table — drop `name` and `source` columns, add
+  `registered boolean not null default false`, add a unique constraint/index on `email`.
+  Update RLS: keep public anon INSERT (homepage is unauthenticated) but constrain it so a
+  client can never insert `registered = true` directly (e.g. `with check (registered = false)`);
+  UPDATE must NOT be open to anon/authenticated at all — the `registered` flip only happens
+  server-side via the service-role client from the sign-up Server Action, never from a
+  client-writable policy (same "server-only for the sensitive field" precedent as money
+  tables). Keep existing staff-only SELECT/DELETE policies (adjust for dropped columns).
+
+  Applied (2026-07-16): `supabase/migrations/20260716185041_leads_signup_intent_rework.sql`,
+  pushed to the hosted project (`pqaffuvhghlbenqigwks`) and verified live — `leads` now has
+  `id`/`email`/`registered`/`created_at`/`updated_at` only, `leads_email_key` unique
+  constraint added, `leads_insert_public`'s `with check` narrowed to `registered = false`,
+  staff-only SELECT/UPDATE/DELETE policies unchanged. Types regenerated
+  (`lib/supabase/types.gen.ts`).
+- [x] `lib/validation/leads.ts`: simplify to an email-only schema (drop `name`). Landed as
+  `signupIntentSchema` (`{ email }`) — `nameSchema`/`leadFormSchema`/`leadCaptureSchema` removed.
+- [x] `app/[locale]/actions.ts`: replace/rework `captureLead` into an email-only action that
+  upserts into `leads` (email, `registered` defaults to false) — call it from
+  `HeroEmailCta`'s submit handler, not from a dialog. Landed as `recordSignupIntent`
+  (rate-limit key renamed `marketing:signup-intent`).
+
+  **`qa` (2026-07-16) found this CRITICAL/broken as first implemented:** the
+  `{ onConflict: 'email', ignoreDuplicates: true }` upsert (`INSERT ... ON CONFLICT DO
+  NOTHING`) was chosen to dodge the `DO UPDATE`-needs-an-UPDATE-policy problem (see below),
+  but `DO NOTHING` has the *same* underlying issue — Postgres needs SELECT-visibility into any
+  potentially-conflicting row to evaluate `ON CONFLICT` at all, and anon/authenticated has zero
+  SELECT on `leads` (`leads_select_staff` is staff-only). Reproduced live against the hosted
+  project: every anon call with that `Prefer` header fails `42501` (RLS violation) — including
+  for a brand-new email with no existing row — so **every homepage submission silently wrote
+  nothing**, the whole point of this stage. `HeroEmailCta` swallows the failure and navigates
+  to `/sign-up` regardless, so this was invisible without live RLS testing (source-level
+  review by `code-reviewer` didn't catch it either — it reasoned the logic through but wasn't
+  run live against real RLS).
+
+  Original (broken) reasoning kept for context: a true upsert-with-update
+  (`onConflict: 'email'` merging into the existing row) is blocked by RLS because
+  anon/authenticated has no UPDATE policy on `leads` (intentional, staff-only), and Postgres
+  enforces the UPDATE policy on `ON CONFLICT DO UPDATE` (unlike a plain UPDATE, which just
+  silently filters rows, a blocked `DO UPDATE` raises an error) — this diagnosis was correct,
+  but the `DO NOTHING` fallback doesn't actually route around it, since `DO NOTHING` also
+  requires SELECT visibility to detect the conflict in the first place.
+
+  **Fixed (2026-07-16):** `recordSignupIntent` now writes via the **service-role client**
+  (`lib/supabase/service.ts`, same one `signUp`'s `registered` flip already uses) instead of
+  the anon client — bypasses RLS entirely, so the SELECT-visibility problem no longer applies
+  regardless of upsert mode. No auth check added (the capture point is intentionally open to
+  anonymous visitors, unchanged trust boundary — Zod validation + the existing
+  `marketing:signup-intent` rate limit are still the only gates). Upsert mode: real
+  `DO UPDATE SET updated_at = now()` on email conflict, deliberately **omitting** `registered`
+  from the update payload — a resubmission just touches `updated_at`, never resets an
+  already-`true` `registered` flag back to `false`. Live-verified against the hosted project:
+  new email → row created (`registered = false`); resubmitting the same email → no error,
+  `updated_at` bumps, `created_at` unchanged; resubmitting an email already flipped to
+  `registered = true` → stays `true`, not reset. `typecheck`/`lint`/`build` clean.
+
+  Re-review after the fix (2026-07-16): `code-reviewer` APPROVED (two Low nits fixed — dropped
+  the redundant explicit `updated_at` from the upsert payload since the `set_leads_updated_at`
+  trigger already stamps it, and reworded a doc comment that ambiguously said "anon Server
+  Action" right next to code that now uses the service-role client). `security-auditor`
+  reviewed the anon→service-role client switch specifically (this makes RLS a non-factor for
+  this write path, leaving Zod + rate-limit as the only gates) — clean, no Critical/High/Medium
+  findings; confirmed the upsert payload structurally can never include `registered`, the
+  `onConflict` target is hard-coded, and the service-role client instance isn't shared/reused
+  elsewhere. Non-blocking suggestion for a future pass: a narrow `SECURITY DEFINER` SQL
+  function would be a tighter-scoped alternative to a general service-role client for this
+  specific anonymous entry point — noted for later, not required now. `qa` independently
+  re-verified all 3 live DB behaviors against the hosted project post-fix (fresh re-run, not
+  just trusting the implementer's report) — PASS.
+- [x] Delete `components/marketing/LeadCaptureDialog.tsx` entirely and its usage in
+  `components/marketing/HeroSection.tsx` (remove the "I'm on the way" trigger link/popup —
+  no separate escape-hatch UI anymore). Done; `HeroSection.tsx`'s doc comment updated,
+  `components/auth/ResendConfirmationEmailButton.tsx`'s stale comment reference fixed too.
+- [x] `app/[locale]/(auth)/actions.ts` `signUp`: after a successful `signUp()` call,
+  best-effort update the matching `leads` row (by lowercased email) to `registered = true`
+  via the service-role client (narrow, justified server-only use — no-op if no row exists,
+  i.e. the visitor never went through the homepage field). Done, non-fatal (console.error on
+  failure), same pattern as `updatePassword`'s existing `verification_deadline` update.
+- [x] i18n: remove now-unused `home.hero.imOnTheWay.*` keys from `messages/en.json`/`es.json`
+  (keep `home.hero.emailLabel`/`emailPlaceholder`/`continue`, still used by `HeroEmailCta`).
+  Done, confirmed no other references before removing.
+- [x] Review loop (`code-reviewer`, `security-auditor` — RLS + service-role usage change,
+  `qa`) then commit via `git-manager`
+
+`typecheck`/`lint`/`format:check` (pre-existing CRLF baseline unchanged, no new violations)/`build` all clean per the implementing agent.
