@@ -720,8 +720,10 @@ the fork opened by the "Cool, I want to become a Mindsetter" button in `WhoIsMin
 (currently a `/` placeholder). Full field-by-field build prompt drafted 2026-07-18 from the
 Figma "Registration" section (via `figma-designer`), cross-checked against the existing
 DB/migrations + spec (Opus, 2026-07-18). **Recorded as a plan only — not taken into development
-yet.** The detailed implementation prompt (all screens, exact copy, field types, frame node
-ids) lives in the user's working notes; the decisions + blockers are captured here.
+yet.** The full field-by-field implementation prompt (all screens, exact copy, field types,
+frame node ids, the A–E decisions/blockers) lives in
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md); the decisions
++ blockers are summarized here.
 
 **⚠️ 3 blockers to resolve with the product owner BEFORE any code:**
 - [ ] **Data model already partly exists and mismatches the design.** `mindsetter_profiles`,
