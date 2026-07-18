@@ -10,30 +10,33 @@ type BlockShellProps = {
    * not this component, since only the page has the parsed `?blocks=&i=` handoff. */
   backHref: string;
   /**
-   * Where "Skip" navigates: the next picked block, or congrats if this was the last one
-   * (`nextBlockHref(blocks, index)`) — reached WITHOUT saving this block's data, unlike the
-   * form's own "Save and continue", which persists first and navigates to the same href only
+   * Where "Skip" navigates: the next picked block, or the Personal-session step if this was the
+   * last one (`nextBlockHref(blocks, index)`) — reached WITHOUT saving this block's data, unlike
+   * the form's own "Save and continue", which persists first and navigates to the same href only
    * on success.
    */
   skipHref: string;
-  /** 0-based position of this block within the picked sequence. */
+  /** 0-based position of this block within the picked sequence. Kept in the prop shape even
+   * though no counter is rendered (product decision D5 — no step/block indicators anywhere in
+   * this flow) since callers still compute it for `backHref`/`skipHref`. */
   index: number;
-  /** Total number of picked blocks. */
+  /** Total number of picked blocks — same "kept for the caller's own computed hrefs" reasoning
+   * as `index` above. */
   total: number;
   children: ReactNode;
 };
 
 /**
  * Shared chrome for the "optional block" screens (onboarding doc section 7, ROADMAP stage 1.9).
- * These run AFTER the 5-step core wizard, so they deliberately do NOT reuse
- * `RegistrationStepHeader`/`RegistrationProgress` (that 5-step bar doesn't apply here) — instead
- * a lightweight header: a Back link + a small "Block X of N" label + a "Skip" link, plus the
- * shared page container/max-width every core step's own page.tsx already uses.
+ * These run AFTER the core wizard, so they deliberately do NOT reuse
+ * `RegistrationStepHeader`/`RegistrationProgress` — instead a lightweight header: a Back link +
+ * a "Skip" link (product decision D5: no step/block counters anywhere in this flow, matching
+ * Figma), plus the shared page container/max-width every core step's own page.tsx already uses.
  *
  * Every block page wraps its heading + form in this shell so the chrome (and the `?blocks=&i=`
- * query-param handoff it implies) stays identical across all 6 block routes.
+ * query-param handoff it implies) stays identical across all 8 block routes.
  */
-export async function BlockShell({ backHref, skipHref, index, total, children }: BlockShellProps) {
+export async function BlockShell({ backHref, skipHref, children }: BlockShellProps) {
   const t = await getTranslations('mindsetterOnboarding.blocks.shell');
 
   return (
@@ -46,12 +49,6 @@ export async function BlockShell({ backHref, skipHref, index, total, children }:
           <ArrowLeft className="size-4" aria-hidden="true" />
           {t('back')}
         </Link>
-
-        {total > 0 ? (
-          <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
-            {t('blockLabel', { index: index + 1, total })}
-          </span>
-        ) : null}
 
         <Link
           href={skipHref}

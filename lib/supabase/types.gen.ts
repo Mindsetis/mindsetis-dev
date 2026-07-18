@@ -346,6 +346,7 @@ export type Database = {
           roles: Json | null
           superpowers: Json | null
           updated_at: string | null
+          video_blog: Json | null
           wins: Json | null
         }
         Insert: {
@@ -363,6 +364,7 @@ export type Database = {
           roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
+          video_blog?: Json | null
           wins?: Json | null
         }
         Update: {
@@ -380,6 +382,7 @@ export type Database = {
           roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
+          video_blog?: Json | null
           wins?: Json | null
         }
         Relationships: [

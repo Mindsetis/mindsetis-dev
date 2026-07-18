@@ -360,7 +360,8 @@ function AvailableDaysField({ control }: { control: Control<SessionStepInput> })
 }
 
 /**
- * Extended Mindsetter onboarding — step 4/5 "Personal session" form (see `page.tsx`). Maps to
+ * Extended Mindsetter onboarding — step 5/5 (now the LAST core step, product decision D9)
+ * "Personal session" form (see `page.tsx`). Maps to
  * `session_settings` (mindsetter_id primary key) rather than `mindsetter_profiles`, unlike the
  * three earlier steps. Mirrors the RHF + `zodResolver` + `applyFieldErrors` structure every
  * other onboarding step form uses.
@@ -400,8 +401,9 @@ export function SessionForm({ topicOptions, initialSessionSettings }: SessionFor
       return;
     }
 
-    // Step 5/5 — "Make your profile shine."
-    router.push('/mindsetter-onboarding/shine');
+    // Last core step — Personal session now flows straight to congrats (product decision D9
+    // moved it to the last core step, after the "Shine" picker and any optional blocks).
+    router.push('/mindsetter-onboarding/congrats');
   });
 
   return (

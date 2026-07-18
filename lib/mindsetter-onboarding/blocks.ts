@@ -1,16 +1,17 @@
 /**
  * Block-sequencing helper for the extended Mindsetter onboarding's optional blocks
  * (`docs/mindsetter-extended-onboarding.md` sections 6/7, ROADMAP stage 1.9). The
- * "Make your profile shine" picker (step 5/5, `app/[locale]/mindsetter-onboarding/shine/page.tsx`)
+ * "Make your profile shine" picker (step 4/5, `app/[locale]/mindsetter-onboarding/shine/page.tsx`)
  * lets the caller pick any subset of these blocks; rather than persisting that selection in the
  * DB, it's handed to the first picked block screen as a query string
- * (`?blocks=<slug,slug,...>&i=<index>`), and each (not yet built) block screen's own "Save and
- * continue" reads this same param shape to find the next one. This file is the single source of
- * truth both sides share, so the picker and every block screen agree on the
- * ordering/route/query-param contract without duplicating it.
+ * (`?blocks=<slug,slug,...>&i=<index>`), and each block screen's own "Save and continue" reads
+ * this same param shape to find the next one. This file is the single source of truth both sides
+ * share, so the picker and every block screen agree on the ordering/route/query-param contract
+ * without duplicating it.
  *
- * "Video blog" (BUILT NOT BURN) is deliberately excluded — product decision, onboarding doc
- * section D: Phase 2, out of MVP. Only the 7 blocks below ever appear anywhere in this flow.
+ * "Video blog" (BUILT NOT BURN) was originally deferred as Phase 2 scope, but is un-deferred back
+ * into MVP per product/Figma (migration `20260718185944_mindsetter_video_blog.sql`) — it's the
+ * 8th and last block below.
  */
 
 /** Canonical order — matches the picker's own list order (onboarding doc section 6). */
@@ -22,6 +23,7 @@ export const BLOCK_SLUGS = [
   'my-way',
   'fckups',
   'philosophy',
+  'video-blog',
 ] as const;
 
 export type BlockSlug = (typeof BLOCK_SLUGS)[number];
@@ -41,9 +43,17 @@ export function blockRoute(slug: BlockSlug): string {
 
 /**
  * Where the flow lands once every picked block has been filled in (onboarding doc section 8,
- * Mindsetter Congrats screen) — not built yet either, same precedent as `blockRoute`.
+ * Mindsetter Congrats screen).
  */
 export const CONGRATS_ROUTE = '/mindsetter-onboarding/congrats';
+
+/**
+ * "Personal session" is the LAST core step (product decision D9, ROADMAP stage 1.9 follow-up):
+ * roles → superpowers → help → shine → [optional blocks] → session → congrats. So once every
+ * picked block is done, the flow lands on the mandatory Personal-session step next, not congrats
+ * directly — `nextBlockHref` below returns this rather than `CONGRATS_ROUTE`.
+ */
+export const SESSION_ROUTE = '/mindsetter-onboarding/session';
 
 /** Builds `/mindsetter-onboarding/blocks/<slug>?blocks=<...>&i=<index>` for `blocks[index]`. */
 export function buildBlockHref(blocks: readonly BlockSlug[], index: number): string {
@@ -90,11 +100,11 @@ export function parseBlocksParam(searchParams: BlocksSearchParams): {
 
 /**
  * The href a block screen's "Save and continue" navigates to: the next picked block, or the
- * congrats screen once `index` was the last one (onboarding doc section 7: "next PICKED block or
- * congrats if it's the last").
+ * (now-last) Personal-session step once `index` was the last picked block (decision D9 — see
+ * `SESSION_ROUTE`'s doc comment).
  */
 export function nextBlockHref(blocks: readonly BlockSlug[], index: number): string {
   const nextIndex = index + 1;
-  if (nextIndex >= blocks.length) return CONGRATS_ROUTE;
+  if (nextIndex >= blocks.length) return SESSION_ROUTE;
   return buildBlockHref(blocks, nextIndex);
 }

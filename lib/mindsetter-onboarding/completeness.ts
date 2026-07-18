@@ -1,13 +1,17 @@
 /**
- * Profile-completeness calc for the "Make your profile shine" picker (step 5/5,
+ * Profile-completeness calc for the "Make your profile shine" picker (step 4/5 under the
+ * reordered flow — "Personal session" moved to be the last core step, product decision D9,
  * `docs/mindsetter-extended-onboarding.md` section 6 / decision E.5). The Figma mock showed a
  * static, undefined "42% · Basic" with no %→tier legend — this is the real MVP rule instead,
  * kept in one small pure function so it's easy to tweak once product defines the real tiers.
  *
  * Counts 4 "core" sections (roles, superpowers, help_with, a configured Personal session — all
- * mandatory earlier steps in this same wizard, so they're only ever unfilled for a caller who
- * hasn't reached this step honestly) plus the 7 optional blocks from the picker (section 6) — 11
- * sections total — and reports what fraction the caller has actually filled in.
+ * mandatory steps in this same wizard, so they're only ever unfilled for a caller who hasn't
+ * reached/passed this step honestly — note that under the reordered flow Personal session now
+ * runs AFTER this picker, so its own contribution to the percentage only shows once the caller
+ * has gone on to complete it) plus the 8 optional blocks from the picker (section 6/7, including
+ * "Video blog" un-deferred back into MVP) — 12 sections total — and reports what fraction the
+ * caller has actually filled in.
  */
 import type { Json } from '@/lib/supabase/types.gen';
 
@@ -31,6 +35,7 @@ export type MindsetterProfileSnapshot = {
   myWay: Json | null;
   fckups: Json | null;
   philosophy: string | null;
+  videoBlog: Json | null;
 };
 
 export type SessionSettingsSnapshot = {
@@ -56,7 +61,7 @@ function hasAnyStringValue(value: Json | null): boolean {
 }
 
 const CORE_SECTION_COUNT = 4;
-const OPTIONAL_BLOCK_COUNT = 7;
+const OPTIONAL_BLOCK_COUNT = 8;
 const TOTAL_SECTIONS = CORE_SECTION_COUNT + OPTIONAL_BLOCK_COUNT;
 
 // TODO confirm tiers — MVP guess (no product-defined %→tier legend exists yet, doc E.5).
@@ -85,6 +90,7 @@ export function computeProfileCompleteness(
     hasEntries(profile.myWay),
     hasEntries(profile.fckups),
     hasText(profile.philosophy),
+    hasAnyStringValue(profile.videoBlog),
   ].filter(Boolean).length;
 
   const percent = Math.round((filledCount / TOTAL_SECTIONS) * 100);

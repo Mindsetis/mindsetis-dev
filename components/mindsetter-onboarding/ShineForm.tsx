@@ -20,7 +20,8 @@ type ShineFormProps = {
 };
 
 /**
- * "Make your profile shine" picker (step 5/5, onboarding doc section 6). Manages the optional-
+ * "Make your profile shine" picker (step 4/5 — Personal session moved to the last core step,
+ * product decision D9 — onboarding doc section 6). Manages the optional-
  * block checkbox selection entirely as local client state — the selection itself is never
  * persisted (handed to the first picked block screen via the `blocks.ts` query-param handoff
  * instead, see that file's header comment); only `mindsetter_profiles.onboarding_step` needs to
@@ -66,8 +67,9 @@ export function ShineForm({ completeness }: ShineFormProps) {
   }
 
   function handleSkip() {
-    // TODO: cabinet route (§5.3) not built yet — placeholder navigate to `/`.
-    void advanceAndNavigate('/');
+    // Personal session is the next (and last) core step regardless of which/any optional blocks
+    // were picked (product decision D9 — Personal session moved after this picker).
+    void advanceAndNavigate('/mindsetter-onboarding/session');
   }
 
   function handleContinue() {

@@ -177,8 +177,9 @@ export function HelpForm({ initialExpertise }: HelpFormProps) {
       return;
     }
 
-    // Step 4/5 — "Personal session".
-    router.push('/mindsetter-onboarding/session');
+    // Step 4/5 — "Make your profile shine." (Personal session moved to the last core step,
+    // product decision D9 — no longer directly after Help.)
+    router.push('/mindsetter-onboarding/shine');
   });
 
   return (

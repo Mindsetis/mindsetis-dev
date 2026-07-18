@@ -19,7 +19,7 @@ export const MAX_ROLE_TITLE_LENGTH = 40;
 export const MAX_ROLE_DESCRIPTION_LENGTH = 200;
 export const MAX_ROLE_LINKS = 5;
 export const MIN_ROLES = 1;
-export const MAX_ROLES = 5;
+export const MAX_ROLES = 10;
 
 /**
  * One optional link per role. `ogTitle` is populated later by a not-yet-built og-scraping
@@ -176,7 +176,7 @@ export type SuperpowersStepInput = z.infer<typeof superpowersStepSchema>;
 export const MAX_EXPERTISE_TITLE_LENGTH = 40;
 export const MAX_EXPERTISE_DESCRIPTION_LENGTH = 200;
 export const MIN_EXPERTISE = 1;
-export const MAX_EXPERTISE = 5;
+export const MAX_EXPERTISE = 10;
 
 export const expertiseSchema = z.object({
   title: z
@@ -338,12 +338,26 @@ export const promoStepSchema = z.object({
 
 export type PromoStepInput = z.infer<typeof promoStepSchema>;
 
+// --- Video blog -> mindsetter_profiles.video_blog jsonb { youtube, vimeo } -----------------
+// Un-deferred from Phase 2 back into MVP scope (migration
+// `20260718185944_mindsetter_video_blog.sql`) — identical shape/schema to `promoStepSchema`
+// above (both YouTube/Vimeo URL fields optional, empty string is valid), just no upload
+// dropzone: this block is a link-only "BUILT NOT BURN interview" field, `VideoBlogForm.tsx`
+// never renders a placeholder dropzone the way `PromoForm.tsx` does.
+
+export const videoBlogStepSchema = z.object({
+  youtube: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
+  vimeo: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
+});
+
+export type VideoBlogStepInput = z.infer<typeof videoBlogStepSchema>;
+
 // --- Numbers -> mindsetter_profiles.numbers jsonb, array of {value, label} ------------------
 
 export const MAX_NUMBER_VALUE_LENGTH = 40;
 export const MAX_NUMBER_LABEL_LENGTH = 40;
 export const MIN_NUMBERS = 1;
-export const MAX_NUMBERS = 5;
+export const MAX_NUMBERS = 10;
 
 export const numberItemSchema = z.object({
   value: z
@@ -390,7 +404,7 @@ export const MAX_WIN_YEAR_LENGTH = 40;
 export const MAX_WIN_TITLE_LENGTH = 40;
 export const MAX_WIN_DESCRIPTION_LENGTH = 200;
 export const MIN_WINS = 1;
-export const MAX_WINS = 5;
+export const MAX_WINS = 10;
 
 export const winSchema = z.object({
   year: z
@@ -435,7 +449,7 @@ export const MAX_MY_WAY_PROJECT_LENGTH = 40;
 export const MAX_MY_WAY_DESCRIPTION_LENGTH = 200;
 export const MAX_MY_WAY_YEAR_LENGTH = 40;
 export const MIN_MY_WAY = 1;
-export const MAX_MY_WAY = 5;
+export const MAX_MY_WAY = 10;
 
 export const myWayStageSchema = z.object({
   project: z
@@ -486,7 +500,7 @@ export type MyWayStepInput = z.infer<typeof myWayStepSchema>;
 
 export const MAX_FCKUP_STORY_LENGTH = 200;
 export const MIN_FCKUPS = 1;
-export const MAX_FCKUPS = 5;
+export const MAX_FCKUPS = 10;
 
 export const fckupSchema = z.object({
   story: z

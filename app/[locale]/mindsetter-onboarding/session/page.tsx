@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
+import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { SessionForm } from '@/components/mindsetter-onboarding/SessionForm';
 import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -11,24 +11,31 @@ type SessionPageProps = {
   params: Promise<{ locale: string }>;
 };
 
-const TOTAL_STEPS = 5;
-
 /**
- * Extended Mindsetter onboarding — step 4/5 "Personal session"
+ * Extended Mindsetter onboarding — step 5/5 "Personal session", now the LAST core step (product
+ * decision D9: roles → superpowers → help → shine → [optional blocks] → session → congrats)
  * (`docs/mindsetter-extended-onboarding.md` section 5). The most complex step: maps to
  * `session_settings` (not `mindsetter_profiles`, unlike the three earlier steps) and pulls in
- * the "Topics you're expert in" option source from the previous step's `help_with` card titles
- * (doc section E.1).
+ * the "Topics you're expert in" option source from the (now-earlier) Help step's `help_with`
+ * card titles (doc section E.1) — that dependency still holds since Help still runs before this
+ * step in the new order.
+ *
+ * Reached either directly from the "Shine" picker (no blocks picked / Skip) or after every
+ * picked optional block is done (`nextBlockHref`, `lib/mindsetter-onboarding/blocks.ts`) — so its
+ * Back link points at `/mindsetter-onboarding/shine`, not the last picked block, to keep this
+ * page's own chrome independent of how many (if any) optional blocks the caller filled in.
  *
  * Requires a signed-in user — redirect to `/login` at the page level, same defense-in-depth as
  * `../roles/page.tsx`/`../help/page.tsx`.
  *
- * `SessionForm`'s submit navigates to `/mindsetter-onboarding/shine` (step 5/5, `../shine/page.tsx`).
+ * `SessionForm`'s submit navigates to `/mindsetter-onboarding/congrats` — the last core step now
+ * flows straight to congrats instead of `/shine`.
  */
 export default async function MindsetterOnboardingSessionPage({ params }: SessionPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
+  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -79,12 +86,9 @@ export default async function MindsetterOnboardingSessionPage({ params }: Sessio
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <RegistrationStepHeader
-        backHref="/mindsetter-onboarding/help"
-        step={4}
-        total={TOTAL_STEPS}
-        label={t('common.stepLabel', { step: 4, total: TOTAL_STEPS })}
-      />
+      <div className="relative mb-8 md:mb-[100px]">
+        <RegistrationBackLink href="/mindsetter-onboarding/shine" label={tAuth('signUp.back')} />
+      </div>
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-2">

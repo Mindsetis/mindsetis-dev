@@ -15,13 +15,18 @@ type MindsetterCongratsPageProps = {
  * send a caller who lands here before finishing the core wizard back to wherever they left off,
  * mirroring `finalizeMindsetterOnboarding`'s guard
  * (`docs/mindsetter-extended-onboarding.md` section B/8).
+ *
+ * Reordered per product decision D9 (ROADMAP stage 1.9 follow-up) — "Personal session" is now
+ * the LAST core step: roles(0) → superpowers(1) → help(2) → shine(3) → session(4), so this
+ * array's index order changed from `[roles, superpowers, help, session, shine]` to
+ * `[roles, superpowers, help, shine, session]`.
  */
 const CORE_STEP_ROUTES = [
   '/mindsetter-onboarding/roles',
   '/mindsetter-onboarding/superpowers',
   '/mindsetter-onboarding/help',
-  '/mindsetter-onboarding/session',
   '/mindsetter-onboarding/shine',
+  '/mindsetter-onboarding/session',
 ] as const;
 
 function coreStepRedirectRoute(onboardingStep: number): string {
@@ -33,9 +38,8 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * Extended Mindsetter onboarding — Mindsetter Congrats screen
  * (`docs/mindsetter-extended-onboarding.md` section 8, `CONGRATS_ROUTE` in
  * `lib/mindsetter-onboarding/blocks.ts`). Reached once the core wizard (Roles → Superpowers →
- * Help → Personal session → Shine picker) is done and every picked optional block's own "Save
- * and continue" has run out of blocks (`nextBlockHref`) — or directly from the Shine picker if
- * no optional blocks were picked.
+ * Help → Shine picker → [optional blocks] → Personal session, reordered per decision D9) is
+ * done — `SessionForm`'s own "Save and continue" is what actually lands here now.
  *
  * Unlike every earlier step, this page doesn't just render a form — on load it calls
  * `finalizeMindsetterOnboarding()` (section B's resolved decision D1: completing the core wizard
@@ -44,7 +48,7 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * (`finalized: false` — e.g. someone hand-navigates straight to this URL), this page redirects
  * back to whichever core step `onboardingStep` says is next, instead of showing congrats
  * prematurely. A same-shape `ok: false` (unexpected internal error) falls back to the last core
- * step ("Shine") rather than rendering a broken congrats screen.
+ * step ("Personal session") rather than rendering a broken congrats screen.
  *
  * Distinct from the Member congrats screen (`/welcome`, `WelcomeCtas`) — no "Who is Mindsetter?"
  * info modal, no dismiss/swap-after-confirm button; see `MindsetterCongratsCtas`'s own doc
@@ -66,7 +70,7 @@ export default async function MindsetterOnboardingCongratsPage({
   const result = await finalizeMindsetterOnboarding({});
 
   if (!result.ok) {
-    redirect({ href: '/mindsetter-onboarding/shine', locale });
+    redirect({ href: '/mindsetter-onboarding/session', locale });
     return null;
   }
 

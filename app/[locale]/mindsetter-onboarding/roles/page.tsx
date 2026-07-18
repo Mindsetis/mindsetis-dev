@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
+import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { MindsetterArrowIcon } from '@/components/icons/mindsetter-arrow-icon';
 import { RolesForm } from '@/components/mindsetter-onboarding/RolesForm';
 import { Button } from '@/components/ui/button';
@@ -13,21 +13,14 @@ type RolesPageProps = {
   params: Promise<{ locale: string }>;
 };
 
-const TOTAL_STEPS = 5;
-
 /**
  * Extended Mindsetter onboarding — step 1/5 "Your roles" (ROADMAP stage 1.9 foundation slice,
  * `docs/mindsetter-extended-onboarding.md` section 2). Entered from the "Cool, I want to
- * become a Mindsetter" button on `WhoIsMindsetterDialog` (a signed-in Member). Reuses the
- * Member wizard's shared chrome (`RegistrationStepHeader` + `RegistrationProgress`) with its
- * own `total={5}` core-step count (Roles/Superpowers/Help/Session/Shine — section C of the
- * onboarding doc: the design has no reliable on-screen step numbering, so this count is
- * decided here, not copied off a Figma layer name) rather than inventing new chrome.
+ * become a Mindsetter" button on `WhoIsMindsetterDialog` (a signed-in Member). No step/progress
+ * indicator anywhere in this flow (product decision D5 — Figma has none) — just a plain Back
+ * link (`RegistrationBackLink`), unlike the Member wizard's `RegistrationStepHeader`.
  *
- * Only this first step is built now — `superpowers`/`help`/`session`/`shine` don't exist yet;
- * `RolesForm`'s submit navigates to `/mindsetter-onboarding/superpowers` anyway (intentionally
- * 404s until that step is built, same "wire the navigation ahead of the route" precedent used
- * elsewhere in this codebase's wizards).
+ * `RolesForm`'s submit navigates to `/mindsetter-onboarding/superpowers`.
  *
  * Requires a signed-in user (this reads/writes the caller's own `mindsetter_profiles` row) —
  * redirect to `/login` at the page level, same defense-in-depth as `/member-profile`/
@@ -38,6 +31,7 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
+  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -59,12 +53,9 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <RegistrationStepHeader
-        backHref="/welcome"
-        step={1}
-        total={TOTAL_STEPS}
-        label={t('common.stepLabel', { step: 1, total: TOTAL_STEPS })}
-      />
+      <div className="relative mb-8 md:mb-[100px]">
+        <RegistrationBackLink href="/welcome" label={tAuth('signUp.back')} />
+      </div>
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-2">

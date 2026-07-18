@@ -38,6 +38,7 @@ import {
   sessionStepSchema,
   shineStepSchema,
   superpowersStepSchema,
+  videoBlogStepSchema,
   winsStepSchema,
 } from '@/lib/validation/mindsetter';
 
@@ -50,12 +51,18 @@ import {
  * NEVER read or write `profiles.onboarding_step` for Mindsetter-onboarding progress — only this
  * `mindsetter_profiles` column. Each step must only ever raise it, never lower it back down for
  * a caller who's already further along, same "only advance" contract the Member wizard follows.
+ *
+ * Reordered per product decision D9 (ROADMAP stage 1.9 follow-up) — "Personal session" is now
+ * the LAST core step instead of running right after Help: roles(1) → superpowers(2) → help(3) →
+ * shine(4) → [optional blocks] → session(5) → congrats. `SESSION_STEP_ONBOARDING_STEP` (5) is
+ * therefore the "core wizard done" threshold `finalizeMindsetterOnboarding` checks against below,
+ * not `SHINE_STEP_ONBOARDING_STEP` (4) anymore.
  */
 const ROLES_STEP_ONBOARDING_STEP = 1;
 const SUPERPOWERS_STEP_ONBOARDING_STEP = 2;
 const HELP_STEP_ONBOARDING_STEP = 3;
-const SESSION_STEP_ONBOARDING_STEP = 4;
-const SHINE_STEP_ONBOARDING_STEP = 5;
+const SHINE_STEP_ONBOARDING_STEP = 4;
+const SESSION_STEP_ONBOARDING_STEP = 5;
 
 /**
  * Shared "only advance `mindsetter_profiles.onboarding_step`" tail, factored out once three
@@ -154,7 +161,8 @@ export const saveHelp = createAction(helpStepSchema, async (input) => {
 });
 
 /**
- * Step 4/5 "Personal session" — unlike the three steps above, this writes `session_settings`
+ * Step 5/5 "Personal session" — now the LAST core step (product decision D9: it used to run
+ * right after Help, before Shine). Unlike the three steps above, this writes `session_settings`
  * (mindsetter_id primary key), not `mindsetter_profiles`. `price_cents` here is the Mindsetter's
  * *configured rate*, not a money-ledger write (that's `transactions`/`payouts`, still
  * service-role-only per CLAUDE.md) — but the WRITE itself still needs the service-role client:
@@ -217,13 +225,14 @@ export const saveSession = createAction(sessionStepSchema, async (input) => {
 });
 
 /**
- * Step 5/5 "Make your profile shine" — the optional-block picker. Unlike every step above, the
- * picker's own selection is never written anywhere: it's handed to the first picked block screen
- * via a query-param handoff (`lib/mindsetter-onboarding/blocks.ts`), not a DB column, per this
- * stage's build decision. So this action has nothing to upsert — it exists purely to advance
- * `mindsetter_profiles.onboarding_step` to 5, run for BOTH the "Continue fill" and "Skip — fill
- * later from cabinet" paths (`ShineForm.tsx`), since reaching/leaving this step either way means
- * the picker itself is done, regardless of which (if any) optional blocks were picked.
+ * Step 4/5 "Make your profile shine" — the optional-block picker, now reached right after Help
+ * instead of after Personal session (product decision D9). Unlike every step above, the picker's
+ * own selection is never written anywhere: it's handed to the first picked block screen via a
+ * query-param handoff (`lib/mindsetter-onboarding/blocks.ts`), not a DB column, per this stage's
+ * build decision. So this action has nothing to upsert — it exists purely to advance
+ * `mindsetter_profiles.onboarding_step` to 4, run for BOTH the "Continue fill" and "Skip" paths
+ * (`ShineForm.tsx`), since reaching/leaving this step either way means the picker itself is done,
+ * regardless of which (if any) optional blocks were picked.
  */
 export const saveShine = createAction(shineStepSchema, async () => {
   const user = await requireUser();
@@ -246,8 +255,9 @@ export type FinalizeMindsetterOnboardingResult = {
 
 /**
  * Onboarding doc section 8 / section B's resolved decision (D1, flagged for security review):
- * completing the 5-step CORE wizard (Roles → Superpowers → Help → Personal session → Shine
- * picker, i.e. `mindsetter_profiles.onboarding_step >= SHINE_STEP_ONBOARDING_STEP`) flips
+ * completing the 5-step CORE wizard (Roles → Superpowers → Help → Shine picker → [optional
+ * blocks] → Personal session, reordered per decision D9, i.e.
+ * `mindsetter_profiles.onboarding_step >= SESSION_STEP_ONBOARDING_STEP`) flips
  * `profiles.account_type` from `'member'` to `'mindsetter'`. This does NOT verify the account
  * and does NOT publish the profile — `mindsetter_profiles.is_public` is never touched here;
  * that stays `false` until staff verification (spec §5.7, a separate later stage). Also never
@@ -298,7 +308,7 @@ export const finalizeMindsetterOnboarding = createAction(
     }
 
     const onboardingStep = mindsetterProfile?.onboarding_step ?? 0;
-    if (onboardingStep < SHINE_STEP_ONBOARDING_STEP) {
+    if (onboardingStep < SESSION_STEP_ONBOARDING_STEP) {
       return { finalized: false, onboardingStep };
     }
 
@@ -348,6 +358,26 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
   if (error) {
     console.error('[mindsetter-onboarding] promo_video upsert failed:', error);
     throw new ActionError('internal_error', 'Could not save your promo video. Please try again.');
+  }
+
+  return { ...input };
+});
+
+export const saveVideoBlog = createAction(videoBlogStepSchema, async (input) => {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const { error } = await supabase.from('mindsetter_profiles').upsert(
+    {
+      id: user.id,
+      video_blog: { youtube: input.youtube || null, vimeo: input.vimeo || null },
+    },
+    { onConflict: 'id' },
+  );
+
+  if (error) {
+    console.error('[mindsetter-onboarding] video_blog upsert failed:', error);
+    throw new ActionError('internal_error', 'Could not save your video blog. Please try again.');
   }
 
   return { ...input };

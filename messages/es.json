@@ -267,8 +267,7 @@
     "common": {
       "charCount": "{count}/{max}",
       "saveAndContinue": "Guardar y continuar",
-      "saving": "Guardando…",
-      "stepLabel": "Paso {step} de {total}"
+      "saving": "Guardando…"
     },
     "roles": {
       "addLink": "Añadir enlace",
@@ -412,6 +411,10 @@
           "description": "Una galería de fotos con tus mejores momentos entre bastidores y destacados.",
           "name": "Reel Life"
         },
+        "video-blog": {
+          "description": "Enlaza tu entrevista de BUILT NOT BURN.",
+          "name": "Video blog"
+        },
         "wins": {
           "description": "Logros clave como tarjetas de colores.",
           "name": "Mis Logros"
@@ -496,8 +499,13 @@
       },
       "shell": {
         "back": "Atrás",
-        "blockLabel": "Bloque {index} de {total}",
         "skip": "Omitir"
+      },
+      "videoBlog": {
+        "linkPlaceholder": "Enlace",
+        "title": "Video blog",
+        "vimeoLabel": "URL de Vimeo",
+        "youtubeLabel": "URL de Youtube"
       },
       "wins": {
         "addWin": "Añadir logro",

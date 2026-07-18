@@ -267,8 +267,7 @@
     "common": {
       "charCount": "{count}/{max}",
       "saveAndContinue": "Save and continue",
-      "saving": "Saving…",
-      "stepLabel": "Step {step} of {total}"
+      "saving": "Saving…"
     },
     "roles": {
       "addLink": "Add link",
@@ -412,6 +411,10 @@
           "description": "A photo gallery of your best behind-the-scenes and highlight moments.",
           "name": "Reel Life"
         },
+        "video-blog": {
+          "description": "Link your BUILT NOT BURN interview.",
+          "name": "Video blog"
+        },
         "wins": {
           "description": "Key achievements as colorful cards.",
           "name": "My Wins"
@@ -496,8 +499,13 @@
       },
       "shell": {
         "back": "Back",
-        "blockLabel": "Block {index} of {total}",
         "skip": "Skip"
+      },
+      "videoBlog": {
+        "linkPlaceholder": "Link",
+        "title": "Video blog",
+        "vimeoLabel": "Vimeo URL",
+        "youtubeLabel": "Youtube URL"
       },
       "wins": {
         "addWin": "Add win",
