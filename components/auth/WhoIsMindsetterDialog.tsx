@@ -159,9 +159,9 @@ export function WhoIsMindsetterDialog({
             size="lg"
             className="w-full md:order-2 md:flex-1"
           >
-            {/* Placeholder destination — no real Mindsetter-onboarding route exists yet (same
-                convention as the rest of stage 1.6's new buttons). */}
-            <Link href="/">{t('becomeMindsetter')}</Link>
+            {/* Extended Mindsetter onboarding, step 1/5 "Your roles" (ROADMAP stage 1.9) —
+                previously a placeholder `/` link (stage 1.6). */}
+            <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
           </Button>
           <Button
             type="button"

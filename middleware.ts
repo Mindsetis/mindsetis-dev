@@ -18,6 +18,9 @@ const intlMiddleware = createIntlMiddleware(routing);
  * defense-in-depth on top of each page's own `getSessionContext()` redirect and the Server
  * Action's `requireUser()`. `/verify-email` (step 2/4) is intentionally NOT in this list: it's
  * reached with no session at all (that's the point of the gate), so it must stay public.
+ *
+ * `/mindsetter-onboarding` (extended Mindsetter onboarding, ROADMAP stage 1.9) reads/writes
+ * the caller's own `mindsetter_profiles` row the same way — same defense-in-depth precedent.
  */
 const PROTECTED_PREFIXES = [
   '/account',
@@ -25,6 +28,7 @@ const PROTECTED_PREFIXES = [
   '/settings',
   '/member-profile',
   '/build-profile',
+  '/mindsetter-onboarding',
 ];
 
 /**

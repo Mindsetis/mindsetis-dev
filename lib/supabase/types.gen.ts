@@ -334,14 +334,16 @@ export type Database = {
         Row: {
           created_at: string | null
           fckups: Json | null
-          help_with: string[] | null
+          help_with: Json | null
           id: string
           is_public: boolean | null
-          my_way: string | null
+          my_way: Json | null
           numbers: Json | null
+          onboarding_step: number | null
           philosophy: string | null
-          promo_video: string | null
-          roles: string[] | null
+          promo_video: Json | null
+          reel_life: Json | null
+          roles: Json | null
           superpowers: Json | null
           updated_at: string | null
           wins: Json | null
@@ -349,14 +351,16 @@ export type Database = {
         Insert: {
           created_at?: string | null
           fckups?: Json | null
-          help_with?: string[] | null
+          help_with?: Json | null
           id: string
           is_public?: boolean | null
-          my_way?: string | null
+          my_way?: Json | null
           numbers?: Json | null
+          onboarding_step?: number | null
           philosophy?: string | null
-          promo_video?: string | null
-          roles?: string[] | null
+          promo_video?: Json | null
+          reel_life?: Json | null
+          roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
           wins?: Json | null
@@ -364,14 +368,16 @@ export type Database = {
         Update: {
           created_at?: string | null
           fckups?: Json | null
-          help_with?: string[] | null
+          help_with?: Json | null
           id?: string
           is_public?: boolean | null
-          my_way?: string | null
+          my_way?: Json | null
           numbers?: Json | null
+          onboarding_step?: number | null
           philosophy?: string | null
-          promo_video?: string | null
-          roles?: string[] | null
+          promo_video?: Json | null
+          reel_life?: Json | null
+          roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
           wins?: Json | null
@@ -502,32 +508,47 @@ export type Database = {
       }
       session_settings: {
         Row: {
+          accepts_bookings: boolean
+          available_days: string[]
+          available_from: string | null
+          available_to: string | null
           created_at: string | null
           currency: string | null
           duration_min: number | null
           mindsetter_id: string
           price_cents: number | null
           session_type: string
+          timezone: string | null
           topics: string[] | null
           updated_at: string | null
         }
         Insert: {
+          accepts_bookings?: boolean
+          available_days?: string[]
+          available_from?: string | null
+          available_to?: string | null
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
           mindsetter_id: string
           price_cents?: number | null
           session_type?: string
+          timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
         }
         Update: {
+          accepts_bookings?: boolean
+          available_days?: string[]
+          available_from?: string | null
+          available_to?: string | null
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
           mindsetter_id?: string
           price_cents?: number | null
           session_type?: string
+          timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
         }

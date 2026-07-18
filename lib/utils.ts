@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
+import type { Ref, RefCallback } from 'react';
 import { extendTailwindMerge } from 'tailwind-merge';
 
 /**
@@ -26,4 +27,24 @@ const twMerge = extendTailwindMerge({
 /** Merge conditional class names, resolving Tailwind class conflicts (last one wins). */
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Compose several refs (forwarded/object/callback, any mix, some possibly `undefined`) into one
+ * callback ref that updates all of them. Needed wherever a component both (a) accepts a `ref`
+ * prop from its caller — e.g. React 19's "ref as a prop" on a plain function component, no
+ * `forwardRef` — and (b) also needs its own internal `useRef` to the same node (e.g. `Textarea`'s
+ * `autoGrow` resize effect). Without this, whichever of the two refs is applied last (object-
+ * literal/JSX prop order) silently wins and the other is never attached.
+ */
+export function mergeRefs<T>(...refs: Array<Ref<T> | undefined>): RefCallback<T> {
+  return (node) => {
+    for (const ref of refs) {
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref != null) {
+        (ref as { current: T | null }).current = node;
+      }
+    }
+  };
 }

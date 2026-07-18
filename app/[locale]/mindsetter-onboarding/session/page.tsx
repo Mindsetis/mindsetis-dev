@@ -1,0 +1,99 @@
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+
+import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
+import { SessionForm } from '@/components/mindsetter-onboarding/SessionForm';
+import { redirect } from '@/i18n/navigation';
+import { getSessionContext } from '@/lib/auth/guards';
+import { createClient } from '@/lib/supabase/server';
+import type { Expertise } from '@/lib/validation/mindsetter';
+
+type SessionPageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+const TOTAL_STEPS = 5;
+
+/**
+ * Extended Mindsetter onboarding — step 4/5 "Personal session"
+ * (`docs/mindsetter-extended-onboarding.md` section 5). The most complex step: maps to
+ * `session_settings` (not `mindsetter_profiles`, unlike the three earlier steps) and pulls in
+ * the "Topics you're expert in" option source from the previous step's `help_with` card titles
+ * (doc section E.1).
+ *
+ * Requires a signed-in user — redirect to `/login` at the page level, same defense-in-depth as
+ * `../roles/page.tsx`/`../help/page.tsx`.
+ *
+ * `SessionForm`'s submit navigates to `/mindsetter-onboarding/shine` (step 5/5, `../shine/page.tsx`).
+ */
+export default async function MindsetterOnboardingSessionPage({ params }: SessionPageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations('mindsetterOnboarding');
+
+  const session = await getSessionContext();
+  if (!session?.profile) {
+    redirect({ href: '/login', locale });
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  // Two independent reads (different tables), fetched in parallel rather than sequentially.
+  const [{ data: mindsetterProfile }, { data: sessionSettings }] = await Promise.all([
+    supabase
+      .from('mindsetter_profiles')
+      .select('help_with')
+      .eq('id', session.user.id)
+      .maybeSingle(),
+    supabase
+      .from('session_settings')
+      .select(
+        'accepts_bookings, session_type, price_cents, duration_min, topics, timezone, available_days, available_from, available_to',
+      )
+      .eq('mindsetter_id', session.user.id)
+      .maybeSingle(),
+  ]);
+
+  // Card titles from "You can help with" (previous step) are the option source for this step's
+  // topics multiselect (doc section E.1) — not the raw stored objects.
+  const expertise = (mindsetterProfile?.help_with ?? []) as Expertise[];
+  const topicOptions = expertise.map((item) => item.title).filter(Boolean);
+
+  // Already-saved session settings, so a user revisiting this step sees their previously-
+  // submitted config instead of the form's own defaults. `available_from`/`available_to` come
+  // back from Postgres as `HH:mm:ss` — sliced to `HH:mm` to match the `<input type="time">`/
+  // Zod `timeStringSchema` shape the form and its schema both expect.
+  const initialSessionSettings = sessionSettings
+    ? {
+        acceptsBookings: sessionSettings.accepts_bookings,
+        sessionType: (sessionSettings.session_type ?? 'free') as 'free' | 'paid',
+        priceCents: sessionSettings.price_cents,
+        durationMin: sessionSettings.duration_min ?? 30,
+        topics: sessionSettings.topics ?? [],
+        timezone: sessionSettings.timezone ?? '',
+        availableDays: sessionSettings.available_days ?? [],
+        availableFrom: sessionSettings.available_from?.slice(0, 5) ?? '10:00',
+        availableTo: sessionSettings.available_to?.slice(0, 5) ?? '18:00',
+      }
+    : undefined;
+
+  return (
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
+      <RegistrationStepHeader
+        backHref="/mindsetter-onboarding/help"
+        step={4}
+        total={TOTAL_STEPS}
+        label={t('common.stepLabel', { step: 4, total: TOTAL_STEPS })}
+      />
+
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="font-display text-h1 text-foreground md:text-h3">{t('session.title')}</h1>
+          <p className="text-base text-muted-foreground">{t('session.subtitle')}</p>
+        </div>
+
+        <SessionForm topicOptions={topicOptions} initialSessionSettings={initialSessionSettings} />
+      </div>
+    </div>
+  );
+}
