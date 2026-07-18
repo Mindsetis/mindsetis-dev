@@ -661,3 +661,111 @@ constraint on `email` (resubmitting just upserts the existing row, no duplicates
   `qa`) then commit via `git-manager`
 
 `typecheck`/`lint`/`format:check` (pre-existing CRLF baseline unchanged, no new violations)/`build` all clean per the implementing agent.
+
+### 1.8 — Homepage / footer / onboarding UI polish + onboarding-as-popup
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-18
+
+Large batch of iterative, user-driven UI/styling passes on top of stages 1.6/1.7 — requested
+directly in many small increments (colors, pixel spacings, breakpoints, icons), each verified
+live via `browser-tester` before moving on. Left uncommitted and out of ROADMAP during the
+session per the user's standing preference for exploratory styling work; recorded + committed
+here in one batch once the user asked. Design fidelity to Figma throughout; no new
+functionality or data/RLS/money surface (except the onboarding page→popup structural change
+below), so no full review loop — verified via typecheck/lint/format + live browser checks.
+
+- [x] **Button system overhaul** (`components/ui/button.tsx` + `app/styles/base.css` +
+  `tokens/effects.css`): gradient-border variant (`primaryOutline`) and gradient-fill
+  (`primary`, desktop) via masked pseudo-element + two-layer opacity crossfade utilities
+  (`gradient-border`/`gradient-fill` — plain CSS can't transition between two gradients); new
+  `outlineArrow` variant (white text / grey border / `justify-between` + trailing arrow badge);
+  `ghost`/`outline`/`tertiary` state reworks; `cursor-pointer` + transition tokens
+- [x] **`tailwind-merge` fix** (`lib/utils.ts`): register the project's custom `@theme`
+  font-size scale (`text-tiny`/`text-h1`/…/`text-body`) as a `font-size` class group, so those
+  sizes stop silently conflicting-away when combined with a `text-{color}` class (systemic bug
+  found via a mobile label rendering at the wrong size)
+- [x] **Registration wizard shared chrome + restyle**: extracted `RegistrationStepHeader` +
+  `RegistrationBackLink` (custom arrow SVG), standardized page padding across
+  `/sign-up`/`/verify-email`/`/member-profile`/`/build-profile`/`/welcome`; added a minimal
+  root `app/layout.tsx` (required so `not-found` renders); `RegistrationProgress` states
+- [x] **Dropdown/field family restyle**: new generalized `components/ui/combobox.tsx` (replaces
+  `IndustryCombobox`), `LanguagesMultiSelect`/`command`/`select` merged-border + dynamic
+  border/chevron color treatment, `chip`/`field-hint`/`InterestsPicker`/`AvatarUpload`,
+  `input`/`form`/`textarea` tweaks
+- [x] **`WhoIsMindsetterDialog` restyle** (bottom-sheet mobile / centered 30px modal desktop,
+  fixed a tailwind-merge `inset-x`-vs-`left` centering bug), **`WelcomeCtas`** button
+  variants + custom icons (extracted `components/icons/mindsetter-arrow-icon.tsx`)
+- [x] **Header** (`components/layout/Header.tsx`): login UI removed but auth check kept (Join
+  hides once signed in), new `JoinIcon`; **`LocaleSwitcher`** cursor
+- [x] **Footer full restyle** (`Footer.tsx` + `NewsletterForm.tsx`): 50/30px top radius,
+  652px columns block with 190px even columns + responsive shrink (`min-w-0`), heading/gap
+  spacings, newsletter field+button single-row, copyright/legal spacings
+- [x] **`HeroSection`**: always-on gradient title, spacings, custom play glyph → replaced with
+  an embedded test video (YouTube iframe), `+*` required asterisk on the email label, page
+  padding; **`HeroEmailCta`** gaps
+- [x] **Onboarding: page → popup** (structural): converted `/onboarding` route +
+  `OnboardingFlow` into a popup (`components/onboarding/OnboardingDialog.tsx` opened by
+  `components/marketing/OnboardingCta.tsx`), deleted the route, repointed `/sign-up` "Back" to
+  the homepage; styled per `WhoIsMindsetterDialog`; added a looping physical test video per
+  step; `Next` → `primaryOutline`, last-step `Back` hidden on mobile
+- [x] Verified live via `browser-tester` at mobile + desktop breakpoints throughout (gradient
+  title, footer responsive shrink at 1024px, onboarding popup flow, embedded videos loading)
+
+### 1.9 — Extended Mindsetter onboarding (from Figma "Registration" section)
+**Status:** ⬜ Not started
+
+Optional extended Mindsetter onboarding per spec §5.2 ("Подовжений онбординг Mindsetter") —
+the fork opened by the "Cool, I want to become a Mindsetter" button in `WhoIsMindsetterDialog`
+(currently a `/` placeholder). Full field-by-field build prompt drafted 2026-07-18 from the
+Figma "Registration" section (via `figma-designer`), cross-checked against the existing
+DB/migrations + spec (Opus, 2026-07-18). **Recorded as a plan only — not taken into development
+yet.** The detailed implementation prompt (all screens, exact copy, field types, frame node
+ids) lives in the user's working notes; the decisions + blockers are captured here.
+
+**⚠️ 3 blockers to resolve with the product owner BEFORE any code:**
+- [ ] **Data model already partly exists and mismatches the design.** `mindsetter_profiles`,
+  `session_settings`, `availability_slots`, and `profiles.onboarding_step` were created in
+  Stage 0.4 — so this is a *schema-alignment migration*, not a from-scratch build. Mismatches:
+  `roles`/`help_with` are `text[]` but the design needs rich cards `[{title, description,
+  links[]}]` → `jsonb`; `my_way` is `text` but needs an array of stage objects → `jsonb`;
+  `promo_video` (`text`) can't hold upload+YouTube+Vimeo; **no columns exist** for Reel Life
+  photos, Video blog, the "Accept bookings" toggle, a weekly available-days/hours schedule
+  (`availability_slots` holds concrete timestamp slots, not a recurring weekly pattern), or
+  session timezone
+- [ ] **How does an account actually become a Mindsetter + where does verification fit?**
+  `profiles.account_type` and `mindsetter_profiles.is_public` are staff-only mutations (guard
+  triggers) — completing this onboarding does NOT by itself flip the account to Mindsetter or
+  publish the profile (§5.4 publishes only after verification). Decide: when/how `account_type`
+  flips (service-role Server Action vs staff), where verification (§5.7 LinkedIn+company →
+  `verification_requests`) slots in, and what the user sees pre-verification
+- [ ] **Step numbering is not authoritative in Figma** (no on-screen step indicator; "N/6" only
+  in layer names, with duplicate conflicts) — design the progress bar/order ourselves from
+  content, reusing `RegistrationStepHeader`/`RegistrationProgress`
+
+**Core steps (order/copy/fields per the build prompt):**
+- [ ] Step "Your roles" — Role cards (Title 40 / Description auto-grow 200 / optional Link with
+  og-preview + "Add link"); "Add role"; "See how it looks" preview link (profile-preview page
+  doesn't exist yet — placeholder)
+- [ ] Step "Your superpowers" — 3 fixed cards (Title / Description), no "Add"
+- [ ] Step "You can help with" — Expertise cards (Title / Description) + "Add expertise"; card
+  **titles feed** the "Topics you're expert in" multiselect on Personal session
+- [ ] Step "Personal session" — Accept-bookings toggle, Free/Paid price, "Platform fee &
+  payouts" modal (15%/85%, Session Terms consent), duration pills, topics multiselect (≤5, from
+  help_with + "Add custom" ad-hoc), timezone, weekly days/hours (maps to session_settings +
+  availability_slots — needs schema additions; Stripe backend is a later stage §5.9, so pricing
+  UI won't be end-to-end functional yet)
+- [ ] Step "Make your profile shine" — block-picker (choose which optional blocks to fill now);
+  "Skip — fill later from cabinet" (cabinet §5.3 doesn't exist yet — placeholder);
+  profile-completeness indicator ("42% · Basic" is a static mock, define a real rule or simplify)
+- [ ] Optional blocks (only if picked): Promo video, Reel Life (photos + Storage), Numbers,
+  My Wins (per-win color), My Way (timeline stages), My F*ckUp(s), My Philosophy, Video blog
+  (**"Link your BUILT NOT BURN interview" = Phase 2 / out of MVP — likely exclude or stub**)
+- [ ] Mindsetter Congrats screen (distinct from the Member one — no "Who is Mindsetter?" popup)
+- [ ] Save & Continue on every step via `profiles.onboarding_step` (already exists) — partial
+  progress saved server-side, resumable
+- [ ] Silent design-fix cleanups: "Mindseter"→"Mindsetter", "See how in looks"→"See how it
+  looks", "Add stage"→"Add f*ckup" in the F*ckUps block, distinct Reel Life vs My Wins descriptions
+- [ ] Migration(s) via `new-migration`/`supabase-expert` (hosted-only), then full review loop
+  (`code-reviewer` + `security-auditor` — new/changed RLS, staff-only flip, Storage uploads +
+  `qa` live RLS negatives) + `browser-tester` walkthrough, then commit via `git-manager`
