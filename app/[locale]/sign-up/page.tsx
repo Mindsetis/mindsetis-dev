@@ -1,9 +1,7 @@
-import { ArrowLeft } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
+import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { SignUpForm } from '@/components/auth/SignUpForm';
-import { Link } from '@/i18n/navigation';
 import { emailSchema } from '@/lib/validation/common';
 
 type SignUpPageProps = {
@@ -34,33 +32,21 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
 
   const { email } = await searchParams;
   const parsedEmail = emailSchema.safeParse(email);
-  const backHref = parsedEmail.success
-    ? `/onboarding?email=${encodeURIComponent(parsedEmail.data)}`
-    : '/onboarding';
+  // The onboarding tour is a popup now, not a page (reworked 2026-07-18) — "Back" just
+  // returns to the homepage it was opened from, rather than reopening that popup.
+  const backHref = '/';
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       {/* Same max-width + padding as the Header, so "Back" lines up under the logo. On
           desktop Back is absolutely pinned to that left edge while the step bar is centered
-          over the form and spans the form width; on mobile they sit inline (Back, then bar). */}
-      <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
-        <Link
-          href={backHref}
-          className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t('signUp.back')}
-        </Link>
-
-        {/* Progress spans the form width (max-w-640) and is centered over the form. */}
-        <div className="w-full max-w-[640px] flex-1 md:flex-none">
-          <RegistrationProgress
-            step={1}
-            total={TOTAL_STEPS}
-            label={t('signUp.stepLabel', { step: 1, total: TOTAL_STEPS })}
-          />
-        </div>
-      </div>
+          over the form and spans the form width; on mobile the bar renders above Back. */}
+      <RegistrationStepHeader
+        backHref={backHref}
+        step={1}
+        total={TOTAL_STEPS}
+        label={t('signUp.stepLabel', { step: 1, total: TOTAL_STEPS })}
+      />
 
       {/* Centered form column. `text-h1`/`text-h3` are paired font-size+line-height tokens
           (globals.css): mobile 32px/1, `md:text-h3` 48px/0.9 — matches Figma "MOB/H1" vs

@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import {
@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  SelectChevronIcon,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,11 @@ type LanguagesMultiSelectProps = {
   removeLabel: (label: string) => string;
   disabled?: boolean;
   /**
+   * Off by default (2026-07-17: search disabled across every select for now) — pass `true` to
+   * show the `CommandInput` search box for a field that specifically needs it.
+   */
+  searchable?: boolean;
+  /**
    * Error-state styling hook. Rendered as `data-invalid` (a plain data attribute), not
    * `aria-invalid` — the ARIA spec doesn't support `aria-invalid` on `role="button"`, and
    * this trigger isn't a real form control anyway (the actual error text is `FormMessage`,
@@ -33,6 +39,30 @@ type LanguagesMultiSelectProps = {
    */
   invalid?: boolean;
 };
+
+/** Unselected multi-select option indicator (16×16) — provided verbatim by the designer. */
+function OptionUncheckedIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8.0026 14.6668C4.3207 14.6668 1.33594 11.682 1.33594 8.00016C1.33594 4.31826 4.3207 1.3335 8.0026 1.3335C11.6845 1.3335 14.6693 4.31826 14.6693 8.00016C14.6693 11.682 11.6845 14.6668 8.0026 14.6668ZM8.0026 13.3335C10.9481 13.3335 13.3359 10.9457 13.3359 8.00016C13.3359 5.05464 10.9481 2.66683 8.0026 2.66683C5.05708 2.66683 2.66927 5.05464 2.66927 8.00016C2.66927 10.9457 5.05708 13.3335 8.0026 13.3335Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+/** Selected multi-select option indicator (16×16) — provided verbatim by the designer. */
+function OptionCheckedIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8.0026 1.3335C4.33594 1.3335 1.33594 4.3335 1.33594 8.00016C1.33594 11.6668 4.33594 14.6668 8.0026 14.6668C11.6693 14.6668 14.6693 11.6668 14.6693 8.00016C14.6693 4.3335 11.6693 1.3335 8.0026 1.3335ZM10.8026 6.86683L7.6026 10.0668C7.33594 10.3335 6.93594 10.3335 6.66927 10.0668L5.2026 8.60016C4.93594 8.3335 4.93594 7.9335 5.2026 7.66683C5.46927 7.40016 5.86927 7.40016 6.13594 7.66683L7.13594 8.66683L9.86927 5.9335C10.1359 5.66683 10.5359 5.66683 10.8026 5.9335C11.0693 6.20016 11.0693 6.60016 10.8026 6.86683Z"
+        fill="#79B9E3"
+      />
+    </svg>
+  );
+}
 
 /**
  * "Language you speak" multi-select — Radix `Select` only supports single-select, so this
@@ -45,6 +75,19 @@ type LanguagesMultiSelectProps = {
  * is attached via `asChild` regardless of the underlying tag; the `onKeyDown` handler below
  * only fills the native-button gap (Enter/Space normally auto-fire `click`, a plain `div`
  * doesn't) by forwarding to the same ref's `click()`.
+ *
+ * Open-state chrome matches the Figma "input drop-down" merged-shape treatment (same
+ * technique as `components/ui/combobox.tsx`): the trigger's bottom corners/border square off,
+ * and the popover content's top corners/border square off + `sideOffset={-1}` (deliberately
+ * raised 1px past a flush `0`, per the 2026-07-17 spec) + no shadow, so the two pieces read as
+ * one continuous shape instead of Radix Popover's default detached floating box. Border/chevron
+ * color track ONE shared state (invalid `destructive` > open or has-a-selected-chip
+ * `input-focus` > default `input`) so the trigger's border, its chevron, and the list panel's
+ * border always agree — same rule `Combobox` uses for its own "has a value" case, applied here
+ * per-chip instead of per-single-value (no closed-state check-circle swap, though — chips
+ * already show the selection, there's no single value to spotlight that way).
+ * Each option row shows a leading circular indicator (`OptionUncheckedIcon`/`OptionCheckedIcon`,
+ * provided verbatim by the designer) instead of the old square checkbox.
  */
 export function LanguagesMultiSelect({
   value,
@@ -55,12 +98,27 @@ export function LanguagesMultiSelect({
   emptyLabel,
   removeLabel,
   disabled,
+  searchable = false,
   invalid,
 }: LanguagesMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const selectedOptions = options.filter((option) => value.includes(option.value));
+  const hasValue = selectedOptions.length > 0;
+
+  // White border/chevron once there's at least one selected chip — not just while `open` —
+  // per the 2026-07-17 follow-up, matching `Combobox`'s "has a value" rule.
+  const borderColorClass = invalid
+    ? 'border-destructive'
+    : open || hasValue
+      ? 'border-input-focus'
+      : 'border-input';
+  const chevronColorClass = invalid
+    ? 'text-destructive'
+    : open || hasValue
+      ? 'text-input-focus'
+      : 'text-input';
 
   function toggle(optionValue: string) {
     if (value.includes(optionValue)) {
@@ -97,9 +155,13 @@ export function LanguagesMultiSelect({
             }
           }}
           className={cn(
-            'flex min-h-14 w-full flex-wrap items-center gap-1.5 rounded-lg border border-input bg-transparent p-2 pl-4 text-base font-medium text-foreground outline-none transition-colors',
-            'focus-visible:border-input-focus',
-            'data-[invalid]:border-destructive',
+            'flex min-h-14 w-full flex-wrap items-center gap-1.5 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
+            borderColorClass,
+            // Merge with the popover content below into one continuous shape — same
+            // technique as `components/ui/combobox.tsx`: square off the trigger's bottom
+            // corners/border, the content panel mirrors this with `rounded-t-none
+            // border-t-0` + `sideOffset={-1}` below.
+            open && 'rounded-b-none border-b-transparent',
             'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
           )}
         >
@@ -126,19 +188,20 @@ export function LanguagesMultiSelect({
               </span>
             ))
           )}
-          <ChevronDown
-            aria-hidden="true"
-            className="ml-auto size-4 shrink-0 text-muted-foreground"
-          />
+          <SelectChevronIcon className={cn('ml-auto size-4 shrink-0', chevronColorClass)} />
         </div>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        sideOffset={-1}
+        className={cn(
+          'w-[var(--radix-popover-trigger-width)] rounded-t-none border-t-0 bg-background p-0 shadow-none',
+          invalid ? 'border-destructive' : 'border-input-focus',
+        )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command className="rounded-t-none bg-background">
+          {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
           <CommandList>
             <CommandEmpty>{emptyLabel}</CommandEmpty>
             <CommandGroup>
@@ -149,15 +212,9 @@ export function LanguagesMultiSelect({
                     key={option.value}
                     value={option.label}
                     onSelect={() => toggle(option.value)}
+                    className={cn(isSelected && 'text-foreground')}
                   >
-                    <span
-                      className={cn(
-                        'flex size-4 shrink-0 items-center justify-center rounded-sm border border-border',
-                        isSelected && 'border-primary bg-primary text-primary-foreground',
-                      )}
-                    >
-                      {isSelected ? <Check className="size-3" aria-hidden="true" /> : null}
-                    </span>
+                    {isSelected ? <OptionCheckedIcon /> : <OptionUncheckedIcon />}
                     {option.label}
                   </CommandItem>
                 );

@@ -1,13 +1,32 @@
 'use client';
 
-import { CircleArrowRight, IdCard, Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { MindsetterArrowIcon } from '@/components/icons/mindsetter-arrow-icon';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 
 import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
+
+/**
+ * "See how looks my profile page" icon (16×16) — provided verbatim by the designer.
+ * `fill="currentColor"` (source asset had a literal `fill="black"`) so it follows the button's
+ * text color like every other button icon in this codebase — a no-op difference in practice
+ * here, since this button is always `variant="primary"`, whose text color
+ * (`text-primary-foreground`) is black at every state anyway.
+ */
+function ProfilePageIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M9.33333 14L8 15.3333L6.66667 14H3.33006C2.59549 14 2 13.4049 2 12.6699V3.33006C2 2.59549 2.59508 2 3.33006 2H12.6699C13.4045 2 14 2.59508 14 3.33006V12.6699C14 13.4045 13.4049 14 12.6699 14H9.33333ZM4.23791 12H11.8983C11.055 10.791 9.65393 10 8.06813 10C6.48229 10 5.08121 10.791 4.23791 12ZM8 8.66667C9.28867 8.66667 10.3333 7.622 10.3333 6.33333C10.3333 5.04467 9.28867 4 8 4C6.71133 4 5.66667 5.04467 5.66667 6.33333C5.66667 7.622 6.71133 8.66667 8 8.66667Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 /**
  * Congrats-screen ("/welcome") CTAs — stage 1.6 copy/UI follow-up, replacing the old single
@@ -23,11 +42,14 @@ import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
  * profile page" — tracked only as local client state (`dismissed`), not persisted anywhere,
  * since the task only calls for this to hold for the current page view.
  *
- * Icons (added after a Figma audit, stage 1.6): Figma's "Find Mindsetis event" button is
- * borderless/tertiary, hence `variant="ghost"` there instead of `primaryOutline` like its
- * siblings. The "Find out who a Mindsetter is" trailing icon is Figma's `arrow-left-long-line`
- * flipped to point right — a circular arrow badge — which lucide-react ships natively as
- * `CircleArrowRight`, so no custom circular wrapper was needed.
+ * Button variants (direct product request, 2026-07-17): "Find Mindseter for me" stays
+ * `primaryOutline` (gradient border); "Invite on Mindsetis event" is plain `outline` (solid
+ * border); "Find Mindsetis event" is borderless/backgroundless `ghost`; "Find out who a
+ * Mindsetter is" is its own `outlineArrow` variant (white text, `#747474` border, text pinned
+ * left / trailing icon pinned right — see `components/ui/button.tsx` for the full state spec)
+ * with the custom `MindsetterArrowIcon` in place of the previous `lucide-react`
+ * `CircleArrowRight`; once dismissed, "See how looks my profile page" switches to `primary`
+ * (gradient background).
  */
 export function WelcomeCtas() {
   const t = useTranslations('auth');
@@ -36,51 +58,57 @@ export function WelcomeCtas() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <Button asChild variant="primaryOutline" size="lg" className="w-full sm:w-auto">
-          {/* Placeholder destination — no Mindsetter-matching route exists yet. */}
-          <Link href="/">
-            <Search aria-hidden="true" />
-            {t('welcome.ctas.findMindsetter')}
-          </Link>
-        </Button>
-
-        <Button asChild variant="primaryOutline" size="lg" className="w-full sm:w-auto">
-          {/* Placeholder destination — no event-invite route exists yet. */}
-          <Link href="/">
-            <UserPlus aria-hidden="true" />
-            {t('welcome.ctas.inviteEvent')}
-          </Link>
-        </Button>
-
-        <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto">
-          {/* Placeholder destination — no event-catalog route exists yet. */}
-          <Link href="/">
-            <Search aria-hidden="true" />
-            {t('welcome.ctas.findEvent')}
-          </Link>
-        </Button>
-
-        {dismissed ? (
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-3">
           <Button asChild variant="primaryOutline" size="lg" className="w-full sm:w-auto">
-            {/* Placeholder destination — no profile-preview route exists yet. */}
+            {/* Placeholder destination — no Mindsetter-matching route exists yet. */}
             <Link href="/">
-              <IdCard aria-hidden="true" />
-              {t('welcome.ctas.seeProfile')}
+              <Search aria-hidden="true" />
+              {t('welcome.ctas.findMindsetter')}
             </Link>
           </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="primaryOutline"
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => setModalOpen(true)}
-          >
-            {t('welcome.ctas.findMindsetterInfo')}
-            <CircleArrowRight aria-hidden="true" />
+
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            {/* Placeholder destination — no event-invite route exists yet. */}
+            <Link href="/">
+              <UserPlus aria-hidden="true" />
+              {t('welcome.ctas.inviteEvent')}
+            </Link>
           </Button>
-        )}
+
+          <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto">
+            {/* Placeholder destination — no event-catalog route exists yet. */}
+            <Link href="/">
+              <Search aria-hidden="true" />
+              {t('welcome.ctas.findEvent')}
+            </Link>
+          </Button>
+        </div>
+
+        {/* Deliberately large, asymmetric gap to the info/profile-preview button below —
+            80px desktop, but MORE on mobile (137px), per direct product request 2026-07-17. */}
+        <div className="mt-[137px] md:mt-20">
+          {dismissed ? (
+            <Button asChild variant="primary" size="lg" className="w-full">
+              {/* Placeholder destination — no profile-preview route exists yet. */}
+              <Link href="/">
+                <ProfilePageIcon />
+                {t('welcome.ctas.seeProfile')}
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outlineArrow"
+              size="lg"
+              className="w-full px-5"
+              onClick={() => setModalOpen(true)}
+            >
+              {t('welcome.ctas.findMindsetterInfo')}
+              <MindsetterArrowIcon />
+            </Button>
+          )}
+        </div>
       </div>
 
       <WhoIsMindsetterDialog

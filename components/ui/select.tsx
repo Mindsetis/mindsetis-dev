@@ -22,14 +22,16 @@ function SelectTrigger({
   className,
   children,
   size = 'default',
+  valid,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Trigger> & { size?: 'sm' | 'default' }) {
+}: ComponentProps<typeof SelectPrimitive.Trigger> & { size?: 'sm' | 'default'; valid?: boolean }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
+      data-valid={valid ? '' : undefined}
       className={cn(
-        'flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent text-foreground outline-none transition-colors',
+        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-input bg-transparent text-foreground outline-none transition-colors',
         'data-[placeholder]:text-muted-foreground',
         'focus-visible:border-input-focus',
         'aria-invalid:border-destructive',
@@ -39,6 +41,10 @@ function SelectTrigger({
         'data-[size=default]:h-14 data-[size=default]:p-4 data-[size=default]:text-base data-[size=default]:font-medium',
         'data-[size=sm]:h-9 data-[size=sm]:px-3 data-[size=sm]:py-2 data-[size=sm]:text-sm',
         '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground',
+        // Figma "filled/valid" state: white border only — no icon (Select already renders its
+        // own chevron in the same slot a check icon would occupy). Defensive/future-proofing:
+        // no `<Select>` usage is currently wrapped in `FormControl` (see `input.tsx`/`form.tsx`).
+        valid && 'border-input-focus',
         className,
       )}
       {...props}
@@ -110,7 +116,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        'relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none',
+        'relative flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none',
         'focus:bg-accent focus:text-accent-foreground',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className,

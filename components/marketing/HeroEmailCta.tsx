@@ -48,13 +48,17 @@ export function HeroEmailCta() {
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('emailLabel')}</FormLabel>
+              <FormLabel>
+                <span className="inline-flex items-center gap-1">
+                  {t('emailLabel')} <span className="text-primary">*</span>
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input
                   type="email"

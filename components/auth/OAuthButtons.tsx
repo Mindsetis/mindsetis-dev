@@ -19,6 +19,10 @@ import { Button } from '@/components/ui/button';
  * Scoping the grow to `md:` (row layout, main axis = width) keeps equal-width desktop
  * buttons without touching mobile height; mobile full-width comes from the default
  * `align-items: stretch` cross-axis behavior of the parent flex container.
+ *
+ * Currently unused: not rendered by `SignUpForm.tsx` as of the stage-1.6 style pass that
+ * dropped it from step 1's layout. Kept in the codebase (not deleted) — product wants OAuth
+ * buttons back on a future step; nothing else imports this component right now.
  */
 export function OAuthButtons() {
   const t = useTranslations('auth');

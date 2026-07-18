@@ -69,7 +69,7 @@
     "screenshotPlaceholder": "Platform's screenshot",
     "steps": {
       "step1": {
-        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates — and book a real conversation.",
+        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates<br></br> — and book a real conversation.",
         "title": "Book a 1:1 session with a Mindsetter."
       },
       "step2": {
@@ -214,7 +214,7 @@
       "submitting": "Continuing…",
       "title": "Create account",
       "username": "Username",
-      "usernamePlaceholder": "@anakondra"
+      "usernamePlaceholder": "anakondra"
     },
     "verifyEmail": {
       "changeIt": "Change it",
@@ -243,7 +243,7 @@
         },
         "close": "Close",
         "confirm": "Understand, I want to be a Member",
-        "description": "A Mindsetter is a verified business owner who opens 1:1 sessions — sharing real experience with other founders who need it.",
+        "description": "A Mindsetter is a verified business owner who opens 1:1 sessions<br></br> — sharing real experience with other founders who need it.",
         "features": {
           "brand": {
             "body": "No more content grind. Your profile does the work — it shows who you are and what you've built.",

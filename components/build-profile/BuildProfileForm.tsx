@@ -7,9 +7,9 @@ import { useForm } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/build-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
-import { IndustryCombobox } from '@/components/build-profile/IndustryCombobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import {
   Form,
   FormControl,
@@ -34,9 +34,10 @@ type BuildProfileFormProps = {
  * Registration wizard step 4/4 ("What do you build?") form — mirrors
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but simpler:
  * three required fields, no file upload or multi-select controls. Company/Role stay plain
- * text; Industry (stage 1.4 Figma audit) is a fixed-option `IndustryCombobox` (stage 1.6:
- * Popover + searchable `Command` list, matching `LanguagesMultiSelect`'s visual language but
- * single-select) sourced from the code-defined `INDUSTRIES` catalog
+ * text; Industry (stage 1.4 Figma audit) is a fixed-option `Combobox` (`components/ui/combobox.tsx`
+ * — Popover + searchable `Command` list, matching `LanguagesMultiSelect`'s visual language but
+ * single-select; generalized from an Industry-only component so any other single-select field
+ * can reuse the same chrome) sourced from the code-defined `INDUSTRIES` catalog
  * (`lib/constants/industries.ts`) instead of free text.
  */
 export function BuildProfileForm({
@@ -50,6 +51,7 @@ export function BuildProfileForm({
 
   const form = useForm<BuildProfileInput>({
     resolver: zodResolver(buildProfileSchema),
+    mode: 'onChange',
     defaultValues: {
       company: initialCompany ?? '',
       role: initialRole ?? '',
@@ -85,9 +87,9 @@ export function BuildProfileForm({
 
   return (
     <Form {...form}>
-      {/* Outer gap is 16px (Figma's field-block-to-submit-button spacing) — the fields
-          themselves keep their own tighter 12px (`gap-3`) rhythm in the wrapper below. */}
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      {/* Same spacing rhythm as `SignUpForm.tsx`/`MemberProfileForm.tsx`: 16px/24px
+          (mobile/desktop) from the field block to the submit button. */}
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
@@ -101,7 +103,9 @@ export function BuildProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('buildProfile.company.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('buildProfile.company.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -122,7 +126,9 @@ export function BuildProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('buildProfile.role.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('buildProfile.role.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -143,9 +149,11 @@ export function BuildProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('buildProfile.industry.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('buildProfile.industry.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
-                <IndustryCombobox
+                <Combobox
                   value={field.value}
                   onChange={field.onChange}
                   options={INDUSTRIES}

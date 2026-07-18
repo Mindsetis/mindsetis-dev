@@ -38,14 +38,22 @@ export default async function WelcomePage({ params }: WelcomePageProps) {
   const t = await getTranslations('auth');
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 px-4 py-16 sm:px-6 md:py-24">
-      <RegistrationProgress
-        step={4}
-        total={TOTAL_STEPS}
-        label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
-      />
-      <h1 className="font-display text-h1 text-foreground md:text-h3">{t('welcome.title')}</h1>
-      <WelcomeCtas />
+    <div className="mx-auto flex w-full max-w-[640px] flex-col px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px]">
+      {/* Same margin-bottom below the step indicator as the other three steps'
+          `RegistrationStepHeader` (32px mobile / 100px desktop) — this page has no Back link,
+          so it doesn't use that shared component, just matches its spacing here. */}
+      <div className="mb-8 md:mb-[100px]">
+        <RegistrationProgress
+          step={4}
+          total={TOTAL_STEPS}
+          label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
+          complete
+        />
+      </div>
+      <div className="flex flex-col gap-6">
+        <h1 className="font-display text-h1 text-foreground md:text-h3">{t('welcome.title')}</h1>
+        <WelcomeCtas />
+      </div>
     </div>
   );
 }

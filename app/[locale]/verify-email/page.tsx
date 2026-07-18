@@ -1,7 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
+import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { ResendConfirmationEmailButton } from '@/components/auth/ResendConfirmationEmailButton';
 import { Link } from '@/i18n/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
@@ -56,24 +55,13 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
   const resolvedEmail = user?.email ?? email;
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
-      <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
-        <Link
-          href="/sign-up"
-          className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t('signUp.back')}
-        </Link>
-
-        <div className="w-full max-w-[640px] flex-1 md:flex-none">
-          <RegistrationProgress
-            step={2}
-            total={TOTAL_STEPS}
-            label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}
-          />
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
+      <RegistrationStepHeader
+        backHref="/sign-up"
+        step={2}
+        total={TOTAL_STEPS}
+        label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}
+      />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-2">
@@ -82,23 +70,29 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
               {resolvedEmail}
             </span>
           ) : null}
-          <h1 className="font-display text-h1 text-foreground md:text-h3">
-            {t('verifyEmail.title')}
-          </h1>
-          <p className="text-body font-medium text-foreground">{t('verifyEmail.subtitle')}</p>
+          <div className="flex flex-col gap-1">
+            <h1 className="font-display text-h1 text-foreground md:text-h3">
+              {t('verifyEmail.title')}
+            </h1>
+            <p className="text-body font-medium text-foreground">{t('verifyEmail.subtitle')}</p>
+          </div>
         </div>
 
-        {resolvedEmail ? <ResendConfirmationEmailButton email={resolvedEmail} /> : null}
+        <div className="flex flex-col gap-3">
+          {resolvedEmail ? <ResendConfirmationEmailButton email={resolvedEmail} /> : null}
 
-        <p className="text-sm text-muted-foreground">
-          {t('verifyEmail.wrongEmail')}{' '}
-          <Link
-            href="/sign-up"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {t('verifyEmail.changeIt')}
-          </Link>
-        </p>
+          <p className="text-center text-base text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground">{t('verifyEmail.wrongEmail')}</span>
+              <Link
+                href="/sign-up"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t('verifyEmail.changeIt')}
+              </Link>
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

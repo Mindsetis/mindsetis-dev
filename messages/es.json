@@ -69,7 +69,7 @@
     "screenshotPlaceholder": "Captura de la plataforma",
     "steps": {
       "step1": {
-        "body": "Los Mindsetters son fundadores verificados que comparten su experiencia. Explora perfiles, encuentra a alguien afín y reserva una conversación real.",
+        "body": "Los Mindsetters son fundadores verificados que comparten su experiencia. Explora perfiles, encuentra a alguien afín<br></br> y reserva una conversación real.",
         "title": "Reserva una sesión 1:1 con un Mindsetter."
       },
       "step2": {
@@ -214,7 +214,7 @@
       "submitting": "Continuando…",
       "title": "Crear cuenta",
       "username": "Nombre de usuario",
-      "usernamePlaceholder": "@anakondra"
+      "usernamePlaceholder": "anakondra"
     },
     "verifyEmail": {
       "changeIt": "Cámbialo",
@@ -243,7 +243,7 @@
         },
         "close": "Cerrar",
         "confirm": "Entendido, quiero ser Miembro",
-        "description": "Un Mindsetter es un empresario verificado que abre sesiones 1:1 — comparte experiencia real con otros fundadores que la necesitan.",
+        "description": "Un Mindsetter es un empresario verificado que abre sesiones 1:1<br></br> — comparte experiencia real con otros fundadores que la necesitan.",
         "features": {
           "brand": {
             "body": "Nada de crear contenido sin parar. Tu perfil habla por ti — muestra quién eres y qué has construido.",

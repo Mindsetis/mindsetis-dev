@@ -45,7 +45,7 @@ export function ResendConfirmationEmailButton({ email }: ResendConfirmationEmail
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="primaryOutline"
       size="lg"
       className="w-full"
       loading={isPending}

@@ -7,6 +7,32 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
+ * Select-trigger chevron (24×24) — provided verbatim by the designer, replacing
+ * `lucide-react`'s `ChevronDown` in the two select-style comboboxes built on this file's
+ * primitives (`components/ui/combobox.tsx`, `components/member-profile/LanguagesMultiSelect.tsx`).
+ * `fill="currentColor"` (not the source asset's hardcoded `#A5A5A5`) so it keeps tracking each
+ * consumer's own border-color state (default/open/invalid) exactly as the previous lucide icon
+ * did — only the shape changed, not the color-state logic.
+ */
+function SelectChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M16.9008 9.19999C16.5008 8.79999 15.9008 8.79999 15.5008 9.19999L12.0008 12.7L8.50078 9.19999C8.10078 8.79999 7.50078 8.79999 7.10078 9.19999C6.70078 9.59999 6.70078 10.2 7.10078 10.6L11.3008 14.8C11.5008 15 11.7008 15.1 12.0008 15.1C12.3008 15.1 12.5008 15 12.7008 14.8L16.9008 10.6C17.3008 10.2 17.3008 9.59999 16.9008 9.19999Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/**
  * Thin wrapper around `cmdk`'s `Command` primitives, themed for the dark UI Kit. Used as
  * the list/filter part of the `Popover`+`Command` multi-select pattern (e.g. the "Language
  * you speak" picker) — no `CommandDialog` here, this project has no command-palette use
@@ -17,7 +43,7 @@ function Command({ className, ...props }: ComponentProps<typeof CommandPrimitive
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        'flex h-full w-full flex-col overflow-hidden rounded-lg bg-popover text-popover-foreground',
+        'flex h-full w-full flex-col overflow-hidden rounded-lg bg-background text-popover-foreground',
         className,
       )}
       {...props}
@@ -48,7 +74,7 @@ function CommandList({ className, ...props }: ComponentProps<typeof CommandPrimi
   return (
     <CommandPrimitive.List
       data-slot="command-list"
-      className={cn('max-h-64 scroll-py-1 overflow-x-hidden overflow-y-auto p-1', className)}
+      className={cn('max-h-64 scroll-py-1 overflow-x-hidden overflow-y-auto p-0', className)}
       {...props}
     />
   );
@@ -69,7 +95,16 @@ function CommandGroup({ className, ...props }: ComponentProps<typeof CommandPrim
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        'overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-tiny [&_[cmdk-group-heading]]:text-muted-foreground',
+        // 16px padding lives here, and only here — every other Command piece (`CommandList`,
+        // `CommandItem`) is zero-padding, per the dropdown-menu spec (2026-07-17): the option
+        // list's own 16px inset is the single source of the dropdown's padding. No top padding
+        // (2026-07-17 follow-up) — the first option row sits flush against the top of the panel.
+        'overflow-hidden px-4 pt-0 pb-4 text-foreground',
+        '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-tiny [&_[cmdk-group-heading]]:text-muted-foreground',
+        // 24px vertical gap between option rows (cmdk wraps a group's actual items in its own
+        // `[cmdk-group-items]` container, separate from the heading — same targeting technique
+        // as the heading selector above).
+        '[&_[cmdk-group-items]]:flex [&_[cmdk-group-items]]:flex-col [&_[cmdk-group-items]]:gap-6',
         className,
       )}
       {...props}
@@ -82,8 +117,10 @@ function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimi
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        'relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground outline-none select-none',
-        'data-[selected=true]:bg-white/[0.06]',
+        // No background (not even on hover/keyboard-highlight), zero padding (see
+        // `CommandGroup`), 16px/500/`#a5a5a5` text — the base "unselected option" look;
+        // consumers layer a `text-foreground` override for the currently-selected option.
+        'relative flex cursor-pointer items-center gap-2 p-0 text-base font-medium text-muted-foreground outline-none select-none',
         'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
         className,
       )}
@@ -92,4 +129,12 @@ function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimi
   );
 }
 
-export { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList };
+export {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  SelectChevronIcon,
+};
