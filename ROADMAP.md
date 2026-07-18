@@ -713,7 +713,14 @@ below), so no full review loop — verified via typecheck/lint/format + live bro
   title, footer responsive shrink at 1024px, onboarding popup flow, embedded videos loading)
 
 ### 1.9 — Extended Mindsetter onboarding (from Figma "Registration" section)
-**Status:** ⬜ Not started
+**Status:** 🔄 In progress
+**Started:** 2026-07-18
+**Note (2026-07-18):** Implementation is complete and has passed the full review loop
+(`code-reviewer`, `security-auditor`, `qa`) plus a live `browser-tester` E2E walkthrough. The
+3 architectural blockers listed below were resolved by the developer with **provisional**
+decisions, recorded for product-owner review (see the working-notes decision log /
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)). The stage
+stays **In progress** until the product owner confirms those decisions.
 
 Optional extended Mindsetter onboarding per spec §5.2 ("Подовжений онбординг Mindsetter") —
 the fork opened by the "Cool, I want to become a Mindsetter" button in `WhoIsMindsetterDialog`
@@ -726,7 +733,7 @@ frame node ids, the A–E decisions/blockers) lives in
 + blockers are summarized here.
 
 **⚠️ 3 blockers to resolve with the product owner BEFORE any code:**
-- [ ] **Data model already partly exists and mismatches the design.** `mindsetter_profiles`,
+- [~] **Data model already partly exists and mismatches the design.** `mindsetter_profiles`,
   `session_settings`, `availability_slots`, and `profiles.onboarding_step` were created in
   Stage 0.4 — so this is a *schema-alignment migration*, not a from-scratch build. Mismatches:
   `roles`/`help_with` are `text[]` but the design needs rich cards `[{title, description,
@@ -734,40 +741,56 @@ frame node ids, the A–E decisions/blockers) lives in
   `promo_video` (`text`) can't hold upload+YouTube+Vimeo; **no columns exist** for Reel Life
   photos, Video blog, the "Accept bookings" toggle, a weekly available-days/hours schedule
   (`availability_slots` holds concrete timestamp slots, not a recurring weekly pattern), or
-  session timezone
-- [ ] **How does an account actually become a Mindsetter + where does verification fit?**
+  session timezone (provisionally resolved: schema-alignment migrations applied — pending
+  product-owner confirmation)
+- [~] **How does an account actually become a Mindsetter + where does verification fit?**
   `profiles.account_type` and `mindsetter_profiles.is_public` are staff-only mutations (guard
   triggers) — completing this onboarding does NOT by itself flip the account to Mindsetter or
   publish the profile (§5.4 publishes only after verification). Decide: when/how `account_type`
   flips (service-role Server Action vs staff), where verification (§5.7 LinkedIn+company →
-  `verification_requests`) slots in, and what the user sees pre-verification
-- [ ] **Step numbering is not authoritative in Figma** (no on-screen step indicator; "N/6" only
+  `verification_requests`) slots in, and what the user sees pre-verification (provisionally
+  resolved: `account_type` flips to `'mindsetter'` on core-onboarding completion via
+  service-role; `is_public` stays staff-gated and unlocks nothing until verification — pending
+  product-owner confirmation)
+- [~] **Step numbering is not authoritative in Figma** (no on-screen step indicator; "N/6" only
   in layer names, with duplicate conflicts) — design the progress bar/order ourselves from
-  content, reusing `RegistrationStepHeader`/`RegistrationProgress`
+  content, reusing `RegistrationStepHeader`/`RegistrationProgress` (provisionally resolved:
+  designed a dedicated 5-step progress indicator + a separate
+  `mindsetter_profiles.onboarding_step` column — pending product-owner confirmation)
 
 **Core steps (order/copy/fields per the build prompt):**
-- [ ] Step "Your roles" — Role cards (Title 40 / Description auto-grow 200 / optional Link with
+- [x] Step "Your roles" — Role cards (Title 40 / Description auto-grow 200 / optional Link with
   og-preview + "Add link"); "Add role"; "See how it looks" preview link (profile-preview page
   doesn't exist yet — placeholder)
-- [ ] Step "Your superpowers" — 3 fixed cards (Title / Description), no "Add"
-- [ ] Step "You can help with" — Expertise cards (Title / Description) + "Add expertise"; card
+- [x] Step "Your superpowers" — 3 fixed cards (Title / Description), no "Add"
+- [x] Step "You can help with" — Expertise cards (Title / Description) + "Add expertise"; card
   **titles feed** the "Topics you're expert in" multiselect on Personal session
-- [ ] Step "Personal session" — Accept-bookings toggle, Free/Paid price, "Platform fee &
+- [x] Step "Personal session" — Accept-bookings toggle, Free/Paid price, "Platform fee &
   payouts" modal (15%/85%, Session Terms consent), duration pills, topics multiselect (≤5, from
   help_with + "Add custom" ad-hoc), timezone, weekly days/hours (maps to session_settings +
   availability_slots — needs schema additions; Stripe backend is a later stage §5.9, so pricing
   UI won't be end-to-end functional yet)
-- [ ] Step "Make your profile shine" — block-picker (choose which optional blocks to fill now);
+- [x] Step "Make your profile shine" — block-picker (choose which optional blocks to fill now);
   "Skip — fill later from cabinet" (cabinet §5.3 doesn't exist yet — placeholder);
   profile-completeness indicator ("42% · Basic" is a static mock, define a real rule or simplify)
-- [ ] Optional blocks (only if picked): Promo video, Reel Life (photos + Storage), Numbers,
+- [x] Optional blocks (only if picked): Promo video, Reel Life (photos + Storage), Numbers,
   My Wins (per-win color), My Way (timeline stages), My F*ckUp(s), My Philosophy, Video blog
   (**"Link your BUILT NOT BURN interview" = Phase 2 / out of MVP — likely exclude or stub**)
-- [ ] Mindsetter Congrats screen (distinct from the Member one — no "Who is Mindsetter?" popup)
-- [ ] Save & Continue on every step via `profiles.onboarding_step` (already exists) — partial
+- [x] Mindsetter Congrats screen (distinct from the Member one — no "Who is Mindsetter?" popup)
+- [x] Save & Continue on every step via `profiles.onboarding_step` (already exists) — partial
   progress saved server-side, resumable
-- [ ] Silent design-fix cleanups: "Mindseter"→"Mindsetter", "See how in looks"→"See how it
+- [x] Silent design-fix cleanups: "Mindseter"→"Mindsetter", "See how in looks"→"See how it
   looks", "Add stage"→"Add f*ckup" in the F*ckUps block, distinct Reel Life vs My Wins descriptions
-- [ ] Migration(s) via `new-migration`/`supabase-expert` (hosted-only), then full review loop
+- [x] Migration(s) via `new-migration`/`supabase-expert` (hosted-only), then full review loop
   (`code-reviewer` + `security-auditor` — new/changed RLS, staff-only flip, Storage uploads +
   `qa` live RLS negatives) + `browser-tester` walkthrough, then commit via `git-manager`
+
+**Provisional decisions pending product-owner review** (details in
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)):
+- Video blog ("Link your BUILT NOT BURN interview") **EXCLUDED** as Phase-2/out-of-MVP
+- Promo video is **URL-only** for now (file upload deferred)
+- Reel Life "minimum 3 photos" is **informational only** (non-blocking)
+- `session_settings` is written via **service-role** during onboarding; public read is
+  gated to verified Mindsetters
+- Profile-completeness indicator uses a **simple filled/total-fields heuristic** (not the
+  static "42% · Basic" mock)
