@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 import {
   Command,
@@ -11,10 +11,21 @@ import {
   CommandList,
   SelectChevronIcon,
 } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  usePopoverContentSide,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-type ComboboxOption = { value: string; label: string };
+type ComboboxOption = {
+  value: string;
+  label: string;
+  /** Optional secondary line rendered under `label` in the LIST (e.g. a timezone's "UTC+3"
+   * short-offset). Omitted → single-line option, unchanged from the original behavior. */
+  description?: string;
+};
 
 /**
  * Selected-value check icon (16×16) — same verbatim path as `Input`'s `CheckIcon` /
@@ -56,6 +67,16 @@ type ComboboxProps = {
    * actual error text is `FormMessage`, already announced via the field's `aria-describedby`).
    */
   invalid?: boolean;
+  /** Optional icon rendered at the START of the trigger, before the value (e.g. the timezone
+   * field's globe). 4px gap to the value. Omitted → no leading icon (default). */
+  leftIcon?: ReactNode;
+  /** Optional secondary line rendered under the selected value's label IN THE TRIGGER (e.g. the
+   * timezone field's live "UTC+3 · currently 14:30"). Only shown when a value is selected. */
+  triggerDescription?: ReactNode;
+  /** Optional replacement for the trigger's trailing icon. When set, this renders instead of the
+   * default check-circle (selected) / chevron (empty) swap — e.g. the timezone field's static
+   * chevron. Omitted → the default check/chevron behavior. */
+  trailingIcon?: ReactNode;
 };
 
 /**
@@ -74,12 +95,15 @@ type ComboboxProps = {
  * i.e. the exact color of the trigger's own resting border — not `muted-foreground`, a
  * deliberately different token). The popover content's border/the "merged shape" trick both
  * reuse the same color so the whole control — trigger, chevron, list border — always reads as
- * one coherent color, not just the fill/glow-heavy states. The trigger's bottom corners/border
- * square off when open (`rounded-b-none border-b-transparent`) and the popover content's top
- * corners/border square off + `sideOffset={-1}` (deliberately raised 1px, per spec, to close
- * a hairline seam) + no shadow, so the two pieces read as one continuous merged shape instead
- * of a detached floating popover (verified live — no visible seam at `sideOffset={0}`; `-1`
- * tightens it further per this pass's explicit ask). The list panel is opaque `bg-background`
+ * one coherent color, not just the fill/glow-heavy states. The trigger's corners/border square
+ * off on whichever edge touches the content when open (`rounded-b-none border-b-transparent`
+ * below the trigger — the common case — or `rounded-t-none border-t-transparent` if Radix flips
+ * the popover above it for lack of room; `usePopoverContentSide`, `components/ui/popover.tsx`,
+ * tracks the actual side) and the popover content mirrors that on its own opposite edge +
+ * `sideOffset={-1}` (deliberately raised 1px, per spec, to close a hairline seam) + no shadow,
+ * so the two pieces read as one continuous merged shape instead of a detached floating popover
+ * (verified live — no visible seam at `sideOffset={0}`; `-1` tightens it further per this pass's
+ * explicit ask). The list panel is opaque `bg-background`
  * (pure black, per spec — previously `bg-popover`/`#1a1a1a`; before that briefly
  * `bg-transparent`, which let page content sitting behind the floating portal bleed through —
  * stay opaque). A selected option renders `text-foreground` in the list (no checkmark — single-
@@ -97,9 +121,14 @@ export function Combobox({
   disabled,
   searchable = false,
   invalid,
+  leftIcon,
+  triggerDescription,
+  trailingIcon,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const { contentRef, side } = usePopoverContentSide();
+  const isTop = side === 'top';
 
   const selectedOption = options.find((option) => option.value === value);
   const hasValue = !!selectedOption;
@@ -139,23 +168,46 @@ export function Combobox({
             }
           }}
           className={cn(
-            'flex h-14 w-full items-center gap-1.5 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
+            'flex min-h-14 w-full items-center gap-1 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
             borderColorClass,
-            // Merge with the popover content below into one continuous shape: square off the
-            // trigger's bottom corners and drop its bottom border (the content panel mirrors
-            // this with `rounded-t-none border-t-0` + `sideOffset={-1}`, see below).
-            open && 'rounded-b-none border-b-transparent',
+            // Merge with the popover content into one continuous shape: square off whichever
+            // edge actually touches the content (Radix may flip the popover above the trigger
+            // when there isn't room below — `usePopoverContentSide` tracks that) and drop that
+            // edge's border; the content panel mirrors this on its own opposite edge + a
+            // `sideOffset={-1}` (see below).
+            open &&
+              (isTop
+                ? 'rounded-t-none border-t-transparent'
+                : 'rounded-b-none border-b-transparent'),
             'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
           )}
         >
-          {selectedOption ? (
-            <span className="truncate text-foreground">{selectedOption.label}</span>
-          ) : (
-            <span className={open ? 'text-foreground' : 'text-muted-foreground'}>
-              {placeholder}
+          {leftIcon ? (
+            <span aria-hidden="true" className="shrink-0">
+              {leftIcon}
             </span>
-          )}
-          {selectedOption ? (
+          ) : null}
+          <div className="flex min-w-0 flex-1 flex-col">
+            {selectedOption ? (
+              <>
+                <span className="truncate text-foreground">{selectedOption.label}</span>
+                {triggerDescription ? (
+                  <span className="truncate text-sm text-muted-foreground">
+                    {triggerDescription}
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <span className={cn('truncate', open ? 'text-foreground' : 'text-muted-foreground')}>
+                {placeholder}
+              </span>
+            )}
+          </div>
+          {trailingIcon ? (
+            <span aria-hidden="true" className="ml-auto shrink-0">
+              {trailingIcon}
+            </span>
+          ) : selectedOption ? (
             <span aria-hidden="true" className="ml-auto shrink-0 text-primary">
               <ComboboxCheckIcon />
             </span>
@@ -165,15 +217,17 @@ export function Combobox({
         </div>
       </PopoverTrigger>
       <PopoverContent
+        ref={contentRef}
         align="start"
         sideOffset={-1}
         className={cn(
-          'w-[var(--radix-popover-trigger-width)] rounded-t-none border-t-0 bg-background p-0 shadow-none',
+          'w-[var(--radix-popover-trigger-width)] bg-background p-0 shadow-none',
+          isTop ? 'rounded-b-none border-b-0' : 'rounded-t-none border-t-0',
           invalid ? 'border-destructive' : 'border-input-focus',
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Command className="rounded-t-none bg-background">
+        <Command className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}>
           {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
           <CommandList>
             <CommandEmpty>{emptyLabel}</CommandEmpty>
@@ -187,7 +241,16 @@ export function Combobox({
                     onSelect={() => select(option.value)}
                     className={cn(isSelected && 'text-foreground')}
                   >
-                    {option.label}
+                    {option.description ? (
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate">{option.label}</span>
+                        <span className="truncate text-sm text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </div>
+                    ) : (
+                      option.label
+                    )}
                   </CommandItem>
                 );
               })}

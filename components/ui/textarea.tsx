@@ -25,10 +25,10 @@ type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
    * start at a single-line `Input`-like height and grow with content instead of scrolling
    * internally). Implemented via a native `input`-event listener (not React's `onChange`,
    * which RHF's `{...field}` spread would otherwise let win an ordering fight if this
-   * wrapped `onChange` instead) that resizes `style.height` to `scrollHeight` — resize-safe
-   * (`resize-none`) and starts at `min-h-14` (56px, matches `Input`'s `h-14`) instead of the
-   * default `min-h-24` multi-line box. Purely additive: omitted, this renders identically to
-   * before.
+   * wrapped `onChange` instead) that resizes `style.height` to `scrollHeight`, `resize-none`
+   * since height is JS-driven. Starts at `min-h-14` (56px) — same as the non-autoGrow default
+   * below, which also matches `Input`'s `h-14` — just without the JS resize-on-input behavior.
+   * Purely additive: omitted, this renders identically to before.
    */
   autoGrow?: boolean;
 };
@@ -65,7 +65,7 @@ function Textarea({ className, valid, autoGrow, ref, ...props }: TextareaProps) 
         'focus-visible:border-input-focus',
         'aria-invalid:border-destructive',
         'disabled:cursor-not-allowed disabled:opacity-60',
-        autoGrow ? 'min-h-14 resize-none overflow-hidden' : 'min-h-24',
+        autoGrow ? 'min-h-14 resize-none overflow-hidden' : 'min-h-14',
         valid && 'border-input-focus',
         className,
       )}

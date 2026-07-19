@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { MyWinsBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { WinsForm } from '@/components/mindsetter-onboarding/WinsForm';
 import { redirect } from '@/i18n/navigation';
@@ -49,8 +50,13 @@ export default async function MindsetterOnboardingWinsBlockPage({
   const initialWins = (mindsetterProfile?.wins ?? undefined) as Win[] | undefined;
 
   return (
-    <BlockShell backHref={backHref} skipHref={nextHref} index={index} total={blocks.length}>
-      <h1 className="font-display text-h1 text-foreground md:text-h3">{t('blocks.wins.title')}</h1>
+    <BlockShell backHref={backHref} index={index} total={blocks.length}>
+      <div className="flex items-center gap-2 md:gap-4">
+        <MyWinsBlockIcon className="size-7 md:size-10" />
+        <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
+          {t('blocks.wins.title')}
+        </h1>
+      </div>
       <WinsForm initialWins={initialWins} nextHref={nextHref} />
     </BlockShell>
   );

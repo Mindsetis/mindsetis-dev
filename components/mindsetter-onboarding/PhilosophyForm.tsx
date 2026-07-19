@@ -73,7 +73,7 @@ export function PhilosophyForm({ initialPhilosophy, nextHref }: PhilosophyFormPr
           </Alert>
         ) : null}
 
-        <Card className="gap-4 px-4 py-4 md:px-6 md:py-6">
+        <Card className="gap-4 p-4">
           <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
             {t('blocks.philosophy.cardTitle')}
           </span>

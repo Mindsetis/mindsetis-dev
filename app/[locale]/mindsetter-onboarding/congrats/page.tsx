@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { finalizeMindsetterOnboarding } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { MindsetterCongratsCtas } from '@/components/mindsetter-onboarding/MindsetterCongratsCtas';
 import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -53,6 +54,12 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * Distinct from the Member congrats screen (`/welcome`, `WelcomeCtas`) — no "Who is Mindsetter?"
  * info modal, no dismiss/swap-after-confirm button; see `MindsetterCongratsCtas`'s own doc
  * comment.
+ *
+ * Renders a `RegistrationBackLink` back to `/mindsetter-onboarding/session` (product fix, stage
+ * 1.9 follow-up), same chrome convention every core step's own page.tsx already uses. Going back
+ * is safe even though `account_type` has already flipped to `'mindsetter'` by the time this page
+ * renders — `saveSession`'s write path uses the service-role client and stays idempotent, so
+ * revisiting/resubmitting that step doesn't undo the flip or duplicate anything.
  */
 export default async function MindsetterOnboardingCongratsPage({
   params,
@@ -60,6 +67,7 @@ export default async function MindsetterOnboardingCongratsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
+  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -80,8 +88,16 @@ export default async function MindsetterOnboardingCongratsPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px]">
-      <div className="flex flex-col gap-6">
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
+      <div className="relative mb-8 md:mb-[28px]">
+        <RegistrationBackLink
+          href="/mindsetter-onboarding/session"
+          label={tAuth('signUp.back')}
+          className="md:static md:translate-y-0"
+        />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <h1 className="font-display text-h1 text-foreground md:text-h3">{t('congrats.title')}</h1>
         <MindsetterCongratsCtas />
       </div>

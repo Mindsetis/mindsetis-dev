@@ -12,7 +12,12 @@ import {
   CommandList,
   SelectChevronIcon,
 } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  usePopoverContentSide,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 type Option = { value: string; label: string };
@@ -77,8 +82,10 @@ function OptionCheckedIcon() {
  * doesn't) by forwarding to the same ref's `click()`.
  *
  * Open-state chrome matches the Figma "input drop-down" merged-shape treatment (same
- * technique as `components/ui/combobox.tsx`): the trigger's bottom corners/border square off,
- * and the popover content's top corners/border square off + `sideOffset={-1}` (deliberately
+ * technique as `components/ui/combobox.tsx`): the trigger's corners/border square off on
+ * whichever edge touches the content (`usePopoverContentSide`, `components/ui/popover.tsx`,
+ * tracks whether Radix flipped the popover above the trigger for lack of room below), the
+ * popover content mirrors that on its own opposite edge + `sideOffset={-1}` (deliberately
  * raised 1px past a flush `0`, per the 2026-07-17 spec) + no shadow, so the two pieces read as
  * one continuous shape instead of Radix Popover's default detached floating box. Border/chevron
  * color track ONE shared state (invalid `destructive` > open or has-a-selected-chip
@@ -103,6 +110,8 @@ export function LanguagesMultiSelect({
 }: LanguagesMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const { contentRef, side } = usePopoverContentSide();
+  const isTop = side === 'top';
 
   const selectedOptions = options.filter((option) => value.includes(option.value));
   const hasValue = selectedOptions.length > 0;
@@ -157,11 +166,15 @@ export function LanguagesMultiSelect({
           className={cn(
             'flex min-h-14 w-full flex-wrap items-center gap-1.5 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
             borderColorClass,
-            // Merge with the popover content below into one continuous shape — same
-            // technique as `components/ui/combobox.tsx`: square off the trigger's bottom
-            // corners/border, the content panel mirrors this with `rounded-t-none
-            // border-t-0` + `sideOffset={-1}` below.
-            open && 'rounded-b-none border-b-transparent',
+            // Merge with the popover content into one continuous shape — same technique as
+            // `components/ui/combobox.tsx`: square off whichever edge actually touches the
+            // content (Radix may flip the popover above the trigger for lack of room below —
+            // `usePopoverContentSide` tracks that), the content panel mirrors this on its own
+            // opposite edge + `sideOffset={-1}` below.
+            open &&
+              (isTop
+                ? 'rounded-t-none border-t-transparent'
+                : 'rounded-b-none border-b-transparent'),
             'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
           )}
         >
@@ -192,15 +205,17 @@ export function LanguagesMultiSelect({
         </div>
       </PopoverTrigger>
       <PopoverContent
+        ref={contentRef}
         align="start"
         sideOffset={-1}
         className={cn(
-          'w-[var(--radix-popover-trigger-width)] rounded-t-none border-t-0 bg-background p-0 shadow-none',
+          'w-[var(--radix-popover-trigger-width)] bg-background p-0 shadow-none',
+          isTop ? 'rounded-b-none border-b-0' : 'rounded-t-none border-t-0',
           invalid ? 'border-destructive' : 'border-input-focus',
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Command className="rounded-t-none bg-background">
+        <Command className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}>
           {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
           <CommandList>
             <CommandEmpty>{emptyLabel}</CommandEmpty>

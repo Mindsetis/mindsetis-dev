@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { MyWayBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { MyWayForm } from '@/components/mindsetter-onboarding/MyWayForm';
 import { redirect } from '@/i18n/navigation';
@@ -49,8 +50,13 @@ export default async function MindsetterOnboardingMyWayBlockPage({
   const initialMyWay = (mindsetterProfile?.my_way ?? undefined) as MyWayStage[] | undefined;
 
   return (
-    <BlockShell backHref={backHref} skipHref={nextHref} index={index} total={blocks.length}>
-      <h1 className="font-display text-h1 text-foreground md:text-h3">{t('blocks.myWay.title')}</h1>
+    <BlockShell backHref={backHref} index={index} total={blocks.length}>
+      <div className="flex items-center gap-2 md:gap-4">
+        <MyWayBlockIcon className="size-7 md:size-10" />
+        <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
+          {t('blocks.myWay.title')}
+        </h1>
+      </div>
       <MyWayForm initialMyWay={initialMyWay} nextHref={nextHref} />
     </BlockShell>
   );

@@ -76,12 +76,16 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[100px]">
-        <RegistrationBackLink href="/mindsetter-onboarding/help" label={tAuth('signUp.back')} />
+      <div className="relative mb-8 md:mb-[28px]">
+        <RegistrationBackLink
+          href="/mindsetter-onboarding/help"
+          label={tAuth('signUp.back')}
+          className="md:static md:translate-y-0"
+        />
       </div>
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1 md:gap-4">
           <h1 className="font-display text-h1 text-foreground md:text-h3">{t('shine.title')}</h1>
           <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
         </div>

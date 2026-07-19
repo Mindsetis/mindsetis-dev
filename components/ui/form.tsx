@@ -4,7 +4,7 @@ import { Slot } from '@radix-ui/react-slot';
 import type { ComponentProps } from 'react';
 import { createContext, useContext, useId } from 'react';
 import type { ControllerProps, FieldPath, FieldValues } from 'react-hook-form';
-import { Controller, FormProvider, useFormContext, useFormState } from 'react-hook-form';
+import { Controller, FormProvider, useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -90,13 +90,20 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
 }
 
 function FormControl({ ...props }: ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId, invalid, isDirty } = useFormField();
+  const { name, error, formItemId, formDescriptionId, formMessageId, invalid, isDirty } =
+    useFormField();
+  // Current field value — read directly (rather than trusting `isDirty` alone) so a freshly
+  // APPENDED field (e.g. a new "Add role"/"Add expertise"/"Add number" card) never renders the
+  // "valid" treatment while still empty: RHF marks an appended field dirty immediately, even
+  // though the caller hasn't typed anything into it yet.
+  const value = useWatch({ name });
+  const hasValue = value != null && value !== '';
   // "Correctly filled" state for the shared Figma valid-field treatment (white border +
   // check icon on `Input`, white border only on `Textarea`/`Select`) — surfaced globally here
   // so every field wrapped in `FormControl` gets it without per-field wiring. Radix `Slot`
   // merges this non-DOM prop onto whichever child is rendered inside (e.g. `<Input />`),
   // which reads it itself and is the only place it's translated into DOM attributes/classes.
-  const valid = isDirty && !invalid;
+  const valid = isDirty && !invalid && hasValue;
 
   return (
     <Slot

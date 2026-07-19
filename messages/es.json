@@ -266,6 +266,8 @@
   "mindsetterOnboarding": {
     "common": {
       "charCount": "{count}/{max}",
+      "edit": "Editar",
+      "reorder": "Reordenar",
       "saveAndContinue": "Guardar y continuar",
       "saving": "Guardando…"
     },
@@ -275,12 +277,14 @@
       "descriptionLabel": "Descripción",
       "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
       "linkPlaceholder": "Enlace",
+      "linkPreviewLoading": "Cargando vista previa…",
       "removeLink": "Quitar enlace",
       "removeRole": "Quitar rol",
       "roleCardTitle": "Rol {index}",
+      "rolesHeading": "Tus roles",
       "seeHowItLooks": "Ver cómo se ve",
-      "subtitle": "Completa las secciones a continuación y tu perfil lucirá como un sitio web personal premium — no solo una tarjeta en el catálogo.",
-      "title": "Estamos construyendo tu sitio personal",
+      "subtitle": "Completa las secciones a continuación y tu perfil lucirá como un sitio web personal<br></br> premium — no solo una tarjeta en el catálogo.",
+      "title": "Estamos construyendo tu<br></br> sitio personal",
       "titleLabel": "Título",
       "titlePlaceholder": "p. ej. Fundador y CEO"
     },
@@ -358,21 +362,22 @@
         "value": "0$"
       },
       "howItWorks": {
-        "subtitle": "15% de comisión · te quedas con el 85% · pago instantáneo",
+        "label": "Cómo funciona",
+        "subtitle": "15% de comisión · te quedas con el 85% · pago<br></br>instantáneo",
         "title": "Comisión de la plataforma y pagos"
       },
       "paid": {
-        "hint": "$ + Precio",
         "label": "De pago"
       },
       "priceHint": "Puedes cambiar esto en cualquier momento",
-      "priceInputLabel": "Precio",
-      "priceInputPlaceholder": "p. ej. 50",
+      "priceInputPlaceholder": "Precio",
       "priceLabel": "Indica el precio de la sesión",
       "subtitle": "Aquí puedes indicar tu tarifa por hora para la sesión",
-      "timezoneDetecting": "Detectando tu zona horaria…",
-      "timezoneHint": "Detectada automáticamente desde tu dispositivo.",
+      "timezoneEmpty": "No se encontró ninguna zona horaria.",
+      "timezoneHint": "Detectada automáticamente desde tu dispositivo. Toca para cambiar.",
       "timezoneLabel": "Tu zona horaria",
+      "timezonePlaceholder": "Selecciona la zona horaria",
+      "timezoneSearchPlaceholder": "Buscar zona horaria…",
       "title": "Sesión personal",
       "topicsLabel": "Temas en los que eres experto · hasta {max}",
       "weekday": {
@@ -475,18 +480,24 @@
         "title": "Mi Filosofía"
       },
       "promo": {
+        "errors": {
+          "invalidType": "Sube un video MP4 o MOV.",
+          "tooLarge": "El video debe pesar 200MB o menos.",
+          "uploadFailed": "No se pudo subir tu video. Inténtalo de nuevo."
+        },
         "linkPlaceholder": "Enlace",
         "orDivider": "O",
+        "removeVideo": "Quitar video",
         "title": "Video promocional",
-        "uploadComingSoon": "La subida de video llegará pronto — usa un enlace por ahora",
-        "uploadHint": "MP4 o MOV · Máx. 200MB · Vertical (9:16)",
+        "uploadHint": "MP4 o MOV · Máx. 200MB<br></br>Formato vertical (9:16)<br></br>recomendado",
+        "uploading": "Subiendo…",
         "uploadLabel": "Subir video",
         "vimeoLabel": "URL de Vimeo",
         "youtubeLabel": "URL de Youtube"
       },
       "reelLife": {
         "activateHint": "Añade al menos 3 fotos para activar esta sección.",
-        "addPhoto": "+ Añadir foto",
+        "addPhoto": "Añadir foto",
         "errors": {
           "invalidType": "Solo se permiten imágenes PNG o JPEG.",
           "tooLarge": "La imagen debe pesar como máximo 10 MB."
@@ -494,12 +505,8 @@
         "removePhoto": "Quitar foto",
         "reorderHint": "Mantén pulsado y arrastra para cambiar el orden.",
         "title": "Reel Life",
-        "uploadHint": "PNG o JPEG · Máx. 10MB por foto",
+        "uploadHint": "PNG o JPEG · Máx. 10MB por<br></br>foto",
         "uploadLabel": "Subir foto"
-      },
-      "shell": {
-        "back": "Atrás",
-        "skip": "Omitir"
       },
       "videoBlog": {
         "linkPlaceholder": "Enlace",
@@ -510,6 +517,7 @@
       "wins": {
         "addWin": "Añadir logro",
         "cardTitle": "Logro {index}",
+        "colorCardLabel": "Tarjeta {color}",
         "colorLabel": "Elige la tarjeta de color",
         "colorName": {
           "blue": "Azul",

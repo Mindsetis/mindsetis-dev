@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import {
@@ -14,9 +14,10 @@ import {
 
 import { saveNumbers } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
+import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -49,19 +50,48 @@ type NumberCardProps = {
   control: Control<NumbersStepInput>;
   index: number;
   onRemove?: () => void;
+  /** Sortable id (the `useFieldArray` field id) + whether this card can be reordered — the parent
+   * wraps the list in `SortableList`; see `CollapsibleCard`. */
+  id: string;
+  draggable: boolean;
 };
 
 /** One "Number N" card — Value (40-char counter) + Label (40-char counter), e.g. "3×" /
  * "Platforms founded". Mirrors `ExpertiseCard`'s structure, just two `Input`s instead of an
- * Input + Textarea. */
-function NumberCard({ control, index, onRemove }: NumberCardProps) {
+ * Input + Textarea. Wrapped in `CollapsibleCard` (stage 1.9 "collapse-on-blur") — collapses once
+ * value+label are filled AND the caller clicks outside it. */
+function NumberCard({ control, index, onRemove, id, draggable }: NumberCardProps) {
   const t = useTranslations('mindsetterOnboarding');
 
   const valueValue = useWatch({ control, name: `numbers.${index}.value` }) ?? '';
   const labelValue = useWatch({ control, name: `numbers.${index}.label` }) ?? '';
+  const isFilled = valueValue.trim().length > 0 && labelValue.trim().length > 0;
 
   return (
-    <Card className="gap-4 px-4 py-4 md:px-6 md:py-6">
+    <CollapsibleCard
+      isFilled={isFilled}
+      title={
+        <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
+          {t('blocks.numbers.cardTitle', { index: index + 1 })}
+        </span>
+      }
+      onDelete={onRemove}
+      deleteLabel={t('blocks.numbers.removeNumber')}
+      editLabel={t('common.edit')}
+      reorderLabel={t('common.reorder')}
+      id={id}
+      draggable={draggable}
+      collapsedSummary={
+        <div className="flex flex-col gap-1">
+          <p className="truncate text-base font-bold tracking-[0.3em] text-foreground uppercase">
+            {valueValue}
+          </p>
+          {labelValue ? (
+            <p className="line-clamp-2 text-sm text-muted-foreground">{labelValue}</p>
+          ) : null}
+        </div>
+      }
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
           {t('blocks.numbers.cardTitle', { index: index + 1 })}
@@ -71,9 +101,9 @@ function NumberCard({ control, index, onRemove }: NumberCardProps) {
             type="button"
             onClick={onRemove}
             aria-label={t('blocks.numbers.removeNumber')}
-            className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+            className="cursor-pointer"
           >
-            <Trash2 className="size-4" aria-hidden="true" />
+            <DeleteIcon />
           </button>
         ) : null}
       </div>
@@ -133,7 +163,7 @@ function NumberCard({ control, index, onRemove }: NumberCardProps) {
           </FormItem>
         )}
       />
-    </Card>
+    </CollapsibleCard>
   );
 }
 
@@ -153,7 +183,10 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: 'numbers' });
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: 'numbers',
+  });
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
@@ -177,16 +210,20 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
           </Alert>
         ) : null}
 
-        <div className="flex flex-col gap-4">
-          {fields.map((field, index) => (
-            <NumberCard
-              key={field.id}
-              control={form.control}
-              index={index}
-              onRemove={fields.length > 1 ? () => remove(index) : undefined}
-            />
-          ))}
-        </div>
+        <SortableList ids={fields.map((field) => field.id)} onReorder={move}>
+          <div className="flex flex-col gap-3 md:gap-4">
+            {fields.map((field, index) => (
+              <NumberCard
+                key={field.id}
+                id={field.id}
+                control={form.control}
+                index={index}
+                onRemove={fields.length > 1 ? () => remove(index) : undefined}
+                draggable={fields.length > 1}
+              />
+            ))}
+          </div>
+        </SortableList>
 
         {fields.length < MAX_NUMBERS ? (
           <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_NUMBER)}>
@@ -200,6 +237,10 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
           variant="primaryOutline"
           size="lg"
           loading={form.formState.isSubmitting}
+          // The parent's `gap-4 md:gap-6` (16px/24px) already spaces every sibling — this
+          // negative margin narrows JUST this gap (Add number → Save and continue) down to the
+          // requested 12px mobile / 16px desktop, without touching spacing elsewhere in the form.
+          className={fields.length < MAX_NUMBERS ? 'mt-[-4px] md:mt-[-8px]' : undefined}
         >
           {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
         </Button>

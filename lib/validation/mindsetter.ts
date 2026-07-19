@@ -21,21 +21,57 @@ export const MAX_ROLE_LINKS = 5;
 export const MIN_ROLES = 1;
 export const MAX_ROLES = 10;
 
+/** `roleLinkSchema.mediaType` — mirrors `LinkPreviewMediaType` in `lib/link-preview.ts` (kept as
+ * a separate literal union here rather than importing that server-only module's type, since this
+ * schema is shared with the client `zodResolver`). */
+export const ROLE_LINK_MEDIA_TYPES = ['video', 'article', 'link'] as const;
+
+export type RoleLinkMediaType = (typeof ROLE_LINK_MEDIA_TYPES)[number];
+
 /**
- * One optional link per role. `ogTitle` is populated later by a not-yet-built og-scraping
- * step (see the "Your roles" section of the onboarding doc, "// TODO og preview" in
- * `RolesForm.tsx`) — for now the form only ever writes `url`. Deliberately camelCase here
- * (matching the rest of this TS/Zod layer) even though the schema-alignment migration's own
- * SQL comment documents the jsonb shape with a snake_case `og_title` key — this app owns both
- * the read and write side of this brand-new field, so there is no existing consumer to stay
- * compatible with; keep this comment in sync if that ever changes.
+ * One optional link per role. `ogTitle`/`ogImage`/`mediaType`/`siteName`/`favicon` are populated
+ * by the og-scraping Server Action (`fetchRoleLinkPreview`, `lib/link-preview.ts`) once the
+ * caller blurs a filled-in `url` field (see `RolesForm.tsx`) — the form itself never computes
+ * them, just persists whatever that action returned via `form.setValue` so `saveRoles` writes
+ * them straight through. Deliberately camelCase here (matching the rest of this TS/Zod layer)
+ * even though the schema-alignment migration's own SQL comment documents the jsonb shape with
+ * snake_case keys (e.g. `og_title`) — this app owns both the read and write side of this
+ * brand-new field, so there is no existing consumer to stay compatible with; keep this comment
+ * in sync if that ever changes.
  */
+/** `true` only for an absolute `http:`/`https:` URL — shared by `ogImage`/`favicon` below.
+ * Security boundary (audit finding): both fields are later hotlinked (`<img src>`/favicon
+ * `<link>`) by a caller that trusts whatever was stored, so a bare `.url()` check (which accepts
+ * ANY scheme, e.g. `javascript:`/`data:`/`file:`/`vbscript:`) isn't enough — this also hardens
+ * `saveRoles` against a client submitting a crafted non-http image URL directly, bypassing the
+ * scraper's own http(s)-only filtering entirely (`absolutizeHttpUrl`, `lib/link-preview.ts`). */
+function isHttpUrl(value: string): boolean {
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
 export const roleLinkSchema = z.object({
   url: z.string().trim().min(1, 'Enter a valid URL.').url('Enter a valid URL.'),
   ogTitle: z.string().trim().max(200).optional(),
+  ogImage: z.string().trim().url().refine(isHttpUrl, 'must be http(s)').optional(),
+  mediaType: z.enum(ROLE_LINK_MEDIA_TYPES).optional(),
+  siteName: z.string().trim().max(200).optional(),
+  favicon: z.string().trim().url().refine(isHttpUrl, 'must be http(s)').optional(),
 });
 
 export type RoleLink = z.infer<typeof roleLinkSchema>;
+
+/** `fetchRoleLinkPreview`'s Server Action input — just the URL the caller blurred off of
+ * (`RolesForm.tsx`); the preview fields above are never client input, only ever the action's
+ * OUTPUT. */
+export const roleLinkPreviewRequestSchema = z.object({
+  url: z.string().trim().min(1, 'Enter a valid URL.').url('Enter a valid URL.'),
+});
+
+export type RoleLinkPreviewRequest = z.infer<typeof roleLinkPreviewRequestSchema>;
 
 export const roleSchema = z.object({
   title: z
@@ -299,6 +335,19 @@ export const sessionStepSchema = z
         message: 'Select at least one available day.',
       });
     }
+
+    // Reversed-range guard (product fix, stage 1.9 follow-up), mirroring `myWayStageSchema`'s own
+    // superRefine above. Both fields are always non-empty by the time this runs (`timeStringSchema`
+    // already rejects a blank/malformed value), so this only ever needs to compare two valid
+    // "HH:mm" strings — a plain lexicographic string comparison is equivalent to comparing the
+    // times numerically since both are fixed-width, zero-padded 24h clock strings.
+    if (data.availableFrom && data.availableTo && data.availableTo <= data.availableFrom) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['availableTo'],
+        message: '"To" time must be later than the "From" time.',
+      });
+    }
   });
 
 export type SessionStepInput = z.infer<typeof sessionStepSchema>;
@@ -325,15 +374,70 @@ export type ShineStepInput = z.infer<typeof shineStepSchema>;
 // block screen runs) — its Server Action only upserts its own `mindsetter_profiles` column.
 // -----------------------------------------------------------------------------------------
 
-// --- Promo video -> mindsetter_profiles.promo_video jsonb { youtube, vimeo } ---------------
-// Direct video upload is deferred past MVP (decision D4, migration comment on
-// `promo_video`) — the dropzone in `PromoForm.tsx` is a disabled visual placeholder only; the
-// real save path is this YouTube/Vimeo URL pair, both optional (empty string is valid — "not
-// filled in").
+// --- Promo video -> mindsetter_profiles.promo_video jsonb { youtube, vimeo, videoPath } -----
+// Direct video upload is now enabled (product follow-up, 2026-07-19, un-deferring decision D4):
+// the caller can EITHER upload a video file (stored in the private `promo-video` Storage bucket,
+// migration `20260719132834_promo_video_storage_bucket.sql`; only its object PATH lands in the
+// jsonb, like `reel_life`) OR paste a YouTube/Vimeo URL — all three fields optional (empty
+// string / omitted = "not filled in"). The 200 MB file is uploaded CLIENT-SIDE straight to
+// Storage (a Server Action's request body can't carry it — Next's default 1 MB action-body limit
+// / Vercel's 4.5 MB serverless body limit), so this schema only ever validates the resulting
+// path string; `savePromo` re-checks it's inside the caller's own `<uid>/` folder before storing.
+
+/** Max promo-video upload size — mirrors the `promo-video` bucket's `file_size_limit` (200 MB)
+ * and the onboarding doc's "Max 200MB" copy. Client-side pre-check; Storage enforces it too. */
+export const MAX_PROMO_VIDEO_SIZE_BYTES = 200 * 1024 * 1024;
+/** Accepted promo-video MIME types — mirrors the bucket's `allowed_mime_types` (MP4 + MOV). */
+export const ACCEPTED_PROMO_VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime'] as const;
+
+// Host allow-lists for the "Youtube URL"/"Vimeo URL" fields (promo + video-blog steps) — so those
+// inputs reject arbitrary links (a random blog/article URL pasted into "Youtube URL") instead of
+// accepting any valid URL, per product follow-up (2026-07-19).
+const YOUTUBE_HOSTS = ['youtube.com', 'youtu.be'] as const;
+const VIMEO_HOSTS = ['vimeo.com'] as const;
+
+/** True when `value`'s hostname is (a subdomain of) one of `hosts` — `www.` stripped first, so
+ * `www.youtube.com`, `m.youtube.com`, `player.vimeo.com` all match; a non-URL returns false. */
+function urlHostMatches(value: string, hosts: readonly string[]): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    return hosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+  } catch {
+    return false;
+  }
+}
+
+/** Optional "Youtube URL" field — empty, or a valid URL on a YouTube host. */
+const youtubeUrlField = z.union([
+  z.literal(''),
+  z
+    .string()
+    .trim()
+    .url('Enter a valid URL.')
+    .refine(
+      (value) => urlHostMatches(value, YOUTUBE_HOSTS),
+      'Enter a YouTube link (youtube.com or youtu.be).',
+    ),
+]);
+
+/** Optional "Vimeo URL" field — empty, or a valid URL on a Vimeo host. */
+const vimeoUrlField = z.union([
+  z.literal(''),
+  z
+    .string()
+    .trim()
+    .url('Enter a valid URL.')
+    .refine((value) => urlHostMatches(value, VIMEO_HOSTS), 'Enter a Vimeo link (vimeo.com).'),
+]);
 
 export const promoStepSchema = z.object({
-  youtube: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
-  vimeo: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
+  youtube: youtubeUrlField,
+  vimeo: vimeoUrlField,
+  // A `promo-video` Storage object path (`<uid>/promo-...`) for an uploaded file, or '' when the
+  // caller uses a link / uploaded nothing. Ownership (the `<uid>/` prefix) is enforced server-side
+  // in `savePromo`, not here — same "never trust a client-supplied path outright" precedent as
+  // `reelLifeStepSchema`.
+  videoPath: z.union([z.literal(''), z.string().trim().min(1)]),
 });
 
 export type PromoStepInput = z.infer<typeof promoStepSchema>;
@@ -346,8 +450,8 @@ export type PromoStepInput = z.infer<typeof promoStepSchema>;
 // never renders a placeholder dropzone the way `PromoForm.tsx` does.
 
 export const videoBlogStepSchema = z.object({
-  youtube: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
-  vimeo: z.union([z.literal(''), z.string().trim().url('Enter a valid URL.')]),
+  youtube: youtubeUrlField,
+  vimeo: vimeoUrlField,
 });
 
 export type VideoBlogStepInput = z.infer<typeof videoBlogStepSchema>;
@@ -386,8 +490,8 @@ export type NumbersStepInput = z.infer<typeof numbersStepSchema>;
 // --- My Wins -> mindsetter_profiles.wins jsonb, array of {year, win, description, color} ----
 
 /** Palette keys stored on each win (not hex — the hex values live in `WinsForm.tsx`'s own
- * display-only swatch map, `// TODO confirm exact palette hex from Figma`), onboarding doc
- * section 7 "My Wins": "palette of 7 colors (yellow/purple/blue/orange/teal/light-blue/pink)". */
+ * display-only swatch map), onboarding doc section 7 "My Wins": "palette of 7 colors
+ * (yellow/purple/blue/orange/teal/light-blue/pink)". */
 export const WIN_COLORS = [
   'yellow',
   'purple',
@@ -451,37 +555,59 @@ export const MAX_MY_WAY_YEAR_LENGTH = 40;
 export const MIN_MY_WAY = 1;
 export const MAX_MY_WAY = 10;
 
-export const myWayStageSchema = z.object({
-  project: z
-    .string()
-    .trim()
-    .min(1, 'Project name is required.')
-    .max(
-      MAX_MY_WAY_PROJECT_LENGTH,
-      `Project name must be at most ${MAX_MY_WAY_PROJECT_LENGTH} characters.`,
-    ),
-  description: z
-    .string()
-    .trim()
-    .min(1, 'Description is required.')
-    .max(
-      MAX_MY_WAY_DESCRIPTION_LENGTH,
-      `Description must be at most ${MAX_MY_WAY_DESCRIPTION_LENGTH} characters.`,
-    ),
-  yearFrom: z
-    .string()
-    .trim()
-    .min(1, 'Start year is required.')
-    .max(
-      MAX_MY_WAY_YEAR_LENGTH,
-      `Start year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`,
-    ),
-  yearTo: z
-    .string()
-    .trim()
-    .min(1, 'End year is required.')
-    .max(MAX_MY_WAY_YEAR_LENGTH, `End year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`),
-});
+export const myWayStageSchema = z
+  .object({
+    project: z
+      .string()
+      .trim()
+      .min(1, 'Project name is required.')
+      .max(
+        MAX_MY_WAY_PROJECT_LENGTH,
+        `Project name must be at most ${MAX_MY_WAY_PROJECT_LENGTH} characters.`,
+      ),
+    description: z
+      .string()
+      .trim()
+      .min(1, 'Description is required.')
+      .max(
+        MAX_MY_WAY_DESCRIPTION_LENGTH,
+        `Description must be at most ${MAX_MY_WAY_DESCRIPTION_LENGTH} characters.`,
+      ),
+    yearFrom: z
+      .string()
+      .trim()
+      .min(1, 'Start year is required.')
+      .max(
+        MAX_MY_WAY_YEAR_LENGTH,
+        `Start year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`,
+      ),
+    yearTo: z
+      .string()
+      .trim()
+      .min(1, 'End year is required.')
+      .max(
+        MAX_MY_WAY_YEAR_LENGTH,
+        `End year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`,
+      ),
+  })
+  .superRefine((stage, ctx) => {
+    // Reversed-range guard (product fix, stage 1.9 follow-up): only fires once BOTH years are
+    // present and numeric — a non-numeric or missing year is already reported by the field's own
+    // `min`/`max` rules above, so this stays silent in that case rather than piling on a second,
+    // confusing error. Same year on both ends (a one-year project, e.g. "2020 – 2020") is
+    // deliberately allowed — only a truly reversed range ("2016 – 2012") is rejected.
+    if (!stage.yearFrom || !stage.yearTo) return;
+    const from = Number(stage.yearFrom);
+    const to = Number(stage.yearTo);
+    if (Number.isNaN(from) || Number.isNaN(to)) return;
+    if (to < from) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['yearTo'],
+        message: '"To" year cannot be earlier than the "From" year.',
+      });
+    }
+  });
 
 export type MyWayStage = z.infer<typeof myWayStageSchema>;
 

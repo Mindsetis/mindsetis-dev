@@ -34,9 +34,9 @@ function Switch({ checked, onCheckedChange, disabled, className, ...props }: Swi
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        'inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-border bg-transparent p-0.5 outline-none transition-colors',
+        'inline-flex h-7 w-11 shrink-0 cursor-pointer items-center rounded-full bg-white p-2 outline-none transition-colors',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        checked && 'border-primary bg-primary/20',
+        checked && 'bg-[#79b9e3]',
         'disabled:cursor-not-allowed disabled:opacity-60',
         className,
       )}
@@ -45,8 +45,8 @@ function Switch({ checked, onCheckedChange, disabled, className, ...props }: Swi
       <span
         aria-hidden="true"
         className={cn(
-          'size-5 rounded-full bg-muted-foreground transition-transform',
-          checked && 'translate-x-5 bg-primary',
+          'size-3 rounded-full bg-black transition-transform',
+          checked && 'translate-x-4',
         )}
       />
     </button>

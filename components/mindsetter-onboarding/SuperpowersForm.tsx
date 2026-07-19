@@ -1,16 +1,17 @@
 'use client';
 
+import { arrayMove } from '@dnd-kit/sortable';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { type Control, useForm, type UseFormReturn, useWatch } from 'react-hook-form';
 
 import { saveSuperpowers } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
+import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -43,6 +44,10 @@ type SuperpowerCardProps = {
   control: Control<SuperpowersStepInput>;
   index: number;
   onClear: () => void;
+  /** Stable sortable id that travels WITH this slot's row as it's reordered (not the index) +
+   * whether it can be dragged — the parent wraps the list in `SortableList`; see `CollapsibleCard`. */
+  id: string;
+  draggable: boolean;
 };
 
 /**
@@ -50,17 +55,43 @@ type SuperpowerCardProps = {
  * counter). Unlike `RoleCard`/`ExpertiseCard`, the number of card slots here is fixed at
  * exactly 3 (design has no "Add" button, onboarding doc section 3) — the trash icon clears
  * that slot's fields back to empty instead of removing the card from the list, so the form
- * always renders 3 cards regardless of how many are filled in.
+ * always renders 3 cards regardless of how many are filled in. Wrapped in `CollapsibleCard`
+ * (stage 1.9 "collapse-on-blur") — "delete" on a collapsed card clears the slot (not a remove),
+ * matching that same fixed-slot semantics.
  */
-function SuperpowerCard({ control, index, onClear }: SuperpowerCardProps) {
+function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCardProps) {
   const t = useTranslations('mindsetterOnboarding');
 
   const titleValue = useWatch({ control, name: `superpowers.${index}.title` }) ?? '';
   const descriptionValue = useWatch({ control, name: `superpowers.${index}.description` }) ?? '';
   const isEmpty = titleValue.length === 0 && descriptionValue.length === 0;
+  const isFilled = titleValue.trim().length > 0 && descriptionValue.trim().length > 0;
 
   return (
-    <Card className="gap-4 px-4 py-4 md:px-6 md:py-6">
+    <CollapsibleCard
+      isFilled={isFilled}
+      title={
+        <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
+          {t('superpowers.cardTitle', { index: index + 1, total: MAX_SUPERPOWERS })}
+        </span>
+      }
+      onDelete={isEmpty ? undefined : onClear}
+      deleteLabel={t('superpowers.removeSuperpower')}
+      editLabel={t('common.edit')}
+      reorderLabel={t('common.reorder')}
+      id={id}
+      draggable={draggable}
+      collapsedSummary={
+        <div className="flex flex-col gap-1">
+          <p className="truncate text-base font-bold tracking-[0.3em] text-foreground uppercase">
+            {titleValue}
+          </p>
+          {descriptionValue ? (
+            <p className="line-clamp-2 text-sm text-muted-foreground">{descriptionValue}</p>
+          ) : null}
+        </div>
+      }
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
           {t('superpowers.cardTitle', { index: index + 1, total: MAX_SUPERPOWERS })}
@@ -70,9 +101,9 @@ function SuperpowerCard({ control, index, onClear }: SuperpowerCardProps) {
             type="button"
             onClick={onClear}
             aria-label={t('superpowers.removeSuperpower')}
-            className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+            className="cursor-pointer"
           >
-            <Trash2 className="size-4" aria-hidden="true" />
+            <DeleteIcon />
           </button>
         ) : null}
       </div>
@@ -140,7 +171,7 @@ function SuperpowerCard({ control, index, onClear }: SuperpowerCardProps) {
           </FormItem>
         )}
       />
-    </Card>
+    </CollapsibleCard>
   );
 }
 
@@ -197,6 +228,22 @@ export function SuperpowersForm({ initialSuperpowers }: SuperpowersFormProps) {
     form.setValue(`superpowers.${index}`, { ...EMPTY_SUPERPOWER }, { shouldValidate: true });
   };
 
+  // There's no `useFieldArray` here (see the file-header note) — 3 fixed slots — so each row gets
+  // a STABLE id that travels with it as it's dragged (kept in `rowIds`), moved in lockstep with
+  // the underlying `superpowers` values via `arrayMove`. Because the id (and thus the React key)
+  // moves WITH the content, each `SuperpowerCard` keeps its own collapsed/expanded state as it's
+  // reordered — no remount / `dragVersion` hack needed (which the old native-DnD version used to
+  // re-derive state from whatever content landed in a fixed position).
+  const [rowIds, setRowIds] = useState(() =>
+    Array.from({ length: MAX_SUPERPOWERS }, (_, index) => `superpower-${index}`),
+  );
+
+  function handleReorder(fromIndex: number, toIndex: number) {
+    const current = form.getValues('superpowers');
+    form.setValue('superpowers', arrayMove(current, fromIndex, toIndex), { shouldValidate: true });
+    setRowIds((ids) => arrayMove(ids, fromIndex, toIndex));
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
@@ -206,16 +253,20 @@ export function SuperpowersForm({ initialSuperpowers }: SuperpowersFormProps) {
           </Alert>
         ) : null}
 
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: MAX_SUPERPOWERS }, (_, index) => (
-            <SuperpowerCard
-              key={index}
-              control={form.control}
-              index={index}
-              onClear={() => handleClear(index)}
-            />
-          ))}
-        </div>
+        <SortableList ids={rowIds} onReorder={handleReorder}>
+          <div className="flex flex-col gap-3 md:gap-4">
+            {rowIds.map((rowId, index) => (
+              <SuperpowerCard
+                key={rowId}
+                id={rowId}
+                control={form.control}
+                index={index}
+                onClear={() => handleClear(index)}
+                draggable
+              />
+            ))}
+          </div>
+        </SortableList>
 
         <Button
           type="submit"

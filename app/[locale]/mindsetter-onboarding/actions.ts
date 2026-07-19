@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
+import { fetchLinkPreview, type LinkPreview } from '@/lib/link-preview';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
@@ -34,6 +35,7 @@ import {
   reelLifePhotoDeleteSchema,
   reelLifePhotoUploadSchema,
   reelLifeStepSchema,
+  roleLinkPreviewRequestSchema,
   rolesStepSchema,
   sessionStepSchema,
   shineStepSchema,
@@ -123,6 +125,38 @@ export const saveRoles = createAction(rolesStepSchema, async (input) => {
 
   return { roles: input.roles };
 });
+
+export type FetchRoleLinkPreviewResult = {
+  /** `null` when the fetch/scrape failed for any reason — the client just shows no preview
+   * card in that case, never an error message (see `lib/link-preview.ts`'s doc comment: this
+   * never throws, so a `null` result is an expected, ordinary outcome, not a failure). */
+  preview: LinkPreview | null;
+};
+
+/**
+ * Scrapes Open Graph metadata for one role-link URL (`RolesForm.tsx`, fired on `url` field
+ * blur). The actual fetch + parsing — and, critically, the SSRF guard (protocol allow-list,
+ * private/reserved-IP deny-list checked against BOTH the literal hostname and every DNS-resolved
+ * address, manually-revalidated redirects) — lives entirely in `lib/link-preview.ts`; this
+ * action is just the authenticated, rate-limited entry point to it.
+ *
+ * Auth-gated (`requireUser()`) rather than public: this endpoint makes the SERVER fetch an
+ * arbitrary caller-supplied URL, which is exactly the kind of capability that must never be
+ * exposed to anonymous callers (open SSRF proxy / anonymous scraping-as-a-service). Rate-limited
+ * on top of that as defense-in-depth against a signed-in caller hammering it (e.g. scripted
+ * abuse of the fetch itself, independent of the SSRF guard already blocking unsafe targets).
+ */
+export const fetchRoleLinkPreview = createAction(
+  roleLinkPreviewRequestSchema,
+  async (input): Promise<FetchRoleLinkPreviewResult> => {
+    await requireUser();
+    const preview = await fetchLinkPreview(input.url);
+    return { preview };
+  },
+  {
+    rateLimit: { key: 'mindsetter-onboarding:link-preview', limit: 20, window: '10 m' },
+  },
+);
 
 export const saveSuperpowers = createAction(superpowersStepSchema, async (input) => {
   const user = await requireUser();
@@ -347,10 +381,23 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
   const user = await requireUser();
   const supabase = await createClient();
 
+  // The video file itself is uploaded client-side straight to the `promo-video` bucket (see
+  // `PromoForm.tsx`); this only persists the resulting object path. Re-check it's inside the
+  // caller's own `<uid>/` folder (never trust a client-supplied path), same defense-in-depth as
+  // `saveReelLife`, even though Storage RLS already blocks writing/reading another user's object.
+  const videoPath = input.videoPath.trim();
+  if (videoPath && !videoPath.startsWith(`${user.id}/`)) {
+    throw new ActionError('validation_error', 'Invalid video.');
+  }
+
   const { error } = await supabase.from('mindsetter_profiles').upsert(
     {
       id: user.id,
-      promo_video: { youtube: input.youtube || null, vimeo: input.vimeo || null },
+      promo_video: {
+        youtube: input.youtube || null,
+        vimeo: input.vimeo || null,
+        videoPath: videoPath || null,
+      },
     },
     { onConflict: 'id' },
   );

@@ -27,6 +27,15 @@ function FinishIcon() {
 type OnboardingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * When provided, the LAST step's action button becomes a plain "Next" button that just calls
+   * this (closing the popup) instead of the default `Link`-to-`/sign-up` "Ok, continue
+   * registration" button. Used by `RolesPreviewCta` (Mindsetter onboarding "Your roles" step's
+   * "See how it looks" preview) — that caller is already mid-onboarding, so "continue
+   * registration" doesn't apply. Omitted by the homepage's `OnboardingCta`, which keeps the
+   * original sign-up-linking behavior unchanged.
+   */
+  onFinish?: () => void;
 };
 
 /**
@@ -52,7 +61,7 @@ type OnboardingDialogProps = {
  * used by desktop steps 1–3, combined with the real step-4 copy from the mobile frame
  * ("Onboarding - 4"). Flag this to design if the real desktop step-4 layout differs.
  */
-export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) {
+export function OnboardingDialog({ open, onOpenChange, onFinish }: OnboardingDialogProps) {
   const t = useTranslations('onboarding');
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -148,12 +157,24 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
           ) : null}
 
           {isLastStep ? (
-            <Button asChild size="lg" className="flex-1">
-              <Link href="/sign-up">
-                <FinishIcon />
-                {t('finish')}
-              </Link>
-            </Button>
+            onFinish ? (
+              <Button
+                type="button"
+                variant="primaryOutline"
+                size="lg"
+                className="flex-1"
+                onClick={onFinish}
+              >
+                {t('next')}
+              </Button>
+            ) : (
+              <Button asChild size="lg" className="flex-1">
+                <Link href="/sign-up">
+                  <FinishIcon />
+                  {t('finish')}
+                </Link>
+              </Button>
+            )
           ) : (
             <Button
               type="button"

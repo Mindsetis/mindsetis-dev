@@ -1,25 +1,95 @@
 'use client';
 
-import { GripVertical, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { arrayMove, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type DragEvent, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   deleteReelLifePhoto,
   saveReelLife,
   uploadReelLifePhoto,
 } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldHint } from '@/components/ui/field-hint';
 import { useRouter } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 import {
   ACCEPTED_REEL_LIFE_MIME_TYPES,
   MAX_REEL_LIFE_PHOTO_SIZE_BYTES,
   MAX_REEL_LIFE_PHOTOS,
+  MIN_REEL_LIFE_TO_ACTIVATE,
 } from '@/lib/validation/mindsetter';
 
 const ACCEPT_ATTR = ACCEPTED_REEL_LIFE_MIME_TYPES.join(',');
+
+/** Upload-photo dropzone icon (46×46) — provided verbatim by the designer, hardcoded fill (not
+ * `currentColor`). */
+function UploadPhotoIcon() {
+  return (
+    <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+      <path
+        d="M25.8737 11.4997C24.3404 11.4997 22.9987 12.8413 22.9987 14.3747C22.9987 15.908 24.3404 17.2497 25.8737 17.2497C27.407 17.2497 28.7487 15.908 28.7487 14.3747C28.7487 12.8413 27.407 11.4997 25.8737 11.4997ZM36.4154 3.83301H9.58203C6.3237 3.83301 3.83203 6.32467 3.83203 9.58301V36.4163C3.83203 39.6747 6.3237 42.1663 9.58203 42.1663H36.4154C39.6737 42.1663 42.1654 39.6747 42.1654 36.4163V9.58301C42.1654 6.32467 39.6737 3.83301 36.4154 3.83301ZM38.332 26.6413L34.6904 22.9997C32.3904 20.8913 28.7487 20.8913 26.6404 22.9997L24.9154 24.7247L19.357 19.1663C17.057 17.058 13.4154 17.058 11.307 19.1663L7.66536 22.808V9.58301C7.66536 8.43301 8.43203 7.66634 9.58203 7.66634H36.4154C37.5654 7.66634 38.332 8.43301 38.332 9.58301V26.6413Z"
+        fill="#79B9E3"
+      />
+    </svg>
+  );
+}
+
+/** Per-tile drag-handle icon (12×12) — provided verbatim by the designer, hardcoded fill (not
+ * `currentColor`). */
+function PhotoDragHandleIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path
+        d="M4.95149 3.85714H10.7251C11.04 3.85714 11.25 3.64286 11.25 3.32143C11.25 3 11.04 2.78571 10.7251 2.78571H4.95149C4.63657 2.78571 4.42662 3 4.42662 3.32143C4.42662 3.64286 4.63657 3.85714 4.95149 3.85714ZM2.69453 7.76786V4.23214C2.7995 4.33929 2.90448 4.39286 3.00945 4.39286C3.16691 4.39286 3.27189 4.33929 3.37686 4.28571C3.58681 4.07143 3.6393 3.75 3.42935 3.53571L2.53706 2.46429C2.43209 2.30357 2.32711 2.25 2.16965 2.25C2.01219 2.25 1.85473 2.30357 1.74975 2.46429L0.857462 3.53571C0.699999 3.75 0.699999 4.07143 0.962437 4.28571C1.17239 4.44643 1.43482 4.44643 1.64478 4.28571V7.82143C1.43482 7.66071 1.17239 7.60714 0.962437 7.82143C0.752487 8.03571 0.699999 8.35714 0.909949 8.57143L1.80224 9.64286C1.85473 9.69643 2.01219 9.75 2.16965 9.75C2.32711 9.75 2.48458 9.69643 2.58955 9.53571L3.48184 8.46429C3.69179 8.25 3.6393 7.875 3.42935 7.71429C3.16691 7.55357 2.85199 7.55357 2.69453 7.76786ZM10.7251 5.46429H4.95149C4.63657 5.46429 4.42662 5.67857 4.42662 6C4.42662 6.32143 4.63657 6.53571 4.95149 6.53571H10.7251C11.04 6.53571 11.25 6.32143 11.25 6C11.25 5.67857 11.04 5.46429 10.7251 5.46429ZM10.7251 8.14286H4.95149C4.63657 8.14286 4.42662 8.35714 4.42662 8.67857C4.42662 9 4.63657 9.21429 4.95149 9.21429H10.7251C11.04 9.21429 11.25 9 11.25 8.67857C11.25 8.35714 11.04 8.14286 10.7251 8.14286Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+/** Per-tile delete icon (12×12) — provided verbatim by the designer, hardcoded fill (not
+ * `currentColor`). */
+function PhotoDeleteIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path
+        d="M8.5 2H10.5C10.7761 2 11 2.22386 11 2.5C11 2.77614 10.7761 3 10.5 3H10V10.5C10 10.7762 9.77615 11 9.5 11H2.5C2.22386 11 2 10.7762 2 10.5V3H1.5C1.22386 3 1 2.77614 1 2.5C1 2.22386 1.22386 2 1.5 2H3.5C3.5 1.44772 3.94772 1 4.5 1H7.5C8.05228 1 8.5 1.44772 8.5 2ZM5 4.5C4.72386 4.5 4.5 4.72386 4.5 5V8C4.5 8.27614 4.72386 8.5 5 8.5C5.27614 8.5 5.5 8.27614 5.5 8V5C5.5 4.72386 5.27614 4.5 5 4.5ZM7 4.5C6.72386 4.5 6.5 4.72386 6.5 5V8C6.5 8.27614 6.72386 8.5 7 8.5C7.27614 8.5 7.5 8.27614 7.5 8V5C7.5 4.72386 7.27614 4.5 7 4.5Z"
+        fill="#FF4C58"
+      />
+    </svg>
+  );
+}
+
+/** Icon above the "Add Photo" tile (16×16) — provided verbatim by the designer, hardcoded fill
+ * (not `currentColor`). */
+function AddPhotoPlusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M7.33203 7.33398V4.00065C7.33203 3.63246 7.63051 3.33398 7.9987 3.33398C8.36689 3.33398 8.66536 3.63246 8.66536 4.00065V7.33398H11.9987C12.3669 7.33398 12.6654 7.63246 12.6654 8.00065C12.6654 8.36884 12.3669 8.66732 11.9987 8.66732H8.66536V12.0007C8.66536 12.3688 8.36689 12.6673 7.9987 12.6673C7.63051 12.6673 7.33203 12.3688 7.33203 12.0007V8.66732H3.9987C3.63051 8.66732 3.33203 8.36884 3.33203 8.00065C3.33203 7.63246 3.63051 7.33398 3.9987 7.33398H7.33203Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+/** Icon to the left of the "Hold and drag to change order" hint (16×16) — provided verbatim by
+ * the designer, hardcoded fill (not `currentColor`). */
+function ReorderHintIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6.60199 5.14286H14.3002C14.7201 5.14286 15 4.85714 15 4.42857C15 4 14.7201 3.71429 14.3002 3.71429H6.60199C6.18209 3.71429 5.90215 4 5.90215 4.42857C5.90215 4.85714 6.18209 5.14286 6.60199 5.14286ZM3.5927 10.3571V5.64286C3.73267 5.78571 3.87264 5.85714 4.0126 5.85714C4.22255 5.85714 4.36252 5.78571 4.50249 5.71429C4.78242 5.42857 4.8524 5 4.57247 4.71429L3.38275 3.28571C3.24278 3.07143 3.10282 3 2.89287 3C2.68292 3 2.47297 3.07143 2.333 3.28571L1.14328 4.71429C0.933332 5 0.933332 5.42857 1.28325 5.71429C1.56318 5.92857 1.9131 5.92857 2.19303 5.71429V10.4286C1.9131 10.2143 1.56318 10.1429 1.28325 10.4286C1.00332 10.7143 0.933332 11.1429 1.21327 11.4286L2.40298 12.8571C2.47297 12.9286 2.68292 13 2.89287 13C3.10282 13 3.31277 12.9286 3.45274 12.7143L4.64245 11.2857C4.92239 11 4.8524 10.5 4.57247 10.2857C4.22255 10.0714 3.80265 10.0714 3.5927 10.3571ZM14.3002 7.28571H6.60199C6.18209 7.28571 5.90215 7.57143 5.90215 8C5.90215 8.42857 6.18209 8.71429 6.60199 8.71429H14.3002C14.7201 8.71429 15 8.42857 15 8C15 7.57143 14.7201 7.28571 14.3002 7.28571ZM14.3002 10.8571H6.60199C6.18209 10.8571 5.90215 11.1429 5.90215 11.5714C5.90215 12 6.18209 12.2857 6.60199 12.2857H14.3002C14.7201 12.2857 15 12 15 11.5714C15 11.1429 14.7201 10.8571 14.3002 10.8571Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
 
 /** One grid tile — either still uploading (a local `File` + object-URL preview, no Storage path
  * yet) or fully uploaded (a real Storage `path` + a server-signed `url`). `id` is a stable
@@ -42,6 +112,75 @@ function createTileId(): string {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+/** One photo tile in the Reel Life grid — a `@dnd-kit` sortable item. The whole tile is the
+ * moving element (transform/transition), the top-right grip is the drag handle (mouse/touch/
+ * keyboard via `SortableList`'s sensors). An uploading tile isn't draggable yet (no path saved). */
+function PhotoTile({
+  item,
+  onRemove,
+  removeLabel,
+  reorderLabel,
+}: {
+  item: ReelLifeItem;
+  onRemove: () => void;
+  removeLabel: string;
+  reorderLabel: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled: item.status !== 'ready',
+  });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'group relative aspect-square overflow-hidden rounded-[12px] border border-border bg-card',
+        isDragging && 'z-10',
+      )}
+    >
+      {item.status === 'uploading' ? (
+        // Local object-URL preview of a not-yet-uploaded file, not a static/remote asset Next can
+        // optimize.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.previewUrl} alt="" className="size-full object-cover opacity-50" />
+      ) : (
+        // Server-signed private-bucket URL (short-lived, per-request), not a static/remote asset
+        // Next can optimize/cache.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.url} alt="" className="size-full object-cover" />
+      )}
+
+      {item.status === 'uploading' ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+          <Loader2 className="size-6 animate-spin text-white" aria-hidden="true" />
+        </div>
+      ) : (
+        <>
+          <span
+            className="absolute top-3 right-3 flex cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+            aria-label={reorderLabel}
+            {...attributes}
+            {...listeners}
+          >
+            <PhotoDragHandleIcon />
+          </span>
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={removeLabel}
+            className="absolute right-3 bottom-3 flex cursor-pointer items-center justify-center"
+          >
+            <PhotoDeleteIcon />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /**
  * Optional block "Reel Life" (onboarding doc section 7) — a private-bucket photo gallery, unlike
  * every sibling block's plain RHF card list. Each photo uploads via its own Server Action
@@ -60,17 +199,14 @@ function createTileId(): string {
  * drag-reordering + per-item async upload state into an RHF field array added complexity with no
  * real benefit over a small dedicated `useState`.
  *
- * Reordering: a lightweight native HTML5 drag-and-drop (`draggable` + `onDragStart`/`onDragOver`/
- * `onDrop`), not a dedicated DnD library — simplest option that still lets the STORED ORDER (the
- * `reel_life` array itself) reflect exactly what the caller dragged. // TODO: no keyboard-
- * accessible reorder fallback yet (mouse/touch drag only) — revisit if this needs to be fully
- * accessible past MVP.
+ * Reordering: `@dnd-kit` (`SortableList` + `PhotoTile`'s `useSortable`), grid strategy — works on
+ * mouse, touch AND keyboard. Replaced the previous native HTML5 drag-and-drop, which fired on
+ * mouse only and was dead on touch (so phones couldn't reorder at all).
  */
 export function ReelLifeForm({ initialPhotos, nextHref }: ReelLifeFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const dragIndexRef = useRef<number | null>(null);
 
   const [items, setItems] = useState<ReelLifeItem[]>(() =>
     initialPhotos.map((photo) => ({
@@ -86,6 +222,10 @@ export function ReelLifeForm({ initialPhotos, nextHref }: ReelLifeFormProps) {
 
   const isUploading = items.some((item) => item.status === 'uploading');
   const canAddMore = items.length < MAX_REEL_LIFE_PHOTOS;
+  // "Save and continue" only appears once the section is actually active — at least
+  // `MIN_REEL_LIFE_TO_ACTIVATE` fully-uploaded photos (a still-uploading tile doesn't count).
+  const readyCount = items.filter((item) => item.status === 'ready').length;
+  const canSubmit = readyCount >= MIN_REEL_LIFE_TO_ACTIVATE;
 
   function replaceItem(id: string, next: ReelLifeItem) {
     setItems((previous) => previous.map((item) => (item.id === id ? next : item)));
@@ -145,19 +285,8 @@ export function ReelLifeForm({ initialPhotos, nextHref }: ReelLifeFormProps) {
     }
   }
 
-  function handleDrop(event: DragEvent<HTMLDivElement>, targetIndex: number) {
-    event.preventDefault();
-    const sourceIndex = dragIndexRef.current;
-    dragIndexRef.current = null;
-    if (sourceIndex === null || sourceIndex === targetIndex) return;
-
-    setItems((previous) => {
-      const next = [...previous];
-      const [moved] = next.splice(sourceIndex, 1);
-      if (!moved) return previous;
-      next.splice(targetIndex, 0, moved);
-      return next;
-    });
+  function handleReorder(fromIndex: number, toIndex: number) {
+    setItems((previous) => arrayMove(previous, fromIndex, toIndex));
   }
 
   async function handleSubmit() {
@@ -196,80 +325,65 @@ export function ReelLifeForm({ initialPhotos, nextHref }: ReelLifeFormProps) {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-border bg-card px-6 py-10 text-center transition-colors hover:border-foreground/40"
+          className="flex h-[200px] cursor-pointer flex-col items-center justify-center rounded-[16px] bg-[#1a1a1a] px-6 text-center md:h-[400px]"
         >
-          <ImagePlus className="size-6 text-muted-foreground" aria-hidden="true" />
-          <p className="text-base font-bold text-foreground">{t('blocks.reelLife.uploadLabel')}</p>
-          <p className="text-sm text-muted-foreground">{t('blocks.reelLife.uploadHint')}</p>
+          <UploadPhotoIcon />
+          <p className="mt-[13px] text-base font-bold text-foreground">
+            {t('blocks.reelLife.uploadLabel')}
+          </p>
+          <p className="mt-1 text-tiny text-white">
+            {t.rich('blocks.reelLife.uploadHint', {
+              br: () => <br className="hidden md:inline" />,
+            })}
+          </p>
         </button>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {items.map((item, index) => (
-            <div
-              key={item.id}
-              draggable={item.status === 'ready'}
-              onDragStart={() => {
-                dragIndexRef.current = index;
-              }}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleDrop(event, index)}
-              className="group relative aspect-square overflow-hidden rounded-[12px] border border-border bg-card"
-            >
-              {item.status === 'uploading' ? (
-                // Local object-URL preview of a not-yet-uploaded file, not a static/remote asset
-                // Next can optimize.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.previewUrl} alt="" className="size-full object-cover opacity-50" />
-              ) : (
-                // Server-signed private-bucket URL (short-lived, per-request), not a static/
-                // remote asset Next can optimize/cache.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.url} alt="" className="size-full object-cover" />
-              )}
-
-              {item.status === 'uploading' ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                  <Loader2 className="size-6 animate-spin text-white" aria-hidden="true" />
-                </div>
-              ) : (
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span
-                    className="cursor-grab rounded-full bg-black/60 p-1 text-white"
-                    aria-hidden="true"
-                  >
-                    <GripVertical className="size-4" />
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    aria-label={t('blocks.reelLife.removePhoto')}
-                    className="cursor-pointer rounded-full bg-black/60 p-1 text-white transition-colors hover:text-destructive"
-                  >
-                    <Trash2 className="size-4" aria-hidden="true" />
-                  </button>
-                </div>
-              )}
+        <div>
+          {canSubmit ? (
+            <div className="mb-4 flex items-center gap-2 rounded-[12px] border border-[#747474] bg-[#1a1a1a] p-4 md:mb-6">
+              <ReorderHintIcon />
+              <span className="text-tiny text-white">{t('blocks.reelLife.reorderHint')}</span>
             </div>
-          ))}
-
-          {canAddMore ? (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border border-dashed border-border text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-            >
-              <ImagePlus className="size-5" aria-hidden="true" />
-              <span className="text-tiny font-bold">{t('blocks.reelLife.addPhoto')}</span>
-            </button>
           ) : null}
+
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
+            <SortableList
+              ids={items.map((item) => item.id)}
+              onReorder={handleReorder}
+              layout="grid"
+            >
+              {items.map((item) => (
+                <PhotoTile
+                  key={item.id}
+                  item={item}
+                  onRemove={() => removeItem(item.id)}
+                  removeLabel={t('blocks.reelLife.removePhoto')}
+                  reorderLabel={t('common.reorder')}
+                />
+              ))}
+            </SortableList>
+
+            {canAddMore ? (
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-2 border-dashed border-border transition-colors hover:border-foreground/40"
+              >
+                <AddPhotoPlusIcon />
+                <span className="text-tiny font-bold text-white">
+                  {t('blocks.reelLife.addPhoto')}
+                </span>
+              </button>
+            ) : null}
+          </div>
         </div>
       )}
 
-      {items.length > 0 ? (
-        <FieldHint centerIcon>{t('blocks.reelLife.reorderHint')}</FieldHint>
-      ) : (
-        <FieldHint centerIcon>{t('blocks.reelLife.activateHint')}</FieldHint>
-      )}
+      {!canSubmit ? (
+        <FieldHint centerIcon className={items.length === 0 ? 'mt-[-14px] md:mt-0' : undefined}>
+          {t('blocks.reelLife.activateHint')}
+        </FieldHint>
+      ) : null}
 
       <input
         ref={inputRef}
@@ -286,16 +400,18 @@ export function ReelLifeForm({ initialPhotos, nextHref }: ReelLifeFormProps) {
         }}
       />
 
-      <Button
-        type="button"
-        variant="primaryOutline"
-        size="lg"
-        loading={submitting}
-        disabled={isUploading}
-        onClick={() => void handleSubmit()}
-      >
-        {submitting ? t('common.saving') : t('common.saveAndContinue')}
-      </Button>
+      {canSubmit ? (
+        <Button
+          type="button"
+          variant="primaryOutline"
+          size="lg"
+          loading={submitting}
+          disabled={isUploading}
+          onClick={() => void handleSubmit()}
+        >
+          {submitting ? t('common.saving') : t('common.saveAndContinue')}
+        </Button>
+      ) : null}
     </div>
   );
 }

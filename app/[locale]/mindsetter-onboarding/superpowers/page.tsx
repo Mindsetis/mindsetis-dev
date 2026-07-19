@@ -1,7 +1,7 @@
-import { Zap } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
+import { SuperpowersSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { SuperpowersForm } from '@/components/mindsetter-onboarding/SuperpowersForm';
 import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -50,14 +50,18 @@ export default async function MindsetterOnboardingSuperpowersPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[100px]">
-        <RegistrationBackLink href="/mindsetter-onboarding/roles" label={tAuth('signUp.back')} />
+      <div className="relative mb-8 md:mb-[28px]">
+        <RegistrationBackLink
+          href="/mindsetter-onboarding/roles"
+          label={tAuth('signUp.back')}
+          className="md:static md:translate-y-0"
+        />
       </div>
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <Zap className="size-6 text-primary" aria-hidden="true" />
-          <h1 className="font-display text-h1 text-foreground md:text-h3">
+      <div className="mx-auto flex w-full max-w-[640px] flex-col">
+        <div className="mb-4 flex items-center gap-2 md:mb-8 md:gap-4">
+          <SuperpowersSectionIcon className="size-7 md:size-10" />
+          <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
             {t('superpowers.title')}
           </h1>
         </div>

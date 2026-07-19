@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { NumbersBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { NumbersForm } from '@/components/mindsetter-onboarding/NumbersForm';
 import { redirect } from '@/i18n/navigation';
@@ -49,10 +50,13 @@ export default async function MindsetterOnboardingNumbersBlockPage({
   const initialNumbers = (mindsetterProfile?.numbers ?? undefined) as NumberItem[] | undefined;
 
   return (
-    <BlockShell backHref={backHref} skipHref={nextHref} index={index} total={blocks.length}>
-      <h1 className="font-display text-h1 text-foreground md:text-h3">
-        {t('blocks.numbers.title')}
-      </h1>
+    <BlockShell backHref={backHref} index={index} total={blocks.length}>
+      <div className="flex items-center gap-2 md:gap-4">
+        <NumbersBlockIcon className="size-7 md:size-10" />
+        <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
+          {t('blocks.numbers.title')}
+        </h1>
+      </div>
       <NumbersForm initialNumbers={initialNumbers} nextHref={nextHref} />
     </BlockShell>
   );

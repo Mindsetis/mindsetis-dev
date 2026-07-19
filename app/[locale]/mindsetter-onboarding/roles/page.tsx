@@ -1,10 +1,10 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
-import { MindsetterArrowIcon } from '@/components/icons/mindsetter-arrow-icon';
+import { RolesSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { RolesForm } from '@/components/mindsetter-onboarding/RolesForm';
-import { Button } from '@/components/ui/button';
-import { Link, redirect } from '@/i18n/navigation';
+import { RolesPreviewCta } from '@/components/mindsetter-onboarding/RolesPreviewCta';
+import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import type { Role } from '@/lib/validation/mindsetter';
@@ -53,24 +53,36 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[100px]">
-        <RegistrationBackLink href="/welcome" label={tAuth('signUp.back')} />
+      <div className="relative mb-8 md:mb-[28px]">
+        <RegistrationBackLink
+          href="/welcome"
+          label={tAuth('signUp.back')}
+          className="md:static md:translate-y-0"
+        />
       </div>
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-display text-h1 text-foreground md:text-h3">{t('roles.title')}</h1>
-          <p className="text-base text-muted-foreground">{t('roles.subtitle')}</p>
+      <div className="mx-auto flex w-full max-w-[640px] flex-col">
+        <div className="flex flex-col gap-1 md:gap-4">
+          <h1 className="font-display text-h1 text-foreground md:text-h3">
+            {t.rich('roles.title', { br: () => <br className="hidden md:block" /> })}
+          </h1>
+          <p className="text-base text-muted-foreground">
+            {t.rich('roles.subtitle', { br: () => <br className="hidden md:block" /> })}
+          </p>
         </div>
 
-        {/* Placeholder destination — the public Mindsetter profile page doesn't exist yet
-            (onboarding doc section D). */}
-        <Button asChild variant="link" className="w-fit gap-2">
-          <Link href="/">
-            {t('roles.seeHowItLooks')}
-            <MindsetterArrowIcon />
-          </Link>
-        </Button>
+        {/* Reuses the homepage's onboarding tour popup (`OnboardingDialog`) instead of navigating
+            to the (not-yet-built) public Mindsetter profile page — see `RolesPreviewCta`. */}
+        <div className="mt-6">
+          <RolesPreviewCta />
+        </div>
+
+        <div className="mt-8 mb-4 flex items-center gap-2 md:mt-12 md:mb-8 md:gap-4">
+          <RolesSectionIcon className="size-7 md:size-10" />
+          <h2 className="font-display text-[24px] leading-none text-foreground md:text-h3">
+            {t('roles.rolesHeading')}
+          </h2>
+        </div>
 
         <RolesForm initialRoles={initialRoles} />
       </div>

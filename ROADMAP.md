@@ -722,6 +722,31 @@ decisions, recorded for product-owner review (see the working-notes decision log
 [`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)). The stage
 stays **In progress** until the product owner confirms those decisions.
 
+**Follow-up (2026-07-19 → 2026-07-20):** Long iterative, Figma-driven UI-polish + interaction
+pass across the whole flow (roles → superpowers → help → shine → optional blocks → session →
+congrats), per ongoing product review. Highlights:
+- **Drag-to-reorder migrated from native HTML5 DnD to `@dnd-kit`** (`SortableList` + `useSortable`
+  in `CollapsibleCard` and `ReelLifeForm`) so card/photo reordering works on **touch (phones)** and
+  keyboard, not just mouse — the old native DnD fired on mouse only and was dead on touch.
+  Live-verified (mouse / touch / keyboard).
+- **Promo video: real file upload ENABLED** (client → private `promo-video` Storage bucket, migration
+  `20260719132834`, owner-scoped RLS + server-side path re-validation) — supersedes the earlier
+  "URL-only / upload deferred" provisional decision below.
+- **Video blog un-deferred back into MVP and built** (link-only, migration `20260718185944`) —
+  supersedes the earlier "EXCLUDED as Phase-2" provisional decision below.
+- **Personal session:** "Save and continue" now gates on the Platform-fee-&-payouts consent modal
+  when Accept-bookings is on (agree → submit; opening the info button alone does not advance the
+  step); searchable timezone picker (418 IANA zones, offset in trigger + list); Free/Paid + price,
+  duration, topics, available-days/hours restyled to Figma. (Consent is UI-only local state — no
+  `session_terms_accepted` DB flag yet; revisit with the Stripe Connect stage §5.9.)
+- **Combobox / multi-select:** fixed the flipped-dropdown (opens-above) border/corner "merged shape"
+  via a shared `usePopoverContentSide` hook (`components/ui/popover.tsx`).
+- Congrats CTAs, Platform-fee modal, and every optional-block screen restyled to Figma; per-step
+  heading icons + shine block-picker icons added.
+- Full review loop re-run clean (`code-reviewer` APPROVED, `qa` PASS incl. production build +
+  no client-bundle secret leak, `browser-tester` PASS); fixed a `valid` DOM-attribute leak in the
+  price field and removed orphaned i18n keys (`blocks.shell.*`, `session.timezoneDetecting`).
+
 Optional extended Mindsetter onboarding per spec §5.2 ("Подовжений онбординг Mindsetter") —
 the fork opened by the "Cool, I want to become a Mindsetter" button in `WhoIsMindsetterDialog`
 (currently a `/` placeholder). Full field-by-field build prompt drafted 2026-07-18 from the
@@ -787,8 +812,10 @@ frame node ids, the A–E decisions/blockers) lives in
 
 **Provisional decisions pending product-owner review** (details in
 [`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)):
-- Video blog ("Link your BUILT NOT BURN interview") **EXCLUDED** as Phase-2/out-of-MVP
-- Promo video is **URL-only** for now (file upload deferred)
+- ~~Video blog ("Link your BUILT NOT BURN interview") **EXCLUDED** as Phase-2/out-of-MVP~~ →
+  **reversed 2026-07-19: BUILT (link-only)**, un-deferred back into MVP per product/Figma
+- ~~Promo video is **URL-only** for now (file upload deferred)~~ → **reversed 2026-07-19: file
+  upload ENABLED** (private `promo-video` Storage bucket + owner-scoped RLS)
 - Reel Life "minimum 3 photos" is **informational only** (non-blocking)
 - `session_settings` is written via **service-role** during onboarding; public read is
   gated to verified Mindsetters

@@ -73,33 +73,47 @@ export function VideoBlogForm({ initialVideoBlog, nextHref }: VideoBlogFormProps
           </Alert>
         ) : null}
 
-        <FormField
-          control={form.control}
-          name="youtube"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('blocks.videoBlog.youtubeLabel')}</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder={t('blocks.videoBlog.linkPlaceholder')} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex flex-col gap-3 md:gap-4">
+          <FormField
+            control={form.control}
+            name="youtube"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel variant="boldSpacing" className="mb-1 text-[#a5a5a5]">
+                  {t('blocks.videoBlog.youtubeLabel')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="url"
+                    placeholder={t('blocks.videoBlog.linkPlaceholder')}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="vimeo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('blocks.videoBlog.vimeoLabel')}</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder={t('blocks.videoBlog.linkPlaceholder')} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="vimeo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel variant="boldSpacing" className="mb-1 text-[#a5a5a5]">
+                  {t('blocks.videoBlog.vimeoLabel')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="url"
+                    placeholder={t('blocks.videoBlog.linkPlaceholder')}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button
           type="submit"

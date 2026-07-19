@@ -14,11 +14,15 @@
  * 8th and last block below.
  */
 
-/** Canonical order — matches the picker's own list order (onboarding doc section 6). */
+/**
+ * Canonical order — matches the picker's own list order (onboarding doc section 6). "Reel Life"
+ * sits right after "Promo video" (product fix, ahead of "Numbers") — the picker (`ShineForm.tsx`)
+ * renders this same array in order, so no separate ordering needs to be kept in sync there.
+ */
 export const BLOCK_SLUGS = [
   'promo',
-  'numbers',
   'reel-life',
+  'numbers',
   'wins',
   'my-way',
   'fckups',

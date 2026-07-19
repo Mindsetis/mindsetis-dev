@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { VideoBlogBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { VideoBlogForm } from '@/components/mindsetter-onboarding/VideoBlogForm';
 import { redirect } from '@/i18n/navigation';
@@ -53,10 +54,13 @@ export default async function MindsetterOnboardingVideoBlogBlockPage({
     { youtube?: string | null; vimeo?: string | null } | null | undefined;
 
   return (
-    <BlockShell backHref={backHref} skipHref={nextHref} index={index} total={blocks.length}>
-      <h1 className="font-display text-h1 text-foreground md:text-h3">
-        {t('blocks.videoBlog.title')}
-      </h1>
+    <BlockShell backHref={backHref} index={index} total={blocks.length}>
+      <div className="flex items-center gap-2 md:gap-4">
+        <VideoBlogBlockIcon className="size-7 md:size-10" />
+        <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
+          {t('blocks.videoBlog.title')}
+        </h1>
+      </div>
       <VideoBlogForm initialVideoBlog={initialVideoBlog} nextHref={nextHref} />
     </BlockShell>
   );

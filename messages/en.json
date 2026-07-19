@@ -266,6 +266,8 @@
   "mindsetterOnboarding": {
     "common": {
       "charCount": "{count}/{max}",
+      "edit": "Edit",
+      "reorder": "Reorder",
       "saveAndContinue": "Save and continue",
       "saving": "Saving…"
     },
@@ -275,12 +277,14 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Character limit: {max} characters",
       "linkPlaceholder": "Link",
+      "linkPreviewLoading": "Loading preview…",
       "removeLink": "Remove link",
       "removeRole": "Remove role",
       "roleCardTitle": "Role {index}",
+      "rolesHeading": "Your roles",
       "seeHowItLooks": "See how it looks",
-      "subtitle": "Fill in the sections below and your profile will look like a premium personal website — not just a card in a catalog.",
-      "title": "We're building your personal site",
+      "subtitle": "Fill in the sections below and your profile will look like a premium personal<br></br> website — not just a card in a catalog.",
+      "title": "We're building your<br></br> personal site",
       "titleLabel": "Title",
       "titlePlaceholder": "e.g. Founder & CEO"
     },
@@ -358,21 +362,22 @@
         "value": "0$"
       },
       "howItWorks": {
-        "subtitle": "15% fee · you keep 85% · instant payout",
+        "label": "How it Works",
+        "subtitle": "15% fee · you keep 85% · instant<br></br>payout",
         "title": "Platform fee & payouts"
       },
       "paid": {
-        "hint": "$ + Price",
         "label": "Paid"
       },
       "priceHint": "You can change this anytime",
-      "priceInputLabel": "Price",
-      "priceInputPlaceholder": "e.g. 50",
+      "priceInputPlaceholder": "Price",
       "priceLabel": "Indicate session price",
       "subtitle": "Here you can enter information about your hourly rate for the session",
-      "timezoneDetecting": "Detecting your timezone…",
-      "timezoneHint": "Auto-detected from your device.",
+      "timezoneEmpty": "No timezone found.",
+      "timezoneHint": "Auto-detected from your device. Tap to change.",
       "timezoneLabel": "Your timezone",
+      "timezonePlaceholder": "Select timezone",
+      "timezoneSearchPlaceholder": "Search timezone…",
       "title": "Personal session",
       "topicsLabel": "Topics you're expert in · up to {max}",
       "weekday": {
@@ -475,18 +480,24 @@
         "title": "My Philosophy"
       },
       "promo": {
+        "errors": {
+          "invalidType": "Please upload an MP4 or MOV video.",
+          "tooLarge": "Video must be 200MB or smaller.",
+          "uploadFailed": "Could not upload your video. Please try again."
+        },
         "linkPlaceholder": "Link",
         "orDivider": "OR",
+        "removeVideo": "Remove video",
         "title": "Promo video",
-        "uploadComingSoon": "Video upload coming soon — use a link for now",
-        "uploadHint": "MP4 or MOV · Max 200MB · Vertical (9:16)",
+        "uploadHint": "MP4 or MOV · Max 200MB<br></br>Vertical format (9:16)<br></br>recommended",
+        "uploading": "Uploading…",
         "uploadLabel": "Upload video",
         "vimeoLabel": "Vimeo URL",
         "youtubeLabel": "Youtube URL"
       },
       "reelLife": {
         "activateHint": "Add at least 3 photos to activate this section.",
-        "addPhoto": "+ Add Photo",
+        "addPhoto": "Add Photo",
         "errors": {
           "invalidType": "Only PNG or JPEG images are allowed.",
           "tooLarge": "Image must be at most 10 MB."
@@ -494,12 +505,8 @@
         "removePhoto": "Remove photo",
         "reorderHint": "Hold and drag to change order.",
         "title": "Reel Life",
-        "uploadHint": "PNG or JPEG · Max 10MB per photo",
+        "uploadHint": "PNG or JPEG · Max 10MB per<br></br>photo",
         "uploadLabel": "Upload photo"
-      },
-      "shell": {
-        "back": "Back",
-        "skip": "Skip"
       },
       "videoBlog": {
         "linkPlaceholder": "Link",
@@ -510,6 +517,7 @@
       "wins": {
         "addWin": "Add win",
         "cardTitle": "Win {index}",
+        "colorCardLabel": "{color} card",
         "colorLabel": "Choose color card",
         "colorName": {
           "blue": "Blue",

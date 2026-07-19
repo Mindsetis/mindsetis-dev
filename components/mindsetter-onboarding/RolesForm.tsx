@@ -1,22 +1,24 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link as LinkIcon, Plus, Trash2, X } from 'lucide-react';
+import { Link2, Loader2, Plus, Video } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   type Control,
   useFieldArray,
   useForm,
+  useFormContext,
   type UseFormReturn,
   useWatch,
 } from 'react-hook-form';
 
-import { saveRoles } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { fetchRoleLinkPreview, saveRoles } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
+import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -34,6 +36,8 @@ import {
   MAX_ROLE_TITLE_LENGTH,
   MAX_ROLES,
   type Role,
+  type RoleLink,
+  type RoleLinkMediaType,
   type RolesStepInput,
   rolesStepSchema,
 } from '@/lib/validation/mindsetter';
@@ -45,20 +49,113 @@ type RolesFormProps = {
 
 const EMPTY_ROLE: Role = { title: '', description: '', links: [] };
 
+/** "Add link" button icon (16×16) — provided verbatim by the designer. Uses `currentColor` (per
+ * product follow-up, 2026-07-19) so it tracks this `ghost`-variant button's own text color
+ * (resting/hover/active), instead of a hardcoded fill. */
+function AddLinkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M7.33203 7.33301V3.99967C7.33203 3.63148 7.63051 3.33301 7.9987 3.33301C8.36689 3.33301 8.66536 3.63148 8.66536 3.99967V7.33301H11.9987C12.3669 7.33301 12.6654 7.63148 12.6654 7.99967C12.6654 8.36786 12.3669 8.66634 11.9987 8.66634H8.66536V11.9997C8.66536 12.3679 8.36689 12.6663 7.9987 12.6663C7.63051 12.6663 7.33203 12.3679 7.33203 11.9997V8.66634H3.9987C3.63051 8.66634 3.33203 8.36786 3.33203 7.99967C3.33203 7.63148 3.63051 7.33301 3.9987 7.33301H7.33203Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/** "Remove link" icon (16×16) — provided verbatim by the designer, hardcoded `fill="white"` (not
+ * `currentColor`); rendered inside the link input itself, 16px from its right edge (see the
+ * `right-4` positioning below), mirroring the established `PasswordToggle`
+ * (`components/auth/SignUpForm.tsx`) absolute-inside-input icon pattern. */
+function RemoveLinkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8.00045 7.05767L10.8289 4.22921C11.0893 3.96887 11.5114 3.96887 11.7717 4.22922C12.0321 4.48956 12.0321 4.91167 11.7717 5.17202L8.94325 8.00047L11.7717 10.8289C12.0321 11.0892 12.0321 11.5113 11.7717 11.7717C11.5114 12.032 11.0893 12.032 10.8289 11.7717L8.00045 8.94327L5.17203 11.7717C4.91168 12.032 4.48957 12.032 4.22923 11.7717C3.96887 11.5113 3.96887 11.0892 4.22922 10.8289L7.05765 8.00047L4.22922 5.17202C3.96887 4.91167 3.96887 4.48956 4.22922 4.22922C4.48957 3.96887 4.91168 3.96887 5.17203 4.22922L8.00045 7.05767Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+/** `true` only for a string that `fetchRoleLinkPreview` could plausibly fetch (http/https,
+ * well-formed) — anything else (empty, `javascript:`, malformed) never triggers a server round
+ * trip, mirroring the SSRF guard's own protocol allow-list in `lib/link-preview.ts` (that guard
+ * still re-checks server-side; this is purely a client-side "don't bother calling" short-circuit,
+ * not a security boundary). */
+function isFetchableUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** Best-effort hostname for the "no og:title yet — fall back to the domain" preview-card state
+ * (product decision: never show a raw/invalid URL as the fallback title). `null` when `value`
+ * isn't parseable as a URL at all. */
+function getHostname(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One link's preview row — "a small dark icon box on the left + the page title" (design), e.g.
+ * "Designing games with Canva — VCTR". `mediaType === 'video'` gets a video-camera icon; every
+ * other type (article/link/unset) gets a generic link icon.
+ * // TODO: swap the non-video type icon for the exact Figma SVG when provided.
+ */
+function LinkPreviewCard({ title, mediaType }: { title: string; mediaType?: RoleLinkMediaType }) {
+  const Icon = mediaType === 'video' ? Video : Link2;
+  return (
+    <div className="flex items-center gap-2 rounded-[8px] border border-[#747474] bg-[#000] p-2">
+      <span className="flex shrink-0 items-center justify-center rounded-[2px] bg-[#1a1a1a] px-[13px] py-[7px]">
+        <Icon className="h-[10px] w-[14px]" aria-hidden="true" />
+      </span>
+      <span className="truncate text-[12px] font-medium text-foreground">{title}</span>
+    </div>
+  );
+}
+
+/** In-flight state for the same preview slot, shown while `fetchRoleLinkPreview` is running. */
+function LinkPreviewLoading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-input p-3 text-muted-foreground">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-card">
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+      </span>
+      <span className="truncate text-sm">{label}</span>
+    </div>
+  );
+}
+
 type RoleCardProps = {
   control: Control<RolesStepInput>;
   index: number;
   onRemove?: () => void;
+  /** Sortable id (the `useFieldArray` field id) + whether this card can be reordered — the parent
+   * wraps the list in `SortableList`; see `CollapsibleCard`. */
+  id: string;
+  draggable: boolean;
 };
 
 /**
  * One "Role N" card — Title (40-char counter), Description (auto-grow, 200-char counter),
  * and its own nested `links` field array. Split out of `RolesForm` because each card owns an
  * independent `useFieldArray` for its links (`roles.${index}.links`), which can't live in the
- * parent without one nested field-array hook per row.
+ * parent without one nested field-array hook per row. Wrapped in `CollapsibleCard` (stage 1.9
+ * "collapse-on-blur") — collapses to a compact summary once title+description are filled AND the
+ * caller clicks outside it.
  */
-function RoleCard({ control, index, onRemove }: RoleCardProps) {
+function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
   const t = useTranslations('mindsetterOnboarding');
+  // `control` (the prop) and this are the SAME `RolesForm` instance — `useFormContext` just
+  // gives us `setValue`/`getValues`, which `useFieldArray`'s `control` alone doesn't expose.
+  const { setValue, getValues } = useFormContext<RolesStepInput>();
 
   const {
     fields: linkFields,
@@ -68,9 +165,158 @@ function RoleCard({ control, index, onRemove }: RoleCardProps) {
 
   const titleValue = useWatch({ control, name: `roles.${index}.title` }) ?? '';
   const descriptionValue = useWatch({ control, name: `roles.${index}.description` }) ?? '';
+  const linksValue = useWatch({ control, name: `roles.${index}.links` }) ?? [];
+  const isFilled = titleValue.trim().length > 0 && descriptionValue.trim().length > 0;
+
+  // Per-link in-flight state for `fetchRoleLinkPreview` — keyed by the link's stable
+  // `useFieldArray` `field.id` (not its array index, which shifts when a sibling link is
+  // removed). The preview DATA itself (`ogTitle`/`ogImage`/...) lives in the form (persisted on
+  // save); this is purely ephemeral "is a fetch running right now" UI state.
+  const [loadingLinks, setLoadingLinks] = useState<Record<string, boolean>>({});
+  // The URL each link's CURRENTLY STORED preview (if any) corresponds to — lets `handleLinkBlur`
+  // skip re-fetching when the field is blurred without having actually changed (e.g. tabbing
+  // through), and lets `handleLinkUrlChange` know when to clear a now-stale preview. Seeded
+  // lazily (see the `linkFields.map` below) from each link's value the first time it's seen —
+  // correctly treats a prefilled link's saved URL as "already fetched" (doc requirement: prefill
+  // shows its preview immediately, no re-fetch) and a brand-new "Add link" row's empty URL as
+  // "nothing fetched yet".
+  const fetchedUrlByLinkId = useRef<Record<string, string>>({});
+
+  // Seeding happens here (an effect), NOT inline in the `linkFields.map` render below — mutating
+  // a ref's `.current` during render is disallowed (React Compiler / `react-hooks/refs`). Reads
+  // `linkField.url` (from `useFieldArray`'s OWN `fields`, i.e. each link's value as of when it was
+  // registered — mount for a prefilled link, `appendLink({ url: '' })` for a brand-new one), not
+  // the live-watched `linksValue`: `fields` only changes reference on a STRUCTURAL array change
+  // (append/remove/move), which is exactly when a new field id needs seeding — an in-place edit to
+  // an already-seeded link's `url` must NOT re-seed it (that's `handleLinkUrlChange`'s job). Each
+  // entry is written at most once per field id (the `in` check), so this is idempotent.
+  useEffect(() => {
+    for (const linkField of linkFields) {
+      if (!(linkField.id in fetchedUrlByLinkId.current)) {
+        fetchedUrlByLinkId.current[linkField.id] = (linkField.url ?? '').trim();
+      }
+    }
+  }, [linkFields]);
+
+  function clearLinkPreview(linkIndex: number) {
+    const current = getValues(`roles.${index}.links.${linkIndex}`);
+    if (!current) return;
+    if (
+      !current.ogTitle &&
+      !current.ogImage &&
+      !current.mediaType &&
+      !current.siteName &&
+      !current.favicon
+    ) {
+      return; // already clear — skip redundant `setValue` calls.
+    }
+    setValue(`roles.${index}.links.${linkIndex}.ogTitle`, undefined, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.ogImage`, undefined, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.mediaType`, undefined, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.siteName`, undefined, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.favicon`, undefined, { shouldDirty: true });
+  }
+
+  /** Fired on every keystroke — clears a now-stale stored preview the moment the URL diverges
+   * from whatever it was when that preview was fetched (product decision: don't wait for blur to
+   * drop a stale card), without waiting for `handleLinkBlur` to actually re-fetch. */
+  function handleLinkUrlChange(linkIndex: number, fieldId: string, rawValue: string) {
+    const trimmed = rawValue.trim();
+    if (fetchedUrlByLinkId.current[fieldId] === trimmed) return;
+    clearLinkPreview(linkIndex);
+  }
+
+  /** Fired on blur — the actual `fetchRoleLinkPreview` round trip, only when the field holds a
+   * non-empty, fetchable-looking URL that's genuinely different from what was last fetched. */
+  async function handleLinkBlur(linkIndex: number, fieldId: string) {
+    const link = getValues(`roles.${index}.links.${linkIndex}`);
+    const url = link?.url?.trim();
+    if (!url || !isFetchableUrl(url)) return;
+    if (fetchedUrlByLinkId.current[fieldId] === url) return;
+
+    setLoadingLinks((previous) => ({ ...previous, [fieldId]: true }));
+    const result = await fetchRoleLinkPreview({ url });
+    setLoadingLinks((previous) => {
+      const next = { ...previous };
+      delete next[fieldId];
+      return next;
+    });
+
+    // Mark this URL as "fetched" regardless of outcome — a repeat blur on the same (still-failed)
+    // URL shouldn't keep re-hitting the server; the client falls back to the domain-name display
+    // either way (see `renderLinkPreview` below).
+    fetchedUrlByLinkId.current[fieldId] = url;
+
+    if (!result.ok || !result.data.preview) return;
+
+    const { preview } = result.data;
+    setValue(`roles.${index}.links.${linkIndex}.ogTitle`, preview.ogTitle, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.ogImage`, preview.ogImage, { shouldDirty: true });
+    setValue(`roles.${index}.links.${linkIndex}.mediaType`, preview.mediaType, {
+      shouldDirty: true,
+    });
+    setValue(`roles.${index}.links.${linkIndex}.siteName`, preview.siteName, {
+      shouldDirty: true,
+    });
+    setValue(`roles.${index}.links.${linkIndex}.favicon`, preview.favicon, { shouldDirty: true });
+  }
+
+  /** Renders the compact preview row below a link's URL input, or nothing at all — see the
+   * component doc comment on `LinkPreviewCard` for the design this matches. Falls back to the
+   * URL's own hostname when `ogTitle` never resolved (no scrape yet, or the scrape came back
+   * empty); shows nothing at all for an unparsable URL, per product decision. */
+  function renderLinkPreview(link: RoleLink | undefined, isLoading: boolean) {
+    if (isLoading) return <LinkPreviewLoading label={t('roles.linkPreviewLoading')} />;
+
+    const url = link?.url?.trim();
+    if (!url) return null;
+
+    if (link?.ogTitle) {
+      return <LinkPreviewCard title={link.ogTitle} mediaType={link.mediaType} />;
+    }
+
+    const hostname = getHostname(url);
+    if (!hostname) return null;
+    return <LinkPreviewCard title={hostname} mediaType={link?.mediaType} />;
+  }
 
   return (
-    <Card className="gap-4 px-4 py-4 md:px-6 md:py-6">
+    <CollapsibleCard
+      isFilled={isFilled}
+      title={
+        <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
+          {t('roles.roleCardTitle', { index: index + 1 })}
+        </span>
+      }
+      onDelete={onRemove}
+      deleteLabel={t('roles.removeRole')}
+      editLabel={t('common.edit')}
+      reorderLabel={t('common.reorder')}
+      id={id}
+      draggable={draggable}
+      collapsedSummary={
+        <div className="flex flex-col gap-2">
+          <p className="truncate text-tiny font-bold tracking-[0.3em] text-foreground uppercase">
+            {titleValue}
+          </p>
+          {descriptionValue ? (
+            <p className="line-clamp-2 text-tiny text-muted-foreground">{descriptionValue}</p>
+          ) : null}
+          {linksValue.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              {linksValue
+                .map((link) => link?.url)
+                .filter(Boolean)
+                .map((url) => (
+                  <p key={url} className="truncate text-tiny text-muted-foreground">
+                    {url}
+                  </p>
+                ))}
+            </div>
+          ) : null}
+        </div>
+      }
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
           {t('roles.roleCardTitle', { index: index + 1 })}
@@ -80,9 +326,9 @@ function RoleCard({ control, index, onRemove }: RoleCardProps) {
             type="button"
             onClick={onRemove}
             aria-label={t('roles.removeRole')}
-            className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+            className="cursor-pointer"
           >
-            <Trash2 className="size-4" aria-hidden="true" />
+            <DeleteIcon />
           </button>
         ) : null}
       </div>
@@ -149,49 +395,74 @@ function RoleCard({ control, index, onRemove }: RoleCardProps) {
       />
 
       <div className="flex flex-col gap-2">
-        {linkFields.map((linkField, linkIndex) => (
-          <FormField
-            key={linkField.id}
-            control={control}
-            name={`roles.${index}.links.${linkIndex}.url`}
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center gap-2">
-                  <FormControl>
-                    <Input type="url" placeholder={t('roles.linkPlaceholder')} {...field} />
-                  </FormControl>
-                  <button
-                    type="button"
-                    onClick={() => removeLink(linkIndex)}
-                    aria-label={t('roles.removeLink')}
-                    className="shrink-0 cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    <X className="size-4" aria-hidden="true" />
-                  </button>
-                </div>
-                {/* TODO og preview: once real og-scraping exists, render a favicon/og-title
-                    preview row below this input instead of a bare URL field (onboarding doc,
-                    "Your roles" section — links "show a preview card" once filled). */}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
+        {linkFields.map((linkField, linkIndex) => {
+          const link = linksValue[linkIndex];
+          const isLoading = !!loadingLinks[linkField.id];
+
+          return (
+            <div key={linkField.id} className="flex flex-col gap-1">
+              <FormField
+                control={control}
+                name={`roles.${index}.links.${linkIndex}.url`}
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    {/* Deliberately NOT wrapped in `FormControl` — a link row is an optional,
+                        freely-removable chip (the trailing remove icon below), not a "fill this
+                        in correctly" field, so it must never show the shared valid/check
+                        treatment (`FormControl` is what supplies that `valid` prop to `Input`).
+                        Rendering `Input` directly here, with its own `aria-invalid`, keeps the
+                        remove icon as the only trailing icon this row ever shows. The remove
+                        button sits INSIDE the input, 16px from its right edge (`right-4`),
+                        mirroring `SignUpForm.tsx`'s `PasswordToggle` pattern — `pr-11` on the
+                        input reserves room for it. */}
+                    <div className="relative">
+                      <Input
+                        type="url"
+                        className="pr-11"
+                        placeholder={t('roles.linkPlaceholder')}
+                        aria-invalid={!!fieldState.error}
+                        {...field}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          handleLinkUrlChange(linkIndex, linkField.id, event.target.value);
+                        }}
+                        onBlur={() => {
+                          field.onBlur();
+                          void handleLinkBlur(linkIndex, linkField.id);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeLink(linkIndex)}
+                        aria-label={t('roles.removeLink')}
+                        className="absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer"
+                      >
+                        <RemoveLinkIcon />
+                      </button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {renderLinkPreview(link, isLoading)}
+            </div>
+          );
+        })}
 
         {linkFields.length < MAX_ROLE_LINKS ? (
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="w-fit"
-            onClick={() => appendLink({ url: '', ogTitle: undefined })}
+            className="self-center"
+            onClick={() => appendLink({ url: '' })}
           >
-            <LinkIcon className="size-4" aria-hidden="true" />
+            <AddLinkIcon />
             {t('roles.addLink')}
           </Button>
         ) : null}
       </div>
-    </Card>
+    </CollapsibleCard>
   );
 }
 
@@ -213,7 +484,7 @@ export function RolesForm({ initialRoles }: RolesFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: 'roles' });
+  const { fields, append, remove, move } = useFieldArray({ control: form.control, name: 'roles' });
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
@@ -239,32 +510,38 @@ export function RolesForm({ initialRoles }: RolesFormProps) {
           </Alert>
         ) : null}
 
-        <div className="flex flex-col gap-4">
-          {fields.map((field, index) => (
-            <RoleCard
-              key={field.id}
-              control={form.control}
-              index={index}
-              onRemove={fields.length > 1 ? () => remove(index) : undefined}
-            />
-          ))}
-        </div>
+        <SortableList ids={fields.map((field) => field.id)} onReorder={move}>
+          <div className="flex flex-col gap-3 md:gap-4">
+            {fields.map((field, index) => (
+              <RoleCard
+                key={field.id}
+                id={field.id}
+                control={form.control}
+                index={index}
+                onRemove={fields.length > 1 ? () => remove(index) : undefined}
+                draggable={fields.length > 1}
+              />
+            ))}
+          </div>
+        </SortableList>
 
-        {fields.length < MAX_ROLES ? (
-          <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
-            <Plus className="size-4" aria-hidden="true" />
-            {t('roles.addRole')}
+        <div className="flex flex-col gap-3 md:gap-4">
+          {fields.length < MAX_ROLES ? (
+            <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
+              <Plus className="size-4" aria-hidden="true" />
+              {t('roles.addRole')}
+            </Button>
+          ) : null}
+
+          <Button
+            type="submit"
+            variant="primaryOutline"
+            size="lg"
+            loading={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
           </Button>
-        ) : null}
-
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        </div>
       </form>
     </Form>
   );
