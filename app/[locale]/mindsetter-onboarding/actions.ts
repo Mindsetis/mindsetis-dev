@@ -239,6 +239,7 @@ export const saveSession = createAction(sessionStepSchema, async (input) => {
       available_days: input.availableDays,
       available_from: input.availableFrom,
       available_to: input.availableTo,
+      fee_consent_accepted: input.feeConsentAccepted,
     },
     { onConflict: 'mindsetter_id' },
   );

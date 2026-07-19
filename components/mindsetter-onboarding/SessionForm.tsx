@@ -57,6 +57,7 @@ type SessionSettingsInitial = {
   availableDays: string[];
   availableFrom: string;
   availableTo: string;
+  feeConsentAccepted: boolean;
 };
 
 type SessionFormProps = {
@@ -605,12 +606,6 @@ export function SessionForm({ topicOptions, initialSessionSettings }: SessionFor
   // State (not a ref) so React's ref-in-render lint stays happy — each setter also re-renders,
   // so `handleFeeAgree` below always closes over the mode that was set when the modal opened.
   const [feeModalMode, setFeeModalMode] = useState<'gate' | 'info'>('info');
-  // Whether the caller has accepted the platform-fee policy in `PlatformFeeModal`. Only gates
-  // submission when `acceptsBookings` is on (a Free/no-bookings profile has no fee to consent to).
-  // Persisted at the form level (not just the modal's own checkbox) so a second "Save and
-  // continue" doesn't re-prompt once consent was already given this session — regardless of
-  // whether that consent was given via the gate or the informational button.
-  const [consentGiven, setConsentGiven] = useState(false);
 
   const form: UseFormReturn<SessionStepInput> = useForm<SessionStepInput>({
     resolver: zodResolver(sessionStepSchema),
@@ -625,6 +620,10 @@ export function SessionForm({ topicOptions, initialSessionSettings }: SessionFor
       availableDays: (initialSessionSettings?.availableDays ?? []) as Weekday[],
       availableFrom: initialSessionSettings?.availableFrom ?? DEFAULT_AVAILABLE_FROM,
       availableTo: initialSessionSettings?.availableTo ?? DEFAULT_AVAILABLE_TO,
+      // Platform-fee consent, seeded from what's already persisted in `session_settings` — so a
+      // returning Mindsetter who agreed before isn't re-prompted by the gate below. Not a rendered
+      // input; driven by `PlatformFeeModal` via `handleFeeAgree` and saved back by `saveSession`.
+      feeConsentAccepted: initialSessionSettings?.feeConsentAccepted ?? false,
     },
   });
 
@@ -652,8 +651,9 @@ export function SessionForm({ topicOptions, initialSessionSettings }: SessionFor
     // Consent gate: an accepting-bookings profile must accept the platform-fee policy before it
     // can be saved. First "Save and continue" opens the fee modal instead of proceeding; the
     // modal's "I agree — continue setup" then runs `persist` (see `handleFeeAgree`). Once consent
-    // is given, later saves proceed straight through.
-    if (acceptsBookings && !consentGiven) {
+    // is given (this session OR loaded from a prior save via `feeConsentAccepted`), later saves
+    // proceed straight through.
+    if (acceptsBookings && !values.feeConsentAccepted) {
       setFeeModalMode('gate');
       setFeeModalOpen(true);
       return;
@@ -669,7 +669,9 @@ export function SessionForm({ topicOptions, initialSessionSettings }: SessionFor
   // the caller to the next step.
   async function handleFeeAgree() {
     const wasGate = feeModalMode === 'gate';
-    setConsentGiven(true);
+    // Record consent into the form value (persisted by `saveSession` → `fee_consent_accepted`),
+    // shouldValidate so the gate's `values.feeConsentAccepted` is fresh for the submit below.
+    form.setValue('feeConsentAccepted', true, { shouldValidate: true });
     setFeeModalOpen(false);
     if (wasGate) {
       await form.handleSubmit(persist)();

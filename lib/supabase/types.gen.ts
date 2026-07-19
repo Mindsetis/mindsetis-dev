@@ -518,6 +518,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           duration_min: number | null
+          fee_consent_accepted: boolean
           mindsetter_id: string
           price_cents: number | null
           session_type: string
@@ -533,6 +534,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
+          fee_consent_accepted?: boolean
           mindsetter_id: string
           price_cents?: number | null
           session_type?: string
@@ -548,6 +550,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
+          fee_consent_accepted?: boolean
           mindsetter_id?: string
           price_cents?: number | null
           session_type?: string

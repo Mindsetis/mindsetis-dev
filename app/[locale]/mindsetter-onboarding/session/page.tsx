@@ -55,7 +55,7 @@ export default async function MindsetterOnboardingSessionPage({ params }: Sessio
     supabase
       .from('session_settings')
       .select(
-        'accepts_bookings, session_type, price_cents, duration_min, topics, timezone, available_days, available_from, available_to',
+        'accepts_bookings, session_type, price_cents, duration_min, topics, timezone, available_days, available_from, available_to, fee_consent_accepted',
       )
       .eq('mindsetter_id', session.user.id)
       .maybeSingle(),
@@ -81,6 +81,7 @@ export default async function MindsetterOnboardingSessionPage({ params }: Sessio
         availableDays: sessionSettings.available_days ?? [],
         availableFrom: sessionSettings.available_from?.slice(0, 5) ?? '10:00',
         availableTo: sessionSettings.available_to?.slice(0, 5) ?? '18:00',
+        feeConsentAccepted: sessionSettings.fee_consent_accepted ?? false,
       }
     : undefined;
 

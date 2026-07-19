@@ -143,14 +143,20 @@ export function CollapsibleCard({
   useEffect(() => {
     if (!expanded || !isFilled) return;
 
-    function handleMouseDown(event: MouseEvent) {
+    // Collapse on an outside CLICK (not `mousedown`). `mousedown` fired mid-gesture and collapsed
+    // this card before the click completed — the resulting layout reflow (this card shrinking)
+    // moved whatever the caller was pressing (notably the "Add role/expertise/number" button just
+    // below the list), so its `mouseup` landed elsewhere and the click was swallowed, needing a
+    // second click to actually add a card. Listening on `click` lets that button's own `onClick`
+    // (append) and this collapse both run on one completed click, in the same React batch.
+    function handleOutsideClick(event: MouseEvent) {
       if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
         setExpanded(false);
       }
     }
 
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
   }, [expanded, isFilled]);
 
   function handleDelete() {

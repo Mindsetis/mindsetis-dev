@@ -304,6 +304,11 @@ export const sessionStepSchema = z
     availableDays: z.array(z.enum(WEEKDAYS)),
     availableFrom: timeStringSchema,
     availableTo: timeStringSchema,
+    /** Whether the caller accepted the platform-fee / Session-Terms policy in `PlatformFeeModal`.
+     * Not a rendered form input — driven by that modal and persisted to
+     * `session_settings.fee_consent_accepted` so a returning Mindsetter isn't re-prompted by the
+     * "Save and continue" consent gate. */
+    feeConsentAccepted: z.boolean(),
   })
   .superRefine((data, ctx) => {
     // "Accept bookings" off (doc section 5): "rest of the fields hide, only toggle + 'Continue'
