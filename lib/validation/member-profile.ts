@@ -27,13 +27,32 @@ export const MAX_BIO_LENGTH = 300;
 export const MAX_ABOUT_LENGTH = 300;
 
 /**
- * Optional social URL: a real URL, or an empty string (the RHF default before the user
- * types anything) — `.optional()` alone only special-cases `undefined`, not `''`, so an
+ * `z.string().url()` accepts any scheme the WHATWG `URL` constructor parses, including
+ * `javascript:`/`data:`/`vbscript:` — these social links are rendered as real `<a href>`s on
+ * the public `/member/[username]` page (`components/profile/MemberProfileView.tsx`), so an
+ * unrestricted scheme here is a stored-XSS vector (security-auditor finding, stage 1.6).
+ * Restrict to `http:`/`https:` only.
+ */
+function isHttpUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Optional social URL: a real http(s) URL, or an empty string (the RHF default before the
+ * user types anything) — `.optional()` alone only special-cases `undefined`, not `''`, so an
  * untouched field would otherwise fail `.url()`. No `z.preprocess` involved (see file
  * header), so the field's inferred input type stays a concrete `string`, not `unknown`.
  */
 const optionalUrlSchema = z
-  .union([z.literal(''), z.string().trim().url('Enter a valid URL.')])
+  .union([
+    z.literal(''),
+    z.string().trim().url('Enter a valid URL.').refine(isHttpUrl, 'Enter a valid URL.'),
+  ])
   .optional();
 
 /**
@@ -103,7 +122,12 @@ export function createMemberProfileSchema({
       interestIds: z
         .array(z.enum(INTEREST_VALUES))
         .max(MAX_INTERESTS, `You can select up to ${MAX_INTERESTS} interests.`),
-      linkedin: z.string().trim().min(1, 'Linkedin URL is required.').url('Enter a valid URL.'),
+      linkedin: z
+        .string()
+        .trim()
+        .min(1, 'Linkedin URL is required.')
+        .url('Enter a valid URL.')
+        .refine(isHttpUrl, 'Enter a valid URL.'),
       instagram: optionalUrlSchema,
       facebook: optionalUrlSchema,
       tiktok: optionalUrlSchema,

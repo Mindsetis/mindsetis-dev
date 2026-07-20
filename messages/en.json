@@ -547,6 +547,20 @@
       "title": "Congratulations! You are now a mindsetter of the community."
     }
   },
+  "profile": {
+    "aboutEyebrow": "ABOUT",
+    "banner": {
+      "highlight": "Public view",
+      "rest": "— this is how others see your profile"
+    },
+    "beyondBusinessEyebrow": "BEYOND BUSINESS",
+    "beyondBusinessHeading": "What I care about beyond work",
+    "editProfile": "Edit Profile",
+    "inviteToEvent": "Invite to event",
+    "shareProfile": "Share Profile",
+    "verified": "Verified",
+    "website": "Website"
+  },
   "email": {
     "footer": {
       "address": "Mindsetis Community",

@@ -70,6 +70,10 @@ if (existsSync(linkedRefFile)) {
 
 const childEnv = { ...process.env };
 if (ACCESS_TOKEN) childEnv.SUPABASE_ACCESS_TOKEN = ACCESS_TOKEN;
+// Pass the DB password via env var, not argv: the CLI reads SUPABASE_DB_PASSWORD
+// itself (its own auth-failure message points at this var), and keeping it out of
+// argv avoids any shell-escaping risk from the `shell: true` spawn below.
+if (DB_PASSWORD) childEnv.SUPABASE_DB_PASSWORD = DB_PASSWORD;
 
 function run(args, label) {
   console.log(`\n→ ${label}`);
@@ -77,9 +81,9 @@ function run(args, label) {
   // .cmd file directly without a shell (fails with ENOENT/EINVAL on current
   // Node releases), so `shell: true` is required on win32. This only ever
   // shells out to a fixed argv (`npx --yes supabase <subcommand>`) plus a
-  // regex-validated project ref and a password sourced from local
-  // `.env.local` — never untrusted/remote input — so the shell-escaping
-  // caveat behind Node's DEP0190 advisory does not apply here.
+  // regex-validated project ref — the DB password travels via env (see
+  // above), never argv — so the shell-escaping caveat behind Node's DEP0190
+  // advisory does not apply here.
   const res = spawnSync('npx', ['--yes', 'supabase', ...args], {
     cwd: ROOT,
     env: childEnv,
@@ -89,10 +93,8 @@ function run(args, label) {
   if (res.status !== 0) die(`\`supabase ${args[0]}\` exited with code ${res.status ?? 'null'}.`);
 }
 
-const pwArgs = DB_PASSWORD ? ['-p', DB_PASSWORD] : [];
-
 console.log(`\n🎯 Target Supabase project: ${REF}`);
-run(['link', '--project-ref', REF, ...pwArgs], `Linking to ${REF}`);
-run(['db', 'push', '--linked', ...pwArgs], `Pushing pending migrations to ${REF} (linked only)`);
+run(['link', '--project-ref', REF], `Linking to ${REF}`);
+run(['db', 'push', '--linked'], `Pushing pending migrations to ${REF} (linked only)`);
 
 console.log(`\n✔ Migrations pushed to project ${REF} — no other project was touched.\n`);
