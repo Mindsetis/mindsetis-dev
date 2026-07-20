@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * type is 16px/bold across variants; `nav` keeps its own pill shape via variant override.
  */
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-lg text-base font-bold transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-lg text-base font-bold transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   {
     variants: {
       variant: {

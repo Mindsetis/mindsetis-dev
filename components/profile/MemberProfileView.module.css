@@ -30,11 +30,18 @@
 /* ---- Preview banner (variant="preview" only) ---------------------------------------- */
 
 .banner {
-  /* Spec only said "dark background" (no specific hex) — reuses the app's existing dark
-     card surface token so the banner reads as part of the same dark chrome surrounding this
-     one light page, rather than inventing a new dark value. */
-  background-color: var(--color-card);
-  min-height: 80px;
+  /* Figma: mobile banner container (node I401:8413;127:1348 "Frame 84") fills pure
+     `#000000`, ~48px tall (8px padding + 32px chip). Desktop (401:6352) fills `#1a1a1a` —
+     exactly the app's existing dark card surface token — at 80px tall (12px padding + 56px
+     buttons). Was one flat rule that only matched the desktop value. */
+  background-color: #000000;
+  min-height: 48px;
+}
+@media (min-width: 768px) {
+  .banner {
+    background-color: var(--color-card);
+    min-height: 80px;
+  }
 }
 
 .bannerText {
@@ -47,26 +54,98 @@
 }
 
 .editButton {
-  /* Gradient 1px border with a fully transparent fill, via the padding-box/border-box
-     double-background trick (works regardless of whatever sits behind the button). Spec's
-     stops (#C3E4F9 0% -> #79B9E3 49.5% -> #21B8E6 100%) are a near-exact match for the
-     existing --gradient-primary token (effects.css: 49% instead of 49.5%, otherwise
-     identical stops/colors) — reused here instead of duplicating a second gradient. */
-  background:
-    linear-gradient(#0000, #0000) padding-box,
-    var(--gradient-primary) border-box !important;
-  border: 1px solid transparent !important;
-  color: var(--color-primary) !important;
+  /* Figma: the mobile "Edit" chip (node I401:8413;127:1353 "Frame 83") is a plain flat
+     `#1a1a1a` fill (== --color-card) with a solid `#747474` (== --color-border) border and
+     white text/icon — NOT the gradient-bordered pill. That gradient treatment only exists
+     on the desktop "Edit Profile" button (401:6358), applied at `md:` below.
+     `transition` covers `box-shadow` (the `md:` hover below removes the glow) in addition to
+     the `background`/`border`/`color` the shared Button component's own `transition-colors`
+     already animates — that utility doesn't include `box-shadow`, so without this the
+     desktop hover's glow snapped off instantly instead of fading. */
+  background: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  color: #ffffff !important;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
 }
 .editButton:hover {
-  opacity: 0.9;
+  background: rgb(255 255 255 / 6%) !important;
+}
+@media (min-width: 768px) {
+  .editButton:hover {
+    /* Desktop hover must NOT change the mobile chip's translucent-white background rule
+       above (it's unscoped by media query, so without this override it was silently winning
+       here too via `!important`, wiping out the gradient-border trick's background on
+       hover). Interior fill (padding-box layer) stays the same `var(--color-card)` as the
+       resting state — only the border-box layer swaps from the 3-stop brand gradient to a
+       flat `#9AD2EE`, and the glow (`box-shadow`) is dropped entirely. */
+    background:
+      linear-gradient(var(--color-card), var(--color-card)) padding-box,
+      linear-gradient(#9ad2ee, #9ad2ee) border-box !important;
+    box-shadow: none !important;
+  }
+}
+.editButton svg {
+  /* Figma: the mobile chip's "ball-pen-fill" icon frame is 14x14 (desktop's is 16x16, the
+     `size-4` the icon itself already carries) — a plain Tailwind class on the icon (e.g.
+     `size-3.5`) can't express this because the shared Button component's own base class
+     already force-sets every icon to 16px via `[&_svg]:size-4`, which compiles to a
+     `.buttonClass svg` descendant selector — same specificity as a `.editButton svg` rule
+     here, but higher specificity than a bare utility class placed directly on the `<svg>`
+     (`.size-3.5`), so that class alone would silently lose the fight and stay at 16px.
+     `!important` (same precedent as this file's background/border/color overrides above)
+     guarantees this wins regardless of stylesheet order. */
+  width: 14px !important;
+  height: 14px !important;
+}
+@media (min-width: 768px) {
+  .editButton {
+    /* Gradient 1px border via the padding-box/border-box double-background trick. The top
+       (padding-box) layer must be an OPAQUE color matching the backdrop this button actually
+       sits on — the `.banner` bar, whose desktop background is `var(--color-card)`
+       (`#1a1a1a`), NOT this section's white `.section` background (the banner is a separate
+       dark bar layered on top of the white section, only rendered for `variant="preview"`).
+       A transparent top layer doesn't mask anything, so the border-box gradient underneath
+       paints straight through the whole button as a solid fill instead of just the 1px ring
+       (that was the original bug: `linear-gradient(#0000, #0000)`, fully transparent, let
+       the gradient show everywhere). A prior fix used opaque white here, which was also
+       wrong — confirmed against a Figma reference screenshot showing a dark button interior,
+       not white. Spec's stops (#C3E4F9 0% -> #79B9E3 49.5% -> #21B8E6 100%) are a near-exact
+       match for the existing --gradient-primary token (effects.css: 49% instead of 49.5%,
+       otherwise identical stops/colors) — reused here instead of duplicating a second
+       gradient.
+
+       This desktop instance is Figma's "Secondary - 2a" component — the same one
+       `components/ui/button.tsx`'s `primaryOutline` variant was built from. It used to rely
+       on that variant's shared `shadow-glow-primary` Tailwind utility (`md:shadow-glow-primary`
+       in the component's className) for its glow, but that token (`--shadow-glow-primary:
+       rgb(111 237 227 / 0.8)`, effects.css) doesn't actually match this instance's Figma spec
+       — confirmed via the dev-mode CSS export: `0px 4px 12.3px rgba(111, 186, 237, 0.8)`, same
+       G/B channels as `.inviteButton`'s glow below but a different button. Spelled out here
+       instead (the Tailwind utility was dropped from the JSX) so this button gets the color
+       Figma actually specifies rather than the mismatched shared token. */
+    background:
+      linear-gradient(var(--color-card), var(--color-card)) padding-box,
+      var(--gradient-primary) border-box !important;
+    border: 1px solid transparent !important;
+    color: var(--color-primary) !important;
+    box-shadow: 0 4px 12.3px 0 rgb(111 186 237 / 0.8) !important;
+  }
+  .editButton svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
 }
 
 .shareButton {
-  /* #747474 is exactly the app's existing --color-border token. */
+  /* #747474 is exactly the app's existing --color-border token. Explicit `transition` since
+     the `!important` background override otherwise still animates via the shared Button's
+     `transition-colors`, but spelling it out here keeps it correct regardless of that. */
   background: transparent !important;
   border: 1px solid var(--color-border) !important;
   color: #ffffff !important;
+  transition: background-color 150ms ease;
 }
 .shareButton:hover {
   background: rgb(255 255 255 / 6%) !important;
@@ -76,8 +155,17 @@
 
 .portraitFrame,
 .portraitPlaceholder {
-  border-radius: 30px;
+  /* Figma: mobile portrait (node 48:570 / 401:8283 "Rectangle 2") is full-bleed with square
+     corners (no cornerRadius at all) — the 30px radius only applies once the image is inset
+     in the side-by-side desktop layout (node 401:6376, cornerRadius 30) from `lg:` up. */
+  border-radius: 0;
   background-color: #f4f4f4;
+}
+@media (min-width: 1024px) {
+  .portraitFrame,
+  .portraitPlaceholder {
+    border-radius: 30px;
+  }
 }
 
 .pillVerified {
@@ -109,6 +197,20 @@
   }
 }
 
+.metaIcon {
+  /* Figma: the location-pin / language-bubble marks (desktop nodes 401:6408/I401:6411;73:3565,
+     identical mobile 401:8250/I401:8253;73:3565) are filled `#79B9E3` — exactly the app's
+     existing --color-primary token — while the "Tulum, Mexico" / "EN / UA" text beside them
+     stays plain black. Was inheriting the row's black `currentColor` (via the previous plain
+     lucide `MapPin`/`MessageCircle` icons), which doesn't match.
+
+     Reused (not duplicated) below for the "ABOUT" / "BEYOND BUSINESS" eyebrow icons — both are
+     the same `#79B9E3` brand-blue fill in Figma (desktop nodes 401:6496 chat-ai-fill /
+     421:4241 quill-pen-ai-fill), so they share this one color rule instead of a near-identical
+     second class. */
+  color: var(--color-primary);
+}
+
 .metaPill {
   background-color: #f4f4f4;
   border: 1px solid #dddddd;
@@ -117,28 +219,65 @@
 }
 
 .inviteButton {
-  /* No existing token matches this exact diagonal white -> #87BCD7 gradient (closest
-     confirmed token, --gradient-primary, uses different stops/colors entirely) — a genuinely
-     new one-off for this button only. */
-  background: linear-gradient(135deg, #ffffff 0%, #87bcd7 100%) !important;
+  /* Figma: re-verified against the actual node (`401:6401` preview / `383:4693` public — see
+     the JSX comment above for why the previously-cited `401:6377`/`401:6359` were wrong).
+
+     Background: pixel-sampled the exported PNG rather than eyeballing it — every column of
+     the button stays a constant color from top to bottom, which only happens for a horizontal
+     (`90deg` / "to right") gradient, not a diagonal one. The sampled stops (~#c3e4fa at the
+     left edge, ~#79b9e3 at the horizontal midpoint, ~#21b8e6 at the right edge) are the exact
+     same three colors as this file's own `--gradient-primary` token (effects.css) — just at a
+     different angle (that token is 135deg, this fill is 90deg) — so the two matching stops
+     reuse the existing brand tokens instead of repeating hex; only the light-blue start stop
+     has no matching token and stays a one-off hex. The previous 2-stop `#ffffff -> #87bcd7` at
+     135deg matched nothing (wrong stop count, wrong colors, wrong angle) — it was never
+     actually checked against this node.
+
+     Glow: this button carries a drop-shadow that was previously missing entirely — confirmed
+     by sampling the soft colored halo bleeding past the button's solid edges in the exported
+     PNG (larger below the button than above, consistent with a downward y-offset shadow).
+     Figma's own shared effect style "shadow" (`get_styles`) gives the authoritative values:
+     offset (0, 4px), blur 12.3px, spread 0, color rgba(111, 186, 237, 0.8). Note this does NOT
+     match this app's existing `--shadow-glow-primary` token (`rgb(111 237 227 / 0.8)`,
+     effects.css) — the G/B channels differ (186/237 here vs 237/227 there). That token is
+     shared with the Edit Profile button (out of scope to touch here), so rather than reusing a
+     mismatched color or rewriting the shared token, this rule spells out the value Figma
+     actually specifies for this instance.
+
+     `transition` covers `opacity`, which the shared Button's `transition-colors` utility
+     doesn't animate on its own. */
+  background: linear-gradient(
+    90deg,
+    #c3e4fa 0%,
+    var(--color-primary) 49%,
+    var(--color-gradient-end) 100%
+  ) !important;
   border: none !important;
   color: #000000 !important;
+  box-shadow: 0 4px 12.3px 0 rgb(111 186 237 / 0.8);
+  transition: opacity 150ms ease;
 }
 .inviteButton:hover {
   opacity: 0.92;
 }
 
 .socialIconButton {
+  /* Plain `<a>`, not the shared `Button` component — no `transition-colors` utility to
+     inherit, so the hover background swap needs its own explicit transition (was snapping
+     instantly). */
   background-color: #f4f4f4;
   border: 1px solid #dddddd;
   color: #000000;
+  transition: background-color 150ms ease;
 }
 .socialIconButton:hover {
   background-color: #ececec;
 }
 
 .websitePill {
-  background-color: #ffffff;
+  /* Background/height/border-radius match .socialIconButton (the icon buttons in the same
+     row) rather than a plain white pill. */
+  background-color: #f4f4f4;
   border: 1px solid #dddddd;
   color: #000000;
 }
@@ -146,12 +285,16 @@
 /* ---- "ABOUT" card ----------------------------------------------------------------------- */
 
 .aboutCard {
+  /* Figma: mobile "ABOUT" card (node 401:8274 "Frame 464") is cornerRadius 12 / padding 16
+     all sides — desktop (node 401:6494) is cornerRadius 30 / padding 50px 70px. Was a flat
+     30px radius (desktop value) with only the padding made responsive. */
   background-color: #f4f4f4;
-  border-radius: 30px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 16px;
 }
 @media (min-width: 768px) {
   .aboutCard {
+    border-radius: 30px;
     padding: 50px 70px;
   }
 }
@@ -165,6 +308,12 @@
   letter-spacing: 0.3em;
 }
 
+.aboutCard .eyebrow {
+  /* The "ABOUT" eyebrow inside the About card is black, unlike the muted-gray "BEYOND
+     BUSINESS" eyebrow further down the page that shares the base .eyebrow class. */
+  color: #000000;
+}
+
 /* ---- "Beyond Business" (interests) ------------------------------------------------------- */
 
 .interestCard {
@@ -176,6 +325,19 @@
   .interestCard {
     border-radius: 24px;
     padding: 32px;
+  }
+}
+
+.interestCardHeading {
+  /* Figma: 24px on the mobile "Verified Member Profile" frames ("MOB/H2" text style,
+     e.g. node 421:4187) / 22px on both desktop frames (e.g. 421:4278). Neither matches the
+     shared --text-l token (32px, no responsive step), so this gets its own rule rather than
+     reusing/mutating that token (same precedent as .heroName above). */
+  font-size: 24px;
+}
+@media (min-width: 768px) {
+  .interestCardHeading {
+    font-size: 22px;
   }
 }
 

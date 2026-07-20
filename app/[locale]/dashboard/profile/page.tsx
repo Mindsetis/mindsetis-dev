@@ -16,7 +16,7 @@ type DashboardProfilePageProps = {
  * here, `middleware.ts` (`PROTECTED_PREFIXES` already includes `/dashboard`) before the page
  * even renders.
  *
- * Renders the same `MemberProfileView` as the public `/profile/[username]` route
+ * Renders the same `MemberProfileView` as the public `/member/[username]` route
  * (`variant="preview"` here vs `"public"` there) — the two Figma frames are structurally
  * identical below the banner, so this stays one shared component rather than a duplicated
  * layout.

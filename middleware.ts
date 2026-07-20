@@ -25,11 +25,13 @@ const PROTECTED_PREFIXES = [
   '/settings',
   '/member-profile',
   '/build-profile',
-  // `/profile/[username]` (Member profile view, stage 1.6): visible to any REGISTERED
-  // member, not anonymous visitors — product decision, deliberately not restricted to the
-  // profile's own owner or to verified Mindsetters (that's a separate, future, spec-§5.4
-  // "public Mindsetter profile" page this route does not replace).
-  '/profile',
+  // `/member/[username]` (Member profile view, stage 1.6 — renamed from `/profile/[username]`):
+  // visible to any REGISTERED member, not anonymous visitors — product decision, deliberately
+  // not restricted to the profile's own owner or to verified Mindsetters (that's a separate,
+  // future, spec-§5.4 "public Mindsetter profile" page this route does not replace). Distinct
+  // from `/member-profile` above (the registration-wizard editing form) — `matchesPrefix`
+  // requires an exact match or a `/` boundary, so the two prefixes don't collide.
+  '/member',
 ];
 
 /**
