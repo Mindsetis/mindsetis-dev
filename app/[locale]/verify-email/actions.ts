@@ -20,6 +20,7 @@
  *     email-bombing primitive against arbitrary addresses.
  */
 import { createAction } from '@/lib/api';
+import { siteUrl } from '@/lib/auth/site-url';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { resendConfirmationEmailSchema } from '@/lib/validation/auth';
@@ -36,7 +37,15 @@ export const resendConfirmationEmail = createAction(
     });
 
     const supabase = await createClient();
-    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      // Same destination as `signUp()` (`(auth)/actions.ts`) — the default (SMTP-off,
+      // non-editable) "Confirm signup" template builds its link from `emailRedirectTo`, so the
+      // resent email must carry it too, otherwise the confirmation `?code=` lands on the Site
+      // URL root instead of our `/api/auth/confirm` handler.
+      options: { emailRedirectTo: siteUrl('/api/auth/confirm?next=/member-profile') },
+    });
     if (error) {
       // Log for observability, but never surface the specific reason to the caller — an
       // "already confirmed" / "no such user" error here would be an enumeration oracle. Any
