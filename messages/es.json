@@ -652,6 +652,8 @@
       "heading": "Lo que me hace diferente"
     },
     "roles": {
+      "collapse": "Contraer",
+      "expand": "Expandir",
       "eyebrow": "ROLES",
       "heading": "Lo que he construido y quién soy a través de mis proyectos",
       "learnMore": "Haz clic en el enlace para saber más"

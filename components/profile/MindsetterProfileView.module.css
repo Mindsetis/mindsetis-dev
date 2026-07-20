@@ -19,6 +19,21 @@
  * inferred from the app's existing token palette where an exact Figma value wasn't extracted)
  * rather than an exhaustive per-node pixel audit — flagged in the ROADMAP as needing a
  * follow-up polish pass, same as the rest of this large page.
+ *
+ * OPEN FINDING (stage 1.10 pixel-polish pass, 2026-07-20): a fresh node-by-node read of the
+ * ACTUAL Figma frame (`327:1080` desktop, confirmed also on `187:4294` mobile) shows the whole
+ * "Public Mindsetter's Full Profile" page is genuinely DARK-themed end to end (black page
+ * background, white body text, `#1a1a1a` card surfaces) — NOT a white `#FFFFFF` section like
+ * `/members/[username]` (whose own Figma frame really is white). This file's "deliberate white
+ * section" framing above was inherited uncritically from that sibling screen during the
+ * original stage-1.10 build and was never re-verified against this screen's own frame. Re-
+ * theming the entire page is a large, product-level decision well outside this pixel-polish
+ * pass's 4-item scope (CTA banners / Roles accordion / eyebrow icons / mobile verification) —
+ * flagged here for the next stage/product-owner sign-off rather than silently changed. Every
+ * fix in this pass keeps the existing light-theme container (this file's `.section` stays
+ * white) and only adapts colors that Figma's dark-mockup values wouldn't otherwise read
+ * correctly against that white background (see e.g. `.roleToggleClosed`/`.roleIndexNumber`
+ * below, both documented inline).
  */
 
 .section {
@@ -43,20 +58,52 @@
   }
 }
 
-/* ---- Roles / Help / F*ckUps — numbered list cards --------------------------------------- */
+/* ---- Help / F*ckUps — numbered list cards ------------------------------------------------ */
 
 .numberBadge {
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
 
-.roleLinkCard {
-  background-color: #ffffff;
-  border: 1px solid #dddddd;
-  color: #000000;
+/* ---- Roles accordion (stage 1.10 pixel-polish pass) -------------------------------------- */
+/* See `RolesAccordion.tsx` for the Figma node citations (`327:1129`/`187:...`) — this section
+   used to be individual bg-card boxes (`.sectionCard`, same treatment as Superpowers/F*ckUps);
+   Figma actually renders Roles as bordered accordion ROWS, not cards, so these replace the old
+   `.roleLinkCard` card-chip rule (removed, no longer referenced). */
+
+.roleRowBorder {
+  /* Figma's own row divider is `#747474` (`--color-border`) on that mockup's dark page — this
+     screen is deliberately light (`.section` above), so this reuses the same lighter `#dddddd`
+     divider already established for the "What can I help with" list's `divide-y` rows
+     immediately below Roles in this file, rather than Figma's dark-page value, which would be
+     too faint against `#ffffff`. */
+  border-color: #dddddd;
 }
-.roleLinkCard:hover {
-  background-color: #f4f4f4;
+
+.roleIndexNumber {
+  /* Figma: `#a5a5a5` ("secondary text") — tuned for a BLACK background, too faint on this
+     screen's white section (same "not reused as-is" precedent as `MemberProfileView.module.css`'s
+     `.eyebrow` comment). `--color-border` (`#747474`) is the closest existing muted-gray token
+     that still reads on white. */
+  color: var(--color-border);
+  letter-spacing: 0.05em;
+}
+
+.roleToggleClosed {
+  /* The collapsed-row glyph (`AddCircleFillIcon`, `currentColor`) — Figma's raw fill is white,
+     which only works on the dark mockup background; recolored to the same muted border-gray as
+     `.roleIndexNumber` above so it still reads as "inactive" against this screen's white bg
+     without inventing a color Figma never specified. */
+  color: var(--color-border);
+}
+
+.roleLinkText {
+  /* Figma: role links render as bold brand-blue text (`#79B9E3`) directly under the
+     description, not the bordered white chip this section used before this pass. */
+  color: var(--color-primary);
+}
+.roleLinkText:hover {
+  color: var(--color-primary-hover, var(--color-primary));
 }
 
 /* ---- Topics I'm expert pills -------------------------------------------------------------- */
@@ -111,21 +158,74 @@
   color: var(--color-primary);
 }
 
-/* ---- CTA banners (×2) ----------------------------------------------------------------------- */
+/* ---- CTA banners (×2), stage 1.10 pixel-polish pass --------------------------------------- */
+/* See `CtaBanner`'s own doc comment in `MindsetterProfileView.tsx` for the full node citations
+   (`327:1443`/`337:2306`/`327:2636` desktop, `261:1610` mobile) — flat `#1a1a1a` card, NOT the
+   previous `linear-gradient(180deg, #101010, #000000)` (that gradient was never in Figma at
+   all — this card is a genuinely flat fill, its "depth" comes entirely from `.ctaGlow` below). */
 
 .ctaBanner {
-  background: linear-gradient(180deg, #101010 0%, #000000 100%);
+  background-color: #1a1a1a;
   color: #ffffff;
-  border-radius: 24px;
+  border-radius: 16px; /* Figma mobile `261:1610` "Frame 58" */
 }
 @media (min-width: 768px) {
   .ctaBanner {
-    border-radius: 30px;
+    border-radius: 30px; /* Figma desktop `327:1443`/`327:2636` "Frame 58"/"Frame 237" */
   }
 }
 
-.ctaPrice {
-  color: rgb(255 255 255 / 70%);
+/* Approximates the blurred brand-blue glow blob Figma layers in the card's top-right corner
+   (see the citation above for why this is a CSS approximation, not a 1:1 vector export). A
+   radial gradient already fades softly on its own — no `filter: blur()` needed (would cost a
+   compositing layer for no visible gain over the gradient's own soft falloff), and this stays
+   `position: absolute` so it never affects the card's layout/height. */
+.ctaGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 90% at 88% -10%,
+    rgb(121 185 227 / 55%) 0%,
+    rgb(121 185 227 / 22%) 35%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.ctaHeading {
+  /* Figma: 24px mobile ("MOB/H2", `261:1617`) / 72px desktop ("H2 (PC)", `327:1446`/`327:2639`)
+     — was `text-h3 md:text-h2` (48px -> 72px), which doesn't have a matching mobile step at
+     all (this app's `--text-h2`/`--text-h3` tokens carry no mobile override, see
+     `typography.css`), so a dedicated rule is used instead of fighting/mutating those shared
+     tokens (same precedent as `MemberProfileView.module.css`'s `.heroName`). Gradient text
+     reuses the existing `--gradient-primary` token — see the citation above confirming it's a
+     pixel-exact match for Figma's own shared "gradient" text style. */
+  font-size: 24px;
+  line-height: 1;
+  background: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+@media (min-width: 768px) {
+  .ctaHeading {
+    font-size: var(--text-h2);
+    line-height: 0.9;
+  }
+}
+
+.ctaPricePill {
+  /* Figma: bordered pill (`327:1451`/`327:2640` desktop "Frame 3", `261:1618` mobile — same
+     node at both breakpoints), 1px white border, cornerRadius 12, 14px text at every
+     breakpoint — was a bare, unbordered `<p>` in `--text-tiny` (which resolves to 12px on
+     mobile via that token's own responsive override, `typography.css`), so this uses an
+     explicit 14px instead of the shared token to stay correct on mobile too. */
+  border: 1px solid #ffffff;
+  border-radius: 12px;
+  padding: 6px 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #ffffff;
 }
 
 /* ---- Reviews (static) ------------------------------------------------------------------------ */

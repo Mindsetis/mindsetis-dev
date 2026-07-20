@@ -4,21 +4,25 @@ import {
   CheckCircle2,
   Eye,
   Heart,
-  LifeBuoy,
   Link2,
-  MessageSquareQuote,
   Play,
   Share2,
-  Target,
   User,
-  Zap,
 } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/member-profile/page';
 import {
+  BagIcon,
+  FlashlightFillIcon,
+  MagicFillIcon,
+  MicAiFillIcon,
+  ReviewChatIcon,
+} from '@/components/icons/mindsetter-eyebrow-icons';
+import {
   BallPenFillIcon,
+  CashFillIcon,
   LanguageBubbleIcon,
   LocationPinIcon,
   QuillPenAiFillIcon,
@@ -42,6 +46,7 @@ import {
   SOCIAL_ICON_MAP,
   SOCIAL_KEYS,
 } from '@/components/profile/MemberProfileView';
+import { RolesAccordion } from '@/components/profile/RolesAccordion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type {
@@ -185,10 +190,29 @@ function SectionEyebrow({ icon, children }: { icon: ReactNode; children: ReactNo
   );
 }
 
-/** The two repeating CTA banners ("Are you ready…" / "Ready to talk?") — spec-required
+/**
+ * The two repeating CTA banners ("Are you ready…" / "Ready to talk?") — spec-required
  * "sticky, повтори" repeats; static Invite/Book CTAs (booking flow §5.8 isn't built yet), same
  * static-CTA precedent as `MemberProfileView`'s Edit/Share buttons. Session price microcopy is
- * live where `session_settings` data is available. */
+ * live where `session_settings` data is available.
+ *
+ * Stage 1.10 pixel-polish pass (ROADMAP "Polish / follow-up" item 1: "CTA banners use gradient
+ * cards instead of the Figma photo-background treatment"): re-verified against the real nodes
+ * (`327:1443`/`337:2306` "Frame 58" desktop, `327:2636` "Frame 237" desktop, mobile `261:1610`/
+ * `261:1609` "Frame 58") — NOT a photo. Each banner is a flat `#1a1a1a` card (`.ctaBanner`) with
+ * a soft blurred brand-blue glow blob in the top-right corner (Figma layer named "75", a large
+ * blurred shape whose own bounds/fill this MCP's node-read summary can't surface — confirmed by
+ * exporting that layer alone as a PNG and visually sampling it: a blue-to-transparent radial
+ * blur, not a photo) — approximated here as an absolutely-positioned `.ctaGlow` radial gradient
+ * (exact pixel-for-pixel blur data isn't retrievable through this read-only bridge, so this is a
+ * close visual match rather than a 1:1 vector reproduction). The heading text itself uses Figma's
+ * shared "gradient" text style (`get_styles`), whose 3 stops (`#C3E4F9` 0% → `#79B9E3` ~49.5% →
+ * `#21B8E6` 100%) are pixel-identical to this app's own existing `--gradient-primary` token
+ * (`effects.css`) — reused via `background-clip: text` instead of repeating the hex triplet.
+ * The price pill was previously a bare `<p>`; Figma's actual node (`327:1451`/`327:2640`/mobile
+ * `261:1618` "Frame 3") is a bordered pill (1px white border, cornerRadius 12) with a
+ * `cash-fill` icon — added below as `.ctaPricePill`.
+ */
 function CtaBanner({
   heading,
   price,
@@ -203,13 +227,19 @@ function CtaBanner({
   return (
     <div
       className={cn(
-        'flex flex-col gap-6 px-6 py-10 text-center md:px-16 md:py-16',
+        'relative flex flex-col items-center gap-6 overflow-hidden px-6 py-10 text-center md:px-16 md:py-16',
         styles.ctaBanner,
       )}
     >
-      <h2 className="font-display text-h3 md:text-h2">{heading}</h2>
-      {price && <p className={cn('text-tiny', styles.ctaPrice)}>{price}</p>}
-      <div className="mx-auto flex flex-col gap-3 sm:flex-row">
+      <span className={styles.ctaGlow} aria-hidden="true" />
+      <h2 className={cn('relative font-display', styles.ctaHeading)}>{heading}</h2>
+      {price && (
+        <p className={cn('relative inline-flex items-center gap-2', styles.ctaPricePill)}>
+          <CashFillIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          {price}
+        </p>
+      )}
+      <div className="relative flex flex-col gap-3 sm:flex-row">
         <Button
           type="button"
           variant="ghost"
@@ -536,69 +566,29 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           </nav>
         )}
 
-        {/* ============================== ROLES ============================== */}
+        {/* ============================== ROLES ==============================
+            Stage 1.10 pixel-polish pass (ROADMAP item 2): rebuilt as an expand/collapse
+            accordion — see `RolesAccordion.tsx` for the full Figma citation + the
+            `isSafeHttpUrl` stored-XSS guard (unchanged, just relocated into that component). */}
         {profile.roles.length > 0 && (
           <div id="roles" className="mt-16 flex flex-col gap-8 scroll-mt-24">
-            <SectionEyebrow
-              icon={
-                <UserAddFillIcon
-                  className={cn('size-4 shrink-0', memberStyles.metaIcon)}
-                  aria-hidden="true"
-                />
-              }
-            >
+            <SectionEyebrow icon={<MagicFillIcon className="size-4 shrink-0" />}>
               {t('roles.eyebrow')}
             </SectionEyebrow>
             <h2 className="font-display text-h3 md:text-h2">{t('roles.heading')}</h2>
-            <div className="flex flex-col gap-4">
-              {profile.roles.map((role, index) => {
-                // Stored-XSS guard (audit finding, same class already fixed for `socials` in
-                // stage 1.6): `role.links[].url` is write-side restricted to http(s) now
-                // (`roleLinkSchema`), but this also re-checks at render time in case older rows
-                // were written before that guard existed.
-                const safeLinks = role.links.filter((link) => isSafeHttpUrl(link.url));
-                return (
-                  <div
-                    key={`${role.title}-${index}`}
-                    className={cn('flex flex-col gap-3 p-6 md:p-8', styles.sectionCard)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <NumberBadge index={index + 1} />
-                      <h3 className="font-display text-l">{role.title}</h3>
-                    </div>
-                    <p className="text-body whitespace-pre-line">{role.description}</p>
-                    {safeLinks.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {safeLinks.map((link, linkIndex) => (
-                          <a
-                            key={`${link.url}-${linkIndex}`}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                              'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-tiny font-bold',
-                              styles.roleLinkCard,
-                            )}
-                          >
-                            <Link2 className="size-3.5 shrink-0" aria-hidden="true" />
-                            {link.ogTitle || link.siteName || t('roles.learnMore')}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <RolesAccordion
+              roles={profile.roles}
+              learnMoreLabel={t('roles.learnMore')}
+              expandLabel={t('roles.expand')}
+              collapseLabel={t('roles.collapse')}
+            />
           </div>
         )}
 
         {/* ============================== TOPICS I'M EXPERT (desktop-only) ============================== */}
         {profile.topics.length > 0 && (
           <div className="mt-16 hidden flex-col gap-8 lg:flex">
-            <SectionEyebrow
-              icon={<Target className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-            >
+            <SectionEyebrow icon={<MicAiFillIcon className="size-4 shrink-0" />}>
               {t('topics.eyebrow')}
             </SectionEyebrow>
             <h2 className="font-display text-h2">{t('topics.heading')}</h2>
@@ -618,9 +608,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         {/* ============================== SUPERPOWER(S) ============================== */}
         {profile.superpowers.length > 0 && (
           <div id="superpowers" className="mt-16 flex flex-col gap-8 scroll-mt-24">
-            <SectionEyebrow
-              icon={<Zap className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-            >
+            <SectionEyebrow icon={<FlashlightFillIcon className="size-4 shrink-0" />}>
               {t('superpowers.eyebrow')}
             </SectionEyebrow>
             <h2 className="font-display text-h3 md:text-h2">{t('superpowers.heading')}</h2>
@@ -693,9 +681,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         {/* ============================== WHAT CAN I HELP WITH ============================== */}
         {profile.helpWith.length > 0 && (
           <div id="help" className="mt-16 flex flex-col gap-8 scroll-mt-24">
-            <SectionEyebrow
-              icon={<LifeBuoy className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-            >
+            <SectionEyebrow icon={<BagIcon className="size-3 shrink-0" />}>
               {t('help.eyebrow')}
             </SectionEyebrow>
             <h2 className="font-display text-h3 md:text-h2">{t('help.heading')}</h2>
@@ -725,9 +711,24 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               {t('reelLife.eyebrow')}
             </SectionEyebrow>
             <h2 className="font-display text-h3 md:text-h2">{t('reelLife.heading')}</h2>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            {/* Stage 1.10 mobile-verification pass (ROADMAP item 4): Figma's mobile frame
+                (`187:4294`) shows Reel Life as a single-row horizontal carousel (arrow-nav
+                buttons flank the heading, node `261:1262` "Frame 228") rather than a stacked
+                2-column grid — the arrow buttons themselves are decorative (native touch/
+                trackpad scroll already covers the interaction, and adding JS-driven prev/next
+                controls here would need client interactivity beyond this pass's scope, see
+                `RolesAccordion.tsx`'s own note on why only Roles became a client component).
+                Reused the same horizontal-scroll-on-mobile / grid-on-desktop pattern this file
+                already established for My F*ckUp(s) / My Way / My WINS below. */}
+            <div className="flex gap-2 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible">
               {profile.reelLifePhotoUrls.map((url, index) => (
-                <div key={`${url}-${index}`} className={cn('aspect-square', styles.reelLifeTile)}>
+                <div
+                  key={`${url}-${index}`}
+                  className={cn(
+                    'aspect-square w-[45%] shrink-0 sm:w-[30%] md:w-auto',
+                    styles.reelLifeTile,
+                  )}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element -- signed, short-lived private-bucket URL */}
                   <img src={url} alt="" className="size-full object-cover" />
                 </div>
@@ -777,11 +778,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         <div className="flex flex-col gap-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-4">
-              <SectionEyebrow
-                icon={
-                  <MessageSquareQuote className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                }
-              >
+              <SectionEyebrow icon={<ReviewChatIcon className="size-3 shrink-0" />}>
                 {t('reviews.eyebrow')}
               </SectionEyebrow>
               <h2 className="font-display text-h3 md:text-h2">{t('reviews.heading')}</h2>

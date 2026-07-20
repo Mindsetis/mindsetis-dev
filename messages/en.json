@@ -652,6 +652,8 @@
       "heading": "What makes me different"
     },
     "roles": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "eyebrow": "ROLES",
       "heading": "What I've built and who I am across ventures",
       "learnMore": "Click the link to learn more"
