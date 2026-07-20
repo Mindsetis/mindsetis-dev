@@ -1,55 +1,161 @@
 /**
- * Page-specific LIGHT-theme styles for `MindsetterProfileView` (Figma `327:1080` "Public
- * Mindsetter's Full Profile" desktop / `187:4294` mobile). Same rationale as the sibling
- * `MemberProfileView.module.css` (co-located CSS Module, first used there — see that file's
- * own doc comment for the full "why a CSS Module" explanation): this screen is a deliberate
- * white `#FFFFFF` section per Figma while the rest of the app stays the dark Masterclass/
- * Netflix theme.
+ * Page-specific DARK-theme styles for `MindsetterProfileView` (Figma "Public Mindsetter's Full
+ * Profile": `327:1080` desktop "(video vertical)" / `383:2070` desktop "(video horizontal)" —
+ * same content, two promo-video-orientation variants — `383:2830` "Short Profile", `383:4089`
+ * preview, `187:4294` / `401:7567` mobile).
  *
- * Many hero/"Beyond Business" rules are IDENTICAL to `MemberProfileView.module.css` (same
- * Figma brand palette, same component pattern) — `MindsetterProfileView.tsx` imports BOTH
- * modules and reuses those classes directly rather than duplicating them here. This file only
- * holds the rules for sections that don't exist on the Member Profile screen (Roles,
- * Superpowers, Promo video, Numbers, Help, CTA banners, Reviews, Reel Life, My Way, Built Not
- * Burn, F*ckUps, Wins).
+ * RE-THEME NOTE (stage 1.10, 2026-07-20, product-owner approved): this file previously declared
+ * itself a deliberate white `#FFFFFF` section, copied uncritically from the sibling
+ * `MemberProfileView.module.css` (whose own Figma frame really IS white) without re-checking
+ * this screen's own frame. A node-by-node read of `327:1080` (cross-checked against `187:4294`
+ * mobile) shows the Public Mindsetter Profile is genuinely DARK end to end — `#000000` page
+ * background (`--color-background`), `#1a1a1a` card surfaces (`--color-card`, Figma's own
+ * "grey shadow" fill style), white body text (`--color-foreground`), `#a5a5a5` secondary/
+ * eyebrow text (`--color-muted-foreground`, Figma's "secondary text" style), `#747474` borders
+ * (`--color-border`, Figma's "grey border" style), and `#79b9e3` brand accents
+ * (`--color-primary`, Figma's "brand color" style) — i.e. exactly this app's existing dark
+ * Masterclass/Netflix token palette (`app/styles/tokens/colors.css`), reused throughout below
+ * rather than hardcoded, per each rule's own citation. This pass re-themes every rule in this
+ * file (and swaps a handful of `MindsetterProfileView.tsx` class references away from
+ * `MemberProfileView.module.css`'s LIGHT-tuned shared classes — pillHandle/metaPill/
+ * socialIconButton/websitePill/portraitFrame/heroName/interestCard/interestPill — to page-local
+ * dark equivalents here, since that sibling file stays untouched/light for its own screen).
  *
- * Pixel-fidelity note (stage 1.10 first build pass): unlike `MemberProfileView.module.css`
- * (built + polished over several follow-up passes), these rules are a first-pass best-effort
- * match against the Figma structure/measurements gathered during this build (spacing/colors
- * inferred from the app's existing token palette where an exact Figma value wasn't extracted)
- * rather than an exhaustive per-node pixel audit — flagged in the ROADMAP as needing a
- * follow-up polish pass, same as the rest of this large page.
+ * GRADIENT HEADINGS (new this pass): every big Cal-Sans section heading on this frame (hero H1
+ * name, every section's H2, the "2014"/"2018"/… My Way year labels) renders with Figma's shared
+ * "gradient" text fill — confirmed by exporting `327:1081` ("Anastasia Kondratska") and `327:1294`
+ * ("2014") as PNGs and visually sampling a light-blue-to-brand-blue gradient, not flat white
+ * (several of these nodes reported no resolvable `fillStyle` through this read-only MCP bridge,
+ * unlike other nodes tagged e.g. `"fillStyle":"gradient"` explicitly — the screenshot sampling is
+ * the authoritative check). That gradient's 3 stops are pixel-identical to this app's own
+ * `--gradient-primary` token (`effects.css`), same reuse precedent as `CtaBanner`'s `.ctaHeading`
+ * a few sections below. Applied via the shared `.gradientHeading` rule (color/background-clip
+ * only — callers keep their own Tailwind size classes) plus two size-specific variants
+ * (`.heroName` for the H1, `.wayYear` for the small My Way year labels).
  *
- * OPEN FINDING (stage 1.10 pixel-polish pass, 2026-07-20): a fresh node-by-node read of the
- * ACTUAL Figma frame (`327:1080` desktop, confirmed also on `187:4294` mobile) shows the whole
- * "Public Mindsetter's Full Profile" page is genuinely DARK-themed end to end (black page
- * background, white body text, `#1a1a1a` card surfaces) — NOT a white `#FFFFFF` section like
- * `/members/[username]` (whose own Figma frame really is white). This file's "deliberate white
- * section" framing above was inherited uncritically from that sibling screen during the
- * original stage-1.10 build and was never re-verified against this screen's own frame. Re-
- * theming the entire page is a large, product-level decision well outside this pixel-polish
- * pass's 4-item scope (CTA banners / Roles accordion / eyebrow icons / mobile verification) —
- * flagged here for the next stage/product-owner sign-off rather than silently changed. Every
- * fix in this pass keeps the existing light-theme container (this file's `.section` stays
- * white) and only adapts colors that Figma's dark-mockup values wouldn't otherwise read
- * correctly against that white background (see e.g. `.roleToggleClosed`/`.roleIndexNumber`
- * below, both documented inline).
+ * Card-vs-flat distinction (per-section, confirmed via node reads, see each rule's own comment):
+ * Numbers / Reviews / My F*ckUp(s) / Reel Life / meta pills / social icons / website pill / Roles
+ * are `--color-card` (`#1a1a1a`) surfaces; My Way's own project cards are NOT filled at all in
+ * Figma (plain text directly on the page) — `.wayCard` reflects that (background removed, not
+ * just recolored). Superpowers' mockup content alternates between a white card and a dark card
+ * per item (illustrative variety, same idea as My WINS' per-item bright colors) with no
+ * corresponding per-item color field in this app's data model — simplified here to the page's
+ * dominant `--color-card` treatment for every card, consistently. Same simplification for Topics
+ * pills (Figma's mockup gives each topic word a different one-off bright text color purely as
+ * illustrative variety, `327:1509`-`327:1518`; `profile.topics` has no per-item color field) —
+ * unified to one dark chip treatment instead. `!important` is used only where noted (inherited
+ * from the sibling file's own Button-override precedent — not needed anywhere in this file).
  */
 
 .section {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
 
-/* ---- Shared section eyebrow (icon + bold black label) ---------------------------------- */
+/* ---- Shared gradient headings (hero H1 + every section H2, see file doc comment) ---------- */
+
+.gradientHeading {
+  background: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* ---- Hero name (H1) -------------------------------------------------------------------------
+   Page-local replacement for `memberStyles.heroName` (that sibling class is flat `#000000` for
+   its own light screen) — same 40px mobile / 88px desktop sizing (Figma: `327:1081`, "H1 (PC)"
+   text style; deliberately not the shared `--text-h1` token, whose own mobile override resolves
+   to 32px — see the sibling file's identical rationale), gradient-text color instead. */
+
+.heroName {
+  font-size: 40px;
+  line-height: 0.9;
+  background: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+@media (min-width: 768px) {
+  .heroName {
+    font-size: 88px;
+  }
+}
+
+/* ---- Hero @username pill ---------------------------------------------------------------------
+   Figma (`327:1090` "Frame 1"): literal white `#FFFFFF` chip (pops against the black page,
+   exactly as drawn — not a token-driven dark surface), border + text brand color `#79B9E3`
+   (`--color-primary`). Differs from `memberStyles.pillHandle` (that page's own border/text color
+   is `--color-primary-active`, a darker blue tuned for its white section) — page-local copy
+   rather than reusing that class. */
+
+.pillHandle {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background-color: var(--color-foreground);
+}
+
+/* ---- Meta pills (industry / company / role) --------------------------------------------------
+   Figma (`327:1120` "Event Industry"): `--color-card` fill with a literal white 1px stroke (not
+   `--color-border`) and white text. */
+
+.metaPill {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-foreground);
+  border-radius: 12px;
+  color: var(--color-foreground);
+}
+
+/* ---- Social icon buttons + website pill ------------------------------------------------------
+   Figma (`327:1601`-`327:1611` linkedin/instagram/facebook/threads, `327:1727` website — all
+   under "Frame 276"): `--color-card` fill, cornerRadius 8, NO stroke, white icon/text — unlike
+   `memberStyles.socialIconButton`/`.websitePill` (light `#f4f4f4` fill + `#dddddd` border). */
+
+.socialIconButton {
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  transition: background-color 150ms ease;
+}
+.socialIconButton:hover {
+  background-color: #262626;
+}
+
+.websitePill {
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+}
+
+/* ---- Hero portrait / placeholder --------------------------------------------------------------
+   Same shape rules as `memberStyles.portraitFrame`/`.portraitPlaceholder` (full-bleed mobile,
+   30px radius from `lg:` up) — only the placeholder backdrop color changes, `--color-card`
+   instead of light `#f4f4f4` (no Figma frame for the empty-avatar state; this is the closest
+   existing dark-surface token, same "no data to sample" precedent as the light version's own
+   fallback). */
+
+.portraitFrame,
+.portraitPlaceholder {
+  border-radius: 0;
+  background-color: var(--color-card);
+}
+@media (min-width: 1024px) {
+  .portraitFrame,
+  .portraitPlaceholder {
+    border-radius: 30px;
+  }
+}
+
+/* ---- Shared section eyebrow (icon + bold secondary-text label) --------------------------- */
 
 .sectionEyebrow {
-  color: #000000;
+  /* Figma: every eyebrow label on this frame (Roles/Topics/Superpowers/Numbers/Help/Reel Life/
+     My F*ckUp(s)/My Way/Beyond Business — confirmed on `327:1315`/`327:1522`/`327:1309`/
+     `327:1303`/`327:1525`/`327:1538`/`421:4002`) is Figma's "secondary text" style, `#a5a5a5`
+     (`--color-muted-foreground`) — not black, now that the page itself is black. */
+  color: var(--color-muted-foreground);
   letter-spacing: 0.3em;
 }
 
 .sectionCard {
-  background-color: #f4f4f4;
+  background-color: var(--color-card);
   border-radius: 16px;
 }
 @media (min-width: 768px) {
@@ -61,45 +167,38 @@
 /* ---- Help / F*ckUps — numbered list cards ------------------------------------------------ */
 
 .numberBadge {
+  /* Theme-neutral (no background of its own — border + text only), unchanged by this pass. */
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
 }
 
-/* ---- Roles accordion (stage 1.10 pixel-polish pass) -------------------------------------- */
+/* ---- Roles accordion (stage 1.10 pixel-polish pass, re-themed this pass) ------------------ */
 /* See `RolesAccordion.tsx` for the Figma node citations (`327:1129`/`187:...`) — this section
-   used to be individual bg-card boxes (`.sectionCard`, same treatment as Superpowers/F*ckUps);
-   Figma actually renders Roles as bordered accordion ROWS, not cards, so these replace the old
-   `.roleLinkCard` card-chip rule (removed, no longer referenced). */
+   renders as bordered accordion ROWS, not cards. */
 
 .roleRowBorder {
-  /* Figma's own row divider is `#747474` (`--color-border`) on that mockup's dark page — this
-     screen is deliberately light (`.section` above), so this reuses the same lighter `#dddddd`
-     divider already established for the "What can I help with" list's `divide-y` rows
-     immediately below Roles in this file, rather than Figma's dark-page value, which would be
-     too faint against `#ffffff`. */
-  border-color: #dddddd;
+  /* Figma's own row divider (`--color-border`, `#747474`) — the light-section fallback this rule
+     used to need (`#dddddd`) no longer applies now that this page is genuinely dark. */
+  border-color: var(--color-border);
 }
 
 .roleIndexNumber {
-  /* Figma: `#a5a5a5` ("secondary text") — tuned for a BLACK background, too faint on this
-     screen's white section (same "not reused as-is" precedent as `MemberProfileView.module.css`'s
-     `.eyebrow` comment). `--color-border` (`#747474`) is the closest existing muted-gray token
-     that still reads on white. */
-  color: var(--color-border);
+  /* Figma: "secondary text" (`#a5a5a5`, `--color-muted-foreground`) — reads correctly now that
+     this is a black section (the light-page fallback `--color-border` this rule used before is
+     no longer needed). */
+  color: var(--color-muted-foreground);
   letter-spacing: 0.05em;
 }
 
 .roleToggleClosed {
   /* The collapsed-row glyph (`AddCircleFillIcon`, `currentColor`) — Figma's raw fill is white,
-     which only works on the dark mockup background; recolored to the same muted border-gray as
-     `.roleIndexNumber` above so it still reads as "inactive" against this screen's white bg
-     without inventing a color Figma never specified. */
-  color: var(--color-border);
+     which now matches this screen's actual dark background exactly (the light-page substitute
+     color this rule used before is no longer needed). */
+  color: var(--color-foreground);
 }
 
 .roleLinkText {
-  /* Figma: role links render as bold brand-blue text (`#79B9E3`) directly under the
-     description, not the bordered white chip this section used before this pass. */
+  /* Figma: bold brand-blue text (`#79B9E3`) — theme-neutral, unchanged by this pass. */
   color: var(--color-primary);
 }
 .roleLinkText:hover {
@@ -109,37 +208,43 @@
 /* ---- Topics I'm expert pills -------------------------------------------------------------- */
 
 .topicPill {
-  background-color: #ffffff;
+  /* Figma's own mockup gives each topic word a different one-off bright text color with no pill
+     background (`327:1509`-`327:1518`, see file doc comment for why that per-item rainbow
+     styling isn't reproduced here) — unified to one dark chip: `--color-card` fill, brand-blue
+     border + text, consistent with this page's other accent pills. */
+  background-color: var(--color-card);
   border: 1px solid var(--color-primary);
-  color: #000000;
+  color: var(--color-primary);
 }
 
 /* ---- Superpowers --------------------------------------------------------------------------- */
 
 .superpowerCard {
-  background-color: #f4f4f4;
+  /* See file doc comment re: Figma's alternating white/dark mockup cards, unified to the page's
+     dominant `--color-card` treatment. */
+  background-color: var(--color-card);
   border-radius: 16px;
 }
 
 /* ---- Micro-navigation (static anchor links, spec §5.4 "мікро-навігація") ----------------- */
 
 .microNav {
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .microNavLink {
-  color: rgb(0 0 0 / 60%);
+  color: rgb(255 255 255 / 60%);
   letter-spacing: 0.05em;
   transition: color 150ms ease;
 }
 .microNavLink:hover {
-  color: #000000;
+  color: var(--color-foreground);
 }
 
 /* ---- Promo video / Built Not Burn video panels ------------------------------------------- */
 
 .videoPanel {
-  background-color: #0a0a0a;
+  background-color: var(--color-card);
   border-radius: 16px;
 }
 @media (min-width: 768px) {
@@ -151,22 +256,27 @@
 /* ---- Numbers stat row ---------------------------------------------------------------------- */
 
 .numberStat {
-  background-color: #f4f4f4;
+  /* Figma (`327:1486`-`327:1495` "12+ / years in entrepreneurship"): `--color-card` fill. */
+  background-color: var(--color-card);
   border-radius: 16px;
 }
 .numberStatValue {
-  color: var(--color-primary);
+  /* Figma: the big stat number ("12+") is plain white, NOT brand-color — was `--color-primary`,
+     re-verified against the actual node fill. */
+  color: var(--color-foreground);
 }
 
 /* ---- CTA banners (×2), stage 1.10 pixel-polish pass --------------------------------------- */
 /* See `CtaBanner`'s own doc comment in `MindsetterProfileView.tsx` for the full node citations
-   (`327:1443`/`337:2306`/`327:2636` desktop, `261:1610` mobile) — flat `#1a1a1a` card, NOT the
-   previous `linear-gradient(180deg, #101010, #000000)` (that gradient was never in Figma at
-   all — this card is a genuinely flat fill, its "depth" comes entirely from `.ctaGlow` below). */
+   (`327:1443`/`337:2306`/`327:2636` desktop, `261:1610` mobile) — flat `--color-card` fill, no
+   stroke in Figma. Re-verified this pass against the now-black page: `--color-card` (`#1a1a1a`)
+   against `--color-background` (`#000000`) is exactly this app's existing standard "elevated
+   surface on black" contrast step (same pair used everywhere else in the dark theme), so no
+   extra separation/border is needed here beyond the existing `.ctaGlow` accent below. */
 
 .ctaBanner {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
   border-radius: 16px; /* Figma mobile `261:1610` "Frame 58" */
 }
 @media (min-width: 768px) {
@@ -197,9 +307,9 @@
      — was `text-h3 md:text-h2` (48px -> 72px), which doesn't have a matching mobile step at
      all (this app's `--text-h2`/`--text-h3` tokens carry no mobile override, see
      `typography.css`), so a dedicated rule is used instead of fighting/mutating those shared
-     tokens (same precedent as `MemberProfileView.module.css`'s `.heroName`). Gradient text
-     reuses the existing `--gradient-primary` token — see the citation above confirming it's a
-     pixel-exact match for Figma's own shared "gradient" text style. */
+     tokens (same precedent as `.heroName` above). Gradient text reuses the existing
+     `--gradient-primary` token — see the citation above confirming it's a pixel-exact match for
+     Figma's own shared "gradient" text style. */
   font-size: 24px;
   line-height: 1;
   background: var(--gradient-primary);
@@ -220,27 +330,30 @@
      breakpoint — was a bare, unbordered `<p>` in `--text-tiny` (which resolves to 12px on
      mobile via that token's own responsive override, `typography.css`), so this uses an
      explicit 14px instead of the shared token to stay correct on mobile too. */
-  border: 1px solid #ffffff;
+  border: 1px solid var(--color-foreground);
   border-radius: 12px;
   padding: 6px 8px;
   font-size: 14px;
   line-height: 1.4;
-  color: #ffffff;
+  color: var(--color-foreground);
 }
 
 /* ---- Reviews (static) ------------------------------------------------------------------------ */
 
 .reviewCard {
-  background-color: #f4f4f4;
+  /* Figma (`327:1326`/`327:1349`/`327:1372`/`327:1395` "Frame 26"/"222"/"223"/"224"):
+     `--color-card` fill, white text throughout. */
+  background-color: var(--color-card);
   border-radius: 16px;
-  color: #000000;
+  color: var(--color-foreground);
 }
 
 .reviewQuote {
-  color: rgb(0 0 0 / 75%);
+  color: rgb(255 255 255 / 75%);
 }
 
 .reviewBadge {
+  /* Theme-neutral (border + text only), unchanged by this pass. */
   border: 1px solid var(--color-success);
   color: var(--color-success);
 }
@@ -248,7 +361,9 @@
 /* ---- Reel Life gallery ------------------------------------------------------------------------ */
 
 .reelLifeTile {
-  background-color: #f4f4f4;
+  /* Fallback/loading backdrop behind the actual photo — `--color-card` instead of light
+     `#f4f4f4` (no dedicated Figma fill to sample once a real photo covers the tile). */
+  background-color: var(--color-card);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -256,23 +371,67 @@
 /* ---- My Way timeline --------------------------------------------------------------------- */
 
 .wayCard {
-  background-color: #f4f4f4;
+  /* Figma (`327:1540` "Frame 64" etc.): the project title/description sit directly on the page,
+     NO card fill at all — was a light `#f4f4f4` box; background removed entirely (not just
+     recolored) rather than inventing a dark card Figma never draws here. Padding/spacing in the
+     JSX is left as-is (pure layout, not a "card" visual anymore). */
+  background-color: transparent;
   border-radius: 16px;
 }
 
 .wayYear {
+  /* Figma ("2014"/"2018"/"2020"/"2024", `327:1294`-`327:1297`): same gradient-text fill as the
+     section H2 headings (see file doc comment) — was flat `--color-primary`. */
   font-family: var(--font-display);
-  color: var(--color-primary);
+  background: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .wayStep {
-  background-color: var(--color-primary);
-  color: #000000;
+  /* Figma ("stairs-fill", `327:1556` etc.): `--color-card` fill, `--color-border` stroke,
+     brand-color number — was a solid `--color-primary` circle with black text. */
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
 }
 
 /* ---- My WINS (per-win color) --------------------------------------------------------------- */
+/* Confirmed against Figma (`327:1615`/`327:1628`/`327:1667` "Frame 24"/"225"/"228"): every win
+   card is actually a flat BLACK (`#000000`) card with a blurred colored ellipse decoration, not
+   a solid-color fill — `WIN_COLOR_HEX` (below, in the .tsx) is a deliberate simplification from
+   an earlier pass (that palette is shared with `WinsForm.tsx`'s own color picker, see that
+   file's comment) rather than a literal per-node fill match. Out of scope to restructure this
+   pass (per this task's brief, already flagged as an acceptable/expected simplification) — left
+   unchanged; only re-verified the white text stays legible against every one of the 7 bright
+   fills (all pass basic contrast at this text size/weight). */
 
 .winCard {
   border-radius: 16px;
-  color: #ffffff;
+  color: var(--color-foreground);
+}
+
+/* ---- Beyond Business (interests) — page-local dark override of `memberStyles.interestCard`/
+   `.interestPill` (that sibling class stays light `#f4f4f4`/white for its own screen). ------- */
+
+.interestCard {
+  /* Figma (`421:4046`/`421:4047`/`421:4098` "Frame 524"/"525"/"526"): `--color-card` fill. */
+  background-color: var(--color-card);
+  border-radius: 16px;
+  padding: 24px;
+}
+@media (min-width: 768px) {
+  .interestCard {
+    border-radius: 24px;
+    padding: 32px;
+  }
+}
+
+.interestPill {
+  /* Figma (`421:4041` "Frame 506" etc.): NO fill at all, `--color-border` stroke, white text —
+     was a solid white pill with a `#dddddd` border and black text. */
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
 }

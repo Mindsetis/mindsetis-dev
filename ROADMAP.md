@@ -823,8 +823,9 @@ frame node ids, the A–E decisions/blockers) lives in
   static "42% · Basic" mock)
 
 ### 1.10 — Public Mindsetter Profile page (`/mindsetters/[username]`)
-**Status:** 🔄 In progress — core page built, full review loop passed (code-reviewer/
-security-auditor/qa clean); pixel-polish + browser-tester-with-seed follow-ups pending.
+**Status:** 🔄 In progress — page built, polished, dark-themed, reviewed, and live-E2E-passed
+(desktop 1440px + mobile 375px); only future-stage Book-a-Session widget wiring and
+provisional/infra items remain before this stage can flip to ✅ Done.
 **Started:** 2026-07-20
 
 **Note (2026-07-20):** Implementation built and reviewed. Public route
@@ -859,14 +860,54 @@ rendering) and Medium/Low RLS hardening (`session_settings` read policy now requ
 re-run clean: `code-reviewer` APPROVED, `security-auditor` clean, `qa` PASS (build +
 migrations + live RLS negative tests + no client-bundle secret leak).
 
-**Polish / follow-up (pending — stage stays In progress):**
-- CTA banners use gradient cards instead of the Figma photo-background treatment
-- Roles render as always-expanded cards (no accordion/expand-collapse interaction from Figma)
-- A few eyebrow icons are temporary lucide glyphs (Roles / Topics / Superpowers / Help /
-  Reviews), not the exact Figma vectors
-- Mobile frame `187:4294` not yet verified node-by-node against the build
-- Full `browser-tester` E2E across breakpoints still needs persistent seed data (a verified,
-  `is_public = true` mindsetter with populated sections) — not yet run live
+**Note (2026-07-20, polish + dark theme):** Pixel-polish pass and a full dark-theme
+conversion are now done and reviewed — all committed after passing code-review + a live
+`browser-tester` E2E on hosted-seeded data, both desktop 1440px and mobile 375px:
+1. **Roles → accordion**: extracted `components/profile/RolesAccordion.tsx` (`'use client'`)
+   with expand/collapse (Figma indeterminate-circle-fill/add-circle-fill glyphs), preserving
+   the `isSafeHttpUrl` XSS filter on role links. (commit `a8a1c8c`)
+2. **Eyebrow icons**: replaced temporary lucide placeholders (Roles/Topics/Superpowers/Help/
+   Reviews) with real Figma-vector icons in `components/icons/mindsetter-eyebrow-icons.tsx`.
+   (commit `a8a1c8c`)
+3. **CTA banners**: refined to the real Figma treatment (turned out NOT a photo background —
+   solid dark + blue glow + gradient-text heading via `--gradient-primary` + a bordered price
+   pill with a new `CashFillIcon`), price binding intact. (commit `a8a1c8c`)
+4. **Mobile frame `187:4294`** verified node-by-node — Reel Life mobile fixed to a horizontal
+   carousel; hero/typography/Topics-desktop-only/Numbers-grid confirmed already correct.
+   (commit `a8a1c8c`)
+5. **Dark theme conversion** (the big one): the whole page was wrongly implemented light
+   (inherited from Member Profile); re-themed all sections to the Figma dark design (black
+   background, white/gradient text) reusing the app's existing dark design tokens
+   (`--color-background/foreground/card/muted-foreground/border/primary/success`,
+   `--gradient-primary`) rather than hardcoding — Figma's named fill styles mapped 1:1 to
+   these tokens. Gradient headings (h1 name, section h2s, My Way years) via
+   `--gradient-primary` + `background-clip: text`. `MemberProfileView` (the separate LIGHT
+   Member page, stage 1.6) left untouched. All behaviors/security preserved.
+   - Code-review APPROVED (theme-only, no regressions, XSS filters intact); the two optional
+     cleanups it flagged (hardcoded `#ffffff` → `var(--color-foreground)`; My Way description
+     muted color restored) were applied.
+   - Browser E2E PASS: dark background + white/gradient text confirmed, WINS colored cards
+     legible, accordion works, all sections render, mobile responsive with no overflow,
+     not-found renders clean.
+
+**Polish / follow-up — status:**
+- [x] CTA banners refined to the real Figma treatment (gradient-text heading + price pill —
+  turned out not a photo-background treatment after all, see note above)
+- [x] Roles now render as an accordion (expand/collapse), matching the Figma interaction
+- [x] Eyebrow icons replaced with real Figma vectors (Roles / Topics / Superpowers / Help /
+  Reviews)
+- [x] Mobile frame `187:4294` verified node-by-node against the build
+- [x] Full `browser-tester` E2E across breakpoints run live on hosted-seeded data (desktop
+  1440px + mobile 375px) — PASS
+- [x] Dark-theme conversion (page was wrongly light, now matches the Figma dark design) —
+  reviewed and E2E-verified
+- [~] Book-a-Session booking widget end-to-end wiring — still deferred to the dedicated
+  §5.8/§5.9 booking stage, out of this stage's scope
+- [~] Route slug `/mindsetters/[username]` — still provisional; spec doesn't mandate an exact
+  slug
+- Known limitation carried over from Member Profile (stage 1.6): `notFound()` on this route
+  likely also returns HTTP 200 instead of 404, root-caused to the shared app-wide
+  `app/[locale]/loading.tsx` streaming boundary — cross-cutting, deferred, not a new blocker
 - Minor/unrelated infra: a stray `.claude/worktrees/stage-1.6-mobile` worktree pollutes
   `npm run lint`; `eslint.config.mjs` ignore should be `**/.next/**` — separate infra ticket,
   not part of this stage
@@ -908,13 +949,12 @@ Public, spec §5.4 "Публічний профіль Mindsetter" page: "Усі 
 - [x] My events → built as an empty-state placeholder (no events backend yet), see blocker above
 - [x] Footer → reuse the existing site `Footer` component (Figma shows an unedited Relume placeholder footer — ignored its mockup copy)
 
-**Next steps:** core build + full review loop (`code-reviewer`, `security-auditor`, `qa`) are
-done. Remaining before this stage can flip to ✅ Done: Figma-precision polish pass (CTA banner
-photo background, Roles accordion interaction, exact eyebrow icon vectors, mobile
-`187:4294` node-by-node check) and a live `browser-tester` E2E pass across breakpoints once
-persistent seed data (a verified, `is_public = true` mindsetter with populated sections)
-exists — see "Polish / follow-up" above. Book-a-Session widget end-to-end wiring stays
-deferred to the §5.8/§5.9 booking stage, out of this stage's scope.
+**Next steps:** core build, full review loop (`code-reviewer`, `security-auditor`, `qa`), the
+Figma-precision polish pass, the dark-theme conversion, and a live `browser-tester` E2E pass
+across breakpoints (desktop 1440px + mobile 375px) on hosted-seeded data are all done — see
+"Polish / follow-up" above. Remaining before this stage can flip to ✅ Done: Book-a-Session
+widget end-to-end wiring (stays deferred to the §5.8/§5.9 booking stage, out of this stage's
+scope), confirming the final route slug, and the unrelated infra lint ticket.
 
 ### 1.6 — Member Profile view page (self + any-member-by-username)
 **Status:** ✅ Done

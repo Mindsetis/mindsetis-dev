@@ -391,7 +391,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 <span
                   className={cn(
                     'inline-flex items-center rounded-full px-2 pt-1.5 pb-1.5 text-tiny md:pb-2',
-                    memberStyles.pillHandle,
+                    styles.pillHandle,
                   )}
                 >
                   @{profile.username}
@@ -399,7 +399,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               )}
             </div>
 
-            <h1 className={cn('font-display', memberStyles.heroName)}>{displayName}</h1>
+            <h1 className={cn('font-display', styles.heroName)}>{displayName}</h1>
 
             {heroText && <p className="text-body">{heroText}</p>}
 
@@ -410,7 +410,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     key={label}
                     className={cn(
                       'inline-flex h-7 items-center px-2 text-tiny md:px-3',
-                      memberStyles.metaPill,
+                      styles.metaPill,
                     )}
                   >
                     {label}
@@ -453,7 +453,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     aria-label={key}
                     className={cn(
                       'flex size-8 items-center justify-center rounded-md',
-                      memberStyles.socialIconButton,
+                      styles.socialIconButton,
                     )}
                   >
                     <Icon className="size-4" aria-hidden="true" />
@@ -466,7 +466,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     rel="noopener noreferrer"
                     className={cn(
                       'inline-flex h-8 items-center gap-1 rounded-md px-3 text-tiny',
-                      memberStyles.websitePill,
+                      styles.websitePill,
                     )}
                   >
                     <Link2 className="size-3.5" aria-hidden="true" /> {t('website')}
@@ -483,7 +483,11 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 href="#promo-video"
                 className="inline-flex w-fit items-center gap-2 text-tiny font-bold text-foreground/70 hover:text-foreground"
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-black text-white">
+                {/* Was `bg-black` — now that the page itself is `--color-background` (#000000),
+                    a pure-black circle would have no visible edge; `bg-card` (--color-card,
+                    #1a1a1a) is this app's standard "elevated surface on black" step, giving the
+                    circle a visible boundary again (decorative element, no Figma frame). */}
+                <span className="flex size-8 items-center justify-center rounded-full bg-card text-white">
                   <Play className="size-3.5" aria-hidden="true" />
                 </span>
                 {t('introVideo')}
@@ -506,7 +510,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 <button
                   type="button"
                   aria-label={t('favorite')}
-                  className="flex size-14 items-center justify-center rounded-lg border border-[#dddddd] text-black transition-colors hover:bg-[#f4f4f4]"
+                  className="flex size-14 items-center justify-center rounded-lg border border-border text-white transition-colors hover:bg-card"
                 >
                   <Heart className="size-5" aria-hidden="true" />
                 </button>
@@ -526,17 +530,17 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 alt={displayName}
                 className={cn(
                   'aspect-[375/440] w-full object-cover lg:aspect-[640/624]',
-                  memberStyles.portraitFrame,
+                  styles.portraitFrame,
                 )}
               />
             ) : (
               <div
                 className={cn(
                   'flex aspect-[375/440] w-full items-center justify-center lg:aspect-[640/624]',
-                  memberStyles.portraitPlaceholder,
+                  styles.portraitPlaceholder,
                 )}
               >
-                <User className="size-16 text-black/30" aria-hidden="true" />
+                <User className="size-16 text-foreground/30" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -575,7 +579,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<MagicFillIcon className="size-4 shrink-0" />}>
               {t('roles.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('roles.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('roles.heading')}
+            </h2>
             <RolesAccordion
               roles={profile.roles}
               learnMoreLabel={t('roles.learnMore')}
@@ -591,7 +597,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<MicAiFillIcon className="size-4 shrink-0" />}>
               {t('topics.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h2">{t('topics.heading')}</h2>
+            <h2 className={cn('font-display text-h2', styles.gradientHeading)}>
+              {t('topics.heading')}
+            </h2>
             <div className="flex flex-wrap gap-2">
               {profile.topics.map((topic) => (
                 <span
@@ -611,7 +619,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<FlashlightFillIcon className="size-4 shrink-0" />}>
               {t('superpowers.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('superpowers.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('superpowers.heading')}
+            </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {profile.superpowers.map((superpower, index) => (
                 <div
@@ -633,7 +643,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<PromoVideoBlockIcon className="size-4" />}>
               {t('promo.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('promo.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('promo.heading')}
+            </h2>
             <div
               className={cn(
                 'relative aspect-video w-full max-w-[900px] overflow-hidden',
@@ -661,7 +673,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<NumbersBlockIcon className="size-4" />}>
               {t('numbers.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('numbers.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('numbers.heading')}
+            </h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {profile.numbers.map((item, index) => (
                 <div
@@ -684,8 +698,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<BagIcon className="size-3 shrink-0" />}>
               {t('help.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('help.heading')}</h2>
-            <div className="flex flex-col divide-y divide-[#dddddd]">
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('help.heading')}
+            </h2>
+            <div className="flex flex-col divide-y divide-border">
               {profile.helpWith.map((item, index) => (
                 <div key={`${item.title}-${index}`} className="flex flex-col gap-2 py-5">
                   <div className="flex items-center gap-3">
@@ -710,7 +726,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<ReelLifeBlockIcon className="size-4" />}>
               {t('reelLife.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('reelLife.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('reelLife.heading')}
+            </h2>
             {/* Stage 1.10 mobile-verification pass (ROADMAP item 4): Figma's mobile frame
                 (`187:4294`) shows Reel Life as a single-row horizontal carousel (arrow-nav
                 buttons flank the heading, node `261:1262` "Frame 228") rather than a stacked
@@ -754,16 +772,18 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           >
             {t('myEvents.eyebrow')}
           </SectionEyebrow>
-          <h2 className="font-display text-h3 md:text-h2">{t('myEvents.heading')}</h2>
+          <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+            {t('myEvents.heading')}
+          </h2>
           <div
             className={cn(
               'flex flex-col items-center gap-3 px-6 py-16 text-center',
               styles.sectionCard,
             )}
           >
-            <CalendarOff className="size-8 text-black/30" aria-hidden="true" />
+            <CalendarOff className="size-8 text-foreground/30" aria-hidden="true" />
             <p className="font-display text-l">{t('myEvents.emptyTitle')}</p>
-            <p className="max-w-[420px] text-tiny text-black/60">
+            <p className="max-w-[420px] text-tiny text-foreground/60">
               {t('myEvents.emptyDescription')}
             </p>
           </div>
@@ -781,7 +801,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               <SectionEyebrow icon={<ReviewChatIcon className="size-3 shrink-0" />}>
                 {t('reviews.eyebrow')}
               </SectionEyebrow>
-              <h2 className="font-display text-h3 md:text-h2">{t('reviews.heading')}</h2>
+              <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+                {t('reviews.heading')}
+              </h2>
             </div>
             <Button type="button" variant="outline">
               {t('reviews.leaveReview')}
@@ -802,7 +824,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 <p className={cn('text-body', styles.reviewQuote)}>{review.quote}</p>
                 <div>
                   <p className="font-bold">{review.name}</p>
-                  <p className="text-tiny text-black/60">{review.role}</p>
+                  <p className="text-tiny text-foreground/60">{review.role}</p>
                 </div>
               </div>
             ))}
@@ -827,7 +849,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<FckupsBlockIcon className="size-4" />}>
               {t('fckups.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('fckups.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('fckups.heading')}
+            </h2>
             <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
               {profile.fckups.map((fckup, index) => (
                 <div
@@ -851,7 +875,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<MyWayBlockIcon className="size-4" />}>
               {t('myWay.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('myWay.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('myWay.heading')}
+            </h2>
             <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible">
               {profile.myWay.map((stage, index) => (
                 <div key={index} className="flex w-[280px] shrink-0 flex-col gap-3 md:w-auto">
@@ -870,7 +896,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   </div>
                   <div className={cn('flex flex-col gap-2 p-6', styles.wayCard)}>
                     <h3 className="font-display text-l">{stage.project}</h3>
-                    <p className="text-tiny text-black/70">{stage.description}</p>
+                    <p className="text-tiny text-foreground/70">{stage.description}</p>
                   </div>
                 </div>
               ))}
@@ -884,7 +910,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
               {t('wins.eyebrow')}
             </SectionEyebrow>
-            <h2 className="font-display text-h3 md:text-h2">{t('wins.heading')}</h2>
+            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              {t('wins.heading')}
+            </h2>
             <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
               {profile.wins.map((win, index) => (
                 <div
@@ -911,7 +939,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               <SectionEyebrow icon={<VideoBlogBlockIcon className="size-4" />}>
                 {t('videoBlog.eyebrow')}
               </SectionEyebrow>
-              <h2 className="font-display text-h3 md:text-h2">{t('videoBlog.heading')}</h2>
+              <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+                {t('videoBlog.heading')}
+              </h2>
               <Button type="button" variant="outline" className="w-fit">
                 {t('videoBlog.allInterviews')}
               </Button>
@@ -956,20 +986,20 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   className={cn('size-4 shrink-0', memberStyles.metaIcon)}
                   aria-hidden="true"
                 />
-                <span className={cn('text-tiny font-bold uppercase', memberStyles.eyebrow)}>
+                <span className={cn('text-tiny font-bold uppercase', styles.sectionEyebrow)}>
                   {t('beyondBusiness.eyebrow')}
                 </span>
               </span>
-              <h2 className="hidden font-display text-h2 text-black md:block">
+              <h2 className={cn('hidden font-display text-h2 md:block', styles.gradientHeading)}>
                 {t('beyondBusiness.heading')}
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {interestGroups.map(({ category, items }) => (
-                <div key={category} className={memberStyles.interestCard}>
+                <div key={category} className={styles.interestCard}>
                   <h3
                     className={cn(
-                      'font-display leading-none font-normal text-black',
+                      'font-display leading-none font-normal text-white',
                       memberStyles.interestCardHeading,
                     )}
                   >
@@ -979,10 +1009,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     {items.map((item) => (
                       <span
                         key={item.value}
-                        className={cn(
-                          'rounded-full px-3 py-3 text-tiny',
-                          memberStyles.interestPill,
-                        )}
+                        className={cn('rounded-full px-3 py-3 text-tiny', styles.interestPill)}
                       >
                         {item.emoji} {item.label}
                       </span>
