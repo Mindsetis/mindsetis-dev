@@ -383,3 +383,54 @@ Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ 
 - [x] Migration/data check: any existing hosted-project users created via the auto-confirm path stay confirmed (no retroactive re-verification) — confirm this is fine as a one-time MVP-stage transition, not a live-migration concern
 - [x] i18n: update `signUp.stepLabel`-driven copy if any step-specific strings (e.g. verify-email eyebrow/subtitle) assumed the old step-4 framing
 - [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths
+
+### 1.6 — Member Profile view page (self + any-member-by-username)
+**Status:** ✅ Done
+**Started:** 2026-07-15
+**Completed:** 2026-07-15
+
+> **Scope grew significantly during implementation.** Originally briefed as a narrow hero
+> block (avatar/name/bio/role-industry-company badges/static buttons). Live Figma extraction
+> of frames `383:4667` (public) + `401:6375` (preview) revealed one cohesive "Member Profile"
+> page, so the built scope covers the whole page, not just the hero. It also flipped from
+> "public, no login required" to **auth-gated for any registered member** (a product decision
+> made once the full page — and its RLS implications — became clear), and a security review
+> during the loop found the app-layer gating alone didn't block direct anonymous Supabase REST
+> API access, closed with a dedicated RLS migration.
+
+The full "Member Profile" page from Figma (`383:4667` public / `401:6375` preview) — not just
+the originally-scoped narrow hero block: verified badge + `@handle`, name (`full_name` +
+`last_name`), bio, three badges in Figma's actual order **Industry → Company → Role** (not
+the originally-briefed Role/Industry/Company), a static "Invite to event" button, location
+(`country`/`city`) + languages, social links (`profiles.socials`, scheme-restricted to
+http/https to close a stored-XSS vector found in review), a large portrait (`avatar_url`),
+an "ABOUT" card (`profiles.about`), and a "What I care about beyond work" interests section
+grouping `profiles.interests` by category via the existing `lib/constants/interests.ts`
+catalog. Light-theme content section deliberately matching Figma's white background (not the
+app's dark theme), isolated in its own CSS Module
+(`components/profile/MemberProfileView.module.css`) — a new pattern for this codebase, first
+use of CSS Modules here. Two routes sharing one component: `/dashboard/profile` (self-view,
+shows the preview banner + Edit Profile/Share Profile buttons) and `/member/[username]` (any
+other member's profile, no banner/buttons). Both routes require an authenticated session
+(product decision: visible to any REGISTERED member, not anonymous visitors, editing reserved
+for the profile owner) — enforced at both the Next.js layer (`middleware.ts`) AND the database
+layer (a new migration tightened the `profiles_read` RLS policy to require
+`auth.uid() is not null`, after a security review found the app-layer gating alone didn't
+block direct anonymous Supabase REST API access). Edit Profile / Share Profile / Invite to
+event are static UI only, no behavior yet.
+
+- [x] `figma-designer`: pulled "Member Profile" frames `383:4667` (public) + `401:6375` (preview) — desktop 1440px only, no mobile variant exists for the preview frame in the Figma file (flagged as a gap, typography hints borrowed from a related mobile frame for a best-effort responsive pass)
+- [x] Shared `MemberProfileView` component (avatar/name/bio/badges/About/interests/static buttons) + dedicated CSS Module
+- [x] `/dashboard/profile` route (self-view, auth-gated)
+- [x] `/member/[username]` route (any-member view, auth-gated — not anonymous-public; renamed from `/profile/[username]`)
+- [x] i18n keys (`profile` namespace, en + es)
+- [x] Migration: tightened `profiles_read` RLS to require authentication (`supabase/migrations/20260715194801_profiles_read_require_auth.sql`)
+- [x] Fixed a stored-XSS gap in social-link URLs (write-time Zod scheme restriction + read-time render guard)
+- [x] Review loop (code-reviewer, security-auditor ×2, qa ×2) — all passed; live-verified against the hosted DB
+
+**Known limitation:** `notFound()` on `/member/[username]` for a nonexistent username renders
+the correct not-found UI but returns HTTP 200 instead of 404 — root-caused to the app-wide
+`app/[locale]/loading.tsx` streaming boundary flushing the response before the status can
+change (confirmed by temporarily removing it and observing the status correctly flip to 404).
+Fixing this properly requires restructuring that ambient loading boundary across the whole app
+(broad blast radius), deferred as a follow-up rather than blocking this stage.

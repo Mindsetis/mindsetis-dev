@@ -54,3 +54,71 @@ export function YoutubeIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+/**
+ * The three icons below are sourced from the Member Profile screen's own "Follow" row
+ * (Figma desktop `401:6413` "Frame 276", identical mobile `401:8255` "Frame 6") rather than
+ * the Footer's "Follow Us" column above — a direct node-diff shows they're genuinely
+ * different assets from the same section:
+ *
+ * - `TiktokIcon`/`ThreadsIcon` have no equivalent among the Footer-sourced icons above at
+ *   all (Footer's `SOCIAL_LINKS` never linked either platform), so `MemberProfileView`'s
+ *   `tiktok`/`threads` keys were falling back to a generic `lucide-react` `Link` icon for
+ *   both — identical glyphs for two different platforms, reported as "duplicated".
+ * - `FacebookGlyphIcon` is a real mismatch fix: the Member Profile frame's Facebook mark is a
+ *   bare "f" glyph (no circle baked in — the surrounding badge, `.socialIconButton`, already
+ *   supplies the light-gray rounded box), whereas `FacebookIcon` above is the classic
+ *   *standalone* circular Facebook logo built for the Footer's plain (unboxed) icon list.
+ *   Confirmed by comparing exported vector bounds: `FacebookIcon`'s circle nearly fills its
+ *   24x24 viewBox edge-to-edge, while the Member Profile export is a narrow, non-square "f"
+ *   glyph — not the same mark just rescaled. (LinkedIn/Instagram/YouTube above WERE checked
+ *   the same way and do match — their Member Profile exports are the same boxed/standalone
+ *   marks as here, merely scaled ~0.74x to fit the smaller badge, so those three are reused
+ *   as-is rather than duplicated.)
+ *
+ * Figma's own export grid for this row uses `viewBox="0 0 32 32"` for all three — but that
+ * dimension is the surrounding BADGE FRAME's size, not each icon's own tight bounds. Computed
+ * bounding boxes (bbox = actual path extent, sampled from the curve data itself, not eyeballed)
+ * confirm all three glyphs sit in a small corner of that 32x32 frame with a lot of dead space
+ * around them:
+ *   - `FacebookGlyphIcon` bbox ~[13,9]..[19.67,22.33] — fills only ~21%x42% of `0 0 32 32`
+ *   - `TiktokIcon` bbox ~[11,10]..[21.86,22.5] — fills only ~34%x39%
+ *   - `ThreadsIcon` bbox ~[10,10]..[22,23] — fills only ~37%x41%
+ * vs. `LinkedinIcon`/`InstagramIcon` above filling ~75% of their own `0 0 24 24` viewBox. At
+ * the shared `size-4` render size used in `MemberProfileView.tsx`'s social row, that gap made
+ * these three visibly SMALLER than the other icons next to them (user-reported "icons are
+ * different sizes"), even though every icon renders in an identical CSS box. Fix: crop each
+ * `viewBox` to that icon's own bbox (plus a small safety margin, no path data changed) so all
+ * three fill ~90% of their box, matching the others' visual weight.
+ */
+export function FacebookGlyphIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="12.5 8.5 7.5 14" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M17.4444 16.6667H19.0317L19.6667 14H17.4444V12.6667C17.4444 11.9804 17.4444 11.3333 18.7143 11.3333H19.6667V9.0934C19.4599 9.06457 18.6781 9 17.8526 9C16.1291 9 14.9048 10.1046 14.9048 12.1331V14H13V16.6667H14.9048V22.3333H17.4444V16.6667Z" />
+    </svg>
+  );
+}
+
+export function TiktokIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="10.5 9.5 12 13.5" fill="currentColor" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.7033 10.0104C17.3856 10 18.0627 10.0052 18.7397 10C18.7814 10.7969 19.0678 11.6094 19.6511 12.1718C20.2344 12.75 21.0573 13.0156 21.8594 13.1041V15.2031C21.1094 15.177 20.3542 15.0208 19.672 14.6979C19.3751 14.5624 19.0991 14.3906 18.8282 14.2135C18.823 15.7343 18.8335 17.2551 18.8178 18.7707C18.7762 19.4999 18.5366 20.2238 18.1147 20.8228C17.4325 21.8228 16.2502 22.4738 15.0367 22.4946C14.292 22.5363 13.5472 22.3332 12.9118 21.9582C11.8598 21.3384 11.1202 20.203 11.0109 18.9843C11.0005 18.7238 10.9953 18.4634 11.0057 18.2082C11.0994 17.2187 11.589 16.2708 12.3494 15.6249C13.2139 14.8749 14.4222 14.5156 15.5523 14.7291C15.5628 15.4999 15.5315 16.2708 15.5315 17.0416C15.0159 16.8749 14.4118 16.9218 13.9587 17.2343C13.6306 17.4478 13.3806 17.7759 13.2504 18.1457C13.141 18.4114 13.1722 18.703 13.1775 18.9843C13.3025 19.8384 14.1253 20.5572 15.0003 20.479C15.5836 20.4738 16.1409 20.1353 16.443 19.6405C16.5419 19.4686 16.6513 19.2915 16.6565 19.0884C16.7086 18.1561 16.6877 17.2291 16.6929 16.2968C16.6981 14.1979 16.6877 12.1041 16.7033 10.0104Z"
+      />
+    </svg>
+  );
+}
+
+export function ThreadsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="9.5 9.5 13 14" fill="currentColor" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M15.6234 10.0141C13.3774 10.1451 11.746 11.0935 10.8234 12.8043C10.3702 13.6448 10.1171 14.5819 10.0183 15.7853C10.0083 15.9083 10 16.2315 10 16.5035C10 16.7755 10.0083 17.0987 10.0183 17.2216C10.1171 18.4252 10.3704 19.3628 10.8235 20.2026C11.4888 21.4358 12.5058 22.2628 13.8814 22.6893C14.367 22.8399 14.8337 22.9269 15.4561 22.983C15.7413 23.0087 16.5466 23.0045 16.8603 22.9757C18.3161 22.8421 19.3351 22.4226 20.2378 21.5853C20.6287 21.2228 20.8935 20.8742 21.0971 20.4543C21.6046 19.4077 21.5198 18.1512 20.8802 17.242C20.5349 16.7512 20.0307 16.3473 19.3991 16.0557L19.1641 15.9472L19.1459 15.768C19.0276 14.6037 18.5265 13.7897 17.6607 13.3556C17.4058 13.2277 17.0369 13.1181 16.693 13.0679C16.4922 13.0386 15.9759 13.0269 15.7676 13.0469C15.0081 13.12 14.3353 13.4202 13.8643 13.8961C13.7607 14.0007 13.5713 14.2295 13.5723 14.2486C13.573 14.2611 14.5435 14.8843 14.5623 14.8843C14.5679 14.8843 14.6023 14.8473 14.6387 14.802C14.7233 14.6973 14.9078 14.5334 15.0163 14.4666C15.3657 14.2515 15.8109 14.1547 16.3018 14.1871C16.6228 14.2082 16.8424 14.259 17.0641 14.3632C17.4821 14.5596 17.7525 14.9258 17.8779 15.4653C17.895 15.539 17.9063 15.6018 17.9029 15.605C17.8995 15.6082 17.8289 15.6015 17.746 15.5901C17.3923 15.5418 17.2559 15.5347 16.6784 15.5347C16.1971 15.5347 16.0624 15.5389 15.8999 15.5593C15.3576 15.6274 14.9017 15.7651 14.532 15.9723C14.1362 16.1943 13.8232 16.501 13.6375 16.849C13.5448 17.0228 13.4988 17.1464 13.4535 17.3436C13.409 17.5374 13.4052 17.9331 13.446 18.1363C13.5017 18.4134 13.6153 18.6741 13.7846 18.9129C13.905 19.0829 14.1911 19.3449 14.3919 19.4691C14.7679 19.7018 15.2271 19.8538 15.7088 19.9052C15.9046 19.9261 16.4393 19.9148 16.6348 19.8856C17.9748 19.6856 18.8113 18.8293 19.0762 17.3868L19.1093 17.2064L19.2181 17.2725C19.747 17.5941 20.0749 18.0564 20.1863 18.6376C20.2242 18.8354 20.2216 19.208 20.1809 19.4178C20.1042 19.8128 19.9083 20.207 19.6293 20.5278C19.5118 20.663 19.2418 20.9102 19.0795 21.0313C18.7967 21.2423 18.4289 21.4395 18.0886 21.5624C17.5652 21.7515 16.8659 21.8556 16.1182 21.8557C14.8306 21.8558 13.7647 21.5477 12.9604 20.9431C12.8125 20.832 12.5226 20.5602 12.4019 20.4194C11.7711 19.6844 11.3908 18.6949 11.251 17.4249C11.136 16.3806 11.233 15.1786 11.5044 14.2861C11.6729 13.7318 11.8855 13.2872 12.177 12.8791C12.3472 12.6409 12.4678 12.503 12.676 12.3088C13.3644 11.6667 14.2084 11.3184 15.4052 11.1826C15.7317 11.1456 16.5148 11.149 16.8659 11.1889C18.7241 11.4006 19.9524 12.2522 20.6165 13.7896C20.6416 13.8476 20.7022 14.0085 20.7512 14.147L20.8403 14.3989L21.4224 14.254C21.9424 14.1245 22.0039 14.1063 21.9998 14.0834C21.988 14.0176 21.8846 13.7128 21.8121 13.5299C21.2651 12.1516 20.3073 11.137 19.0108 10.5627C18.0602 10.1416 16.836 9.94332 15.6234 10.0141ZM16.3146 16.6806C15.6417 16.7126 15.1822 16.8658 14.8893 17.1558C14.4965 17.5445 14.5393 18.1362 14.9835 18.4598C15.2694 18.6681 15.6323 18.771 16.0818 18.7711C16.3336 18.7712 16.4722 18.7559 16.6826 18.7047C17.3963 18.5312 17.8005 17.9564 17.9235 16.9397C17.9328 16.8629 17.9377 16.7975 17.9344 16.7944C17.9032 16.7654 17.3576 16.6979 17.0092 16.6799C16.7246 16.6652 16.6361 16.6653 16.3146 16.6806Z"
+      />
+    </svg>
+  );
+}
