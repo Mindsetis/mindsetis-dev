@@ -31,7 +31,7 @@ import styles from './MemberProfileView.module.css';
  * `lib/supabase/types.gen.ts` — that generated file is stale (missing `role`/`industry`,
  * added by `20260714101121_profiles_step3_build_fields.sql`) and regenerating it
  * (`npm run db:types`) is out of scope for this stage. Both call sites (`/dashboard/profile`,
- * `/member/[username]`) select this exact column allow-list, never `select('*')`.
+ * `/members/[username]`) select this exact column allow-list, never `select('*')`.
  */
 export interface MemberProfile {
   username: string;
@@ -108,7 +108,7 @@ const LANGUAGE_CODE_BY_VALUE = new Map<string, string>(
 /**
  * Defense-in-depth alongside the write-time `isHttpUrl` refine in
  * `lib/validation/member-profile.ts`: this page renders `profiles.socials` values as real
- * `<a href>`s on the PUBLIC, unauthenticated `/member/[username]` route, so a
+ * `<a href>`s on the PUBLIC, unauthenticated `/members/[username]` route, so a
  * `javascript:`/`data:` value that somehow reached the DB (e.g. written before the write-time
  * fix shipped) must never be turned into a clickable link here either (security-auditor
  * finding, stage 1.6).
@@ -178,7 +178,7 @@ function resolveLanguageText(profile: MemberProfile): string | null {
 
 /**
  * Shared presentational component for the "Member Profile" view — the two call sites
- * (`app/[locale]/dashboard/profile/page.tsx` self-view, `app/[locale]/member/[username]/
+ * (`app/[locale]/dashboard/profile/page.tsx` self-view, `app/[locale]/members/[username]/
  * page.tsx` public view) are structurally IDENTICAL below the banner (confirmed via a direct
  * Figma node-diff of `401:6375` vs `383:4667`), so this stays a single Server Component
  * (no client interactivity needed — Edit Profile / Share Profile / Invite to event are all
