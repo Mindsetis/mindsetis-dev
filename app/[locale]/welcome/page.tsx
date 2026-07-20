@@ -1,9 +1,7 @@
-import { CheckCircle2 } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
-import { Button } from '@/components/ui/button';
-import { Link } from '@/i18n/navigation';
+import { WelcomeCtas } from '@/components/auth/WelcomeCtas';
 
 type WelcomePageProps = {
   params: Promise<{ locale: string }>;
@@ -23,15 +21,16 @@ const TOTAL_STEPS = 4;
  * link (there's nowhere to go back to from here); added in stage 1.4 (was missing from the
  * original stage 1.2 build).
  *
- * CTA scope (stage 1.2): only "Browse the community" (home page). The ROADMAP's other
+ * CTA scope: stage 1.2 shipped only "Browse the community" (home page) since the other
  * suggested CTAs (Find Mindsetter / Invite to event / Find event / "Find out who a
- * Mindsetter is") don't have a real destination anywhere in the codebase yet — no
- * catalog/events/invite routes, and no Mindsetter-info page — so wiring them now would just
- * be dead links; add them once those pages exist (future stage, per ROADMAP 1.2's own scope
- * note). Untouched by the stage 1.4 pass below — only the progress indicator + a left-aligned
- * shell tweak (matching the other three steps) were added; note `items-center` alone doesn't
- * left-align a flex-col's children (it still centers each block), so dropping it entirely
- * (not just `text-center`) was the actual fix.
+ * Mindsetter is") had no real destination anywhere in the codebase — no catalog/events/invite
+ * routes, no Mindsetter-info page. Stage 1.6 (user-requested copy/UI pass) replaced that single
+ * CTA with the four buttons + info modal from `WelcomeCtas.tsx` — all four still link to `/`
+ * as an explicit placeholder (see that component's doc comment); wire up their real
+ * destinations once those pages exist. Untouched by the stage 1.4 pass below — only the
+ * progress indicator + a left-aligned shell tweak (matching the other three steps) were added;
+ * note `items-center` alone doesn't left-align a flex-col's children (it still centers each
+ * block), so dropping it entirely (not just `text-center`) was the actual fix.
  */
 export default async function WelcomePage({ params }: WelcomePageProps) {
   const { locale } = await params;
@@ -39,18 +38,22 @@ export default async function WelcomePage({ params }: WelcomePageProps) {
   const t = await getTranslations('auth');
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 px-4 py-16 sm:px-6 md:py-24">
-      <RegistrationProgress
-        step={4}
-        total={TOTAL_STEPS}
-        label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
-      />
-      <CheckCircle2 className="size-12 text-primary" aria-hidden="true" />
-      <h1 className="font-display text-h1 text-foreground md:text-h3">{t('welcome.title')}</h1>
-      <p className="text-sm text-muted-foreground">{t('welcome.subtitle')}</p>
-      <Button asChild variant="primaryOutline" size="lg" className="w-full sm:w-auto">
-        <Link href="/">{t('welcome.browseCta')}</Link>
-      </Button>
+    <div className="mx-auto flex w-full max-w-[640px] flex-col px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px]">
+      {/* Same margin-bottom below the step indicator as the other three steps'
+          `RegistrationStepHeader` (32px mobile / 100px desktop) — this page has no Back link,
+          so it doesn't use that shared component, just matches its spacing here. */}
+      <div className="mb-8 md:mb-[100px]">
+        <RegistrationProgress
+          step={4}
+          total={TOTAL_STEPS}
+          label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
+          complete
+        />
+      </div>
+      <div className="flex flex-col gap-6">
+        <h1 className="font-display text-h1 text-foreground md:text-h3">{t('welcome.title')}</h1>
+        <WelcomeCtas />
+      </div>
     </div>
   );
 }

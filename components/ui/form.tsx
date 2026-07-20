@@ -4,7 +4,7 @@ import { Slot } from '@radix-ui/react-slot';
 import type { ComponentProps } from 'react';
 import { createContext, useContext, useId } from 'react';
 import type { ControllerProps, FieldPath, FieldValues } from 'react-hook-form';
-import { Controller, FormProvider, useFormContext, useFormState } from 'react-hook-form';
+import { Controller, FormProvider, useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -70,7 +70,7 @@ function FormItem({ className, ...props }: ComponentProps<'div'>) {
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div data-slot="form-item" className={cn('flex flex-col gap-1.5', className)} {...props} />
+      <div data-slot="form-item" className={cn('flex flex-col gap-1', className)} {...props} />
     </FormItemContext.Provider>
   );
 }
@@ -82,7 +82,7 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
     <Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn('data-[error=true]:text-destructive', className)}
+      className={className}
       htmlFor={formItemId}
       {...props}
     />
@@ -90,7 +90,20 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Label>) {
 }
 
 function FormControl({ ...props }: ComponentProps<typeof Slot>) {
-  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
+  const { name, error, formItemId, formDescriptionId, formMessageId, invalid, isDirty } =
+    useFormField();
+  // Current field value — read directly (rather than trusting `isDirty` alone) so a freshly
+  // APPENDED field (e.g. a new "Add role"/"Add expertise"/"Add number" card) never renders the
+  // "valid" treatment while still empty: RHF marks an appended field dirty immediately, even
+  // though the caller hasn't typed anything into it yet.
+  const value = useWatch({ name });
+  const hasValue = value != null && value !== '';
+  // "Correctly filled" state for the shared Figma valid-field treatment (white border +
+  // check icon on `Input`, white border only on `Textarea`/`Select`) — surfaced globally here
+  // so every field wrapped in `FormControl` gets it without per-field wiring. Radix `Slot`
+  // merges this non-DOM prop onto whichever child is rendered inside (e.g. `<Input />`),
+  // which reads it itself and is the only place it's translated into DOM attributes/classes.
+  const valid = isDirty && !invalid && hasValue;
 
   return (
     <Slot
@@ -98,6 +111,7 @@ function FormControl({ ...props }: ComponentProps<typeof Slot>) {
       id={formItemId}
       aria-describedby={!error ? formDescriptionId : `${formDescriptionId} ${formMessageId}`}
       aria-invalid={!!error}
+      {...{ valid }}
       {...props}
     />
   );
@@ -116,6 +130,26 @@ function FormDescription({ className, ...props }: ComponentProps<'p'>) {
   );
 }
 
+/** Leading icon for `FormMessage` — inherits `currentColor` so it matches the error text. */
+function FormMessageIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path
+        d="M6 11C3.23857 11 1 8.7614 1 6C1 3.23857 3.23857 1 6 1C8.7614 1 11 3.23857 11 6C11 8.7614 8.7614 11 6 11ZM6 5.5C5.72386 5.5 5.5 5.72386 5.5 6V8C5.5 8.27614 5.72386 8.5 6 8.5C6.27614 8.5 6.5 8.27614 6.5 8V6C6.5 5.72386 6.27614 5.5 6 5.5ZM6 3.5C5.72386 3.5 5.5 3.72386 5.5 4C5.5 4.27614 5.72386 4.5 6 4.5C6.27614 4.5 6.5 4.27614 6.5 4C6.5 3.72386 6.27614 3.5 6 3.5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function FormMessage({ className, children, ...props }: ComponentProps<'p'>) {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error.message ?? '') : children;
@@ -129,9 +163,10 @@ function FormMessage({ className, children, ...props }: ComponentProps<'p'>) {
       data-slot="form-message"
       id={formMessageId}
       role="alert"
-      className={cn('text-tiny font-medium text-destructive', className)}
+      className={cn('flex items-center gap-1 text-[12px] font-normal text-destructive', className)}
       {...props}
     >
+      <FormMessageIcon />
       {body}
     </p>
   );

@@ -306,50 +306,83 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          registered: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          registered?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          registered?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mindsetter_profiles: {
         Row: {
           created_at: string | null
           fckups: Json | null
-          help_with: string[] | null
+          help_with: Json | null
           id: string
           is_public: boolean | null
-          my_way: string | null
+          my_way: Json | null
           numbers: Json | null
+          onboarding_step: number | null
           philosophy: string | null
-          promo_video: string | null
-          roles: string[] | null
+          promo_video: Json | null
+          reel_life: Json | null
+          roles: Json | null
           superpowers: Json | null
           updated_at: string | null
+          video_blog: Json | null
           wins: Json | null
         }
         Insert: {
           created_at?: string | null
           fckups?: Json | null
-          help_with?: string[] | null
+          help_with?: Json | null
           id: string
           is_public?: boolean | null
-          my_way?: string | null
+          my_way?: Json | null
           numbers?: Json | null
+          onboarding_step?: number | null
           philosophy?: string | null
-          promo_video?: string | null
-          roles?: string[] | null
+          promo_video?: Json | null
+          reel_life?: Json | null
+          roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
+          video_blog?: Json | null
           wins?: Json | null
         }
         Update: {
           created_at?: string | null
           fckups?: Json | null
-          help_with?: string[] | null
+          help_with?: Json | null
           id?: string
           is_public?: boolean | null
-          my_way?: string | null
+          my_way?: Json | null
           numbers?: Json | null
+          onboarding_step?: number | null
           philosophy?: string | null
-          promo_video?: string | null
-          roles?: string[] | null
+          promo_video?: Json | null
+          reel_life?: Json | null
+          roles?: Json | null
           superpowers?: Json | null
           updated_at?: string | null
+          video_blog?: Json | null
           wins?: Json | null
         }
         Relationships: [
@@ -401,12 +434,14 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          industry: string | null
           interests: string[] | null
           is_blocked: boolean | null
           job_title: string | null
           languages: string[] | null
           last_name: string | null
           onboarding_step: number | null
+          role: string | null
           socials: Json | null
           tagline: string | null
           updated_at: string | null
@@ -428,12 +463,14 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          industry?: string | null
           interests?: string[] | null
           is_blocked?: boolean | null
           job_title?: string | null
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          role?: string | null
           socials?: Json | null
           tagline?: string | null
           updated_at?: string | null
@@ -455,12 +492,14 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          industry?: string | null
           interests?: string[] | null
           is_blocked?: boolean | null
           job_title?: string | null
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          role?: string | null
           socials?: Json | null
           tagline?: string | null
           updated_at?: string | null
@@ -472,32 +511,50 @@ export type Database = {
       }
       session_settings: {
         Row: {
+          accepts_bookings: boolean
+          available_days: string[]
+          available_from: string | null
+          available_to: string | null
           created_at: string | null
           currency: string | null
           duration_min: number | null
+          fee_consent_accepted: boolean
           mindsetter_id: string
           price_cents: number | null
           session_type: string
+          timezone: string | null
           topics: string[] | null
           updated_at: string | null
         }
         Insert: {
+          accepts_bookings?: boolean
+          available_days?: string[]
+          available_from?: string | null
+          available_to?: string | null
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
+          fee_consent_accepted?: boolean
           mindsetter_id: string
           price_cents?: number | null
           session_type?: string
+          timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
         }
         Update: {
+          accepts_bookings?: boolean
+          available_days?: string[]
+          available_from?: string | null
+          available_to?: string | null
           created_at?: string | null
           currency?: string | null
           duration_min?: number | null
+          fee_consent_accepted?: boolean
           mindsetter_id?: string
           price_cents?: number | null
           session_type?: string
+          timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
         }

@@ -39,7 +39,7 @@ export function NewsletterForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-row gap-2 sm:gap-4">
         <div className="flex-1">
           <label htmlFor="newsletter-email" className="sr-only">
             {t('emailLabel')}
@@ -68,7 +68,7 @@ export function NewsletterForm() {
           {errors.email.message}
         </p>
       ) : null}
-      <p className="text-tiny text-muted-foreground">{t('consent')}</p>
+      <p className="text-tiny text-foreground">{t('consent')}</p>
     </form>
   );
 }

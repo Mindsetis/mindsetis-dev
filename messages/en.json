@@ -52,17 +52,6 @@
       "continue": "Continue",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
-      "imOnTheWay": {
-        "description": "Leave your name and email — our team will personally follow up with you.",
-        "emailLabel": "Email",
-        "emailPlaceholder": "you@example.com",
-        "nameLabel": "Name",
-        "namePlaceholder": "Your name",
-        "submit": "Notify the team",
-        "success": "Thanks — we'll be in touch soon.",
-        "title": "Not ready to sign up yet?",
-        "trigger": "I'm on the way"
-      },
       "or": "or",
       "seeFeatures": "See platform features",
       "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
@@ -80,7 +69,7 @@
     "screenshotPlaceholder": "Platform's screenshot",
     "steps": {
       "step1": {
-        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates — and book a real conversation.",
+        "body": "Mindsetters are verified founders who share their experience. Browse profiles, find someone who resonates<br></br> — and book a real conversation.",
         "title": "Book a 1:1 session with a Mindsetter."
       },
       "step2": {
@@ -114,8 +103,10 @@
         "placeholder": "Your company name"
       },
       "industry": {
+        "empty": "No industry found.",
         "label": "Industry",
-        "placeholder": "Select an industry"
+        "placeholder": "Select an industry",
+        "searchPlaceholder": "Search industries"
       },
       "role": {
         "label": "Your role",
@@ -206,30 +197,26 @@
     },
     "signUp": {
       "back": "Back",
+      "confirmPassword": "Repeat Password",
       "continueWithGoogle": "Continue with Google",
       "continueWithLinkedin": "Continue with Linkedin",
-      "eyebrow": "Let's start",
       "fullName": "First name",
-      "haveAccount": "Already have an account?",
       "hidePassword": "Hide password",
       "lastName": "Second name",
-      "loginLink": "Log in",
       "passwordHints": {
         "length": "At least 8 characters",
-        "letter": "Contains a letter",
-        "number": "Contains a number"
+        "letter": "At least 1 uppercase letter",
+        "number": "At least 1 number"
       },
       "showPassword": "Show password",
       "stepLabel": "Step {step} of {total}",
       "submit": "Continue",
       "submitting": "Continuing…",
-      "subtitle": "Your info is saved right away — even if you don't finish now.",
       "title": "Create account",
       "username": "Username",
-      "usernamePlaceholder": "@anakondra"
+      "usernamePlaceholder": "anakondra"
     },
     "verifyEmail": {
-      "backToLogin": "Back to log in",
       "changeIt": "Change it",
       "resend": "Resend email",
       "resending": "Sending…",
@@ -239,9 +226,325 @@
       "wrongEmail": "Wrong email?"
     },
     "welcome": {
-      "browseCta": "Browse the community",
-      "subtitle": "You are now a member of the community.",
-      "title": "Congrats!"
+      "ctas": {
+        "findEvent": "Find Mindsetis event",
+        "findMindsetter": "Find Mindseter for me",
+        "findMindsetterInfo": "Find out who a Mindsetter is",
+        "inviteEvent": "Invite on Mindsetis event",
+        "seeProfile": "See how looks my profile page"
+      },
+      "modal": {
+        "becomeMindsetter": "Cool, I want to become a Mindsetter",
+        "checklist": {
+          "experience": "Ready to share real experience",
+          "label": "A Mindsetter is",
+          "owner": "A business owner, founder or CEO",
+          "verified": "Verified by the Mindsetis team"
+        },
+        "close": "Close",
+        "confirm": "Understand, I want to be a Member",
+        "description": "A Mindsetter is a verified business owner who opens 1:1 sessions<br></br> — sharing real experience with other founders who need it.",
+        "features": {
+          "brand": {
+            "body": "No more content grind. Your profile does the work — it shows who you are and what you've built.",
+            "title": "Build your personal brand"
+          },
+          "earn": {
+            "body": "Set your own price. Free or paid — your choice. Platform takes 15%, you keep 85%.",
+            "title": "Earn from sessions"
+          },
+          "site": {
+            "body": "Your Mindsetis profile looks like a premium personal website. Roles, wins, timeline, philosophy — all in one place.",
+            "title": "Your own personal site"
+          }
+        },
+        "title": "Who is Mindsetter?"
+      },
+      "title": "Congratulations! You are now a member of the community."
+    }
+  },
+  "mindsetterOnboarding": {
+    "common": {
+      "charCount": "{count}/{max}",
+      "edit": "Edit",
+      "reorder": "Reorder",
+      "saveAndContinue": "Save and continue",
+      "saving": "Saving…"
+    },
+    "roles": {
+      "addLink": "Add link",
+      "addRole": "Add role",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Character limit: {max} characters",
+      "linkPlaceholder": "Link",
+      "linkPreviewLoading": "Loading preview…",
+      "removeLink": "Remove link",
+      "removeRole": "Remove role",
+      "roleCardTitle": "Role {index}",
+      "rolesHeading": "Your roles",
+      "seeHowItLooks": "See how it looks",
+      "subtitle": "Fill in the sections below and your profile will look like a premium personal<br></br> website — not just a card in a catalog.",
+      "title": "We're building your<br></br> personal site",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Founder & CEO"
+    },
+    "superpowers": {
+      "cardTitle": "Superpower {index}/{total}",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Character limit: {max} characters",
+      "removeSuperpower": "Remove superpower",
+      "title": "Your superpowers",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Turning chaos into a clear plan"
+    },
+    "help": {
+      "addExpertise": "Add expertise",
+      "cardTitle": "Expertise {index}",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Character limit: {max} characters",
+      "removeExpertise": "Remove expertise",
+      "title": "You can help with",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Conference production"
+    },
+    "session": {
+      "acceptBookings": {
+        "subtitle": "People can book sessions with you",
+        "title": "Accept bookings"
+      },
+      "addCustomTopic": "Add custom",
+      "addCustomTopicConfirm": "Add",
+      "addCustomTopicPlaceholder": "Custom topic",
+      "availableDaysLabel": "Available days",
+      "availableFromLabel": "From",
+      "availableHoursLabel": "Available hours",
+      "availableToLabel": "To",
+      "durationLabel": "Choose session's duration",
+      "durationOption": "{minutes} min",
+      "feeModal": {
+        "agree": "I agree — continue setup",
+        "close": "Close",
+        "consent": "I have read and agree to the <terms>Session Terms</terms> and understand the platform fee policy.",
+        "info": {
+          "cancellation": {
+            "body": "Full refund if cancelled 24h+ before. No refund under 24h.",
+            "title": "Cancellation policy"
+          },
+          "changeAnytime": {
+            "body": "Switch Free ⇄ Paid or pause bookings at any moment from settings.",
+            "title": "Change anytime"
+          },
+          "payout": {
+            "body": "Funds released within 24h after session is completed and confirmed.",
+            "title": "Payout after session"
+          }
+        },
+        "subtitle": "How Mindsetis handles payments and your earnings",
+        "table": {
+          "note": "Example for a $500 session · Free sessions have no fee",
+          "platformFee": {
+            "label": "Platform fee · 15%",
+            "value": "−$75"
+          },
+          "sessionPrice": {
+            "label": "Session price (example)",
+            "value": "$500"
+          },
+          "youReceive": {
+            "label": "You receive · 85%",
+            "value": "$425"
+          }
+        },
+        "title": "Platform fee & payouts"
+      },
+      "free": {
+        "label": "Free",
+        "value": "0$"
+      },
+      "howItWorks": {
+        "label": "How it Works",
+        "subtitle": "15% fee · you keep 85% · instant<br></br>payout",
+        "title": "Platform fee & payouts"
+      },
+      "paid": {
+        "label": "Paid"
+      },
+      "priceHint": "You can change this anytime",
+      "priceInputPlaceholder": "Price",
+      "priceLabel": "Indicate session price",
+      "subtitle": "Here you can enter information about your hourly rate for the session",
+      "timezoneEmpty": "No timezone found.",
+      "timezoneHint": "Auto-detected from your device. Tap to change.",
+      "timezoneLabel": "Your timezone",
+      "timezonePlaceholder": "Select timezone",
+      "timezoneSearchPlaceholder": "Search timezone…",
+      "title": "Personal session",
+      "topicsLabel": "Topics you're expert in · up to {max}",
+      "weekday": {
+        "fri": "Fr",
+        "mon": "Mo",
+        "sat": "Sa",
+        "sun": "Su",
+        "thu": "Th",
+        "tue": "Tu",
+        "wed": "We"
+      }
+    },
+    "shine": {
+      "blocks": {
+        "fckups": {
+          "description": "Real mistakes. Builds trust like nothing else.",
+          "name": "My F*ckUp(s)"
+        },
+        "my-way": {
+          "description": "Your business journey as a timeline.",
+          "name": "My Way"
+        },
+        "numbers": {
+          "description": "12+ years · 3× platforms · #1 in your field.",
+          "name": "Numbers"
+        },
+        "philosophy": {
+          "description": "One quote that defines how you think.",
+          "name": "My Philosophy"
+        },
+        "promo": {
+          "description": "60-90 sec vertical video. Biggest impact on bookings.",
+          "name": "Promo video"
+        },
+        "reel-life": {
+          "description": "A photo gallery of your best behind-the-scenes and highlight moments.",
+          "name": "Reel Life"
+        },
+        "video-blog": {
+          "description": "Link your BUILT NOT BURN interview.",
+          "name": "Video blog"
+        },
+        "wins": {
+          "description": "Key achievements as colorful cards.",
+          "name": "My Wins"
+        }
+      },
+      "completeness": {
+        "label": "Profile completeness",
+        "tier": {
+          "basic": "Basic",
+          "growing": "Growing",
+          "pro": "Pro"
+        }
+      },
+      "continueFill": "Continue fill ({count, plural, one {# section} other {# sections}})",
+      "listHeading": "What you can add",
+      "skip": "Skip — fill later from cabinet",
+      "subtitle": "Select what you want to fill now. Everything else — later.",
+      "title": "Make your profile shine."
+    },
+    "blocks": {
+      "fckups": {
+        "addFckup": "Add f*ckup",
+        "cardTitle": "F*ckup {index}",
+        "removeFckup": "Remove f*ckup",
+        "storyLabel": "Story",
+        "storyPlaceholder": "Character limit: {max} characters",
+        "title": "My F*ckUp(s)"
+      },
+      "myWay": {
+        "addStage": "Add stage",
+        "cardTitle": "Stage {index}",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Character limit: {max} characters",
+        "projectLabel": "Project name",
+        "projectPlaceholder": "e.g. Founded my first startup",
+        "removeStage": "Remove stage",
+        "title": "My Way",
+        "yearFromLabel": "From",
+        "yearFromPlaceholder": "e.g. 2016",
+        "yearToLabel": "To",
+        "yearToPlaceholder": "e.g. 2020",
+        "yearsLabel": "Years"
+      },
+      "numbers": {
+        "addNumber": "Add number",
+        "cardTitle": "Number {index}",
+        "labelLabel": "Label",
+        "labelPlaceholder": "e.g. Platforms founded",
+        "removeNumber": "Remove number",
+        "title": "Numbers",
+        "valueLabel": "Value",
+        "valuePlaceholder": "e.g. 3×"
+      },
+      "philosophy": {
+        "cardTitle": "Quote",
+        "quoteLabel": "Your quote",
+        "quotePlaceholder": "Character limit: {max} characters",
+        "title": "My Philosophy"
+      },
+      "promo": {
+        "errors": {
+          "invalidType": "Please upload an MP4 or MOV video.",
+          "tooLarge": "Video must be 200MB or smaller.",
+          "uploadFailed": "Could not upload your video. Please try again."
+        },
+        "linkPlaceholder": "Link",
+        "orDivider": "OR",
+        "removeVideo": "Remove video",
+        "title": "Promo video",
+        "uploadHint": "MP4 or MOV · Max 200MB<br></br>Vertical format (9:16)<br></br>recommended",
+        "uploading": "Uploading…",
+        "uploadLabel": "Upload video",
+        "vimeoLabel": "Vimeo URL",
+        "youtubeLabel": "Youtube URL"
+      },
+      "reelLife": {
+        "activateHint": "Add at least 3 photos to activate this section.",
+        "addPhoto": "Add Photo",
+        "errors": {
+          "invalidType": "Only PNG or JPEG images are allowed.",
+          "tooLarge": "Image must be at most 10 MB."
+        },
+        "removePhoto": "Remove photo",
+        "reorderHint": "Hold and drag to change order.",
+        "title": "Reel Life",
+        "uploadHint": "PNG or JPEG · Max 10MB per<br></br>photo",
+        "uploadLabel": "Upload photo"
+      },
+      "videoBlog": {
+        "linkPlaceholder": "Link",
+        "title": "Video blog",
+        "vimeoLabel": "Vimeo URL",
+        "youtubeLabel": "Youtube URL"
+      },
+      "wins": {
+        "addWin": "Add win",
+        "cardTitle": "Win {index}",
+        "colorCardLabel": "{color} card",
+        "colorLabel": "Choose color card",
+        "colorName": {
+          "blue": "Blue",
+          "lightblue": "Light blue",
+          "orange": "Orange",
+          "pink": "Pink",
+          "purple": "Purple",
+          "teal": "Teal",
+          "yellow": "Yellow"
+        },
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Character limit: {max} characters",
+        "removeWin": "Remove win",
+        "title": "My Wins",
+        "winLabel": "Win",
+        "winPlaceholder": "e.g. Launched our biggest product",
+        "yearLabel": "Year",
+        "yearPlaceholder": "e.g. 2021"
+      }
+    },
+    "congrats": {
+      "ctas": {
+        "findEvent": "Find Mindsetis event",
+        "inviteEvent": "Invite on Mindsetis event",
+        "seeProfile": "See how looks my profile page"
+      },
+      "title": "Congratulations! You are now a mindsetter of the community."
     }
   },
   "profile": {

@@ -4,3 +4,146 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
 }
+
+/**
+ * Gradient-border helper — `Button`'s `primaryOutline` variant needs a gradient edge, which
+ * plain Tailwind `border-*` utilities can't render. Drawn via TWO masked pseudo-elements
+ * instead of the double-`background-clip` trick, since the mask approach doesn't need to know
+ * the exact parent background color (buttons sit on the page background, cards, dialogs,
+ * etc.).
+ *
+ * Two layers, not one, because CSS cannot smoothly interpolate a `background` change between
+ * two different `linear-gradient()`s (or gradient↔solid-color) — a plain transition on
+ * `background` just snaps. Crossfading via `opacity` instead (which DOES interpolate) sidesteps
+ * that: `::before` always holds the resting/normal-state ring and fades OUT for every other
+ * state; `::after` holds whichever non-normal state currently applies and fades IN over it.
+ * `:hover`/`:active`/`:disabled` are read directly off the real button element (not a Tailwind
+ * `group-*` + wrapper-span setup) so this works whether `Button` renders a real `<button>` or
+ * (via `asChild`) whatever single child `Slot` merges onto (e.g. a `<Link>`), with no extra DOM
+ * nodes and no `React.Children.only` conflict.
+ *
+ * One known remaining gap: crossfading directly BETWEEN two non-normal states (e.g. hover →
+ * active, both painted by the same `::after` layer) still snaps, since `::after`'s own
+ * `background` swaps instantly there — `::after`'s opacity stays at 1 throughout that
+ * transition, so opacity crossfading doesn't apply to that specific edge. Accepted: that
+ * transition is normally near-instantaneous in real use (the duration of a mouse click), unlike
+ * the far more common and longer-held normal↔hover edge, which now crossfades correctly.
+ *
+ * Each state's fill is supplied via its own `--btn-border-gradient-*` custom property (set once,
+ * unconditionally, in `components/ui/button.tsx`'s `primaryOutline`) rather than being swapped
+ * per state through Tailwind variant classes — the state-switching itself now lives entirely in
+ * this CSS via plain `:hover`/`:active`/`:disabled` selectors.
+ */
+@utility gradient-border {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    /* Both the prefixed AND unprefixed `mask` shorthand must be set in full (not just
+     * `mask-composite` alone) — a shorthand resets the sub-properties it doesn't mention, so
+     * pairing a `-webkit-mask` shorthand with only a standalone unprefixed `mask-composite`
+     * left the exclusion incomplete in some render paths, showing the pseudo-element's full
+     * rounded-rect edge (dark corner artifacts, a visible ring outside the intended border). */
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+
+  &::before {
+    background: var(--btn-border-gradient-normal, transparent);
+    opacity: 1;
+  }
+  &:hover::before,
+  &:active::before,
+  &:disabled::before {
+    opacity: 0;
+  }
+
+  &::after {
+    background: var(--btn-border-gradient-normal, transparent);
+    opacity: 0;
+  }
+  &:hover::after {
+    background: var(--btn-border-gradient-hover, var(--btn-border-gradient-normal));
+    opacity: 1;
+  }
+  &:active::after {
+    background: var(--btn-border-gradient-active, var(--btn-border-gradient-normal));
+    opacity: 1;
+  }
+  &:disabled::after {
+    background: var(--btn-border-gradient-disabled, var(--btn-border-gradient-normal));
+    opacity: 1;
+  }
+}
+
+/**
+ * Gradient-fill helper — `Button`'s `primary` variant (desktop-only, `md:`+) swaps between
+ * two different gradients (normal/hover → active) and a gradient → flat color (→ disabled),
+ * neither of which a plain `background` transition can interpolate — same underlying problem
+ * as `gradient-border` above, same fix: two full-cover layers crossfaded via `opacity`
+ * instead of swapping one layer's `background-image` directly.
+ *
+ * `::before` holds the resting/normal (and hover — they share the same gradient, only the
+ * `shadow-glow-primary` drop differs on hover) fill and fades out for active/disabled;
+ * `::after` holds whichever of those two applies and fades in over it. Both sit at `z-index:
+ * -1` inside this element's own stacking context (`isolation: isolate`) — CSS stacks a
+ * negative-z-index child above its own element's background/border but below normal in-flow
+ * content, so the button's text/icon (plain children, no z-index) render above these layers
+ * without needing a z-index of their own.
+ *
+ * Applied unconditionally (not `md:`-gated) so the utility structure exists at every
+ * breakpoint, but the `--btn-fill-*` custom properties are only SET at `md:`+ in
+ * `components/ui/button.tsx`'s `primary` — on mobile they fall back to this utility's own
+ * `transparent` default, so the layers paint nothing and the element's own flat, real
+ * `background-color` (which — being a solid-to-solid change — already transitions smoothly
+ * on its own) shows through untouched.
+ */
+@utility gradient-fill {
+  position: relative;
+  isolation: isolate;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    transition: opacity 200ms ease;
+  }
+
+  &::before {
+    background: var(--btn-fill-normal, transparent);
+    opacity: 1;
+  }
+  &:active::before,
+  &:disabled::before {
+    opacity: 0;
+  }
+
+  &::after {
+    background: var(--btn-fill-normal, transparent);
+    opacity: 0;
+  }
+  &:active::after {
+    background: var(--btn-fill-active, var(--btn-fill-normal));
+    opacity: 1;
+  }
+  &:disabled::after {
+    background: var(--btn-fill-disabled, var(--btn-fill-normal));
+    opacity: 1;
+  }
+}

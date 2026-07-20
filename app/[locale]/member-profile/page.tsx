@@ -1,9 +1,8 @@
-import { ArrowLeft } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
+import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { MemberProfileForm } from '@/components/member-profile/MemberProfileForm';
-import { Link, redirect } from '@/i18n/navigation';
+import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
 import type { InterestValue } from '@/lib/constants/interests';
 import { INTEREST_VALUES } from '@/lib/constants/interests';
@@ -78,26 +77,15 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:py-16 lg:px-[70px]">
+    <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       {/* Same Back + progress-bar layout as sign-up's step 1 (see that page's comment for
-          why Back is pinned to the logo's left edge on desktop but inline on mobile). */}
-      <div className="relative mb-8 flex items-center gap-4 md:mb-12 md:justify-center">
-        <Link
-          href="/verify-email"
-          className="flex shrink-0 items-center gap-2 text-sm font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {t('signUp.back')}
-        </Link>
-
-        <div className="w-full max-w-[640px] flex-1 md:flex-none">
-          <RegistrationProgress
-            step={3}
-            total={TOTAL_STEPS}
-            label={t('signUp.stepLabel', { step: 3, total: TOTAL_STEPS })}
-          />
-        </div>
-      </div>
+          why Back is pinned to the logo's left edge on desktop but above it on mobile). */}
+      <RegistrationStepHeader
+        backHref="/verify-email"
+        step={3}
+        total={TOTAL_STEPS}
+        label={t('signUp.stepLabel', { step: 3, total: TOTAL_STEPS })}
+      />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <h1 className="font-display text-h1 text-foreground md:text-h3">

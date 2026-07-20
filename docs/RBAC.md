@@ -26,6 +26,15 @@ _hardens_ an already-absent right into an explicit, auditable flag once the wind
 below). Mindsetter-only rights (`canOpenOwnSessions`, `hasPublicProfile`) additionally require
 `account_type === 'mindsetter'` **and** verified — an unverified Mindsetter has neither yet.
 
+**Invariant, stated explicitly because it's easy to get wrong:** `account_type === 'mindsetter'`
+must **never** gate a capability on its own — always AND it with verification. The extended
+Mindsetter onboarding wizard (stage 1.9, `app/[locale]/mindsetter-onboarding/actions.ts`'s
+`finalizeMindsetterOnboarding`) flips `account_type` to `'mindsetter'` as soon as the 5-step core
+wizard is done, which is **before** staff verification (a separate, later step). So a caller can
+sit in `account_type = 'mindsetter'`, `verification_status = 'unverified'` for a while — during
+that window they must have zero Mindsetter-only rights. See the same note in
+`lib/auth/permissions.ts` at `resolvePermissions`'s `isMindsetter` line.
+
 ## 14-day rule → `access_restricted`
 
 - On signup, `verification_deadline = now() + interval '14 days'` (stage 0.6,

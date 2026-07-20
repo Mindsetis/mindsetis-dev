@@ -52,17 +52,6 @@
       "continue": "Continuar",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
-      "imOnTheWay": {
-        "description": "Déjanos tu nombre y correo electrónico — nuestro equipo se pondrá en contacto contigo personalmente.",
-        "emailLabel": "Correo electrónico",
-        "emailPlaceholder": "tu@ejemplo.com",
-        "nameLabel": "Nombre",
-        "namePlaceholder": "Tu nombre",
-        "submit": "Avisar al equipo",
-        "success": "Gracias — nos pondremos en contacto pronto.",
-        "title": "¿Aún no estás listo para registrarte?",
-        "trigger": "Ya voy en camino"
-      },
       "or": "o",
       "seeFeatures": "Ver funciones de la plataforma",
       "subtitle": "Esta plataforma es para quienes actúan — quienes cambian el mundo a través de sus acciones y su mentalidad. Son los Mindsetters.",
@@ -80,7 +69,7 @@
     "screenshotPlaceholder": "Captura de la plataforma",
     "steps": {
       "step1": {
-        "body": "Los Mindsetters son fundadores verificados que comparten su experiencia. Explora perfiles, encuentra a alguien afín y reserva una conversación real.",
+        "body": "Los Mindsetters son fundadores verificados que comparten su experiencia. Explora perfiles, encuentra a alguien afín<br></br> y reserva una conversación real.",
         "title": "Reserva una sesión 1:1 con un Mindsetter."
       },
       "step2": {
@@ -114,8 +103,10 @@
         "placeholder": "El nombre de tu empresa"
       },
       "industry": {
+        "empty": "No se encontró ninguna industria.",
         "label": "Industria",
-        "placeholder": "Selecciona una industria"
+        "placeholder": "Selecciona una industria",
+        "searchPlaceholder": "Buscar industrias"
       },
       "role": {
         "label": "Tu rol",
@@ -206,30 +197,26 @@
     },
     "signUp": {
       "back": "Atrás",
+      "confirmPassword": "Repetir contraseña",
       "continueWithGoogle": "Continuar con Google",
       "continueWithLinkedin": "Continuar con Linkedin",
-      "eyebrow": "Empecemos",
       "fullName": "Nombre",
-      "haveAccount": "¿Ya tienes una cuenta?",
       "hidePassword": "Ocultar contraseña",
       "lastName": "Apellido",
-      "loginLink": "Iniciar sesión",
       "passwordHints": {
         "length": "Al menos 8 caracteres",
-        "letter": "Contiene una letra",
-        "number": "Contiene un número"
+        "letter": "Al menos 1 letra mayúscula",
+        "number": "Al menos 1 número"
       },
       "showPassword": "Mostrar contraseña",
       "stepLabel": "Paso {step} de {total}",
       "submit": "Continuar",
       "submitting": "Continuando…",
-      "subtitle": "Tu información se guarda de inmediato, incluso si no terminas ahora.",
       "title": "Crear cuenta",
       "username": "Nombre de usuario",
-      "usernamePlaceholder": "@anakondra"
+      "usernamePlaceholder": "anakondra"
     },
     "verifyEmail": {
-      "backToLogin": "Volver a iniciar sesión",
       "changeIt": "Cámbialo",
       "resend": "Reenviar correo",
       "resending": "Enviando…",
@@ -239,9 +226,325 @@
       "wrongEmail": "¿Correo equivocado?"
     },
     "welcome": {
-      "browseCta": "Explorar la comunidad",
-      "subtitle": "Ya eres miembro de la comunidad.",
-      "title": "¡Felicidades!"
+      "ctas": {
+        "findEvent": "Buscar un evento de Mindsetis",
+        "findMindsetter": "Buscar un Mindsetter para mí",
+        "findMindsetterInfo": "Descubre qué es un Mindsetter",
+        "inviteEvent": "Invitar a un evento de Mindsetis",
+        "seeProfile": "Ver cómo se ve mi página de perfil"
+      },
+      "modal": {
+        "becomeMindsetter": "Genial, quiero ser Mindsetter",
+        "checklist": {
+          "experience": "Listo para compartir experiencia real",
+          "label": "Un Mindsetter es",
+          "owner": "Un empresario, fundador o CEO",
+          "verified": "Verificado por el equipo de Mindsetis"
+        },
+        "close": "Cerrar",
+        "confirm": "Entendido, quiero ser Miembro",
+        "description": "Un Mindsetter es un empresario verificado que abre sesiones 1:1<br></br> — comparte experiencia real con otros fundadores que la necesitan.",
+        "features": {
+          "brand": {
+            "body": "Nada de crear contenido sin parar. Tu perfil habla por ti — muestra quién eres y qué has construido.",
+            "title": "Construye tu marca personal"
+          },
+          "earn": {
+            "body": "Define tu propio precio. Gratis o de pago — tú eliges. La plataforma se queda el 15%, tú te quedas el 85%.",
+            "title": "Gana con tus sesiones"
+          },
+          "site": {
+            "body": "Tu perfil de Mindsetis se ve como un sitio web personal premium. Roles, logros, trayectoria, filosofía — todo en un solo lugar.",
+            "title": "Tu propio sitio personal"
+          }
+        },
+        "title": "¿Qué es un Mindsetter?"
+      },
+      "title": "¡Felicidades! Ya eres miembro de la comunidad."
+    }
+  },
+  "mindsetterOnboarding": {
+    "common": {
+      "charCount": "{count}/{max}",
+      "edit": "Editar",
+      "reorder": "Reordenar",
+      "saveAndContinue": "Guardar y continuar",
+      "saving": "Guardando…"
+    },
+    "roles": {
+      "addLink": "Añadir enlace",
+      "addRole": "Añadir rol",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
+      "linkPlaceholder": "Enlace",
+      "linkPreviewLoading": "Cargando vista previa…",
+      "removeLink": "Quitar enlace",
+      "removeRole": "Quitar rol",
+      "roleCardTitle": "Rol {index}",
+      "rolesHeading": "Tus roles",
+      "seeHowItLooks": "Ver cómo se ve",
+      "subtitle": "Completa las secciones a continuación y tu perfil lucirá como un sitio web personal<br></br> premium — no solo una tarjeta en el catálogo.",
+      "title": "Estamos construyendo tu<br></br> sitio personal",
+      "titleLabel": "Título",
+      "titlePlaceholder": "p. ej. Fundador y CEO"
+    },
+    "superpowers": {
+      "cardTitle": "Superpoder {index}/{total}",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
+      "removeSuperpower": "Quitar superpoder",
+      "title": "Tus superpoderes",
+      "titleLabel": "Título",
+      "titlePlaceholder": "p. ej. Convertir el caos en un plan claro"
+    },
+    "help": {
+      "addExpertise": "Añadir especialidad",
+      "cardTitle": "Especialidad {index}",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
+      "removeExpertise": "Quitar especialidad",
+      "title": "En qué puedes ayudar",
+      "titleLabel": "Título",
+      "titlePlaceholder": "p. ej. Producción de conferencias"
+    },
+    "session": {
+      "acceptBookings": {
+        "subtitle": "Las personas pueden reservar sesiones contigo",
+        "title": "Aceptar reservas"
+      },
+      "addCustomTopic": "Añadir personalizado",
+      "addCustomTopicConfirm": "Añadir",
+      "addCustomTopicPlaceholder": "Tema personalizado",
+      "availableDaysLabel": "Días disponibles",
+      "availableFromLabel": "Desde",
+      "availableHoursLabel": "Horario disponible",
+      "availableToLabel": "Hasta",
+      "durationLabel": "Elige la duración de la sesión",
+      "durationOption": "{minutes} min",
+      "feeModal": {
+        "agree": "Estoy de acuerdo — continuar configuración",
+        "close": "Cerrar",
+        "consent": "He leído y acepto los <terms>Términos de Sesión</terms> y entiendo la política de comisión de la plataforma.",
+        "info": {
+          "cancellation": {
+            "body": "Reembolso total si se cancela con 24h+ de antelación. Sin reembolso con menos de 24h.",
+            "title": "Política de cancelación"
+          },
+          "changeAnytime": {
+            "body": "Cambia entre Gratis ⇄ De pago o pausa las reservas en cualquier momento desde la configuración.",
+            "title": "Cambia en cualquier momento"
+          },
+          "payout": {
+            "body": "Los fondos se liberan dentro de las 24h posteriores a la sesión completada y confirmada.",
+            "title": "Pago tras la sesión"
+          }
+        },
+        "subtitle": "Cómo gestiona Mindsetis los pagos y tus ganancias",
+        "table": {
+          "note": "Ejemplo para una sesión de $500 · Las sesiones gratuitas no tienen comisión",
+          "platformFee": {
+            "label": "Comisión de la plataforma · 15%",
+            "value": "−$75"
+          },
+          "sessionPrice": {
+            "label": "Precio de la sesión (ejemplo)",
+            "value": "$500"
+          },
+          "youReceive": {
+            "label": "Tú recibes · 85%",
+            "value": "$425"
+          }
+        },
+        "title": "Comisión de la plataforma y pagos"
+      },
+      "free": {
+        "label": "Gratis",
+        "value": "0$"
+      },
+      "howItWorks": {
+        "label": "Cómo funciona",
+        "subtitle": "15% de comisión · te quedas con el 85% · pago<br></br>instantáneo",
+        "title": "Comisión de la plataforma y pagos"
+      },
+      "paid": {
+        "label": "De pago"
+      },
+      "priceHint": "Puedes cambiar esto en cualquier momento",
+      "priceInputPlaceholder": "Precio",
+      "priceLabel": "Indica el precio de la sesión",
+      "subtitle": "Aquí puedes indicar tu tarifa por hora para la sesión",
+      "timezoneEmpty": "No se encontró ninguna zona horaria.",
+      "timezoneHint": "Detectada automáticamente desde tu dispositivo. Toca para cambiar.",
+      "timezoneLabel": "Tu zona horaria",
+      "timezonePlaceholder": "Selecciona la zona horaria",
+      "timezoneSearchPlaceholder": "Buscar zona horaria…",
+      "title": "Sesión personal",
+      "topicsLabel": "Temas en los que eres experto · hasta {max}",
+      "weekday": {
+        "fri": "Vi",
+        "mon": "Lu",
+        "sat": "Sá",
+        "sun": "Do",
+        "thu": "Ju",
+        "tue": "Ma",
+        "wed": "Mi"
+      }
+    },
+    "shine": {
+      "blocks": {
+        "fckups": {
+          "description": "Errores reales. Genera confianza como ninguna otra cosa.",
+          "name": "Mis Meteduras de Pata"
+        },
+        "my-way": {
+          "description": "Tu trayectoria profesional como línea de tiempo.",
+          "name": "Mi Camino"
+        },
+        "numbers": {
+          "description": "12+ años · 3× plataformas · #1 en tu campo.",
+          "name": "Números"
+        },
+        "philosophy": {
+          "description": "Una cita que define cómo piensas.",
+          "name": "Mi Filosofía"
+        },
+        "promo": {
+          "description": "Video vertical de 60-90 seg. El mayor impacto en las reservas.",
+          "name": "Video promocional"
+        },
+        "reel-life": {
+          "description": "Una galería de fotos con tus mejores momentos entre bastidores y destacados.",
+          "name": "Reel Life"
+        },
+        "video-blog": {
+          "description": "Enlaza tu entrevista de BUILT NOT BURN.",
+          "name": "Video blog"
+        },
+        "wins": {
+          "description": "Logros clave como tarjetas de colores.",
+          "name": "Mis Logros"
+        }
+      },
+      "completeness": {
+        "label": "Completitud del perfil",
+        "tier": {
+          "basic": "Básico",
+          "growing": "En crecimiento",
+          "pro": "Pro"
+        }
+      },
+      "continueFill": "Continuar completando ({count, plural, one {# sección} other {# secciones}})",
+      "listHeading": "Qué puedes añadir",
+      "skip": "Omitir — completar más tarde desde el panel",
+      "subtitle": "Selecciona lo que quieres completar ahora. Todo lo demás — más tarde.",
+      "title": "Haz brillar tu perfil."
+    },
+    "blocks": {
+      "fckups": {
+        "addFckup": "Añadir metedura de pata",
+        "cardTitle": "Metedura de pata {index}",
+        "removeFckup": "Quitar metedura de pata",
+        "storyLabel": "Historia",
+        "storyPlaceholder": "Límite de caracteres: {max} caracteres",
+        "title": "Mis Meteduras de Pata"
+      },
+      "myWay": {
+        "addStage": "Añadir etapa",
+        "cardTitle": "Etapa {index}",
+        "descriptionLabel": "Descripción",
+        "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
+        "projectLabel": "Nombre del proyecto",
+        "projectPlaceholder": "p. ej. Fundé mi primera startup",
+        "removeStage": "Quitar etapa",
+        "title": "Mi Camino",
+        "yearFromLabel": "Desde",
+        "yearFromPlaceholder": "p. ej. 2016",
+        "yearToLabel": "Hasta",
+        "yearToPlaceholder": "p. ej. 2020",
+        "yearsLabel": "Años"
+      },
+      "numbers": {
+        "addNumber": "Añadir número",
+        "cardTitle": "Número {index}",
+        "labelLabel": "Etiqueta",
+        "labelPlaceholder": "p. ej. Plataformas fundadas",
+        "removeNumber": "Quitar número",
+        "title": "Números",
+        "valueLabel": "Valor",
+        "valuePlaceholder": "p. ej. 3×"
+      },
+      "philosophy": {
+        "cardTitle": "Cita",
+        "quoteLabel": "Tu cita",
+        "quotePlaceholder": "Límite de caracteres: {max} caracteres",
+        "title": "Mi Filosofía"
+      },
+      "promo": {
+        "errors": {
+          "invalidType": "Sube un video MP4 o MOV.",
+          "tooLarge": "El video debe pesar 200MB o menos.",
+          "uploadFailed": "No se pudo subir tu video. Inténtalo de nuevo."
+        },
+        "linkPlaceholder": "Enlace",
+        "orDivider": "O",
+        "removeVideo": "Quitar video",
+        "title": "Video promocional",
+        "uploadHint": "MP4 o MOV · Máx. 200MB<br></br>Formato vertical (9:16)<br></br>recomendado",
+        "uploading": "Subiendo…",
+        "uploadLabel": "Subir video",
+        "vimeoLabel": "URL de Vimeo",
+        "youtubeLabel": "URL de Youtube"
+      },
+      "reelLife": {
+        "activateHint": "Añade al menos 3 fotos para activar esta sección.",
+        "addPhoto": "Añadir foto",
+        "errors": {
+          "invalidType": "Solo se permiten imágenes PNG o JPEG.",
+          "tooLarge": "La imagen debe pesar como máximo 10 MB."
+        },
+        "removePhoto": "Quitar foto",
+        "reorderHint": "Mantén pulsado y arrastra para cambiar el orden.",
+        "title": "Reel Life",
+        "uploadHint": "PNG o JPEG · Máx. 10MB por<br></br>foto",
+        "uploadLabel": "Subir foto"
+      },
+      "videoBlog": {
+        "linkPlaceholder": "Enlace",
+        "title": "Video blog",
+        "vimeoLabel": "URL de Vimeo",
+        "youtubeLabel": "URL de Youtube"
+      },
+      "wins": {
+        "addWin": "Añadir logro",
+        "cardTitle": "Logro {index}",
+        "colorCardLabel": "Tarjeta {color}",
+        "colorLabel": "Elige la tarjeta de color",
+        "colorName": {
+          "blue": "Azul",
+          "lightblue": "Azul claro",
+          "orange": "Naranja",
+          "pink": "Rosa",
+          "purple": "Morado",
+          "teal": "Verde azulado",
+          "yellow": "Amarillo"
+        },
+        "descriptionLabel": "Descripción",
+        "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
+        "removeWin": "Quitar logro",
+        "title": "Mis Logros",
+        "winLabel": "Logro",
+        "winPlaceholder": "p. ej. Lanzamos nuestro mayor producto",
+        "yearLabel": "Año",
+        "yearPlaceholder": "p. ej. 2021"
+      }
+    },
+    "congrats": {
+      "ctas": {
+        "findEvent": "Buscar evento de Mindsetis",
+        "inviteEvent": "Invitar a un evento de Mindsetis",
+        "seeProfile": "Ver cómo se ve mi página de perfil"
+      },
+      "title": "¡Felicidades! Ahora eres un mindsetter de la comunidad."
     }
   },
   "profile": {

@@ -54,11 +54,12 @@ export function InterestsPicker({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto">
         <Chip
           selected={activeCategory === ALL_CATEGORY}
           onClick={() => setActiveCategory(ALL_CATEGORY)}
           disabled={disabled}
+          className="min-w-[48px]"
         >
           {allCategoryLabel}
         </Chip>
@@ -94,8 +95,10 @@ export function InterestsPicker({
                 disabled={disabled || (!isSelected && limitReached)}
                 onClick={() => toggle(interest.value)}
               >
-                <span aria-hidden="true">{interest.emoji}</span>
-                {interest.label}
+                <span>
+                  <span aria-hidden="true">{interest.emoji}</span>
+                  {interest.label}
+                </span>
               </Chip>
             );
           })}

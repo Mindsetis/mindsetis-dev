@@ -97,6 +97,7 @@ export function MemberProfileForm({
 
   const form = useForm<MemberProfileInput>({
     resolver: zodResolver(createMemberProfileSchema({ avatarRequired: !hasExistingAvatar })),
+    mode: 'onChange',
     defaultValues: {
       username: initialUsername,
       country: initialCountry ?? '',
@@ -152,23 +153,25 @@ export function MemberProfileForm({
 
   return (
     <Form {...form}>
-      {/* Outer gap is 16px (Figma's field-block-to-submit-button spacing) — the fields
-          themselves keep their own tighter 12px (`gap-3`) rhythm in the wrapper below. */}
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      {/* Same spacing rhythm as `SignUpForm.tsx`: 16px/24px (mobile/desktop) from the field
+          block to the submit button, 12px/16px between individual fields. */}
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
           </Alert>
         ) : null}
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 md:gap-4">
           <FormField
             control={form.control}
             name="username"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('signUp.username')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('signUp.username')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -189,7 +192,9 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('memberProfile.country.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('memberProfile.country.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -210,7 +215,9 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {t('memberProfile.city.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('memberProfile.city.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -231,7 +238,9 @@ export function MemberProfileForm({
             render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
-                  {t('memberProfile.languages.label')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('memberProfile.languages.label')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <LanguagesMultiSelect
                   value={field.value}
@@ -256,7 +265,9 @@ export function MemberProfileForm({
               <FormItem>
                 <div className="flex items-center justify-between gap-2">
                   <FormLabel>
-                    {t('memberProfile.bio.label')} <span className="text-primary">*</span>
+                    <span className="inline-flex items-center gap-1">
+                      {t('memberProfile.bio.label')} <span className="text-primary">*</span>
+                    </span>
                   </FormLabel>
                   <span className="text-tiny text-muted-foreground">
                     {t('memberProfile.bio.charCount', {
@@ -312,8 +323,10 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel variant="boldSpacing">
-                  {t('memberProfile.photo.label')}
-                  {!hasExistingAvatar && <span className="text-primary">*</span>}
+                  <span className="inline-flex items-center gap-1">
+                    {t('memberProfile.photo.label')}
+                    {!hasExistingAvatar && <span className="text-primary">*</span>}
+                  </span>
                 </FormLabel>
                 <AvatarUpload
                   file={field.value ?? null}
@@ -322,7 +335,9 @@ export function MemberProfileForm({
                   replaceLabel={t('memberProfile.photo.replace')}
                   initialAvatarUrl={initialAvatarUrl}
                 />
-                <FieldHint>{t('memberProfile.photo.hint')}</FieldHint>
+                <FieldHint centerIcon className="text-[12px] md:text-[14px]">
+                  {t('memberProfile.photo.hint')}
+                </FieldHint>
                 <FormMessage />
               </FormItem>
             )}
@@ -333,7 +348,9 @@ export function MemberProfileForm({
             name="interestIds"
             render={({ field }) => (
               <FormItem>
-                <FormLabel variant="boldSpacing">{t('memberProfile.interests.title')}</FormLabel>
+                <FormLabel variant="boldSpacing" className="mb-1">
+                  {t('memberProfile.interests.title')}
+                </FormLabel>
                 <InterestsPicker
                   value={field.value}
                   onChange={field.onChange}
@@ -351,7 +368,9 @@ export function MemberProfileForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel variant="boldSpacing">
-                  {t('memberProfile.socials.linkedin')} <span className="text-primary">*</span>
+                  <span className="inline-flex items-center gap-1">
+                    {t('memberProfile.socials.linkedin')} <span className="text-primary">*</span>
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input

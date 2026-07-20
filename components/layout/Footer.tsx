@@ -38,23 +38,26 @@ export default async function Footer() {
   const columnTwoLinks = t.raw('columns.two.links') as string[];
 
   return (
-    <footer className="rounded-t-3xl bg-card px-4 pt-8 pb-4 sm:px-6 lg:rounded-t-[2.5rem] lg:px-16 lg:py-20">
-      <div className="mx-auto flex max-w-large flex-col gap-12 lg:flex-row lg:justify-between lg:gap-8">
-        <div className="flex flex-col gap-6 lg:max-w-[500px]">
-          <Link href="/" className="font-display text-2xl leading-none text-primary lg:text-l">
+    <footer className="rounded-t-[30px] bg-card px-4 pt-8 pb-4 sm:px-6 lg:rounded-t-[50px] lg:px-16 lg:py-20">
+      <div className="mx-auto flex max-w-large flex-col gap-8 lg:flex-row lg:justify-between">
+        <div className="flex flex-col lg:gap-6 lg:max-w-[500px] lg:shrink-0">
+          <Link
+            href="/"
+            className="mb-6 font-display text-2xl leading-none text-primary lg:mb-0 lg:text-l"
+          >
             {tNav('brand')}
           </Link>
-          <p className="text-body text-foreground">{t('newsletter.subtitle')}</p>
+          <p className="mb-4 text-body text-foreground lg:mb-0">{t('newsletter.subtitle')}</p>
           <NewsletterForm />
         </div>
 
-        <div className="flex flex-col gap-10 sm:flex-row sm:gap-16 lg:gap-20">
+        <div className="flex min-w-0 flex-col gap-4 sm:w-full sm:max-w-[652px] sm:flex-row sm:justify-between">
           <FooterColumn title={t('columns.one.title')} links={columnOneLinks} />
           <FooterColumn title={t('columns.two.title')} links={columnTwoLinks} />
 
-          <div className="flex flex-col gap-6">
-            <h3 className="text-sm font-bold text-primary">{t('social.title')}</h3>
-            <ul className="flex flex-col gap-2">
+          <div className="flex min-w-0 flex-col sm:w-[190px] sm:shrink">
+            <h3 className="mb-2 text-sm font-bold text-primary md:mb-4">{t('social.title')}</h3>
+            <ul className="flex flex-col">
               {SOCIAL_LINKS.map(({ key, Icon, href }) => (
                 <li key={key}>
                   <a
@@ -73,13 +76,13 @@ export default async function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-12 max-w-large lg:mt-16">
+      <div className="mx-auto mt-8 max-w-large lg:mt-[90px]">
         <div className="border-t border-border" />
-        <div className="flex flex-col gap-4 pt-4 text-tiny text-foreground sm:flex-row sm:items-center sm:justify-between sm:pt-8">
+        <div className="flex flex-col gap-2 pt-1 text-tiny text-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pt-8">
           <span>
             &copy; {year} {tNav('brand')}. {t('rights')}
           </span>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 sm:gap-x-6">
             <Link href="/" className="transition-colors hover:text-primary">
               {t('legal.privacy')}
             </Link>
@@ -98,8 +101,8 @@ export default async function Footer() {
 
 function FooterColumn({ title, links }: { title: string; links: string[] }) {
   return (
-    <div className="flex flex-col gap-6">
-      <h3 className="text-sm font-bold text-primary">{title}</h3>
+    <div className="flex min-w-0 flex-col sm:w-[190px] sm:shrink">
+      <h3 className="mb-2 text-sm font-bold text-primary md:mb-4">{title}</h3>
       <ul className="flex flex-col">
         {links.map((label) => (
           <li key={label}>

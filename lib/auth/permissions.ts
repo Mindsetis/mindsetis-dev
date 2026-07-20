@@ -45,6 +45,14 @@ export function resolvePermissions(
   const isVerified =
     profile.verification_status === 'verified' && !profile.is_blocked && !profile.access_restricted;
 
+  // INVARIANT: `account_type === 'mindsetter'` alone must NEVER gate a capability — always AND
+  // it with `isVerified` (as every Mindsetter-only field below already does). The extended
+  // Mindsetter onboarding wizard (`app/[locale]/mindsetter-onboarding/actions.ts`,
+  // `finalizeMindsetterOnboarding`) flips `profiles.account_type` to `'mindsetter'` the moment
+  // the caller finishes the 5-step core wizard — BEFORE staff verification, which is a separate,
+  // later step (spec §5.7). A caller can sit in `account_type = 'mindsetter'`,
+  // `verification_status = 'unverified'` for a while, and must have zero Mindsetter-only rights
+  // during that window.
   const isMindsetter = profile.account_type === 'mindsetter';
 
   return {

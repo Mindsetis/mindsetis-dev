@@ -5,6 +5,13 @@ type RegistrationProgressProps = {
   total: number;
   /** Accessible label, e.g. "Step 1 of 4" — visual "1/4" text is rendered separately. */
   label: string;
+  /**
+   * When true, every segment up to and including `step` renders as "done" (solid
+   * `bg-primary`) and none renders as "current" — for the Congrats screen (`/welcome`),
+   * whose `step === total` has no "next" step to still be "in progress" toward. The `n/total`
+   * text is unaffected (still driven by `step`/`total` directly).
+   */
+  complete?: boolean;
 };
 
 /**
@@ -14,22 +21,15 @@ type RegistrationProgressProps = {
  * Used by all four registration-wizard steps — `/sign-up` (1), `/verify-email` (2),
  * `/member-profile` (3), `/build-profile` (4) — each passing its own `step`/`label`; there's no
  * internal state here, the caller (the URL/page) is the source of truth for which step is
- * "current". Distinct from the onboarding flow's own stepper (`OnboardingFlow.tsx`), which
- * tracks its own real state.
+ * "current". Distinct from the onboarding tour popup's own stepper (`OnboardingDialog.tsx`),
+ * which tracks its own real state.
  *
- * Three visual states per segment (stage 1.4 Figma audit — previously only 2: solid vs
- * `bg-card`):
- *   - **done** (`index < step - 1`): solid `bg-primary` fill, same as before.
- *   - **current** (`index === step - 1`): a "soft glow" — the `bg-card` (`#1a1a1a`) track with
- *     two stacked translucent cyan layers (`#04c7ff4d` + `#4ea6ed4d`, ~30% opacity each)
- *     overlaid, distinct from the solid "done" fill.
- *   - **future** (`index > step - 1`): the same `bg-card` track with a single translucent
- *     `#04c7ff4d` layer (a faint cyan tint, not a plain flat gray).
- * No matching Tailwind/theme tokens exist for the two translucent hex values yet (they're
- * specific to this one Figma effect) — kept as arbitrary-value utilities rather than adding
- * one-off `--color-*` tokens for a single consumer.
+ * Three visual states per segment (colors per direct product request, 2026-07-17):
+ *   - **done** (`index < step - 1`): solid `bg-primary` (`#79b9e3`).
+ *   - **current** (`index === step - 1`): flat `rgba(78, 166, 237, 0.3)`.
+ *   - **future** (`index > step - 1`): solid `bg-card` (`#1a1a1a`).
  */
-export function RegistrationProgress({ step, total, label }: RegistrationProgressProps) {
+export function RegistrationProgress({ step, total, label, complete }: RegistrationProgressProps) {
   return (
     <div className="flex w-full items-center gap-4">
       <div
@@ -43,25 +43,19 @@ export function RegistrationProgress({ step, total, label }: RegistrationProgres
       >
         {/* Segments stretch to fill the container so the bar spans the form width. */}
         {Array.from({ length: total }, (_, index) => {
-          const isDone = index < step - 1;
-          const isCurrent = index === step - 1;
+          const isDone = complete ? index < step : index < step - 1;
+          const isCurrent = complete ? false : index === step - 1;
           return (
             <span
               key={index}
               aria-hidden="true"
               className={cn(
-                'relative h-3 flex-1 overflow-hidden rounded-full',
-                isDone ? 'bg-primary' : 'bg-card',
+                'h-3 flex-1 rounded-full',
+                isDone && 'bg-primary',
+                isCurrent && 'bg-[rgba(78,166,237,0.3)]',
+                !isDone && !isCurrent && 'bg-card',
               )}
-            >
-              {isCurrent ? (
-                <>
-                  <span className="absolute inset-0 bg-[#04c7ff4d]" />
-                  <span className="absolute inset-0 bg-[#4ea6ed4d]" />
-                </>
-              ) : null}
-              {!isDone && !isCurrent ? <span className="absolute inset-0 bg-[#04c7ff4d]" /> : null}
-            </span>
+            />
           );
         })}
       </div>

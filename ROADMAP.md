@@ -384,6 +384,444 @@ Stage 1.2 replaced the planned email-confirmation gate with `admin.createUser({ 
 - [x] i18n: update `signUp.stepLabel`-driven copy if any step-specific strings (e.g. verify-email eyebrow/subtitle) assumed the old step-4 framing
 - [x] Review loop (`code-reviewer`, `security-auditor` — this is an auth-flow change, `qa`) + `browser-tester` full walkthrough: sign-up → real inbox email → click confirm link → lands on member-profile with a session → steps 3–4 → Congrats; also test resend + wrong-email + expired/invalid link paths
 
+### 1.6 — Registration wizard: copy/UI tweaks (Figma follow-ups)
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-16
+
+Batch of small copy and UI adjustments across the registration wizard, requested by the user
+directly (not yet scoped/estimated). **Note:** every new/changed button below links to the
+homepage for now — destinations are placeholders pending a product decision on real routes,
+not final. The step-3 upload icon SVG is recorded verbatim below so implementation doesn't
+need to ask again.
+
+Implementation follow-up (2026-07-16, resolved 2026-07-16): the step-1 password-hint copy now
+reads "At least 1 uppercase letter", but `passwordSchema` (`lib/validation/common.ts`) still
+validated via `/[A-Za-z]/` (any-case letter) — a password with only lowercase letters
+satisfied this requirement even though the UI claimed it needed an uppercase letter.
+Decision: tightened the regex to `/[A-Z]/` to match the copy. Updated `SignUpForm.tsx`'s
+local hint check (same regex) and removed the now-resolved JSDoc flag.
+
+Implementation follow-up (2026-07-16): the step-4 "Industry" checklist item originally said
+"reuse the existing country select used in step 3, made single-select" — turned out step 3's
+Country field is a plain text `Input`, not a select, so that reference didn't exist. User
+clarified (2026-07-16) the actual reference is step 3's **language** control — the
+`LanguagesMultiSelect` combobox (`components/member-profile/LanguagesMultiSelect.tsx`:
+Popover + searchable `Command` list, chevron trigger, checkbox-style selected indicator).
+Industry currently uses a plain Radix `Select`/`SelectTrigger` (`BuildProfileForm.tsx`) — the
+item now means: give Industry the same Popover+searchable-Command visual/interaction style as
+`LanguagesMultiSelect`, but constrained to picking exactly one option (select closes the
+popover and shows the single chosen label, no removable chips).
+
+**Step 1 — account creation (name, password, email):**
+- [x] Remove the "Let's start" text
+- [x] Remove the "Your info is saved right away — even if you don't finish now." text
+- [x] Change copy "Contains a letter" → "At least 1 uppercase letter"
+- [x] Change copy "Contains a number" → "At least 1 number"
+- [x] Change copy "Confirm password" → "Repeat Password"
+- [x] Remove "Already have an account? Log in"
+
+**Step 2 — email confirmation screen (`/verify-email`):**
+- [x] Remove "Back to log in"
+
+**Step 3 — additional profile data (`/member-profile`):**
+- [x] Photo upload field: add an icon to the left of the upload button's text. Exact SVG
+  (16×16, `viewBox="0 0 16 16"`, `fill="white"`) provided by the user:
+  ```svg
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.9987 4.00004C8.46536 4.00004 7.9987 4.46671 7.9987 5.00004C7.9987 5.53337 8.46536 6.00004 8.9987 6.00004C9.53203 6.00004 9.9987 5.53337 9.9987 5.00004C9.9987 4.46671 9.53203 4.00004 8.9987 4.00004ZM12.6654 1.33337H3.33203C2.1987 1.33337 1.33203 2.20004 1.33203 3.33337V12.6667C1.33203 13.8 2.1987 14.6667 3.33203 14.6667H12.6654C13.7987 14.6667 14.6654 13.8 14.6654 12.6667V3.33337C14.6654 2.20004 13.7987 1.33337 12.6654 1.33337ZM13.332 9.26671L12.0654 8.00004C11.2654 7.26671 9.9987 7.26671 9.26536 8.00004L8.66536 8.60004L6.73203 6.66671C5.93203 5.93337 4.66536 5.93337 3.93203 6.66671L2.66536 7.93337V3.33337C2.66536 2.93337 2.93203 2.66671 3.33203 2.66671H12.6654C13.0654 2.66671 13.332 2.93337 13.332 3.33337V9.26671Z" fill="white" />
+  </svg>
+  ```
+- [x] Hide the photo preview by default; only render it once the user has actually uploaded a photo
+
+**Step 4 — company info (`/build-profile`):**
+- [x] "Industry" select: replace the current plain Radix `Select`/`SelectTrigger` with the same
+  Popover + searchable `Command` combobox visual/interaction style as
+  `LanguagesMultiSelect` (`components/member-profile/LanguagesMultiSelect.tsx`), constrained to
+  a single choice (closes on select, shows one chosen label, no removable chips) — see
+  implementation follow-up note above for the clarified reference. Built as a new sibling
+  component `components/build-profile/IndustryCombobox.tsx` (no generic combobox existed yet
+  to reuse); wired into `BuildProfileForm.tsx` in place of the old `Select`.
+
+**Step 5 — Welcome / Congrats screen (`/welcome`, last step):**
+- [x] Remove the `lucide-circle-check` icon
+- [x] Change text "Congrats!" → "Congratulations! You are now a member of the community."
+- [x] Remove the separate "You are now a member of the community." line (merged into the
+  heading above instead)
+- [x] Remove the "Browse the community" button
+- [x] Add a button: "Find Mindseter for me" (user's exact wording — likely typo for
+  "Mindsetter"; confirm spelling with the user before implementing)
+- [x] Add a button: "Invite on Mindsetis event"
+- [x] Add a button: "Find Mindsetis event"
+- [x] Add a button: "Find out who a Mindsetter is" — opens a "Who is Mindsetter?" popup/modal
+  (already designed in Figma, in the frame directly below this last registration screen's
+  frame). Inside the popup, a button "Understand, I want to be a Member" closes the popup AND
+  swaps the "Find out who a Mindsetter is" button (same position) for a new button "See how
+  looks my profile page"
+
+**Before implementing:**
+- [x] Check the Figma file (via `figma-designer`) for every changed/added element above —
+  especially the new step-5 buttons and the step-4 single-select — for whether the design
+  calls for an icon that isn't captured yet in this checklist; add it here if so
+
+  Figma audit findings (2026-07-16): Step 3 upload button icon confirmed matching the recorded
+  SVG (Figma's own asset there is a generic `scenery` picture-glyph, same concept). Step 4
+  Industry select needs no new icon — Figma just shows the standard trailing chevron
+  (`input drop-down`), same as any other select field; Figma's "Country" field itself is a
+  plain text input with no chevron, so it isn't a real reference — the code's existing
+  country-input styling is what actually exists to compare against (see the open Industry
+  question below). Step 5 DOES need icons not yet in the checklist — added as new items below.
+
+**Step 5 icons (added after Figma audit, 2026-07-16):**
+- [x] "Find Mindseter for me" — leading search/magnifying-glass icon (`lucide-react` `Search`)
+- [x] "Invite on Mindsetis event" — leading person+plus icon (Figma: `user-add-fill`; `lucide-react` `UserPlus`)
+- [x] "Find Mindsetis event" — leading search/magnifying-glass icon (borderless/tertiary button style in Figma; `lucide-react` `Search`, `variant="ghost"`)
+- [x] "Find out who a Mindsetter is" — trailing circular icon with an arrow (Figma: `arrow-left-long-line`, rendered pointing right; `lucide-react` ships this natively as `CircleArrowRight`, no custom wrapper needed)
+- [x] "See how looks my profile page" (popup replacement button) — leading ID-card/profile icon (Figma: `account-pin-box-fill`; `lucide-react` `IdCard`)
+- [x] Popup "Understand, I want to be a Member" — confirmed no icon in Figma, no change needed
+
+**Review loop:**
+- [x] `code-reviewer` + `security-auditor` (password-validation regex change touches auth) + `qa` review loop, then commit via `git-manager`
+- [x] Follow-up review loop for the reopened "Who is Mindsetter?" popup expansion (`code-reviewer` + `qa`; no new auth/RLS/money surface, `security-auditor` not required this round), then commit via `git-manager`
+
+`code-reviewer` (2026-07-16): one Medium must-fix — `IndustryCombobox` was wrapped in
+`FormControl` in `BuildProfileForm.tsx`, breaking label/`aria-describedby` association (Radix
+`Slot` merges those onto a single child, but `IndustryCombobox` doesn't forward them);
+`LanguagesMultiSelect`'s established pattern in `MemberProfileForm.tsx` deliberately renders
+outside `FormControl` for this reason. **Fixed:** removed the `FormControl` wrapper to match.
+`typecheck`/`lint` re-verified clean after the fix. Everything else from that review was
+optional/non-blocking (Dialog missing a `DialogDescription`, reset-password form lacking a
+live password-hint checklist, a documented duplication between `LanguagesMultiSelect` and
+`IndustryCombobox` worth a future shared-combobox extraction, and a request to double-check
+the "Find Mindseter" spelling with the user before merge — see the step-5 checklist item,
+already flagged there as the user's exact wording).
+`security-auditor` (2026-07-16): clean, no Medium+ findings; confirmed the password-regex
+tightening applies consistently to both sign-up and password-reset (shared `passwordSchema`),
+no client/server validation drift, no secret/service-role leakage in new client components.
+`qa` (2026-07-16): **PASSED** — typecheck/lint/build/secret-leak scan all green; live smoke
+test against the hosted Supabase project covered all 5 wizard steps (real authenticated
+session for steps 3–5 via the same Admin-API `generateLink` technique as stage 1.5, test user
+cleaned up afterward). One pre-existing issue noted but not blocking: `npm run format:check`
+fails on ~100 files even on a clean `HEAD` with none of this stage's changes — a repo-wide
+`core.autocrlf`/Prettier line-ending mismatch, unrelated to stage 1.6, tracked separately
+(needs a `.gitattributes` `eol=lf` or `core.autocrlf=input` fix at some point).
+
+Implementation follow-up (2026-07-16, reopened): the "Who is Mindsetter?" popup was built as a
+minimal placeholder (title + one button) because the full design wasn't available yet. The
+user pointed to Figma Frame 267 (near the Congrats screen), which has the complete design.
+Audit findings: the popup needs a description under the title; a dark checklist card labeled
+"A MINDSETTER IS" with 3 checkmark bullets ("A business owner, founder or CEO", "Verified by
+the Mindsetis team", "Ready to share real experience"); 3 feature callouts (heading + body
+each) — "Your own personal site", "Earn from sessions" (mentions a 15%/85% platform/creator
+split), "Build your personal brand"; TWO footer buttons instead of one — a new primary button
+"Cool, I want to become a Mindsetter" (fixing the Figma source's "Mindseter" typo) alongside
+the existing "Understand, I want to be a Member" secondary button; and a circular close (X)
+button in the header. User decided: the new "Cool, I want to become a Mindsetter" button also
+links to `/` as a placeholder (same as the rest of stage 1.6's new buttons — no real route
+decided yet); and the non-standard circular close button + the "Understand..." button's
+Figma resting-state style (white text on a grey border, which doesn't match any existing
+`Button` variant exactly) should be built as new, purpose-built components for this popup
+rather than reusing/overriding the shared `Button`/`Dialog` defaults. Figma also had a
+hidden/clipped orphan sub-form (Title/Description/Link fields) accidentally nested inside the
+checklist card in the design file — confirmed via screenshot it never renders, explicitly NOT
+part of this popup, do not build it. Figma's 3-item checklist lays out vertically on mobile,
+horizontally in one row on desktop (responsive difference, not a separate variant).
+
+Popup expansion checklist:
+- [x] Add popup description text under the title
+- [x] Add the dark "A MINDSETTER IS" checklist card (3 checkmark bullets), responsive:
+  vertical stack on mobile, single horizontal row on desktop
+- [x] Add the 3 feature callouts (heading + body pairs): "Your own personal site", "Earn from
+  sessions" (15%/85% split), "Build your personal brand"
+- [x] Add second footer button "Cool, I want to become a Mindsetter" (placeholder link to `/`,
+  same as other stage-1.6 buttons), positioned alongside the existing "Understand, I want to
+  be a Member" button (stacked on mobile, side-by-side on desktop per Figma)
+- [x] Build a custom circular close (X) button matching Figma (not the default Dialog close button)
+- [x] Build/adjust button styling so "Understand, I want to be a Member" matches Figma's
+  resting-state look (white text, grey border) as its own purpose-built style, not a
+  shared-variant override
+- [x] i18n keys for all new popup copy
+
+Implemented (2026-07-16) as a new `components/auth/WhoIsMindsetterDialog.tsx` component
+(swapped into `WelcomeCtas.tsx` in place of the inline placeholder). Close button: a plain
+`&lt;button&gt;` inside `DialogClose asChild` with `showCloseButton={false}` on `DialogContent`
+(32×32, `rounded-full border-border bg-background`, lucide `X`, sr-only label via new
+`modal.close` i18n key). "Understand..." button: `variant="outline"` + a local
+`className="text-foreground"` override (no changes to the shared `button.tsx` variants).
+Breakpoint used for the mobile/desktop checklist-card and footer-button layout: `md:`
+(matching `OAuthButtons.tsx`'s existing convention). `typecheck`/`lint`/`build` all clean.
+
+### 1.7 — "I'm on the way" lead capture: full rework (supersedes 1.3's popup)
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-16
+
+Replaces stage 1.3's approach entirely (that section is left intact below as historical
+record — not deleted, not rewritten). Stage 1.3 built a separate popup
+(`LeadCaptureDialog.tsx`) with its own Name + Email fields, triggered by a standalone
+"I'm on the way" link, writing to a `leads` table (`id`, `name`, `email`, `source`,
+`created_at`, `updated_at`).
+
+User's exact request (2026-07-16): no separate fields, popups, or pages at all. Only the
+existing homepage hero email field + "Continue" button
+(`components/marketing/HeroEmailCta.tsx` — already exists, currently just client-side
+validates the email and routes to `/sign-up?email=...` with zero DB write) should write the
+email to a table when the visitor submits it. Add a `registered` boolean column: when the
+visitor enters their email on the homepage and proceeds to the first registration step, the
+row is written with `registered = false`; if they go on to actually complete account
+registration, the same row's `registered` flips to `true`; if they never complete
+registration, it stays `false`.
+
+User decision: reuse/rework the existing `leads` table rather than create a new one — drop
+`name`/`source`, add `registered boolean not null default false`, add a uniqueness
+constraint on `email` (resubmitting just upserts the existing row, no duplicates).
+
+- [x] Migration: alter `leads` table — drop `name` and `source` columns, add
+  `registered boolean not null default false`, add a unique constraint/index on `email`.
+  Update RLS: keep public anon INSERT (homepage is unauthenticated) but constrain it so a
+  client can never insert `registered = true` directly (e.g. `with check (registered = false)`);
+  UPDATE must NOT be open to anon/authenticated at all — the `registered` flip only happens
+  server-side via the service-role client from the sign-up Server Action, never from a
+  client-writable policy (same "server-only for the sensitive field" precedent as money
+  tables). Keep existing staff-only SELECT/DELETE policies (adjust for dropped columns).
+
+  Applied (2026-07-16): `supabase/migrations/20260716185041_leads_signup_intent_rework.sql`,
+  pushed to the hosted project (`pqaffuvhghlbenqigwks`) and verified live — `leads` now has
+  `id`/`email`/`registered`/`created_at`/`updated_at` only, `leads_email_key` unique
+  constraint added, `leads_insert_public`'s `with check` narrowed to `registered = false`,
+  staff-only SELECT/UPDATE/DELETE policies unchanged. Types regenerated
+  (`lib/supabase/types.gen.ts`).
+- [x] `lib/validation/leads.ts`: simplify to an email-only schema (drop `name`). Landed as
+  `signupIntentSchema` (`{ email }`) — `nameSchema`/`leadFormSchema`/`leadCaptureSchema` removed.
+- [x] `app/[locale]/actions.ts`: replace/rework `captureLead` into an email-only action that
+  upserts into `leads` (email, `registered` defaults to false) — call it from
+  `HeroEmailCta`'s submit handler, not from a dialog. Landed as `recordSignupIntent`
+  (rate-limit key renamed `marketing:signup-intent`).
+
+  **`qa` (2026-07-16) found this CRITICAL/broken as first implemented:** the
+  `{ onConflict: 'email', ignoreDuplicates: true }` upsert (`INSERT ... ON CONFLICT DO
+  NOTHING`) was chosen to dodge the `DO UPDATE`-needs-an-UPDATE-policy problem (see below),
+  but `DO NOTHING` has the *same* underlying issue — Postgres needs SELECT-visibility into any
+  potentially-conflicting row to evaluate `ON CONFLICT` at all, and anon/authenticated has zero
+  SELECT on `leads` (`leads_select_staff` is staff-only). Reproduced live against the hosted
+  project: every anon call with that `Prefer` header fails `42501` (RLS violation) — including
+  for a brand-new email with no existing row — so **every homepage submission silently wrote
+  nothing**, the whole point of this stage. `HeroEmailCta` swallows the failure and navigates
+  to `/sign-up` regardless, so this was invisible without live RLS testing (source-level
+  review by `code-reviewer` didn't catch it either — it reasoned the logic through but wasn't
+  run live against real RLS).
+
+  Original (broken) reasoning kept for context: a true upsert-with-update
+  (`onConflict: 'email'` merging into the existing row) is blocked by RLS because
+  anon/authenticated has no UPDATE policy on `leads` (intentional, staff-only), and Postgres
+  enforces the UPDATE policy on `ON CONFLICT DO UPDATE` (unlike a plain UPDATE, which just
+  silently filters rows, a blocked `DO UPDATE` raises an error) — this diagnosis was correct,
+  but the `DO NOTHING` fallback doesn't actually route around it, since `DO NOTHING` also
+  requires SELECT visibility to detect the conflict in the first place.
+
+  **Fixed (2026-07-16):** `recordSignupIntent` now writes via the **service-role client**
+  (`lib/supabase/service.ts`, same one `signUp`'s `registered` flip already uses) instead of
+  the anon client — bypasses RLS entirely, so the SELECT-visibility problem no longer applies
+  regardless of upsert mode. No auth check added (the capture point is intentionally open to
+  anonymous visitors, unchanged trust boundary — Zod validation + the existing
+  `marketing:signup-intent` rate limit are still the only gates). Upsert mode: real
+  `DO UPDATE SET updated_at = now()` on email conflict, deliberately **omitting** `registered`
+  from the update payload — a resubmission just touches `updated_at`, never resets an
+  already-`true` `registered` flag back to `false`. Live-verified against the hosted project:
+  new email → row created (`registered = false`); resubmitting the same email → no error,
+  `updated_at` bumps, `created_at` unchanged; resubmitting an email already flipped to
+  `registered = true` → stays `true`, not reset. `typecheck`/`lint`/`build` clean.
+
+  Re-review after the fix (2026-07-16): `code-reviewer` APPROVED (two Low nits fixed — dropped
+  the redundant explicit `updated_at` from the upsert payload since the `set_leads_updated_at`
+  trigger already stamps it, and reworded a doc comment that ambiguously said "anon Server
+  Action" right next to code that now uses the service-role client). `security-auditor`
+  reviewed the anon→service-role client switch specifically (this makes RLS a non-factor for
+  this write path, leaving Zod + rate-limit as the only gates) — clean, no Critical/High/Medium
+  findings; confirmed the upsert payload structurally can never include `registered`, the
+  `onConflict` target is hard-coded, and the service-role client instance isn't shared/reused
+  elsewhere. Non-blocking suggestion for a future pass: a narrow `SECURITY DEFINER` SQL
+  function would be a tighter-scoped alternative to a general service-role client for this
+  specific anonymous entry point — noted for later, not required now. `qa` independently
+  re-verified all 3 live DB behaviors against the hosted project post-fix (fresh re-run, not
+  just trusting the implementer's report) — PASS.
+- [x] Delete `components/marketing/LeadCaptureDialog.tsx` entirely and its usage in
+  `components/marketing/HeroSection.tsx` (remove the "I'm on the way" trigger link/popup —
+  no separate escape-hatch UI anymore). Done; `HeroSection.tsx`'s doc comment updated,
+  `components/auth/ResendConfirmationEmailButton.tsx`'s stale comment reference fixed too.
+- [x] `app/[locale]/(auth)/actions.ts` `signUp`: after a successful `signUp()` call,
+  best-effort update the matching `leads` row (by lowercased email) to `registered = true`
+  via the service-role client (narrow, justified server-only use — no-op if no row exists,
+  i.e. the visitor never went through the homepage field). Done, non-fatal (console.error on
+  failure), same pattern as `updatePassword`'s existing `verification_deadline` update.
+- [x] i18n: remove now-unused `home.hero.imOnTheWay.*` keys from `messages/en.json`/`es.json`
+  (keep `home.hero.emailLabel`/`emailPlaceholder`/`continue`, still used by `HeroEmailCta`).
+  Done, confirmed no other references before removing.
+- [x] Review loop (`code-reviewer`, `security-auditor` — RLS + service-role usage change,
+  `qa`) then commit via `git-manager`
+
+`typecheck`/`lint`/`format:check` (pre-existing CRLF baseline unchanged, no new violations)/`build` all clean per the implementing agent.
+
+### 1.8 — Homepage / footer / onboarding UI polish + onboarding-as-popup
+**Status:** ✅ Done
+**Started:** 2026-07-16
+**Completed:** 2026-07-18
+
+Large batch of iterative, user-driven UI/styling passes on top of stages 1.6/1.7 — requested
+directly in many small increments (colors, pixel spacings, breakpoints, icons), each verified
+live via `browser-tester` before moving on. Left uncommitted and out of ROADMAP during the
+session per the user's standing preference for exploratory styling work; recorded + committed
+here in one batch once the user asked. Design fidelity to Figma throughout; no new
+functionality or data/RLS/money surface (except the onboarding page→popup structural change
+below), so no full review loop — verified via typecheck/lint/format + live browser checks.
+
+- [x] **Button system overhaul** (`components/ui/button.tsx` + `app/styles/base.css` +
+  `tokens/effects.css`): gradient-border variant (`primaryOutline`) and gradient-fill
+  (`primary`, desktop) via masked pseudo-element + two-layer opacity crossfade utilities
+  (`gradient-border`/`gradient-fill` — plain CSS can't transition between two gradients); new
+  `outlineArrow` variant (white text / grey border / `justify-between` + trailing arrow badge);
+  `ghost`/`outline`/`tertiary` state reworks; `cursor-pointer` + transition tokens
+- [x] **`tailwind-merge` fix** (`lib/utils.ts`): register the project's custom `@theme`
+  font-size scale (`text-tiny`/`text-h1`/…/`text-body`) as a `font-size` class group, so those
+  sizes stop silently conflicting-away when combined with a `text-{color}` class (systemic bug
+  found via a mobile label rendering at the wrong size)
+- [x] **Registration wizard shared chrome + restyle**: extracted `RegistrationStepHeader` +
+  `RegistrationBackLink` (custom arrow SVG), standardized page padding across
+  `/sign-up`/`/verify-email`/`/member-profile`/`/build-profile`/`/welcome`; added a minimal
+  root `app/layout.tsx` (required so `not-found` renders); `RegistrationProgress` states
+- [x] **Dropdown/field family restyle**: new generalized `components/ui/combobox.tsx` (replaces
+  `IndustryCombobox`), `LanguagesMultiSelect`/`command`/`select` merged-border + dynamic
+  border/chevron color treatment, `chip`/`field-hint`/`InterestsPicker`/`AvatarUpload`,
+  `input`/`form`/`textarea` tweaks
+- [x] **`WhoIsMindsetterDialog` restyle** (bottom-sheet mobile / centered 30px modal desktop,
+  fixed a tailwind-merge `inset-x`-vs-`left` centering bug), **`WelcomeCtas`** button
+  variants + custom icons (extracted `components/icons/mindsetter-arrow-icon.tsx`)
+- [x] **Header** (`components/layout/Header.tsx`): login UI removed but auth check kept (Join
+  hides once signed in), new `JoinIcon`; **`LocaleSwitcher`** cursor
+- [x] **Footer full restyle** (`Footer.tsx` + `NewsletterForm.tsx`): 50/30px top radius,
+  652px columns block with 190px even columns + responsive shrink (`min-w-0`), heading/gap
+  spacings, newsletter field+button single-row, copyright/legal spacings
+- [x] **`HeroSection`**: always-on gradient title, spacings, custom play glyph → replaced with
+  an embedded test video (YouTube iframe), `+*` required asterisk on the email label, page
+  padding; **`HeroEmailCta`** gaps
+- [x] **Onboarding: page → popup** (structural): converted `/onboarding` route +
+  `OnboardingFlow` into a popup (`components/onboarding/OnboardingDialog.tsx` opened by
+  `components/marketing/OnboardingCta.tsx`), deleted the route, repointed `/sign-up` "Back" to
+  the homepage; styled per `WhoIsMindsetterDialog`; added a looping physical test video per
+  step; `Next` → `primaryOutline`, last-step `Back` hidden on mobile
+- [x] Verified live via `browser-tester` at mobile + desktop breakpoints throughout (gradient
+  title, footer responsive shrink at 1024px, onboarding popup flow, embedded videos loading)
+
+### 1.9 — Extended Mindsetter onboarding (from Figma "Registration" section)
+**Status:** 🔄 In progress
+**Started:** 2026-07-18
+**Note (2026-07-18):** Implementation is complete and has passed the full review loop
+(`code-reviewer`, `security-auditor`, `qa`) plus a live `browser-tester` E2E walkthrough. The
+3 architectural blockers listed below were resolved by the developer with **provisional**
+decisions, recorded for product-owner review (see the working-notes decision log /
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)). The stage
+stays **In progress** until the product owner confirms those decisions.
+
+**Follow-up (2026-07-19 → 2026-07-20):** Long iterative, Figma-driven UI-polish + interaction
+pass across the whole flow (roles → superpowers → help → shine → optional blocks → session →
+congrats), per ongoing product review. Highlights:
+- **Drag-to-reorder migrated from native HTML5 DnD to `@dnd-kit`** (`SortableList` + `useSortable`
+  in `CollapsibleCard` and `ReelLifeForm`) so card/photo reordering works on **touch (phones)** and
+  keyboard, not just mouse — the old native DnD fired on mouse only and was dead on touch.
+  Live-verified (mouse / touch / keyboard).
+- **Promo video: real file upload ENABLED** (client → private `promo-video` Storage bucket, migration
+  `20260719132834`, owner-scoped RLS + server-side path re-validation) — supersedes the earlier
+  "URL-only / upload deferred" provisional decision below.
+- **Video blog un-deferred back into MVP and built** (link-only, migration `20260718185944`) —
+  supersedes the earlier "EXCLUDED as Phase-2" provisional decision below.
+- **Personal session:** "Save and continue" now gates on the Platform-fee-&-payouts consent modal
+  when Accept-bookings is on (agree → submit; opening the info button alone does not advance the
+  step); searchable timezone picker (418 IANA zones, offset in trigger + list); Free/Paid + price,
+  duration, topics, available-days/hours restyled to Figma. (Consent is UI-only local state — no
+  `session_terms_accepted` DB flag yet; revisit with the Stripe Connect stage §5.9.)
+- **Combobox / multi-select:** fixed the flipped-dropdown (opens-above) border/corner "merged shape"
+  via a shared `usePopoverContentSide` hook (`components/ui/popover.tsx`).
+- Congrats CTAs, Platform-fee modal, and every optional-block screen restyled to Figma; per-step
+  heading icons + shine block-picker icons added.
+- Full review loop re-run clean (`code-reviewer` APPROVED, `qa` PASS incl. production build +
+  no client-bundle secret leak, `browser-tester` PASS); fixed a `valid` DOM-attribute leak in the
+  price field and removed orphaned i18n keys (`blocks.shell.*`, `session.timezoneDetecting`).
+
+Optional extended Mindsetter onboarding per spec §5.2 ("Подовжений онбординг Mindsetter") —
+the fork opened by the "Cool, I want to become a Mindsetter" button in `WhoIsMindsetterDialog`
+(currently a `/` placeholder). Full field-by-field build prompt drafted 2026-07-18 from the
+Figma "Registration" section (via `figma-designer`), cross-checked against the existing
+DB/migrations + spec (Opus, 2026-07-18). **Recorded as a plan only — not taken into development
+yet.** The full field-by-field implementation prompt (all screens, exact copy, field types,
+frame node ids, the A–E decisions/blockers) lives in
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md); the decisions
++ blockers are summarized here.
+
+**⚠️ 3 blockers to resolve with the product owner BEFORE any code:**
+- [~] **Data model already partly exists and mismatches the design.** `mindsetter_profiles`,
+  `session_settings`, `availability_slots`, and `profiles.onboarding_step` were created in
+  Stage 0.4 — so this is a *schema-alignment migration*, not a from-scratch build. Mismatches:
+  `roles`/`help_with` are `text[]` but the design needs rich cards `[{title, description,
+  links[]}]` → `jsonb`; `my_way` is `text` but needs an array of stage objects → `jsonb`;
+  `promo_video` (`text`) can't hold upload+YouTube+Vimeo; **no columns exist** for Reel Life
+  photos, Video blog, the "Accept bookings" toggle, a weekly available-days/hours schedule
+  (`availability_slots` holds concrete timestamp slots, not a recurring weekly pattern), or
+  session timezone (provisionally resolved: schema-alignment migrations applied — pending
+  product-owner confirmation)
+- [~] **How does an account actually become a Mindsetter + where does verification fit?**
+  `profiles.account_type` and `mindsetter_profiles.is_public` are staff-only mutations (guard
+  triggers) — completing this onboarding does NOT by itself flip the account to Mindsetter or
+  publish the profile (§5.4 publishes only after verification). Decide: when/how `account_type`
+  flips (service-role Server Action vs staff), where verification (§5.7 LinkedIn+company →
+  `verification_requests`) slots in, and what the user sees pre-verification (provisionally
+  resolved: `account_type` flips to `'mindsetter'` on core-onboarding completion via
+  service-role; `is_public` stays staff-gated and unlocks nothing until verification — pending
+  product-owner confirmation)
+- [~] **Step numbering is not authoritative in Figma** (no on-screen step indicator; "N/6" only
+  in layer names, with duplicate conflicts) — design the progress bar/order ourselves from
+  content, reusing `RegistrationStepHeader`/`RegistrationProgress` (provisionally resolved:
+  designed a dedicated 5-step progress indicator + a separate
+  `mindsetter_profiles.onboarding_step` column — pending product-owner confirmation)
+
+**Core steps (order/copy/fields per the build prompt):**
+- [x] Step "Your roles" — Role cards (Title 40 / Description auto-grow 200 / optional Link with
+  og-preview + "Add link"); "Add role"; "See how it looks" preview link (profile-preview page
+  doesn't exist yet — placeholder)
+- [x] Step "Your superpowers" — 3 fixed cards (Title / Description), no "Add"
+- [x] Step "You can help with" — Expertise cards (Title / Description) + "Add expertise"; card
+  **titles feed** the "Topics you're expert in" multiselect on Personal session
+- [x] Step "Personal session" — Accept-bookings toggle, Free/Paid price, "Platform fee &
+  payouts" modal (15%/85%, Session Terms consent), duration pills, topics multiselect (≤5, from
+  help_with + "Add custom" ad-hoc), timezone, weekly days/hours (maps to session_settings +
+  availability_slots — needs schema additions; Stripe backend is a later stage §5.9, so pricing
+  UI won't be end-to-end functional yet)
+- [x] Step "Make your profile shine" — block-picker (choose which optional blocks to fill now);
+  "Skip — fill later from cabinet" (cabinet §5.3 doesn't exist yet — placeholder);
+  profile-completeness indicator ("42% · Basic" is a static mock, define a real rule or simplify)
+- [x] Optional blocks (only if picked): Promo video, Reel Life (photos + Storage), Numbers,
+  My Wins (per-win color), My Way (timeline stages), My F*ckUp(s), My Philosophy, Video blog
+  (**"Link your BUILT NOT BURN interview" = Phase 2 / out of MVP — likely exclude or stub**)
+- [x] Mindsetter Congrats screen (distinct from the Member one — no "Who is Mindsetter?" popup)
+- [x] Save & Continue on every step via `profiles.onboarding_step` (already exists) — partial
+  progress saved server-side, resumable
+- [x] Silent design-fix cleanups: "Mindseter"→"Mindsetter", "See how in looks"→"See how it
+  looks", "Add stage"→"Add f*ckup" in the F*ckUps block, distinct Reel Life vs My Wins descriptions
+- [x] Migration(s) via `new-migration`/`supabase-expert` (hosted-only), then full review loop
+  (`code-reviewer` + `security-auditor` — new/changed RLS, staff-only flip, Storage uploads +
+  `qa` live RLS negatives) + `browser-tester` walkthrough, then commit via `git-manager`
+
+**Provisional decisions pending product-owner review** (details in
+[`docs/mindsetter-extended-onboarding.md`](docs/mindsetter-extended-onboarding.md)):
+- ~~Video blog ("Link your BUILT NOT BURN interview") **EXCLUDED** as Phase-2/out-of-MVP~~ →
+  **reversed 2026-07-19: BUILT (link-only)**, un-deferred back into MVP per product/Figma
+- ~~Promo video is **URL-only** for now (file upload deferred)~~ → **reversed 2026-07-19: file
+  upload ENABLED** (private `promo-video` Storage bucket + owner-scoped RLS)
+- Reel Life "minimum 3 photos" is **informational only** (non-blocking)
+- `session_settings` is written via **service-role** during onboarding; public read is
+  gated to verified Mindsetters
+- Profile-completeness indicator uses a **simple filled/total-fields heuristic** (not the
+  static "42% · Basic" mock)
+
 ### 1.6 — Member Profile view page (self + any-member-by-username)
 **Status:** ✅ Done
 **Started:** 2026-07-15

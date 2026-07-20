@@ -2,15 +2,26 @@
  * Visual effects — shadows and gradients.
  */
 @theme {
-  /* Primary CTA soft cyan glow (Figma "drop shadow" effect → CSS box-shadow). */
-  --shadow-glow-primary: 0 4px 12.3px 0 rgb(111 237 227 / 0.8);
+  /* Primary CTA soft cyan glow (Figma "drop shadow" effect → CSS box-shadow), confirmed
+   * 2026-07-17 — `primary` (gradient-background button)'s normal state. */
+  --shadow-glow-primary: 0 4px 12px 0 rgba(111, 186, 237, 0.6);
 
-  /* Primary button gradient (Figma). Angle synthesized from the design preview —
-   * TODO confirm angle with designer. */
+  /* Same glow, higher opacity — `primaryOutline` (gradient-border button)'s normal state. */
+  --shadow-glow-primary-outline: 0 4px 12px 0 rgba(111, 186, 237, 0.8);
+
+  /* Primary button gradient (Figma, confirmed 2026-07-17) — `primary`'s normal state. */
   --gradient-primary: linear-gradient(
-    135deg,
-    #c3e4fa 0%,
-    #79b9e3 49%,
+    91.51deg,
+    #c3e4f9 0%,
+    #79b9e3 51.73%,
     var(--color-gradient-end) 100%
   );
+
+  /* Primary gradient, active/pressed state — shared by `primary`'s background and
+   * `primaryOutline`'s border in their respective active states (identical gradient per
+   * Figma, confirmed 2026-07-17). */
+  --gradient-primary-active: linear-gradient(91.32deg, #79b9e3 0.28%, #5892c3 100%);
+
+  /* `primaryOutline` (gradient-border button)'s normal-state border gradient. */
+  --gradient-primary-border: linear-gradient(91.51deg, #79b9e3 0%, #5892c3 100%);
 }
