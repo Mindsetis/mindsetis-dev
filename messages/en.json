@@ -561,6 +561,117 @@
     "verified": "Verified",
     "website": "Website"
   },
+  "mindsetterProfile": {
+    "banner": {
+      "highlight": "Public view",
+      "rest": "— this is how others see your profile"
+    },
+    "beyondBusiness": {
+      "eyebrow": "BEYOND BUSINESS",
+      "heading": "What I care about beyond work"
+    },
+    "bookSession": "Book a Session",
+    "ctaBanner1": {
+      "heading": "Are you ready to get valuable expert advice right now?"
+    },
+    "ctaBanner2": {
+      "heading": "Ready to talk?"
+    },
+    "editProfile": "Edit Profile",
+    "favorite": "Add to favorites",
+    "fckups": {
+      "eyebrow": "MY F*CKUP(S)",
+      "heading": "The failures that built everything you see here"
+    },
+    "help": {
+      "eyebrow": "WHAT CAN I HELP WITH",
+      "heading": "The challenges I help founders navigate"
+    },
+    "introVideo": "Intro about me",
+    "inviteToEvent": "Invite to event",
+    "microNav": {
+      "ariaLabel": "Section navigation",
+      "help": "What I help with",
+      "myEvents": "My events",
+      "reelLife": "Reel Life",
+      "reviews": "Reviews",
+      "roles": "Roles",
+      "superpowers": "Superpowers",
+      "wins": "Wins"
+    },
+    "myEvents": {
+      "emptyDescription": "This Mindsetter hasn't hosted or joined any events yet — check back soon.",
+      "emptyTitle": "No events yet",
+      "eyebrow": "MY EVENTS",
+      "heading": "Upcoming & past events"
+    },
+    "myWay": {
+      "eyebrow": "MY WAY",
+      "heading": "The path — from first venture to now"
+    },
+    "numbers": {
+      "eyebrow": "NUMBERS",
+      "heading": "The track record"
+    },
+    "promo": {
+      "eyebrow": "PROMO VIDEO",
+      "heading": "Two minutes that will tell you more than any bio"
+    },
+    "reelLife": {
+      "eyebrow": "REEL LIFE",
+      "heading": "My business, my life — in pictures"
+    },
+    "reviews": {
+      "eyebrow": "REVIEWS",
+      "heading": "What founders say after a session",
+      "items": [
+        {
+          "name": "Erin G.",
+          "quote": "I recently attended a session on event marketing, and it genuinely exceeded my expectations — a rare talent for breaking down complex strategies into clear, actionable steps you can apply right away.",
+          "role": "Head of Communication"
+        },
+        {
+          "name": "Daniel R.",
+          "quote": "One of the most useful hours I've spent this year. Direct, practical, and full of ideas I could apply the very next day.",
+          "role": "Founder"
+        },
+        {
+          "name": "Mira T.",
+          "quote": "Exactly the kind of honest, experienced perspective founders need — no fluff, just real answers to real problems.",
+          "role": "Product Lead"
+        }
+      ],
+      "leaveReview": "Leave a review",
+      "verifiedMember": "Verified Member"
+    },
+    "sessionPriceFree": "Session price: Free",
+    "sessionPricePaid": "Session price: {price}",
+    "shareProfile": "Share Profile",
+    "superpowers": {
+      "eyebrow": "SUPERPOWER(S)",
+      "heading": "What makes me different"
+    },
+    "roles": {
+      "eyebrow": "ROLES",
+      "heading": "What I've built and who I am across ventures",
+      "learnMore": "Click the link to learn more"
+    },
+    "topics": {
+      "eyebrow": "TOPICS I'M EXPERT",
+      "heading": "I conduct mentoring sessions on these topics"
+    },
+    "verified": "Verified",
+    "videoBlog": {
+      "allInterviews": "All interviews with Mindsetters",
+      "eyebrow": "BUILT NOT BURN · INTERVIEW",
+      "heading": "Watch the full conversation"
+    },
+    "website": "Website",
+    "wins": {
+      "eyebrow": "MY WINS",
+      "heading": "The wins worth talking about"
+    }
+  },
   "email": {
     "footer": {
       "address": "Mindsetis Community",

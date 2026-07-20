@@ -561,6 +561,117 @@
     "verified": "Verificado",
     "website": "Sitio web"
   },
+  "mindsetterProfile": {
+    "banner": {
+      "highlight": "Vista pública",
+      "rest": "— así es como otros ven tu perfil"
+    },
+    "beyondBusiness": {
+      "eyebrow": "MÁS ALLÁ DEL TRABAJO",
+      "heading": "Lo que me importa más allá del trabajo"
+    },
+    "bookSession": "Reservar una sesión",
+    "ctaBanner1": {
+      "heading": "¿Listo para recibir consejos valiosos de un experto ahora mismo?"
+    },
+    "ctaBanner2": {
+      "heading": "¿Listo para hablar?"
+    },
+    "editProfile": "Editar perfil",
+    "favorite": "Añadir a favoritos",
+    "fckups": {
+      "eyebrow": "MIS METEDURAS DE PATA",
+      "heading": "Los fracasos que construyeron todo lo que ves aquí"
+    },
+    "help": {
+      "eyebrow": "EN QUÉ PUEDO AYUDAR",
+      "heading": "Los desafíos que ayudo a resolver a los fundadores"
+    },
+    "introVideo": "Sobre mí",
+    "inviteToEvent": "Invitar a un evento",
+    "microNav": {
+      "ariaLabel": "Navegación de secciones",
+      "help": "En qué puedo ayudar",
+      "myEvents": "Mis eventos",
+      "reelLife": "Mi vida en imágenes",
+      "reviews": "Reseñas",
+      "roles": "Roles",
+      "superpowers": "Superpoderes",
+      "wins": "Logros"
+    },
+    "myEvents": {
+      "emptyDescription": "Este Mindsetter aún no ha organizado ni participado en ningún evento — vuelve pronto.",
+      "emptyTitle": "Todavía no hay eventos",
+      "eyebrow": "MIS EVENTOS",
+      "heading": "Eventos próximos y pasados"
+    },
+    "myWay": {
+      "eyebrow": "MI CAMINO",
+      "heading": "El camino — desde el primer proyecto hasta hoy"
+    },
+    "numbers": {
+      "eyebrow": "NÚMEROS",
+      "heading": "La trayectoria"
+    },
+    "promo": {
+      "eyebrow": "VIDEO PROMOCIONAL",
+      "heading": "Dos minutos que dicen más que cualquier biografía"
+    },
+    "reelLife": {
+      "eyebrow": "MI VIDA EN IMÁGENES",
+      "heading": "Mi negocio, mi vida — en imágenes"
+    },
+    "reviews": {
+      "eyebrow": "RESEÑAS",
+      "heading": "Lo que dicen los fundadores después de una sesión",
+      "items": [
+        {
+          "name": "Erin G.",
+          "quote": "Recientemente asistí a una sesión sobre marketing de eventos y realmente superó mis expectativas — un talento poco común para desglosar estrategias complejas en pasos claros y accionables.",
+          "role": "Directora de Comunicación"
+        },
+        {
+          "name": "Daniel R.",
+          "quote": "Una de las horas más útiles que he invertido este año. Directo, práctico y lleno de ideas que pude aplicar al día siguiente.",
+          "role": "Fundador"
+        },
+        {
+          "name": "Mira T.",
+          "quote": "Exactamente el tipo de perspectiva honesta y experimentada que necesitan los fundadores — sin relleno, solo respuestas reales a problemas reales.",
+          "role": "Líder de Producto"
+        }
+      ],
+      "leaveReview": "Dejar una reseña",
+      "verifiedMember": "Miembro verificado"
+    },
+    "sessionPriceFree": "Precio de la sesión: Gratis",
+    "sessionPricePaid": "Precio de la sesión: {price}",
+    "shareProfile": "Compartir perfil",
+    "superpowers": {
+      "eyebrow": "SUPERPODER(ES)",
+      "heading": "Lo que me hace diferente"
+    },
+    "roles": {
+      "eyebrow": "ROLES",
+      "heading": "Lo que he construido y quién soy a través de mis proyectos",
+      "learnMore": "Haz clic en el enlace para saber más"
+    },
+    "topics": {
+      "eyebrow": "TEMAS EN LOS QUE SOY EXPERTO",
+      "heading": "Doy sesiones de mentoría sobre estos temas"
+    },
+    "verified": "Verificado",
+    "videoBlog": {
+      "allInterviews": "Todas las entrevistas con Mindsetters",
+      "eyebrow": "BUILT NOT BURN · ENTREVISTA",
+      "heading": "Mira la conversación completa"
+    },
+    "website": "Sitio web",
+    "wins": {
+      "eyebrow": "MIS LOGROS",
+      "heading": "Los logros que vale la pena contar"
+    }
+  },
   "email": {
     "footer": {
       "address": "Mindsetis Community",

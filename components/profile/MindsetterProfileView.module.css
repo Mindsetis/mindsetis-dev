@@ -1,0 +1,178 @@
+/**
+ * Page-specific LIGHT-theme styles for `MindsetterProfileView` (Figma `327:1080` "Public
+ * Mindsetter's Full Profile" desktop / `187:4294` mobile). Same rationale as the sibling
+ * `MemberProfileView.module.css` (co-located CSS Module, first used there — see that file's
+ * own doc comment for the full "why a CSS Module" explanation): this screen is a deliberate
+ * white `#FFFFFF` section per Figma while the rest of the app stays the dark Masterclass/
+ * Netflix theme.
+ *
+ * Many hero/"Beyond Business" rules are IDENTICAL to `MemberProfileView.module.css` (same
+ * Figma brand palette, same component pattern) — `MindsetterProfileView.tsx` imports BOTH
+ * modules and reuses those classes directly rather than duplicating them here. This file only
+ * holds the rules for sections that don't exist on the Member Profile screen (Roles,
+ * Superpowers, Promo video, Numbers, Help, CTA banners, Reviews, Reel Life, My Way, Built Not
+ * Burn, F*ckUps, Wins).
+ *
+ * Pixel-fidelity note (stage 1.10 first build pass): unlike `MemberProfileView.module.css`
+ * (built + polished over several follow-up passes), these rules are a first-pass best-effort
+ * match against the Figma structure/measurements gathered during this build (spacing/colors
+ * inferred from the app's existing token palette where an exact Figma value wasn't extracted)
+ * rather than an exhaustive per-node pixel audit — flagged in the ROADMAP as needing a
+ * follow-up polish pass, same as the rest of this large page.
+ */
+
+.section {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* ---- Shared section eyebrow (icon + bold black label) ---------------------------------- */
+
+.sectionEyebrow {
+  color: #000000;
+  letter-spacing: 0.3em;
+}
+
+.sectionCard {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+}
+@media (min-width: 768px) {
+  .sectionCard {
+    border-radius: 24px;
+  }
+}
+
+/* ---- Roles / Help / F*ckUps — numbered list cards --------------------------------------- */
+
+.numberBadge {
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.roleLinkCard {
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  color: #000000;
+}
+.roleLinkCard:hover {
+  background-color: #f4f4f4;
+}
+
+/* ---- Topics I'm expert pills -------------------------------------------------------------- */
+
+.topicPill {
+  background-color: #ffffff;
+  border: 1px solid var(--color-primary);
+  color: #000000;
+}
+
+/* ---- Superpowers --------------------------------------------------------------------------- */
+
+.superpowerCard {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+}
+
+/* ---- Micro-navigation (static anchor links, spec §5.4 "мікро-навігація") ----------------- */
+
+.microNav {
+  border-bottom: 1px solid #dddddd;
+}
+
+.microNavLink {
+  color: rgb(0 0 0 / 60%);
+  letter-spacing: 0.05em;
+  transition: color 150ms ease;
+}
+.microNavLink:hover {
+  color: #000000;
+}
+
+/* ---- Promo video / Built Not Burn video panels ------------------------------------------- */
+
+.videoPanel {
+  background-color: #0a0a0a;
+  border-radius: 16px;
+}
+@media (min-width: 768px) {
+  .videoPanel {
+    border-radius: 24px;
+  }
+}
+
+/* ---- Numbers stat row ---------------------------------------------------------------------- */
+
+.numberStat {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+}
+.numberStatValue {
+  color: var(--color-primary);
+}
+
+/* ---- CTA banners (×2) ----------------------------------------------------------------------- */
+
+.ctaBanner {
+  background: linear-gradient(180deg, #101010 0%, #000000 100%);
+  color: #ffffff;
+  border-radius: 24px;
+}
+@media (min-width: 768px) {
+  .ctaBanner {
+    border-radius: 30px;
+  }
+}
+
+.ctaPrice {
+  color: rgb(255 255 255 / 70%);
+}
+
+/* ---- Reviews (static) ------------------------------------------------------------------------ */
+
+.reviewCard {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+  color: #000000;
+}
+
+.reviewQuote {
+  color: rgb(0 0 0 / 75%);
+}
+
+.reviewBadge {
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+/* ---- Reel Life gallery ------------------------------------------------------------------------ */
+
+.reelLifeTile {
+  background-color: #f4f4f4;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ---- My Way timeline --------------------------------------------------------------------- */
+
+.wayCard {
+  background-color: #f4f4f4;
+  border-radius: 16px;
+}
+
+.wayYear {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+}
+
+.wayStep {
+  background-color: var(--color-primary);
+  color: #000000;
+}
+
+/* ---- My WINS (per-win color) --------------------------------------------------------------- */
+
+.winCard {
+  border-radius: 16px;
+  color: #ffffff;
+}
