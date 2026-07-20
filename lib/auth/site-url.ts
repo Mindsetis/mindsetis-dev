@@ -5,9 +5,12 @@ import 'server-only';
  *
  * Extracted from `app/[locale]/(auth)/actions.ts` (stage 0.6). Used there for the
  * password-reset `/api/auth/confirm?next=…` link, and by `lib/auth/send-welcome-email.ts` to
- * build the informational welcome email's `/welcome` link. The sign-up confirmation link itself
- * (stage 1.5, also served by `/api/auth/confirm`) is built by Supabase's own "Confirm signup"
- * email template (a dashboard config, not code), so it doesn't route through this helper.
+ * build the informational welcome email's `/welcome` link. The sign-up confirmation link also
+ * routes through here now (`signUp()` + `resendConfirmationEmail()` pass it as
+ * `emailRedirectTo`): with custom SMTP OFF on the hosted project, Supabase sends its default,
+ * non-editable "Confirm signup" template, whose `{{ .ConfirmationURL }}` redirects to whatever
+ * `emailRedirectTo` we supply — so `/api/auth/confirm?next=/member-profile` must come from code,
+ * not from a dashboard template override.
  */
 export function siteUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_SITE_URL;

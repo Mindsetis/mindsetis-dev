@@ -66,6 +66,12 @@ export const signUp = createAction(
       email,
       password,
       options: {
+        // `{{ .ConfirmationURL }}` in Supabase's default "Confirm signup" template redirects
+        // here after GoTrue verifies the token, delivering the PKCE `?code=` to our
+        // `/api/auth/confirm` handler. Required now that the hosted project runs WITHOUT custom
+        // SMTP — with the default (non-editable) template we can't hardcode the link, so the
+        // destination must come from `emailRedirectTo` instead. Mirrors `requestPasswordReset`.
+        emailRedirectTo: siteUrl('/api/auth/confirm?next=/member-profile'),
         data: {
           ...(username ? { username } : {}),
           full_name: fullName,

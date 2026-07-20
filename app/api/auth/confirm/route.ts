@@ -11,12 +11,15 @@ import { safeRedirectPath } from '@/lib/validation/common';
  *
  *   • Password resets: `requestPasswordReset` (`app/[locale]/(auth)/actions.ts`) points
  *     `redirectTo` here with `?next=/reset-password`.
- *   • Sign-up confirmation (stage 1.5): the hosted project's "Confirm signup" email template
- *     (Dashboard → Authentication → Email Templates — a dashboard config, not code) should point
- *     its link at this route with `?next=/member-profile`, so a confirmed visitor lands straight
- *     on the wizard's step 3. `verifyOtp()` below both confirms the account AND establishes the
- *     real session in one call — this is what makes `/verify-email` (step 2) a real blocking
- *     gate rather than the informational screen it used to be.
+ *   • Sign-up confirmation (stage 1.5): `signUp()` / `resendConfirmationEmail()` pass
+ *     `emailRedirectTo = …/api/auth/confirm?next=/member-profile`. With custom SMTP OFF on the
+ *     hosted project, Supabase's default "Confirm signup" template `{{ .ConfirmationURL }}`
+ *     verifies the token server-side then redirects here with the PKCE `?code=` (handled by the
+ *     `exchangeCodeForSession` branch below), so a confirmed visitor lands straight on the
+ *     wizard's step 3. Establishing the session here is what makes `/verify-email` (step 2) a
+ *     real blocking gate rather than the informational screen it used to be. (If a custom,
+ *     editable template is ever restored, a `?token_hash=&type=` link hits the `verifyOtp`
+ *     branch instead — both paths are supported.)
  *
  * Lives under `/api` so the i18n middleware doesn't rewrite it (see `middleware.ts` matcher).
  * Supports both Supabase link styles:
