@@ -40,11 +40,13 @@
  * just recolored). Superpowers' mockup content alternates between a white card and a dark card
  * per item (illustrative variety, same idea as My WINS' per-item bright colors) with no
  * corresponding per-item color field in this app's data model — simplified here to the page's
- * dominant `--color-card` treatment for every card, consistently. Same simplification for Topics
- * pills (Figma's mockup gives each topic word a different one-off bright text color purely as
- * illustrative variety, `327:1509`-`327:1518`; `profile.topics` has no per-item color field) —
- * unified to one dark chip treatment instead. `!important` is used only where noted (inherited
- * from the sibling file's own Button-override precedent — not needed anywhere in this file).
+ * dominant `--color-card` treatment for every card, consistently. Topics is its own case: the
+ * whole eyebrow+heading+pills block sits inside ONE big `--color-card` card (`552:4907`, 32px
+ * radius), and — unlike Superpowers — the per-pill rainbow coloring (`327:1509`-`327:1518` /
+ * `552:4916`-`552:4924`) IS reproduced (see `.topicPill*` below): it's positional (pill #1 is
+ * always purple, #2 yellow, etc.), not tied to topic content, so it needs no data-model change.
+ * `!important` is used only where noted (inherited from the sibling file's own Button-override
+ * precedent — not needed anywhere in this file).
  */
 
 .section {
@@ -205,16 +207,56 @@
   color: var(--color-primary-hover, var(--color-primary));
 }
 
-/* ---- Topics I'm expert pills -------------------------------------------------------------- */
+/* ---- Topics I'm expert (whole-section card + pills) ------------------------------------------
+   `552:4907` "Frame 433": one `--color-card` card wraps the eyebrow, heading, and pill row
+   together (32px radius, 56px padding on desktop) — unlike every other section on this page,
+   which is flat page-background with individual item cards, not a single outer card. */
 
-.topicPill {
-  /* Figma's own mockup gives each topic word a different one-off bright text color with no pill
-     background (`327:1509`-`327:1518`, see file doc comment for why that per-item rainbow
-     styling isn't reproduced here) — unified to one dark chip: `--color-card` fill, brand-blue
-     border + text, consistent with this page's other accent pills. */
+.topicsCard {
   background-color: var(--color-card);
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
+  border-radius: 32px;
+}
+
+/* Figma gives each pill position a distinct color: a solid-ish colored border that reads as a
+   soft gradient glow, and matching bold colored label text, on a `--color-card`-ish dark fill
+   (`552:4915`-`552:4923` "Frame 228"-"Frame 232"). The gradient border itself isn't retrievable
+   pixel-for-pixel through this read-only bridge (same limitation as `.ctaGlow` above) — a solid
+   border + a soft color-matched `box-shadow` halo is used instead as a close visual match. Each
+   `--topic-pill-color` below is the exact hex Figma uses for that pill position; only the 3rd
+   (`552:4920` "Conference production") maps to this app's own `--color-primary` token — the
+   other 4 have no bound Figma style (raw one-off hex in the file itself, not just here), so they
+   stay as hardcoded hex per this file's established `WIN_COLOR_HEX`-style precedent
+   (`MindsetterProfileView.tsx`). */
+.topicPill {
+  background-color: var(--color-card);
+  border: 1.5px solid var(--topic-pill-color, var(--color-primary));
+  color: var(--topic-pill-color, var(--color-primary));
+  box-shadow: 0 0 24px var(--topic-pill-glow, rgb(121 185 227 / 25%));
+}
+.topicPillPurple {
+  /* `552:4916` "Creative strategy" */
+  --topic-pill-color: #e69ef4;
+  --topic-pill-glow: rgb(230 158 244 / 25%);
+}
+.topicPillYellow {
+  /* `552:4918` "Personal brand" */
+  --topic-pill-color: #fbf286;
+  --topic-pill-glow: rgb(251 242 134 / 25%);
+}
+.topicPillBlue {
+  /* `552:4920` "Conference production" — matches `--color-primary` (Figma "brand color" style). */
+  --topic-pill-color: var(--color-primary);
+  --topic-pill-glow: rgb(121 185 227 / 25%);
+}
+.topicPillOrange {
+  /* `552:4922` "Speaker dev" */
+  --topic-pill-color: #f98866;
+  --topic-pill-glow: rgb(249 136 102 / 25%);
+}
+.topicPillIndigo {
+  /* `552:4924` "Event marketing" */
+  --topic-pill-color: #6b6fef;
+  --topic-pill-glow: rgb(107 111 239 / 25%);
 }
 
 /* ---- Superpowers --------------------------------------------------------------------------- */
@@ -338,11 +380,50 @@
   color: var(--color-foreground);
 }
 
+/* ---- Card slider (Reviews / My WINS / My F*ckUp(s)), see `CardSlider.tsx` --------------------
+   All three are genuine overflowing carousels in Figma (row wider than the content column), not
+   grids — `.sliderTrack` just hides the native scrollbar (scroll-snap + touch/trackpad scroll
+   still work; the `CardSlider` prev/next buttons drive the same scroll position via `scrollBy`).
+   `.sliderArrowOutline`/`.sliderArrowFilled` mirror the two-tone pair Figma draws for each
+   section's nav control (`552:4605`/`552:4625`/`552:4620`) — one bordered/muted, one solid
+   brand-color "primary direction" — approximated with this app's existing button-outline/-filled
+   convention rather than Figma's own two raw hex values (`#04c7ff`/`#79b9e3`), since the latter
+   is a one-off gradient-adjacent pair with no bound style and `--color-primary` reads correctly
+   in context. */
+
+.sliderTrack {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sliderTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.sliderArrowOutline {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background-color: transparent;
+}
+.sliderArrowOutline:not(:disabled):hover {
+  background-color: var(--color-card);
+}
+
+.sliderArrowFilled {
+  background-color: var(--color-primary);
+  color: var(--color-foreground);
+}
+.sliderArrowFilled:not(:disabled):hover {
+  opacity: 0.85;
+}
+
 /* ---- Reviews (static) ------------------------------------------------------------------------ */
 
 .reviewCard {
-  /* Figma (`327:1326`/`327:1349`/`327:1372`/`327:1395` "Frame 26"/"222"/"223"/"224"):
-     `--color-card` fill, white text throughout. */
+  /* Figma (`552:4513`/`552:4536`/`552:4559`/`552:4582` "Frame 26"/"222"/"223"/"224", same design
+     as the previously-cited `327:1326`-`327:1395` — re-verified against the newer duplicate frame
+     this pass, see `MindsetterProfileView.tsx`'s own top-of-file comment): `--color-card` fill,
+     white text throughout, fixed 420px width (part of a 1740px-wide overflowing row — see
+     `CardSlider.tsx`), not a grid column. */
   background-color: var(--color-card);
   border-radius: 16px;
   color: var(--color-foreground);
@@ -358,13 +439,18 @@
   color: var(--color-success);
 }
 
-/* ---- Reel Life gallery ------------------------------------------------------------------------ */
+/* ---- Reel Life gallery (carousel, see `CardSlider.tsx`) ---------------------------------------
+   STAGE 1.11 RE-VERIFICATION (2026-07-21): re-measured against the newest duplicates — desktop
+   tiles (`552:4642`-`552:4649` "Rectangle 13"-"20") are 530×417 with `cornerRadius: 30`; mobile
+   tiles (`401:7881`-`401:7886` "Rectangle 13"-"19") are 212×167, same ~1.27:1 ratio, same 30px
+   radius. Was `aspect-square` + `border-radius: 12px` (no citation) — corrected to the actual
+   ratio/radius Figma draws at both breakpoints; `--color-card` fallback fill kept for the same
+   reason as before (no dedicated Figma fill once a real photo covers the tile). */
 
 .reelLifeTile {
-  /* Fallback/loading backdrop behind the actual photo — `--color-card` instead of light
-     `#f4f4f4` (no dedicated Figma fill to sample once a real photo covers the tile). */
   background-color: var(--color-card);
-  border-radius: 12px;
+  aspect-ratio: 530 / 417;
+  border-radius: 30px;
   overflow: hidden;
 }
 
@@ -398,14 +484,17 @@
 }
 
 /* ---- My WINS (per-win color) --------------------------------------------------------------- */
-/* Confirmed against Figma (`327:1615`/`327:1628`/`327:1667` "Frame 24"/"225"/"228"): every win
-   card is actually a flat BLACK (`#000000`) card with a blurred colored ellipse decoration, not
-   a solid-color fill — `WIN_COLOR_HEX` (below, in the .tsx) is a deliberate simplification from
-   an earlier pass (that palette is shared with `WinsForm.tsx`'s own color picker, see that
-   file's comment) rather than a literal per-node fill match. Out of scope to restructure this
-   pass (per this task's brief, already flagged as an acceptable/expected simplification) — left
-   unchanged; only re-verified the white text stays legible against every one of the 7 bright
-   fills (all pass basic contrast at this text size/weight). */
+/* Confirmed against Figma (`327:1615`/`327:1628`/`327:1667`, re-verified this pass against the
+   newer duplicate `552:5079`/`552:5092`/`552:5105`… "Frame 24"/"225"/"226"/… — 7 sample cards):
+   every win card is actually a flat BLACK (`#000000`) card with a blurred colored ellipse
+   decoration, not a solid-color fill — `WIN_COLOR_HEX` (below, in the .tsx) is a deliberate
+   simplification from an earlier pass (that palette is shared with `WinsForm.tsx`'s own color
+   picker, see that file's comment) rather than a literal per-node fill match. Out of scope to
+   restructure this pass too (unchanged from the prior decision — only re-verified the white text
+   stays legible against every one of the 7 bright fills). What DID change this pass: Figma's own
+   row is a 4600px-wide OVERFLOWING carousel (7×640px cards) with a dedicated prev/next control,
+   not a `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
+   `md:w-auto` grid-filling). */
 
 .winCard {
   border-radius: 16px;

@@ -571,6 +571,10 @@
       "heading": "What I care about beyond work"
     },
     "bookSession": "Book a Session",
+    "carousel": {
+      "next": "Next",
+      "prev": "Previous"
+    },
     "ctaBanner1": {
       "heading": "Are you ready to get valuable expert advice right now?"
     },

@@ -571,6 +571,10 @@
       "heading": "Lo que me importa más allá del trabajo"
     },
     "bookSession": "Reservar una sesión",
+    "carousel": {
+      "next": "Siguiente",
+      "prev": "Anterior"
+    },
     "ctaBanner1": {
       "heading": "¿Listo para recibir consejos valiosos de un experto ahora mismo?"
     },

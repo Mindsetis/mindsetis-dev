@@ -37,6 +37,7 @@ import {
   ReelLifeBlockIcon,
   VideoBlogBlockIcon,
 } from '@/components/icons/shine-block-icons';
+import { CardSlider } from '@/components/profile/CardSlider';
 import {
   groupInterestsByCategory,
   isSafeHttpUrl,
@@ -85,6 +86,34 @@ const WIN_COLOR_HEX: Record<WinColor, string> = {
   lightblue: '#79B9E3',
   pink: '#FB17AF',
 };
+
+/** "Topics I'm expert" pill palette — one CSS Module class per pill *position* (not per topic
+ * value: `profile.topics` has no per-item color field, and Figma's own coloring is purely
+ * illustrative variety, not semantic — `552:4916`/`552:4918`/`552:4920`/`552:4922`/`552:4924`).
+ * Onboarding caps this field at 5 topics ("Topics you're expert in · up to 5", E.1), matching
+ * Figma's fixed 5-pill mockup exactly, so a 5-entry cycle (`index % length`) covers every real
+ * case. See `.topicPill*` in `MindsetterProfileView.module.css` for the actual color values. */
+const TOPIC_PILL_COLOR_CLASSES = [
+  'topicPillPurple',
+  'topicPillYellow',
+  'topicPillBlue',
+  'topicPillOrange',
+  'topicPillIndigo',
+] as const;
+
+/** `index % TOPIC_PILL_COLOR_CLASSES.length` is always in-range, but `noUncheckedIndexedAccess`
+ * can't prove that from a plain array index, hence the small helper (with a same-value fallback
+ * that's unreachable in practice) instead of a non-null assertion at the call site. */
+function topicPillColorClass(index: number): (typeof TOPIC_PILL_COLOR_CLASSES)[number] {
+  return (
+    TOPIC_PILL_COLOR_CLASSES[index % TOPIC_PILL_COLOR_CLASSES.length] ?? TOPIC_PILL_COLOR_CLASSES[0]
+  );
+}
+
+/** Shared base classes for every `CardSlider` item (Reviews / My WINS / My F*ckUp(s) / REEL
+ * LIFE) — same mobile width + scroll-snap participation across all four, kept in one place so a
+ * future 5th slider section can't forget `snap-start` and silently break scroll-snap. */
+const SLIDER_ITEM_BASE = 'w-[280px] shrink-0 snap-start';
 
 /**
  * Everything this screen renders — one `profiles` row joined 1:1 with `mindsetter_profiles`,
@@ -262,12 +291,31 @@ function CtaBanner({
  * variants — / `187:4294` mobile). Section order below matches the ACTUAL Figma node y-order
  * measured during this build (Hero → micro-nav → Roles → Topics pills → Superpower(s) →
  * Promo video → Numbers → What can I help with → REEL LIFE → My events → Reviews → CTA
- * banner #1 → My F*ckUp(s) → My Way → My WINS → Built Not Burn · Interview → CTA banner #2 →
+ * banner #1 → My WINS → My Way → My F*ckUp(s) → Built Not Burn · Interview → CTA banner #2 →
  * Beyond Business), which differs slightly from the ROADMAP stage-1.10 planning note's
  * prose-listed order (that note was written before this node-level measurement pass — the
  * measured layout is the ground truth per CLAUDE.md: "Figma design is the source of truth").
  * Micro-navigation and "My events" have no located Figma frame (ROADMAP open items) — added per
  * product-owner decision as, respectively, static anchor links and a neutral empty state.
+ *
+ * STAGE 1.11 RE-VERIFICATION (2026-07-21): re-measured against `552:4484` ("Public Mindsetter's
+ * Full Profile (video vertical)"), a newer duplicate of the same frame elsewhere on the canvas
+ * (higher node-ID range = the more recently edited copy; the last two styling passes — Topics'
+ * card wrapper, the dark-theme re-theme — already cited `552:xxxx` nodes exclusively as ground
+ * truth). Two corrections from that duplicate: (1) **My WINS → My Way → My F*ckUp(s)** is the
+ * real order (confirmed via each section's direct-child `y` offset under `552:4484`'s own root:
+ * Reviews `552:4496` y=6716 → CTA1 `552:4630` y=7505 → My WINS `552:5069` y=8205 → My Way
+ * `552:4650` y=8851 → My F*ckUp(s) `552:4700` y=9670 → video blog `552:4655` y=10470 → CTA2
+ * `552:4741` y=10958) — the PREVIOUS pass had F*ckUp(s) first and WINS last, measured off the
+ * older `327:1080` duplicate; this fixes that regression. (2) Reviews / My WINS / My F*ckUp(s)
+ * are genuine overflowing CAROUSELS in Figma, not static grids — each card row is measurably
+ * wider than the ~1300px content column (Reviews 1740px / 4×420px cards, My WINS 4600px /
+ * 7×640px cards, My F*ckUp(s) 1964px / 3×641px cards) and each has an identical circular
+ * prev/next control centered below the row (`552:4605`/`552:4625`/`552:4620`) — see
+ * `CardSlider.tsx` for the implementation (native scroll-snap + `scrollBy`, no carousel library).
+ * REEL LIFE is a FOURTH such carousel, added this pass (previously mis-built as a static
+ * grid/horizontal-scroll-on-mobile-only from a stale `187:4294` reading) — see that section's own
+ * inline comment below for the re-measurement citation (desktop `552:4610`, mobile `401:7830`).
  *
  * "Short" vs "Full" Figma frames are the SAME page — every optional section (Promo video, Reel
  * Life, Numbers, My Way, video blog, F*ckUps, My WINS) renders ONLY when its underlying data is
@@ -591,24 +639,53 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           </div>
         )}
 
-        {/* ============================== TOPICS I'M EXPERT (desktop-only) ============================== */}
+        {/* ============================== TOPICS I'M EXPERT (desktop-only card, `552:4907`
+            "Frame 433") ==============================
+            Re-verified against the current Figma pass (2026-07-21): unlike every other section
+            on this page, Topics renders as its OWN self-contained dark card (`#1a1a1a`,
+            32px radius, 56px padding — `552:4907`), with its eyebrow + heading CENTER-aligned
+            (`552:4909`/`552:4913`, `textAlignHorizontal: CENTER`) rather than left-aligned like
+            Roles/Superpowers, and the pill row centered as a group below. This block is
+            genuinely ABSENT from both mobile frames (`187:4294` and the newer `401:7567` —
+            scanned node-by-node: Roles is immediately followed by Superpower(s) on mobile, no
+            Topics text nodes anywhere in either frame) — confirming `lg:`-only visibility is
+            correct per design, not a bug, so that part of the prior build stands. What was
+            wrong: no card wrapper, left-aligned text, and a single flat pill color (the prior
+            pass's doc comment reasoned the per-pill rainbow coloring away as "no per-item color
+            field in the data model" — but the coloring is positional/illustrative, not
+            data-driven, so it doesn't need one; restored via `TOPIC_PILL_COLOR_CLASSES` cycling
+            through the 5 pill positions Figma itself uses, `552:4916`-`552:4924`). Figma's pill
+            border reads as a soft color-matched gradient glow — approximated here with a solid
+            border + colored box-shadow halo (`.topicPill`), same "close visual match, not a 1:1
+            vector reproduction" precedent as `.ctaGlow` above. */}
         {profile.topics.length > 0 && (
-          <div className="mt-16 hidden flex-col gap-8 lg:flex">
-            <SectionEyebrow icon={<MicAiFillIcon className="size-4 shrink-0" />}>
-              {t('topics.eyebrow')}
-            </SectionEyebrow>
-            <h2 className={cn('font-display text-h2', styles.gradientHeading)}>
-              {t('topics.heading')}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {profile.topics.map((topic) => (
-                <span
-                  key={topic}
-                  className={cn('rounded-full px-4 py-3 text-base font-bold', styles.topicPill)}
-                >
-                  {topic}
-                </span>
-              ))}
+          <div className="mt-16 hidden lg:block">
+            <div
+              className={cn(
+                'flex flex-col items-center gap-8 px-8 py-10 text-center lg:px-14 lg:py-14',
+                styles.topicsCard,
+              )}
+            >
+              <SectionEyebrow icon={<MicAiFillIcon className="size-4 shrink-0" />}>
+                {t('topics.eyebrow')}
+              </SectionEyebrow>
+              <h2 className={cn('font-display text-h2', styles.gradientHeading)}>
+                {t('topics.heading')}
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {profile.topics.map((topic, index) => (
+                  <span
+                    key={topic}
+                    className={cn(
+                      'rounded-full px-6 py-4 text-base font-bold',
+                      styles.topicPill,
+                      styles[topicPillColorClass(index)],
+                    )}
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -729,29 +806,41 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
               {t('reelLife.heading')}
             </h2>
-            {/* Stage 1.10 mobile-verification pass (ROADMAP item 4): Figma's mobile frame
-                (`187:4294`) shows Reel Life as a single-row horizontal carousel (arrow-nav
-                buttons flank the heading, node `261:1262` "Frame 228") rather than a stacked
-                2-column grid — the arrow buttons themselves are decorative (native touch/
-                trackpad scroll already covers the interaction, and adding JS-driven prev/next
-                controls here would need client interactivity beyond this pass's scope, see
-                `RolesAccordion.tsx`'s own note on why only Roles became a client component).
-                Reused the same horizontal-scroll-on-mobile / grid-on-desktop pattern this file
-                already established for My F*ckUp(s) / My Way / My WINS below. */}
-            <div className="flex gap-2 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible">
+            {/* STAGE 1.11 RE-VERIFICATION (2026-07-21): re-measured against the newest `552:xxxx`/
+                `401:7567` duplicates (desktop `552:4484`, mobile `401:7567` — supersedes the stale
+                `187:4294`/`261:1262` citation this comment used to carry). Corrected findings:
+                (1) this genuinely IS a carousel on BOTH breakpoints — desktop's photo row
+                (`552:4642`-`552:4649` "Rectangle 13"-"20", 530×417 tiles) spans x=-370..2085,
+                far wider than the ~1300px content column; mobile's row (`401:7881`-`401:7886`
+                "Rectangle 13"-"19", 212×167 tiles) spans x=-147..619 against a 375px frame — same
+                overflowing-row shape as Reviews/My WINS/My F*ckUp(s) below, not a static grid.
+                (2) the prev/next control (desktop `552:4610` "Frame 227", mobile `401:7830`
+                "Frame 228", each a 48px circular pair) sits centered BELOW the photo row on both
+                breakpoints (y mid-way through the row's own span) — NOT flanking the eyebrow/
+                heading as the stale citation claimed; that's the exact same control placement as
+                the other three `CardSlider` sections, so it's reused here unmodified (no new prop
+                needed). (3) Figma draws the tiles in a 2-row staggered/masonry offset (alternating
+                column x-offsets, not a flat single row) — simplified here to a flat CardSlider row
+                like the other three sections rather than hand-rolling a masonry track, since this
+                app has no per-photo layout metadata (crop/offset) to drive that staggering and the
+                task's own instruction is not to overcomplicate. Tile aspect ratio (530:417 desktop,
+                212:167 mobile — effectively the same ~1.27:1 ratio at both breakpoints) is kept via
+                `.reelLifeTile`'s `aspect-ratio` instead of the previous `aspect-square`. */}
+            <CardSlider
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              trackClassName="gap-4"
+            >
               {profile.reelLifePhotoUrls.map((url, index) => (
                 <div
                   key={`${url}-${index}`}
-                  className={cn(
-                    'aspect-square w-[45%] shrink-0 sm:w-[30%] md:w-auto',
-                    styles.reelLifeTile,
-                  )}
+                  className={cn(SLIDER_ITEM_BASE, 'lg:w-[530px]', styles.reelLifeTile)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- signed, short-lived private-bucket URL */}
                   <img src={url} alt="" className="size-full object-cover" />
                 </div>
               ))}
-            </div>
+            </CardSlider>
           </div>
         </div>
       )}
@@ -790,7 +879,11 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         </div>
       </div>
 
-      {/* ============================== REVIEWS (static) ============================== */}
+      {/* ============================== REVIEWS (static, carousel) ==============================
+          Figma `552:4496` "Frame 448": the card row (`552:4512` "Frame 273") is 1740px wide across
+          4×420px cards — wider than the ~1300px content column — with a dedicated prev/next
+          control (`552:4605`) centered below it, i.e. a real carousel (see `CardSlider.tsx`), not
+          the static `md:grid-cols-3` this section rendered before. */}
       <div
         id="reviews"
         className="mx-auto w-full max-w-[1440px] scroll-mt-24 px-4 py-16 sm:px-6 lg:px-[70px]"
@@ -809,9 +902,20 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               {t('reviews.leaveReview')}
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <CardSlider
+            prevLabel={t('carousel.prev')}
+            nextLabel={t('carousel.next')}
+            trackClassName="gap-4"
+          >
             {reviews.map((review) => (
-              <div key={review.name} className={cn('flex flex-col gap-4 p-6', styles.reviewCard)}>
+              <div
+                key={review.name}
+                className={cn(
+                  SLIDER_ITEM_BASE,
+                  'flex flex-col gap-4 p-6 sm:w-[340px] lg:w-[420px]',
+                  styles.reviewCard,
+                )}
+              >
                 <span
                   className={cn(
                     'inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-tiny',
@@ -828,7 +932,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 </div>
               </div>
             ))}
-          </div>
+          </CardSlider>
         </div>
       </div>
 
@@ -843,29 +947,42 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       </div>
 
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
-        {/* ============================== MY F*CKUP(S) ============================== */}
-        {profile.fckups.length > 0 && (
-          <div className="mt-16 flex flex-col gap-8">
-            <SectionEyebrow icon={<FckupsBlockIcon className="size-4" />}>
-              {t('fckups.eyebrow')}
+        {/* ============================== MY WINS (carousel) ==============================
+            Figma `552:5069` "Frame 446": the card row (`552:5078` "Frame 274") is 4600px wide
+            across 7×640px sample cards — wider than the content column — with its own prev/next
+            control (`552:4625`) centered below, i.e. a carousel (see `CardSlider.tsx`), not the
+            `md:grid-cols-3` this section rendered before. Order fix: this section is FIRST of
+            the three (right after CTA banner #1), not last — see this component's own top doc
+            comment for the full re-measurement citation. */}
+        {profile.wins.length > 0 && (
+          <div id="wins" className="mt-16 flex flex-col gap-8 scroll-mt-24">
+            <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
+              {t('wins.eyebrow')}
             </SectionEyebrow>
             <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('fckups.heading')}
+              {t('wins.heading')}
             </h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
-              {profile.fckups.map((fckup, index) => (
+            <CardSlider
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              trackClassName="gap-4"
+            >
+              {profile.wins.map((win, index) => (
                 <div
                   key={index}
                   className={cn(
-                    'flex w-[280px] shrink-0 flex-col gap-4 p-6 md:w-auto',
-                    styles.sectionCard,
+                    SLIDER_ITEM_BASE,
+                    'flex flex-col gap-3 p-6 lg:w-[640px]',
+                    styles.winCard,
                   )}
+                  style={{ backgroundColor: WIN_COLOR_HEX[win.color] }}
                 >
-                  <NumberBadge index={index + 1} />
-                  <p className="text-body whitespace-pre-line">{fckup.story}</p>
+                  <span className="text-tiny font-bold">{win.year}</span>
+                  <h3 className="font-display text-l">{win.win}</h3>
+                  <p className="text-tiny opacity-90">{win.description}</p>
                 </div>
               ))}
-            </div>
+            </CardSlider>
           </div>
         )}
 
@@ -904,31 +1021,47 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           </div>
         )}
 
-        {/* ============================== MY WINS ============================== */}
-        {profile.wins.length > 0 && (
-          <div id="wins" className="mt-16 flex flex-col gap-8 scroll-mt-24">
-            <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
-              {t('wins.eyebrow')}
+        {/* ============================== MY F*CKUP(S) (carousel) ==============================
+            Figma `552:4700` "Frame 453": the card row (`552:4707` "Frame 452") is 1964px wide
+            across 3×641px cards — wider than the content column — with its own prev/next control
+            (`552:4620`) centered below, i.e. a carousel (see `CardSlider.tsx`), not the
+            `md:grid-cols-3` this section rendered before (that grid already fit all 3 cards at
+            desktop width without overflow, which is why it never visually read as a slider).
+            Order fix: this section is LAST of the three (right before the video-blog section),
+            not first — see this component's own top doc comment for the full re-measurement
+            citation. This section's OWN visibility is unchanged (`profile.fckups.length > 0`,
+            data-driven, matching every other optional section on this page) — if it isn't
+            rendering on a specific live profile, re-check that account's
+            `mindsetter_profiles.fckups` jsonb value rather than this component's logic; the
+            onboarding step that fills it in is `app/[locale]/mindsetter-onboarding/blocks/
+            fckups/page.tsx`. */}
+        {profile.fckups.length > 0 && (
+          <div className="mt-16 flex flex-col gap-8">
+            <SectionEyebrow icon={<FckupsBlockIcon className="size-4" />}>
+              {t('fckups.eyebrow')}
             </SectionEyebrow>
             <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('wins.heading')}
+              {t('fckups.heading')}
             </h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
-              {profile.wins.map((win, index) => (
+            <CardSlider
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              trackClassName="gap-4"
+            >
+              {profile.fckups.map((fckup, index) => (
                 <div
                   key={index}
                   className={cn(
-                    'flex w-[280px] shrink-0 flex-col gap-3 p-6 md:w-auto',
-                    styles.winCard,
+                    SLIDER_ITEM_BASE,
+                    'flex flex-col gap-4 p-6 lg:w-[640px]',
+                    styles.sectionCard,
                   )}
-                  style={{ backgroundColor: WIN_COLOR_HEX[win.color] }}
                 >
-                  <span className="text-tiny font-bold">{win.year}</span>
-                  <h3 className="font-display text-l">{win.win}</h3>
-                  <p className="text-tiny opacity-90">{win.description}</p>
+                  <NumberBadge index={index + 1} />
+                  <p className="text-body whitespace-pre-line">{fckup.story}</p>
                 </div>
               ))}
-            </div>
+            </CardSlider>
           </div>
         )}
 
