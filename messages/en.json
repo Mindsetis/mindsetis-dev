@@ -219,6 +219,7 @@
     "verifyEmail": {
       "changeIt": "Change it",
       "resend": "Resend email",
+      "resendRateLimited": "Too many requests. Please wait a little while before requesting another email.",
       "resending": "Sending…",
       "resendSuccess": "Confirmation email sent.",
       "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",

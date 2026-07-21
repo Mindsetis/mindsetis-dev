@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
 import { WelcomeCtas } from '@/components/auth/WelcomeCtas';
+import { getSessionContext } from '@/lib/auth/guards';
 
 type WelcomePageProps = {
   params: Promise<{ locale: string }>;
@@ -25,9 +26,10 @@ const TOTAL_STEPS = 4;
  * suggested CTAs (Find Mindsetter / Invite to event / Find event / "Find out who a
  * Mindsetter is") had no real destination anywhere in the codebase — no catalog/events/invite
  * routes, no Mindsetter-info page. Stage 1.6 (user-requested copy/UI pass) replaced that single
- * CTA with the four buttons + info modal from `WelcomeCtas.tsx` — all four still link to `/`
- * as an explicit placeholder (see that component's doc comment); wire up their real
- * destinations once those pages exist. Untouched by the stage 1.4 pass below — only the
+ * CTA with the four buttons + info modal from `WelcomeCtas.tsx`; the "See how looks my profile
+ * page" CTA now links to the caller's own Member profile (`/members/{username}`), so this page
+ * reads `username` from the session and passes it down. The remaining three still link to `/`
+ * as explicit placeholders (see that component's doc comment). Untouched by the stage 1.4 pass below — only the
  * progress indicator + a left-aligned shell tweak (matching the other three steps) were added;
  * note `items-center` alone doesn't left-align a flex-col's children (it still centers each
  * block), so dropping it entirely (not just `text-center`) was the actual fix.
@@ -36,6 +38,7 @@ export default async function WelcomePage({ params }: WelcomePageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('auth');
+  const session = await getSessionContext();
 
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px]">
@@ -52,7 +55,7 @@ export default async function WelcomePage({ params }: WelcomePageProps) {
       </div>
       <div className="flex flex-col gap-6">
         <h1 className="font-display text-h1 text-foreground md:text-h3">{t('welcome.title')}</h1>
-        <WelcomeCtas />
+        <WelcomeCtas username={session?.profile?.username ?? null} />
       </div>
     </div>
   );

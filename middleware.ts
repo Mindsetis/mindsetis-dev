@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 
-import { routing } from '@/i18n/routing';
+import { localePath, routing } from '@/i18n/routing';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -119,7 +119,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
   if (!user && matchesPrefix(rest, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/login`;
+    url.pathname = localePath(locale, '/login');
     url.search = '';
     url.searchParams.set('redirectTo', rest);
     return NextResponse.redirect(url);
@@ -132,7 +132,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
   if (matchesPrefix(rest, STAFF_PREFIXES)) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/login`;
+      url.pathname = localePath(locale, '/login');
       url.search = '';
       url.searchParams.set('redirectTo', rest);
       return NextResponse.redirect(url);
@@ -140,7 +140,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     const isStaff = await isStaffUser(request, response, user.id);
     if (!isStaff) {
       const url = request.nextUrl.clone();
-      url.pathname = `/${locale}`;
+      url.pathname = localePath(locale, '/');
       url.search = '';
       return NextResponse.redirect(url);
     }
@@ -148,7 +148,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
   if (user && matchesPrefix(rest, AUTH_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = `/${locale}`;
+    url.pathname = localePath(locale, '/');
     url.search = '';
     return NextResponse.redirect(url);
   }
