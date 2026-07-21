@@ -47,10 +47,13 @@ function InviteEventIcon() {
  * same "keep DOM order fixed, swap via CSS order" precedent `WhoIsMindsetterDialog`'s footer
  * buttons already use.
  *
- * All three destinations are explicit placeholders (`/`) — no event-invite, event-catalog, or
- * profile-preview route exists in the codebase yet (onboarding doc section D).
+ * The two event CTAs stay explicit placeholders (`/`) — no event-invite/event-catalog route
+ * exists yet (onboarding doc section D). The bottom "See how looks my profile page" CTA now
+ * links to the caller's own public Mindsetter profile (`/mindsetters/{username}`, stage 1.10);
+ * `username` is resolved server-side by the congrats page and passed in (locale prefix is added
+ * automatically by the next-intl `Link`).
  */
-export async function MindsetterCongratsCtas() {
+export async function MindsetterCongratsCtas({ username }: { username: string }) {
   const t = await getTranslations('mindsetterOnboarding.congrats');
 
   return (
@@ -75,8 +78,9 @@ export async function MindsetterCongratsCtas() {
 
       <div className="mt-[236px] md:mt-[116px]">
         <Button asChild variant="primary" size="lg" className="w-full">
-          {/* TODO: no public Mindsetter profile-preview route exists yet — placeholder. */}
-          <Link href="/">
+          {/* Own public Mindsetter profile (stage 1.10 `/mindsetters/[username]`). `Link`
+              prefixes the active locale itself. */}
+          <Link href={`/mindsetters/${username}`}>
             <ProfilePageIcon />
             {t('ctas.seeProfile')}
           </Link>
