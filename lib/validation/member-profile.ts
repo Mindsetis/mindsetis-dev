@@ -29,7 +29,7 @@ export const MAX_ABOUT_LENGTH = 300;
 /**
  * `z.string().url()` accepts any scheme the WHATWG `URL` constructor parses, including
  * `javascript:`/`data:`/`vbscript:` — these social links are rendered as real `<a href>`s on
- * the public `/member/[username]` page (`components/profile/MemberProfileView.tsx`), so an
+ * the public `/members/[username]` page (`components/profile/MemberProfileView.tsx`), so an
  * unrestricted scheme here is a stored-XSS vector (security-auditor finding, stage 1.6).
  * Restrict to `http:`/`https:` only.
  */

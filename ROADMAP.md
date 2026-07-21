@@ -822,6 +822,140 @@ frame node ids, the A–E decisions/blockers) lives in
 - Profile-completeness indicator uses a **simple filled/total-fields heuristic** (not the
   static "42% · Basic" mock)
 
+### 1.10 — Public Mindsetter Profile page (`/mindsetters/[username]`)
+**Status:** 🔄 In progress — page built, polished, dark-themed, reviewed, and live-E2E-passed
+(desktop 1440px + mobile 375px); only future-stage Book-a-Session widget wiring and
+provisional/infra items remain before this stage can flip to ✅ Done.
+**Started:** 2026-07-20
+
+**Note (2026-07-20):** Implementation built and reviewed. Public route
+`app/[locale]/mindsetters/[username]/page.tsx` (RSC, `force-dynamic`), shared
+`components/profile/MindsetterProfileView.tsx` + `MindsetterProfileView.module.css`, and
+`lib/video-embed.ts` (YouTube/Vimeo URL → embed) — reusing `MemberProfileView`'s now-exported
+helpers (`SocialsJson`, `SOCIAL_ICON_MAP`, `INTEREST_CATEGORIES`, etc.). All ~17 Figma sections
+built with data-driven visibility (empty jsonb blocks hide their section). Product decisions
+applied this pass: Reviews / Invite / CTA banners / micro-navigation = static markup per
+product-owner sign-off; "My events" = empty-state placeholder (no events backend yet); Numbers
+= wired to real `mindsetter_profiles.numbers` data and hides when empty (product owner
+confirmed this is the better interpretation, superseding the earlier "static markup" decision
+noted below in the field-mapping checklist); Philosophy replaces bio/tagline in the hero when
+`mindsetter_profiles.philosophy` is filled. Private-bucket media (Reel Life photos, promo-video
+uploads) is rendered via **service-role signed URLs**, generated server-side only *after* the
+visibility gate (public + verified + not blocked / owner / staff) passes — never exposed to
+unauthorized viewers.
+
+New migration **`20260720184218_public_mindsetter_profile_anon_read.sql`**: added a
+`SECURITY DEFINER` helper `is_public_mindsetter(uuid)` (same precedent as `is_staff`) and
+public-read branches to `profiles_read` / `mindsetter_profiles_read` /
+`session_settings_read_public` — fixes a critical RLS cascade that made the page 404 for
+anonymous visitors. Live-verified on the hosted DB: anon can read a verified + public +
+non-blocked mindsetter; unverified / unpublished / blocked / non-mindsetter profiles stay
+closed; `/members/[username]` member auth-gating is unaffected. This migration also un-blocked
+6 previously-unpushed stage-1.9 migrations (all now pushed to hosted).
+
+Review loop resolved a **Critical stored-XSS** in `role.links[].url` (write-side
+`roleLinkSchema.url` now `.refine(isHttpUrl)`; read-side `isSafeHttpUrl` filter before
+rendering) and Medium/Low RLS hardening (`session_settings` read policy now requires
+`is_public`; `mindsetter_profiles_read` now also checks `is_blocked`). Full review loop
+re-run clean: `code-reviewer` APPROVED, `security-auditor` clean, `qa` PASS (build +
+migrations + live RLS negative tests + no client-bundle secret leak).
+
+**Note (2026-07-20, polish + dark theme):** Pixel-polish pass and a full dark-theme
+conversion are now done and reviewed — all committed after passing code-review + a live
+`browser-tester` E2E on hosted-seeded data, both desktop 1440px and mobile 375px:
+1. **Roles → accordion**: extracted `components/profile/RolesAccordion.tsx` (`'use client'`)
+   with expand/collapse (Figma indeterminate-circle-fill/add-circle-fill glyphs), preserving
+   the `isSafeHttpUrl` XSS filter on role links. (commit `a8a1c8c`)
+2. **Eyebrow icons**: replaced temporary lucide placeholders (Roles/Topics/Superpowers/Help/
+   Reviews) with real Figma-vector icons in `components/icons/mindsetter-eyebrow-icons.tsx`.
+   (commit `a8a1c8c`)
+3. **CTA banners**: refined to the real Figma treatment (turned out NOT a photo background —
+   solid dark + blue glow + gradient-text heading via `--gradient-primary` + a bordered price
+   pill with a new `CashFillIcon`), price binding intact. (commit `a8a1c8c`)
+4. **Mobile frame `187:4294`** verified node-by-node — Reel Life mobile fixed to a horizontal
+   carousel; hero/typography/Topics-desktop-only/Numbers-grid confirmed already correct.
+   (commit `a8a1c8c`)
+5. **Dark theme conversion** (the big one): the whole page was wrongly implemented light
+   (inherited from Member Profile); re-themed all sections to the Figma dark design (black
+   background, white/gradient text) reusing the app's existing dark design tokens
+   (`--color-background/foreground/card/muted-foreground/border/primary/success`,
+   `--gradient-primary`) rather than hardcoding — Figma's named fill styles mapped 1:1 to
+   these tokens. Gradient headings (h1 name, section h2s, My Way years) via
+   `--gradient-primary` + `background-clip: text`. `MemberProfileView` (the separate LIGHT
+   Member page, stage 1.6) left untouched. All behaviors/security preserved.
+   - Code-review APPROVED (theme-only, no regressions, XSS filters intact); the two optional
+     cleanups it flagged (hardcoded `#ffffff` → `var(--color-foreground)`; My Way description
+     muted color restored) were applied.
+   - Browser E2E PASS: dark background + white/gradient text confirmed, WINS colored cards
+     legible, accordion works, all sections render, mobile responsive with no overflow,
+     not-found renders clean.
+
+**Polish / follow-up — status:**
+- [x] CTA banners refined to the real Figma treatment (gradient-text heading + price pill —
+  turned out not a photo-background treatment after all, see note above)
+- [x] Roles now render as an accordion (expand/collapse), matching the Figma interaction
+- [x] Eyebrow icons replaced with real Figma vectors (Roles / Topics / Superpowers / Help /
+  Reviews)
+- [x] Mobile frame `187:4294` verified node-by-node against the build
+- [x] Full `browser-tester` E2E across breakpoints run live on hosted-seeded data (desktop
+  1440px + mobile 375px) — PASS
+- [x] Dark-theme conversion (page was wrongly light, now matches the Figma dark design) —
+  reviewed and E2E-verified
+- [~] Book-a-Session booking widget end-to-end wiring — still deferred to the dedicated
+  §5.8/§5.9 booking stage, out of this stage's scope
+- [~] Route slug `/mindsetters/[username]` — still provisional; spec doesn't mandate an exact
+  slug
+- Known limitation carried over from Member Profile (stage 1.6): `notFound()` on this route
+  likely also returns HTTP 200 instead of 404, root-caused to the shared app-wide
+  `app/[locale]/loading.tsx` streaming boundary — cross-cutting, deferred, not a new blocker
+- Minor/unrelated infra: a stray `.claude/worktrees/stage-1.6-mobile` worktree pollutes
+  `npm run lint`; `eslint.config.mjs` ignore should be `**/.next/**` — separate infra ticket,
+  not part of this stage
+
+Public, spec §5.4 "Публічний профіль Mindsetter" page: "Усі секції + «Мої події» · CTA Watch me / Book a Session / Invite (sticky, повтори) · окремий флоу Invite · мікро-навігація · адаптив. Публікується після верифікації (`is_public = true`)." Route naming mirrors the existing `/members/[username]` (Member Profile, stage 1.6) for consistency, but the ACCESS MODEL is opposite: `/members/[username]` requires a signed-in session (`middleware.ts` `PROTECTED_PREFIXES`); this page is spec-mandated **unauthenticated-public** — must NOT be added to `PROTECTED_PREFIXES`. Visibility gating: `profiles.account_type = 'mindsetter' AND mindsetter_profiles.is_public = true AND profiles.is_blocked = false`, OR the profile owner (any state, sees the preview banner — same UX pattern as `/dashboard/profile`), OR staff. Everyone else / nonexistent username → `notFound()` (note: `/members/[username]` has a known `notFound()`-returns-HTTP-200 bug from the shared `app/[locale]/loading.tsx` streaming boundary — likely recurs here, same deferred fix applies, not a new blocker).
+
+**Figma research (via `figma-designer`, 2026-07-20):** found on "Page 1" — `327:1080`/`383:2070` (Full Profile desktop, 1440×12510, vertical/horizontal promo-video variants, content identical), `383:2830` (Short Profile desktop, 1440×5262), `383:3590` (Short Profile + reviews, 1440×6051), `383:4089` (own-preview state, 1440×5340), `187:4294`/`401:7567` (mobile, 375×~9850, near-duplicates). Working theory: Short vs Full aren't separate frozen designs but the SAME page conditionally rendering sections based on which optional onboarding blocks (`mindsetter-onboarding` "shine" step) the Mindsetter chose to fill — mirrors the data-driven-visibility pattern already established there. Own-preview state (`383:4089`) mirrors `/dashboard/profile`: banner "Public viev — this is how others see your profile" (typo "viev" in Figma, same typo class already fixed once for the Member Profile — fix here too) + Edit Profile/Share Profile buttons replacing visitor CTAs. Mobile mockup for the preview banner looks like an unfinished/mixed iteration (toolbar always shown at top rather than a full state swap like desktop) — flag for designer clarification during build.
+
+**⚠️ Open questions / blockers to resolve before or at the start of implementation:**
+- [~] Route slug: `/mindsetters/[username]` — provisionally chosen to mirror `/members/[username]`; spec doesn't mandate an exact slug
+- [x] **Reviews section** (Figma has it; NO backing DB table, not mentioned in spec §5.4) — DECIDED (product owner, 2026-07-20): confirmed static markup only (статична верстка), no data wiring, no `reviews`/`testimonials` table
+- [x] **"Мої події" (My events)** — RESOLVED (product owner, 2026-07-20): no events backend exists yet, so the section is built as an **empty-state placeholder**; real data wiring deferred to whenever the events feature lands
+- [~] **Booking widget vs static CTA** — built as a static/teaser "Book a Session" CTA this stage (same precedent as Member Profile's static Edit/Share buttons); full 1:1 booking flow (§5.8) and Stripe payments (§5.9) wiring is still deferred to the dedicated booking stage (OPEN — not this stage's scope)
+- [x] **Invite flow** — DECIDED (product owner, 2026-07-20): "Invite to event" CTA + the separate Invite scenario are markup/layout only (статична верстка) this stage, no real invite backend wiring
+- [x] **Philosophy section** (`mindsetter_profiles.philosophy` exists in DB, listed in spec §5.3) — DECIDED (product owner, 2026-07-20): not a separate section — a conditional hero swap: when `philosophy` is filled, render it in the hero IN PLACE OF `bio`/`tagline`; otherwise fall back to `bio`. Resolves the earlier "not spotted in Figma" question.
+- [x] **Micro-navigation + sticky CTA repeats** (spec-required) — DECIDED (product owner, 2026-07-20): markup/layout only (статична верстка) this stage, no real scroll-spy/behavior wiring required
+- [x] "Built Not Burn · Interview" section → maps to `mindsetter_profiles.video_blog` (jsonb: youtube/vimeo), already built in stage 1.9 (product-owner-reversed decision, link-only) — noting this despite CLAUDE.md's general "BUILT NOT BURN = out of MVP" guidance, since it's already shipped data-model-wise; not a new decision, just flagging the discrepancy for awareness
+- Depends on stage 1.9's data model (`mindsetter_profiles`, `session_settings`) — 1.9 is still 🔄 In progress pending product-owner confirmation of its own 3 provisional decisions (see that section); doesn't block this stage's planning but should ideally be confirmed before/alongside implementation
+- Remaining open items: Book-a-Session widget end-to-end wiring (deferred to §5.8/§5.9 booking
+  stage) and the final route slug confirmation — the rest were resolved during this build.
+
+**Field-mapping checklist (Figma section → data source):**
+- [x] Hero: `avatar_url`, `verification_status` (badge), `username`, `full_name`+`last_name`, `bio`/`tagline` (overridden by `mindsetter_profiles.philosophy` when that field is filled — show philosophy instead of bio/tagline; fall back to bio otherwise, see Philosophy decision below), `industry`, `company`, `job_title`/`role`, `location` (country/city), `languages`, `socials` (jsonb) + website — reuse `SocialsJson`/`SOCIAL_ICON_MAP` from `MemberProfileView.tsx` (Figma mockup shows duplicate Facebook/Threads icons — mockup bug, ignored); static Invite/Book CTAs; intro-video play button wired via `lib/video-embed.ts`
+- [x] Roles → `mindsetter_profiles.roles` (jsonb: title/description/links[]) — link URLs sanitized (`isSafeHttpUrl`) after the XSS fix
+- [x] "Topics I'm expert" pills (desktop-only in Figma) → `session_settings.topics` (text[])
+- [x] Superpower(s) → `mindsetter_profiles.superpowers` (jsonb, fixed 3)
+- [x] Promo video → `mindsetter_profiles.promo_video` (jsonb: youtube/vimeo/videoPath) — private-bucket video paths served via service-role signed URLs
+- [x] Numbers → **REVISED 2026-07-20** (product owner): wired to real `mindsetter_profiles.numbers` (jsonb) data and hides when empty — supersedes the earlier "static markup only" decision, confirmed as the better interpretation
+- [x] "What can I help with" → `mindsetter_profiles.help_with` (jsonb)
+- [x] CTA banners ×2 (session price Free/$paid) → `session_settings.session_type` + `price_cents`/`currency` — built as gradient cards, not the Figma photo-background treatment (polish follow-up)
+- [x] Reviews — built as static markup, no data wiring, per decision above
+- [x] REEL LIFE → `mindsetter_profiles.reel_life` (jsonb, private Storage bucket paths) — served via service-role signed URLs generated after the visibility gate
+- [x] My Way → `mindsetter_profiles.my_way` (jsonb)
+- [x] Built Not Burn · Interview → `mindsetter_profiles.video_blog` (jsonb) — already built, see above
+- [x] My F*ckUp(s) → `mindsetter_profiles.fckups` (jsonb)
+- [x] My WINS → `mindsetter_profiles.wins` (jsonb, per-win color enum)
+- [x] Philosophy → `mindsetter_profiles.philosophy` (text) — rendered in the hero IN PLACE OF `bio`/`tagline` when filled, fallback to `bio` otherwise (not a separate section), see blocker above
+- [x] Beyond Business → `profiles.interests` (reuse `INTEREST_CATEGORIES` grouping, same as `MemberProfileView`)
+- [x] My events → built as an empty-state placeholder (no events backend yet), see blocker above
+- [x] Footer → reuse the existing site `Footer` component (Figma shows an unedited Relume placeholder footer — ignored its mockup copy)
+
+**Next steps:** core build, full review loop (`code-reviewer`, `security-auditor`, `qa`), the
+Figma-precision polish pass, the dark-theme conversion, and a live `browser-tester` E2E pass
+across breakpoints (desktop 1440px + mobile 375px) on hosted-seeded data are all done — see
+"Polish / follow-up" above. Remaining before this stage can flip to ✅ Done: Book-a-Session
+widget end-to-end wiring (stays deferred to the §5.8/§5.9 booking stage, out of this stage's
+scope), confirming the final route slug, and the unrelated infra lint ticket.
+
 ### 1.6 — Member Profile view page (self + any-member-by-username)
 **Status:** ✅ Done
 **Started:** 2026-07-15
@@ -848,7 +982,7 @@ catalog. Light-theme content section deliberately matching Figma's white backgro
 app's dark theme), isolated in its own CSS Module
 (`components/profile/MemberProfileView.module.css`) — a new pattern for this codebase, first
 use of CSS Modules here. Two routes sharing one component: `/dashboard/profile` (self-view,
-shows the preview banner + Edit Profile/Share Profile buttons) and `/member/[username]` (any
+shows the preview banner + Edit Profile/Share Profile buttons) and `/members/[username]` (any
 other member's profile, no banner/buttons). Both routes require an authenticated session
 (product decision: visible to any REGISTERED member, not anonymous visitors, editing reserved
 for the profile owner) — enforced at both the Next.js layer (`middleware.ts`) AND the database
@@ -860,13 +994,13 @@ event are static UI only, no behavior yet.
 - [x] `figma-designer`: pulled "Member Profile" frames `383:4667` (public) + `401:6375` (preview) — desktop 1440px only, no mobile variant exists for the preview frame in the Figma file (flagged as a gap, typography hints borrowed from a related mobile frame for a best-effort responsive pass)
 - [x] Shared `MemberProfileView` component (avatar/name/bio/badges/About/interests/static buttons) + dedicated CSS Module
 - [x] `/dashboard/profile` route (self-view, auth-gated)
-- [x] `/member/[username]` route (any-member view, auth-gated — not anonymous-public; renamed from `/profile/[username]`)
+- [x] `/members/[username]` route (any-member view, auth-gated — not anonymous-public; renamed from `/profile/[username]`, then from `/member/[username]`)
 - [x] i18n keys (`profile` namespace, en + es)
 - [x] Migration: tightened `profiles_read` RLS to require authentication (`supabase/migrations/20260715194801_profiles_read_require_auth.sql`)
 - [x] Fixed a stored-XSS gap in social-link URLs (write-time Zod scheme restriction + read-time render guard)
 - [x] Review loop (code-reviewer, security-auditor ×2, qa ×2) — all passed; live-verified against the hosted DB
 
-**Known limitation:** `notFound()` on `/member/[username]` for a nonexistent username renders
+**Known limitation:** `notFound()` on `/members/[username]` for a nonexistent username renders
 the correct not-found UI but returns HTTP 200 instead of 404 — root-caused to the app-wide
 `app/[locale]/loading.tsx` streaming boundary flushing the response before the status can
 change (confirmed by temporarily removing it and observing the status correctly flip to 404).

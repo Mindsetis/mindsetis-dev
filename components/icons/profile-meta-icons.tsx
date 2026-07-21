@@ -42,6 +42,11 @@ import type { SVGProps } from 'react';
  * separate "+" above the shoulder) doesn't match this instance's actual "user-add-fill" vector —
  * a solid silhouette with the "+" badge beside the head, not above it. Exported straight from
  * that node (`I401:6401;327:2540`) at Figma's own 16x16 grid, same as `BallPenFillIcon`.
+ *
+ * `CashFillIcon` (stage 1.10 pixel-polish pass) is the Mindsetter Full Profile's two CTA
+ * banners' "Session price: Free / $500" pill glyph (`401:8438`/`401:8436` "cash-fill", desktop
+ * `327:1443`/`327:2636`, identical mobile instances `261:1618`/`261:1626`'s siblings) — same
+ * 14x14 grid as `LocationPinIcon`/`LanguageBubbleIcon` above.
  */
 
 export function LocationPinIcon(props: SVGProps<SVGSVGElement>) {
@@ -80,6 +85,14 @@ export function BallPenFillIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" {...props}>
       <path d="M11.8995 8.32354L11.4281 7.85214L5.12132 14.1589C4.93378 14.3464 4.67943 14.4518 4.41421 14.4518H3C2.44771 14.4518 2 14.0041 2 13.4518V12.0376C2 11.7723 2.10536 11.518 2.29289 11.3304L9.54247 4.08088L13.3137 7.85214C13.5741 8.11247 13.5741 8.53461 13.3137 8.79494L9.07107 13.0375C8.81072 13.2979 8.38862 13.2979 8.12827 13.0375C7.86792 12.7772 7.86792 12.3551 8.12827 12.0947L11.8995 8.32354ZM12.3709 2.19526L14.2565 4.08088C14.5169 4.34123 14.5169 4.76334 14.2565 5.02369L14.0208 5.25939C13.6303 5.64991 12.9972 5.64991 12.6066 5.25939L11.1924 3.84517C10.8019 3.45465 10.8018 2.82148 11.1924 2.43095L11.4281 2.19526C11.6885 1.93491 12.1105 1.93491 12.3709 2.19526Z" />
+    </svg>
+  );
+}
+
+export function CashFillIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 14 14" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M1.75326 2.33496H12.2533C12.5754 2.33496 12.8366 2.59613 12.8366 2.91829V11.0849C12.8366 11.4071 12.5754 11.6683 12.2533 11.6683H1.75326C1.43109 11.6683 1.16992 11.4071 1.16992 11.0849V2.91829C1.16992 2.59613 1.43109 2.33496 1.75326 2.33496ZM3.79229 3.49992H2.33396V4.95825C3.13937 4.95825 3.79229 4.30533 3.79229 3.49992ZM10.209 3.49992C10.209 4.30533 10.8619 4.95825 11.6673 4.95825V3.49992H10.209ZM2.33396 9.04159V10.4999H3.79229C3.79229 9.69451 3.13937 9.04159 2.33396 9.04159ZM10.209 10.4999H11.6673V9.04159C10.8619 9.04159 10.209 9.69451 10.209 10.4999ZM7.00064 9.33325C8.28928 9.33325 9.33397 8.28856 9.33397 6.99992C9.33397 5.71125 8.28928 4.66659 7.00064 4.66659C5.71196 4.66659 4.66729 5.71125 4.66729 6.99992C4.66729 8.28856 5.71196 9.33325 7.00064 9.33325Z" />
     </svg>
   );
 }

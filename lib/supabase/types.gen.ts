@@ -697,6 +697,7 @@ export type Database = {
       }
       expire_unverified_access: { Args: never; Returns: undefined }
       is_mindsetter: { Args: { uid: string }; Returns: boolean }
+      is_public_mindsetter: { Args: { profile_id: string }; Returns: boolean }
       is_staff: { Args: { uid: string }; Returns: boolean }
       is_verified_member: { Args: { uid: string }; Returns: boolean }
       trigger_email_queue_processing: { Args: never; Returns: undefined }
