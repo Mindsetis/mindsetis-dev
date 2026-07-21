@@ -9,9 +9,10 @@ import { defineRouting } from 'next-intl/routing';
 export const routing = defineRouting({
   locales: ['en', 'es'],
   defaultLocale: 'en',
-  // Always show the locale segment (`/en/...`, `/es/...`) — matches the app's existing
-  // URL structure (this is next-intl's default, made explicit here).
-  localePrefix: 'always',
+  // English (default) is served from the root with NO locale segment (`/`, `/login`, …);
+  // every other locale carries its prefix (`/es/...`, and future `/uk/...`, `/de/...`).
+  // Requests to `/en/...` are redirected to the bare path by next-intl.
+  localePrefix: 'as-needed',
   // English-first (CLAUDE.md §i18n): never auto-switch the locale from the browser's
   // `Accept-Language` header. Visitors land on the default locale (English) and opt in to
   // another language explicitly via the `LocaleSwitcher`; the switcher's own navigation
@@ -20,3 +21,18 @@ export const routing = defineRouting({
 });
 
 export type AppLocale = (typeof routing.locales)[number];
+
+/**
+ * Build a locale-aware pathname honoring `localePrefix: 'as-needed'`: the default locale
+ * (English) gets NO prefix; any other locale gets `/<locale>`. Use this ONLY in the raw
+ * URL-construction sites where next-intl's own navigation helpers aren't available —
+ * the middleware, `next/navigation` redirects, and Route Handlers. Inside `app/[locale]/**`
+ * components keep using the locale-aware `Link`/`redirect` from `@/i18n/navigation`.
+ */
+export function localePath(locale: string, path: string): string {
+  const clean = path === '/' ? '' : path.startsWith('/') ? path : `/${path}`;
+  if (locale === routing.defaultLocale) {
+    return clean === '' ? '/' : clean;
+  }
+  return `/${locale}${clean}`;
+}

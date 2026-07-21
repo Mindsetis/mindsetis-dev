@@ -1,7 +1,7 @@
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { routing } from '@/i18n/routing';
+import { localePath, routing } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/server';
 import { safeRedirectPath } from '@/lib/validation/common';
 
@@ -27,13 +27,13 @@ import { safeRedirectPath } from '@/lib/validation/common';
  *   • `?token_hash=…&type=…`  → verifyOtp (recommended email-template style)
  *   • `?code=…`               → exchangeCodeForSession (PKCE / default ConfirmationURL)
  *
- * On success it redirects to `next` (a safe relative path), prefixed with the default
- * locale so the localized app renders without an extra redirect hop.
+ * On success it redirects to `next` (a safe relative path). The link carries no locale, so
+ * we resolve it against the default locale — which under `localePrefix: 'as-needed'` means
+ * the bare, unprefixed path (`/member-profile`, not `/en/member-profile`).
  */
 
 function localized(path: string, origin: string): URL {
-  const clean = path.startsWith('/') ? path : `/${path}`;
-  return new URL(`/${routing.defaultLocale}${clean === '/' ? '' : clean}`, origin);
+  return new URL(localePath(routing.defaultLocale, path), origin);
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
