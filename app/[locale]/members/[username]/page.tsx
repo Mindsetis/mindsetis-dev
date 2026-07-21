@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
 
 /**
  * "Member Profile" view (Figma `383:4667`) — how another registered member sees a member's
- * profile by username. Gated on being SIGNED IN (`/member` is in `middleware.ts`'s
+ * profile by username. Gated on being SIGNED IN (`/members` is in `middleware.ts`'s
  * `PROTECTED_PREFIXES`, plus this redundant server-side check) but deliberately NOT restricted
  * to the profile's own owner, nor to verified/Mindsetter accounts — product decision (stage
  * 1.6): any registered member may view any other non-blocked member's profile; this is a
@@ -82,7 +82,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const session = await getSessionContext();
   if (!session?.profile) {
     redirect(
-      `${localePath(locale, '/login')}?redirectTo=${encodeURIComponent(`/member/${username}`)}`,
+      `${localePath(locale, '/login')}?redirectTo=${encodeURIComponent(`/members/${username}`)}`,
     );
   }
 

@@ -39,11 +39,13 @@ export type RoleLinkMediaType = (typeof ROLE_LINK_MEDIA_TYPES)[number];
  * brand-new field, so there is no existing consumer to stay compatible with; keep this comment
  * in sync if that ever changes.
  */
-/** `true` only for an absolute `http:`/`https:` URL — shared by `ogImage`/`favicon` below.
- * Security boundary (audit finding): both fields are later hotlinked (`<img src>`/favicon
- * `<link>`) by a caller that trusts whatever was stored, so a bare `.url()` check (which accepts
- * ANY scheme, e.g. `javascript:`/`data:`/`file:`/`vbscript:`) isn't enough — this also hardens
- * `saveRoles` against a client submitting a crafted non-http image URL directly, bypassing the
+/** `true` only for an absolute `http:`/`https:` URL — shared by `url`/`ogImage`/`favicon` below.
+ * Security boundary (audit finding, stage 1.10 review): all three fields are later rendered as a
+ * live `<a href>`/hotlinked `<img src>`/favicon `<link>` by a caller (`MindsetterProfileView.tsx`)
+ * that trusts whatever was stored, so a bare `.url()` check (which accepts ANY scheme, e.g.
+ * `javascript:`/`data:`/`file:`/`vbscript:`) isn't enough — same stored-XSS class already closed
+ * for `socials` in stage 1.6 (`isSafeHttpUrl`, `MemberProfileView.tsx`). This also hardens
+ * `saveRoles` against a client submitting a crafted non-http URL directly, bypassing the
  * scraper's own http(s)-only filtering entirely (`absolutizeHttpUrl`, `lib/link-preview.ts`). */
 function isHttpUrl(value: string): boolean {
   try {
@@ -54,7 +56,12 @@ function isHttpUrl(value: string): boolean {
 }
 
 export const roleLinkSchema = z.object({
-  url: z.string().trim().min(1, 'Enter a valid URL.').url('Enter a valid URL.'),
+  url: z
+    .string()
+    .trim()
+    .min(1, 'Enter a valid URL.')
+    .url('Enter a valid URL.')
+    .refine(isHttpUrl, 'must be http(s)'),
   ogTitle: z.string().trim().max(200).optional(),
   ogImage: z.string().trim().url().refine(isHttpUrl, 'must be http(s)').optional(),
   mediaType: z.enum(ROLE_LINK_MEDIA_TYPES).optional(),

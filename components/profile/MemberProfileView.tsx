@@ -31,7 +31,7 @@ import styles from './MemberProfileView.module.css';
  * `lib/supabase/types.gen.ts` — that generated file is stale (missing `role`/`industry`,
  * added by `20260714101121_profiles_step3_build_fields.sql`) and regenerating it
  * (`npm run db:types`) is out of scope for this stage. Both call sites (`/dashboard/profile`,
- * `/member/[username]`) select this exact column allow-list, never `select('*')`.
+ * `/members/[username]`) select this exact column allow-list, never `select('*')`.
  */
 export interface MemberProfile {
   username: string;
@@ -87,7 +87,13 @@ export interface MemberProfileViewProps {
  * "duplicated icon" report was about — now wired to the real `TiktokIcon`/`ThreadsIcon` marks
  * sourced from that same "Follow" row.
  */
-const SOCIAL_ICON_MAP: Record<
+/**
+ * Exported (stage 1.10) so `MindsetterProfileView.tsx` can reuse this exact icon map/guard/
+ * grouping logic for its own hero social row and "Beyond Business" section, which are
+ * structurally identical to this file's — see that component's own doc comment for the
+ * cross-reference.
+ */
+export const SOCIAL_ICON_MAP: Record<
   Exclude<keyof SocialsJson, 'website'>,
   ComponentType<SVGProps<SVGSVGElement>>
 > = {
@@ -99,7 +105,7 @@ const SOCIAL_ICON_MAP: Record<
   youtube: YoutubeIcon,
 };
 
-const SOCIAL_KEYS = Object.keys(SOCIAL_ICON_MAP) as (keyof typeof SOCIAL_ICON_MAP)[];
+export const SOCIAL_KEYS = Object.keys(SOCIAL_ICON_MAP) as (keyof typeof SOCIAL_ICON_MAP)[];
 
 const LANGUAGE_CODE_BY_VALUE = new Map<string, string>(
   SUPPORTED_LANGUAGES.map((language) => [language.value, language.code]),
@@ -108,12 +114,12 @@ const LANGUAGE_CODE_BY_VALUE = new Map<string, string>(
 /**
  * Defense-in-depth alongside the write-time `isHttpUrl` refine in
  * `lib/validation/member-profile.ts`: this page renders `profiles.socials` values as real
- * `<a href>`s on the PUBLIC, unauthenticated `/member/[username]` route, so a
+ * `<a href>`s on the PUBLIC, unauthenticated `/members/[username]` route, so a
  * `javascript:`/`data:` value that somehow reached the DB (e.g. written before the write-time
  * fix shipped) must never be turned into a clickable link here either (security-auditor
  * finding, stage 1.6).
  */
-function isSafeHttpUrl(value: string | undefined): value is string {
+export function isSafeHttpUrl(value: string | undefined): value is string {
   if (!value) return false;
   try {
     const protocol = new URL(value).protocol;
@@ -123,7 +129,7 @@ function isSafeHttpUrl(value: string | undefined): value is string {
   }
 }
 
-interface InterestGroup {
+export interface InterestGroup {
   category: (typeof INTEREST_CATEGORIES)[number];
   items: { value: string; label: string; emoji: string }[];
 }
@@ -136,7 +142,7 @@ interface InterestGroup {
  * doesn't match anything and is silently skipped, same defensive precedent as
  * `member-profile/page.tsx`'s `initialInterestIds` filter.
  */
-function groupInterestsByCategory(interests: string[] | null): InterestGroup[] {
+export function groupInterestsByCategory(interests: string[] | null): InterestGroup[] {
   if (!interests || interests.length === 0) return [];
   const selected = new Set(interests);
 
@@ -148,16 +154,29 @@ function groupInterestsByCategory(interests: string[] | null): InterestGroup[] {
   })).filter((group) => group.items.length > 0);
 }
 
-/** `{full_name} {last_name}`, gracefully falling back to whichever half exists, then username. */
-function resolveDisplayName(profile: MemberProfile): string {
+/**
+ * `{full_name} {last_name}`, gracefully falling back to whichever half exists, then username.
+ * Exported (stage 1.10) — `MindsetterProfileView.tsx` shares this exact `profiles` name shape.
+ */
+export function resolveDisplayName(profile: {
+  username: string;
+  full_name: string | null;
+  last_name: string | null;
+}): string {
   const parts = [profile.full_name, profile.last_name].filter((part): part is string =>
     Boolean(part?.trim()),
   );
   return parts.length > 0 ? parts.join(' ') : profile.username;
 }
 
-/** "{city}, {country}", or whichever one exists alone; `null` when neither is set. */
-function resolveLocationText(profile: MemberProfile): string | null {
+/**
+ * "{city}, {country}", or whichever one exists alone; `null` when neither is set. Exported
+ * (stage 1.10) for reuse by `MindsetterProfileView.tsx`.
+ */
+export function resolveLocationText(profile: {
+  city: string | null;
+  country: string | null;
+}): string | null {
   if (profile.city && profile.country) return `${profile.city}, ${profile.country}`;
   return profile.city ?? profile.country ?? null;
 }
@@ -165,9 +184,10 @@ function resolveLocationText(profile: MemberProfile): string | null {
 /**
  * "EN / UK" — uppercase ISO 639-1 codes, not full language names. A stored value no longer
  * present in `SUPPORTED_LANGUAGES` (e.g. catalog pruned after this profile saved it) is
- * silently skipped, same defensive precedent as `groupInterestsByCategory`.
+ * silently skipped, same defensive precedent as `groupInterestsByCategory`. Exported (stage
+ * 1.10) for reuse by `MindsetterProfileView.tsx`.
  */
-function resolveLanguageText(profile: MemberProfile): string | null {
+export function resolveLanguageText(profile: { languages: string[] | null }): string | null {
   if (!profile.languages || profile.languages.length === 0) return null;
   const codes = profile.languages
     .map((value) => LANGUAGE_CODE_BY_VALUE.get(value))
@@ -178,7 +198,7 @@ function resolveLanguageText(profile: MemberProfile): string | null {
 
 /**
  * Shared presentational component for the "Member Profile" view — the two call sites
- * (`app/[locale]/dashboard/profile/page.tsx` self-view, `app/[locale]/member/[username]/
+ * (`app/[locale]/dashboard/profile/page.tsx` self-view, `app/[locale]/members/[username]/
  * page.tsx` public view) are structurally IDENTICAL below the banner (confirmed via a direct
  * Figma node-diff of `401:6375` vs `383:4667`), so this stays a single Server Component
  * (no client interactivity needed — Edit Profile / Share Profile / Invite to event are all
