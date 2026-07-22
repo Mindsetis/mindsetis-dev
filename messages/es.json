@@ -219,6 +219,7 @@
     "verifyEmail": {
       "changeIt": "Cámbialo",
       "resend": "Reenviar correo",
+      "resendRateLimited": "Demasiadas solicitudes. Espera un momento antes de solicitar otro correo.",
       "resending": "Enviando…",
       "resendSuccess": "Correo de confirmación enviado.",
       "subtitle": "Te enviamos un enlace de confirmación. Haz clic en él para activar tu cuenta y continuar.",

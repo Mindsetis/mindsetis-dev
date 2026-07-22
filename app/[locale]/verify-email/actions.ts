@@ -20,6 +20,7 @@
  *     email-bombing primitive against arbitrary addresses.
  */
 import { createAction } from '@/lib/api';
+import { ActionError } from '@/lib/api/errors';
 import { siteUrl } from '@/lib/auth/site-url';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -56,6 +57,24 @@ export const resendConfirmationEmail = createAction(
         code: error.code,
         message: error.message,
       });
+
+      // EXCEPTION to the swallow-everything rule: a rate-limit (429) is NOT an enumeration
+      // oracle — it's a global/per-address throttle that says nothing about whether the
+      // address has an account or is already confirmed, so it's safe (and far more honest)
+      // to surface. Without this the button would show a "sent" toast while Supabase silently
+      // dropped the email — the exact false-success the user hit. Mirrors `signUp`'s 429
+      // mapping in `(auth)/actions.ts`.
+      if (
+        error.status === 429 ||
+        error.code === 'over_email_send_rate_limit' ||
+        error.code === 'over_request_rate_limit' ||
+        /rate limit/i.test(error.message ?? '')
+      ) {
+        throw new ActionError(
+          'rate_limited',
+          'Too many requests right now. Please wait a little while before requesting another email.',
+        );
+      }
     }
 
     return null;

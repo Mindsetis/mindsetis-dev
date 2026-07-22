@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
 import { MemberProfileView } from '@/components/profile/MemberProfileView';
+import { localePath } from '@/i18n/routing';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 
@@ -80,7 +81,9 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   const session = await getSessionContext();
   if (!session?.profile) {
-    redirect(`/${locale}/login?redirectTo=${encodeURIComponent(`/members/${username}`)}`);
+    redirect(
+      `${localePath(locale, '/login')}?redirectTo=${encodeURIComponent(`/members/${username}`)}`,
+    );
   }
 
   const t = await getTranslations('profile');

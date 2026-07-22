@@ -99,7 +99,7 @@ export default async function MindsetterOnboardingCongratsPage({
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <h1 className="font-display text-h1 text-foreground md:text-h3">{t('congrats.title')}</h1>
-        <MindsetterCongratsCtas />
+        <MindsetterCongratsCtas username={session.profile.username} />
       </div>
     </div>
   );

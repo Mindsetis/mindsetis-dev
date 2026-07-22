@@ -93,8 +93,19 @@ function run(args, label) {
   if (res.status !== 0) die(`\`supabase ${args[0]}\` exited with code ${res.status ?? 'null'}.`);
 }
 
+// Forward extra flags after `--` (e.g. `npm run db:push -- --include-all`) to
+// `supabase db push` only — never to `link`. Whitelisted so this can't become
+// an arbitrary-flag-injection vector.
+const ALLOWED_PUSH_FLAGS = new Set(['--include-all', '--dry-run']);
+const extraArgs = process.argv.slice(2);
+for (const arg of extraArgs) {
+  if (!ALLOWED_PUSH_FLAGS.has(arg)) {
+    die(`Unrecognized flag "${arg}" — allowed: ${[...ALLOWED_PUSH_FLAGS].join(', ')}.`);
+  }
+}
+
 console.log(`\n🎯 Target Supabase project: ${REF}`);
 run(['link', '--project-ref', REF], `Linking to ${REF}`);
-run(['db', 'push', '--linked'], `Pushing pending migrations to ${REF} (linked only)`);
+run(['db', 'push', '--linked', ...extraArgs], `Pushing pending migrations to ${REF} (linked only)`);
 
 console.log(`\n✔ Migrations pushed to project ${REF} — no other project was touched.\n`);

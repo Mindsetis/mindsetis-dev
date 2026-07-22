@@ -25,11 +25,19 @@ const manrope = Manrope({
 // app/globals.css. Cal Sans is available via next/font/google today; if that ever
 // changes, `--font-display` in globals.css already falls back to Manrope/sans, so the
 // build stays green either way.
+//
+// `adjustFontFallback: false` — Cal Sans isn't in Next.js's bundled font-metrics DB, so its
+// automatic size-adjusted fallback-face generation can't find override values and logs
+// "Failed to find font override values for font `Cal Sans`" on every build (a warning, not a
+// failure). Disabling it silences that: we already ship an explicit CSS fallback chain via
+// `--font-display`, and with `display: 'swap'` on a heading-only font the CLS tradeoff is
+// negligible.
 const calSans = Cal_Sans({
   subsets: ['latin'],
   weight: ['400'],
   variable: '--font-cal-sans',
   display: 'swap',
+  adjustFontFallback: false,
 });
 
 export function generateStaticParams() {

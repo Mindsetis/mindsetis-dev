@@ -36,7 +36,12 @@ export function ResendConfirmationEmailButton({ email }: ResendConfirmationEmail
     setIsPending(false);
 
     if (!result.ok) {
-      toast.error(result.error.message);
+      // Rate-limit is the one failure the action surfaces (see its doc comment) — show a
+      // localized, actionable message rather than the raw English server string. Every other
+      // failure keeps the generic server message.
+      toast.error(
+        result.error.code === 'rate_limited' ? t('resendRateLimited') : result.error.message,
+      );
       return;
     }
     toast.success(t('resendSuccess'));

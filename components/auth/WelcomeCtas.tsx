@@ -32,9 +32,12 @@ import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
  * left / trailing icon pinned right — see `components/ui/button.tsx` for the full state spec)
  * with the custom `MindsetterArrowIcon` in place of the previous `lucide-react`
  * `CircleArrowRight`; once dismissed, "See how looks my profile page" switches to `primary`
- * (gradient background).
+ * (gradient background) and links to the caller's own Member profile view
+ * (`/members/{username}` — locale-prefixed automatically by the next-intl `Link`). `username`
+ * is resolved server-side by the `/welcome` page from the session and passed in; on the rare
+ * chance it's missing we fall back to the homepage rather than emit a broken `/members/` link.
  */
-export function WelcomeCtas() {
+export function WelcomeCtas({ username }: { username: string | null }) {
   const t = useTranslations('auth');
   const [modalOpen, setModalOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -73,8 +76,9 @@ export function WelcomeCtas() {
         <div className="mt-[137px] md:mt-20">
           {dismissed ? (
             <Button asChild variant="primary" size="lg" className="w-full">
-              {/* Placeholder destination — no profile-preview route exists yet. */}
-              <Link href="/">
+              {/* Own Member profile view (stage 1.6 `/members/[username]`). `Link` prefixes the
+                  active locale itself. Fall back to `/` if username is somehow unavailable. */}
+              <Link href={username ? `/members/${username}` : '/'}>
                 <ProfilePageIcon />
                 {t('welcome.ctas.seeProfile')}
               </Link>
