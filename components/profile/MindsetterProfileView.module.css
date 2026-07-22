@@ -317,13 +317,17 @@
    extra separation/border is needed here beyond the existing `.ctaGlow` accent below. */
 
 .ctaBanner {
-  background-color: var(--color-card);
+  background-color: var(--color-card); /* fallback while the image loads */
+  background-image: url('/images/gradient1.png');
+  background-size: cover;
+  background-position: center;
   color: var(--color-foreground);
   border-radius: 16px; /* Figma mobile `261:1610` "Frame 58" */
 }
 @media (min-width: 768px) {
   .ctaBanner {
     border-radius: 30px; /* Figma desktop `327:1443`/`327:2636` "Frame 58"/"Frame 237" */
+    width: 1300px;
   }
 }
 
@@ -353,16 +357,17 @@
      `--gradient-primary` token — see the citation above confirming it's a pixel-exact match for
      Figma's own shared "gradient" text style. */
   font-size: 24px;
-  line-height: 1;
-  background: var(--gradient-primary);
+  line-height: 90%;
+  max-width: 890px;
+  background: linear-gradient(95.47deg, #fff 5.02%, #87bce6 99.77%);
   background-clip: text;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 @media (min-width: 768px) {
   .ctaHeading {
     font-size: var(--text-h2);
-    line-height: 0.9;
   }
 }
 
@@ -437,6 +442,17 @@
   /* Theme-neutral (border + text only), unchanged by this pass. */
   border: 1px solid var(--color-success);
   color: var(--color-success);
+}
+
+.reviewsHeading {
+  /* Reviews' own H2 gradient (Figma), distinct from the shared `.gradientHeading` token used by
+     every other section H2 on this page — placed after `.reviewBadge` so, at equal specificity,
+     it wins the `background` property cascade over `.gradientHeading` when both classes are
+     applied together; `.gradientHeading` still supplies `background-clip: text`/`color: transparent`. */
+  background: linear-gradient(95.47deg, #fff 4.99%, #87bce6 99.78%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Reel Life gallery (carousel, see `CardSlider.tsx`) ---------------------------------------

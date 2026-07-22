@@ -28,6 +28,7 @@ import {
   QuillPenAiFillIcon,
   UserAddFillIcon,
 } from '@/components/icons/profile-meta-icons';
+import { ReviewCompanyLogoIcon, ReviewLeaveIcon } from '@/components/icons/review-icons';
 import {
   FckupsBlockIcon,
   MyWayBlockIcon,
@@ -47,7 +48,10 @@ import {
   SOCIAL_ICON_MAP,
   SOCIAL_KEYS,
 } from '@/components/profile/MemberProfileView';
+import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
+import { ReviewsCarousel } from '@/components/profile/ReviewsCarousel';
 import { RolesAccordion } from '@/components/profile/RolesAccordion';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type {
@@ -110,10 +114,22 @@ function topicPillColorClass(index: number): (typeof TOPIC_PILL_COLOR_CLASSES)[n
   );
 }
 
-/** Shared base classes for every `CardSlider` item (Reviews / My WINS / My F*ckUp(s) / REEL
- * LIFE) — same mobile width + scroll-snap participation across all four, kept in one place so a
- * future 5th slider section can't forget `snap-start` and silently break scroll-snap. */
+/** Shared base classes for every `CardSlider` item (My WINS / My F*ckUp(s) / REEL LIFE — Reviews
+ * moved to `ReviewsCarousel.tsx`'s `embla-carousel-react` track and keeps its own base classes
+ * without `snap-start`, see that section below) — same mobile width + scroll-snap participation
+ * across the remaining three, kept in one place so a future slider section can't forget
+ * `snap-start` and silently break scroll-snap. */
 const SLIDER_ITEM_BASE = 'w-[280px] shrink-0 snap-start';
+
+/** First letter of the first + last "word" of a reviewer's name, uppercased (e.g. "Erin
+ * Glabets" → "EG") — computed rather than hardcoded so this keeps working once the `reviews`
+ * content array gets real, distinct reviewer names. */
+function getReviewerInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const first = words[0]?.[0] ?? '';
+  const last = words.length > 1 ? (words[words.length - 1]?.[0] ?? '') : '';
+  return `${first}${last}`.toUpperCase();
+}
 
 /**
  * Everything this screen renders — one `profiles` row joined 1:1 with `mindsetter_profiles`,
@@ -256,7 +272,7 @@ function CtaBanner({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-6 overflow-hidden px-6 py-10 text-center md:px-16 md:py-16',
+        'relative flex flex-col items-center gap-6 overflow-hidden px-4 py-10 text-center sm:px-6 md:justify-center md:gap-8 md:px-0 md:pt-[100px] md:pb-[100px]',
         styles.ctaBanner,
       )}
     >
@@ -272,12 +288,20 @@ function CtaBanner({
         <Button
           type="button"
           variant="ghost"
-          className={cn('h-14 px-6 text-base font-bold', memberStyles.inviteButton)}
+          className={cn(
+            'h-14 px-6 text-base font-bold md:min-w-[188px]',
+            memberStyles.inviteButton,
+          )}
         >
           <UserAddFillIcon className="size-4" aria-hidden="true" />
           {inviteLabel}
         </Button>
-        <Button type="button" variant="primaryOutline" size="lg">
+        <Button
+          type="button"
+          variant="primaryOutline"
+          size="lg"
+          className="shadow-none md:min-w-[188px]"
+        >
           {bookLabel}
         </Button>
       </div>
@@ -882,38 +906,64 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       {/* ============================== REVIEWS (static, carousel) ==============================
           Figma `552:4496` "Frame 448": the card row (`552:4512` "Frame 273") is 1740px wide across
           4×420px cards — wider than the ~1300px content column — with a dedicated prev/next
-          control (`552:4605`) centered below it, i.e. a real carousel (see `CardSlider.tsx`), not
-          the static `md:grid-cols-3` this section rendered before. */}
-      <div
-        id="reviews"
-        className="mx-auto w-full max-w-[1440px] scroll-mt-24 px-4 py-16 sm:px-6 lg:px-[70px]"
-      >
-        <div className="flex flex-col gap-8">
+          control (`552:4605`) centered below it, i.e. a real carousel (see `ReviewsCarousel.tsx`,
+          an `embla-carousel-react`-backed track dedicated to this section — see that file's doc
+          comment for why it isn't `CardSlider.tsx`), not the static `md:grid-cols-3` this section
+          rendered before. */}
+      {/* Top/bottom padding is intentionally asymmetric: 86px (not 150px) on top because "My
+          Events" directly above already contributes its own 64px bottom padding (`py-16`) — 64 +
+          86 = the requested 150px visible gap. The bottom side has no such neighbor contribution
+          (CTA Banner #1's wrapper below has zero vertical padding of its own), so it stays a flat
+          150px. Do NOT "simplify" this back to a symmetric `py-[150px]` — that would double the
+          gap above this section to 214px. */}
+      <div id="reviews" className="pb-16 pt-16 md:pb-[150px] md:pt-[86px]">
+        <div className="mx-auto flex w-full max-w-[1440px] flex-col px-4 sm:px-6 lg:px-[70px]">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:gap-8">
               <SectionEyebrow icon={<ReviewChatIcon className="size-3 shrink-0" />}>
                 {t('reviews.eyebrow')}
               </SectionEyebrow>
-              <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              <h2
+                className={cn(
+                  'font-display text-h3 md:text-h2 md:max-w-[588px]',
+                  styles.gradientHeading,
+                  styles.reviewsHeading,
+                )}
+              >
                 {t('reviews.heading')}
               </h2>
             </div>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="primaryOutline" className="min-w-[250px] shadow-none">
+              <ReviewLeaveIcon className="size-4" />
               {t('reviews.leaveReview')}
             </Button>
           </div>
-          <CardSlider
-            prevLabel={t('carousel.prev')}
-            nextLabel={t('carousel.next')}
-            trackClassName="gap-4"
-          >
-            {reviews.map((review) => (
+        </div>
+        {/* Full-bleed wrapper for the card row only — breaks out of the max-w-[1440px] grid above
+            so the slider reaches the true viewport edges on screens wider than 1440px, instead of
+            being letterboxed inside the centered column. The `w-screen` + `-translate-x-1/2`
+            full-bleed technique can make this box wider than its ancestors on browsers with a
+            real (non-overlay) scrollbar, which would otherwise introduce a page-wide horizontal
+            scrollbar — the actual guard for that lives on `<body>` in `app/[locale]/layout.tsx`
+            (`overflow-x-hidden`), NOT on this element (an `overflow-x-hidden` here would only
+            clip this element's own overflowing children, not stop this box itself from widening
+            `body`). */}
+        <div className="relative left-1/2 mt-8 w-screen -translate-x-1/2 md:mt-[50px]">
+          <ReviewsCarousel prevLabel={t('carousel.prev')} nextLabel={t('carousel.next')}>
+            {reviews.map((review, index) => (
               <div
-                key={review.name}
+                key={`${review.name}-${index}`}
                 className={cn(
-                  SLIDER_ITEM_BASE,
-                  'flex flex-col gap-4 p-6 sm:w-[340px] lg:w-[420px]',
+                  'w-[280px] shrink-0 sm:w-[340px] lg:w-[420px]',
+                  'flex min-h-[330px] flex-col gap-4 p-6',
                   styles.reviewCard,
+                  // embla's own docs: CSS `gap` (this track's `gap-4`) never applies between the
+                  // LAST slide and the first when `loop: true` — the seam simply has no gap,
+                  // since `gap` only ever renders *between* items and looping wraps straight back
+                  // to item 0 with no "next" item after the last one for the gap to sit against.
+                  // Official fix: a matching margin on the last slide only (see
+                  // https://www.embla-carousel.com/docs/guides/slide-gaps/).
+                  index === reviews.length - 1 && 'mr-4',
                 )}
               >
                 <span
@@ -925,19 +975,33 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   <CheckCircle2 className="size-3" aria-hidden="true" />
                   {t('reviews.verifiedMember')}
                 </span>
-                <p className={cn('text-body', styles.reviewQuote)}>{review.quote}</p>
-                <div>
-                  <p className="font-bold">{review.name}</p>
-                  <p className="text-tiny text-foreground/60">{review.role}</p>
+                <ReviewQuoteText
+                  quote={review.quote}
+                  readMoreLabel={t('reviews.readMore')}
+                  readLessLabel={t('reviews.readLess')}
+                />
+                <div className="mt-auto flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback className="bg-white text-primary">
+                        {getReviewerInitials(review.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-bold">{review.name}</p>
+                      <p className="text-tiny text-foreground/60">{review.role}</p>
+                    </div>
+                  </div>
+                  <ReviewCompanyLogoIcon className="h-[42px] w-auto shrink-0 opacity-70" />
                 </div>
               </div>
             ))}
-          </CardSlider>
+          </ReviewsCarousel>
         </div>
       </div>
 
       {/* ============================== CTA BANNER #1 ============================== */}
-      <div className="mx-auto w-full max-w-[1300px] px-4 sm:px-6 lg:px-[70px]">
+      <div id="cta-banner-1" className="mx-auto w-full max-w-[1300px] scroll-mt-24 mb-[150px]">
         <CtaBanner
           heading={t('ctaBanner1.heading')}
           price={price}
@@ -1100,7 +1164,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       </div>
 
       {/* ============================== CTA BANNER #2 ============================== */}
-      <div className="mx-auto mt-16 w-full max-w-[1300px] px-4 sm:px-6 lg:px-[70px]">
+      <div
+        id="cta-banner-2"
+        className="mx-auto mt-16 w-full max-w-[1300px] scroll-mt-24 mb-[150px]"
+      >
         <CtaBanner
           heading={t('ctaBanner2.heading')}
           price={price}

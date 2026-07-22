@@ -22,18 +22,18 @@ export interface CardSliderProps {
 /**
  * Minimal horizontal card carousel — native CSS scroll-snap + `scrollBy` on the prev/next
  * buttons, no carousel library (none exists in this project's dependencies; Figma's own
- * slider — Reviews `552:4496`"Frame 448", My WINS `552:5069`"Frame 446", My F*ckUp(s)
- * `552:4700`"Frame 453" — is reproduced with plain browser primitives instead of adding
- * `embla-carousel-react`/`swiper`/etc.).
+ * slider — My WINS `552:5069`"Frame 446", My F*ckUp(s) `552:4700`"Frame 453" — is reproduced
+ * with plain browser primitives instead of adding `embla-carousel-react`/`swiper`/etc.). Reviews
+ * uses its own dedicated `ReviewsCarousel.tsx` (embla-based) instead, since it needed genuine
+ * loop/centered-slide behavior this component doesn't implement.
  *
- * All three Figma card rows are wider than the ~1300px content column (Reviews 1740px across
- * 4×420px cards, My WINS 4600px across 7×640px cards, My F*ckUp(s) 1964px across 3×641px
- * cards) — i.e. genuinely overflowing carousels, not grids — each paired with an identical
- * circular prev/next control pinned centered below the row (`552:4605`/`552:4625`/`552:4620`
- * "Frame 56"/"277"/"246", each a pair of 48px circular buttons). Reused here as one small
- * client-component wrapper (the `'use client'` boundary RolesAccordion.tsx already established
- * as this file's precedent for isolated interactivity — everything else on the page stays a
- * Server Component).
+ * Both Figma card rows are wider than the ~1300px content column (My WINS 4600px across
+ * 7×640px cards, My F*ckUp(s) 1964px across 3×641px cards) — i.e. genuinely overflowing
+ * carousels, not grids — each paired with an identical circular prev/next control pinned
+ * centered below the row (`552:4625`/`552:4620` "Frame 277"/"246", each a pair of 48px circular
+ * buttons). Reused here as one small client-component wrapper (the `'use client'` boundary
+ * RolesAccordion.tsx already established as this file's precedent for isolated interactivity —
+ * everything else on the page stays a Server Component).
  *
  * Buttons disable at the scroll boundaries (not verified against a specific Figma
  * enabled/disabled state pair — this is standard carousel UX, not literal pixel-matching) rather
@@ -66,6 +66,7 @@ export function CardSlider({ children, prevLabel, nextLabel, trackClassName }: C
   function scrollByPage(direction: -1 | 1) {
     const track = trackRef.current;
     if (!track) return;
+
     track.scrollBy({ left: direction * track.clientWidth * 0.9, behavior: 'smooth' });
   }
 

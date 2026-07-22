@@ -58,7 +58,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <html lang={locale} className={cn('dark', manrope.variable, calSans.variable)}>
-      <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
+      <body className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale}>
           <Header />
           <main className="flex-1">{children}</main>
