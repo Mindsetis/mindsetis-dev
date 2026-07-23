@@ -52,6 +52,11 @@
 .section {
   background-color: var(--color-background);
   color: var(--color-foreground);
+  /* REEL LIFE's full-bleed slider breaks out via `w-screen -mx-[50vw]` — `100vw` can exceed the
+     actual viewport width by the scrollbar's own width, which otherwise leaves the whole PAGE
+     with a stray horizontal scrollbar. Clipping it here contains that overflow to this section
+     without affecting the slider's own intentional inner `overflow-x-auto`. */
+  overflow-x: hidden;
 }
 
 /* ---- Shared gradient headings (hero H1 + every section H2, see file doc comment) ---------- */
@@ -61,6 +66,11 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  /* Page-local override, scoped to this file's section headings only — explicit line-height
+     (matches the shared `--text-h2--line-height`/`--text-h3--line-height` token default of 0.9)
+     plus 8px of bottom padding, per request, instead of loosening the line-height itself. */
+  line-height: 0.9;
+  padding-bottom: 8px;
 }
 
 /* ---- Hero name (H1) -------------------------------------------------------------------------
@@ -166,7 +176,10 @@
   }
 }
 
-/* ---- Help / F*ckUps — numbered list cards ------------------------------------------------ */
+/* ---- Superpowers / F*ckUps — numbered list cards ------------------------------------------
+   NOTE: Help used to share this badge too, but a re-check against `552:4991`/`401:7758` found
+   it's actually an accordion identical in shape to Roles below (bag icon + plain index number,
+   not this circular badge) — see `HelpWithAccordion.tsx` and `.helpIndexNumber` below. */
 
 .numberBadge {
   /* Theme-neutral (no background of its own — border + text only), unchanged by this pass. */
@@ -205,6 +218,31 @@
 }
 .roleLinkText:hover {
   color: var(--color-primary-hover, var(--color-primary));
+}
+
+/* ---- Help accordion (see `HelpWithAccordion.tsx` for the Figma node citations, `552:4991`
+   desktop "Frame 444" / `401:7758` mobile "Frame 480") — structurally the same accordion
+   pattern as Roles above, kept as its own rules rather than reusing `.roleRowBorder`/
+   `.roleIndexNumber` since the index-number letter-spacing differs (Figma's Help row number
+   uses the same 30%/"tiny spacing" style as the section eyebrow, not Roles' own 5%). --------- */
+
+.helpRowBorder {
+  /* Figma's own row divider (`--color-border`, `#747474`), same token as `.roleRowBorder`. */
+  border-color: var(--color-border);
+}
+
+.helpIndexNumber {
+  /* Figma: "secondary text" (`#a5a5a5`, `--color-muted-foreground`) at 30% letter-spacing —
+     the exact same text style Figma uses for the section eyebrow ("tiny spacing (PC)"/"MOB/tiny
+     spacing"), not Roles' 5% value. */
+  color: var(--color-muted-foreground);
+  letter-spacing: 0.3em;
+}
+
+.helpToggleClosed {
+  /* The collapsed-row glyph (`AddCircleFillIcon`, `currentColor`) — Figma's raw fill is white,
+     which reads correctly on this screen's actual dark background (same as `.roleToggleClosed`). */
+  color: var(--color-foreground);
 }
 
 /* ---- Topics I'm expert (whole-section card + pills) ------------------------------------------
@@ -283,7 +321,57 @@
   color: var(--color-foreground);
 }
 
-/* ---- Promo video / Built Not Burn video panels ------------------------------------------- */
+/* ---- Promo video ----------------------------------------------------------------------------
+   STAGE 1.11 RE-VERIFICATION (2026-07-23): re-measured against `552:4953` "Frame 58" (desktop)
+   and `401:8067`-`401:8076` (mobile) — this section is NOT the previous stacked/centered
+   "eyebrow → heading → 900px 16:9 panel" layout. Desktop wraps the eyebrow+heading (left) and a
+   PORTRAIT video thumbnail (right, `552:4956` "Frame 37": 372×524, `cornerRadius: 16`,
+   `#1a1a1a` "grey shadow") inside ONE full-bleed rounded card (`Frame 58`, 30px radius) with a
+   black-to-brand-blue radial glow background. Mobile has NO such wrapping card — just the
+   eyebrow directly above a flush, full-width 345×450 thumbnail (same `cornerRadius: 16`
+   `#1a1a1a` fill) — and genuinely drops the "Two minutes…" H2 entirely (confirmed: no matching
+   text node anywhere under the mobile frame `401:7567`), so the card background/padding and the
+   heading are both gated `md:` in the JSX (`.promoCard` below only paints anything from `md:` up;
+   the `<h2>` is `hidden md:block`). The video thumbnail's own pre-play state (play glyph +
+   "Click for watching" caption, `552:4957`-`552:4960` / `401:8073`-`401:8076`) is handled by
+   `PromoVideoPlayer.tsx`, not this file.
+
+   BACKGROUND-IS-ACTUALLY-AN-IMAGE CORRECTION (2026-07-23, 2nd follow-up pass): the previous
+   pass above modeled this as a CSS gradient — wrong premise. Re-investigated the raw fill and
+   it's an IMAGE paint, not a gradient: `552:4955` (the un-named full-bleed rect sitting behind
+   the card's text/thumbnail) is named "75", and the identical pattern — a generic numeric name,
+   exact card pixel dimensions, no children — recurs on the SAME background rect in this
+   profile's other duplicate "Full Profile" mockup frames (`337:2307`, `383:2546`, all also named
+   "75"), which is the telltale signature of a dropped-in photo/texture asset (Figma auto-names
+   an inserted image after its source filename) reused across every copy of this section, not a
+   hand-drawn vector gradient (those don't get bare-number auto-names). `get_node` still can't
+   surface the raw image bytes/hash through this read-only bridge (fills come back empty for any
+   non-solid paint, gradient or image alike — confirmed again), so there's no direct "export this
+   fill" path, but exporting the rect NODE itself (`552:4955` has no children, so its screenshot
+   is exactly its own fill, pixel-for-pixel, uncontaminated by the sibling text/thumbnail layers
+   stacked on top of it in the live design) works as a substitute for a raw asset export. Pulled
+   it at 2x, downsampled to the card's native 1296×650 and re-encoded as WebP (this is a very
+   soft, low-frequency blurred glow — no visible quality loss, and it shrinks to ~6KB) —
+   `public/images/promo-video-card-bg.webp`. No repo convention existed yet for local static
+   decorative images (no `public/` directory before this), so this is the first asset there;
+   `background-size: 100% 100%` (not `cover`) so the glow's corners stay anchored to the card's
+   corners at every width instead of cropping as the card's aspect ratio changes across the `md:`
+   → `lg:` range, matching how the previous (gradient) attempt always spanned 100%/100% too. */
+
+.promoCard {
+  border-radius: 16px;
+}
+@media (min-width: 768px) {
+  .promoCard {
+    border-radius: 30px;
+    background-color: #000000;
+    background-image: url('/images/promo-video-card-bg.webp');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+}
+
+/* ---- Built Not Burn video panel ------------------------------------------------------------ */
 
 .videoPanel {
   background-color: var(--color-card);
@@ -295,16 +383,106 @@
   }
 }
 
-/* ---- Numbers stat row ---------------------------------------------------------------------- */
+/* ---- Numbers stat row -----------------------------------------------------------------------
+   STAGE 1.12 RE-VERIFICATION: re-measured against the current duplicate (`552:4979`-`552:4988`
+   "Frame 217"-"220", cross-checked against mobile `401:7744`-`401:7755`, same content/layout).
+   `--color-card` fill was already correct; corner radius was wrong (flat 16px — actually 12px
+   mobile / 24px desktop, same 2-step pattern as `.videoPanel` above) and the per-card two-tone
+   gradient border+glow (Figma's own `Rectangle 9`-`12`/`401:7743` etc., one distinct gradient per
+   card *position*) was missing entirely. That gradient isn't retrievable pixel-exact through this
+   read-only bridge (same limitation as `.topicPill`'s glow above) — colors below are sampled from
+   an exported screenshot of the section instead, and the border itself uses the standard
+   padding-box/border-box double-background technique (respects `border-radius` correctly, unlike
+   `border-image`). No bound Figma style exists for these (illustrative variety, not semantic —
+   same precedent as `.topicPill`), and the data model allows more stat items than Figma's 4-card
+   mockup (`MAX_NUMBERS = 10`), so the 4-color palette cycles by position — see
+   `NUMBER_STAT_COLOR_CLASSES`/`numberStatColorClass` in `MindsetterProfileView.tsx`.
+
+   FOLLOW-UP PRECISION RE-VERIFICATION: `get_node`/`get_nodes_info` on the card frames themselves
+   never expose the gradient fill/stroke as structured paint data (fills/strokes/effects come back
+   empty for any non-solid, non-shared-style paint via this read-only bridge) — confirmed again
+   this pass, so the gradient stop hexes below are still screenshot samples, unchanged, kept as-is
+   per the same limitation. What *did* change: the actual border-and-glow shape isn't a stroke on
+   the card frame at all — it's a separate, larger rounded rect sitting behind it (Figma's own
+   "Rectangle 9"-"12" siblings, e.g. `552:4975` 310×266 behind `552:4979` 302×258, and `401:7568`
+   168×132 behind `401:7744` 164×128) peeking out on all sides. Measuring that size delta (and
+   independently re-confirming by sampling the composited card screenshot's edge pixels) gives a
+   real border width of **~4px on desktop, ~2px on mobile** — the previous flat `1.5px` guess was
+   wrong at both breakpoints. Corner radius (12/24px) and the glow's flat `20px` blur were already
+   right in structure; the glow's blur *radius* still can't be read as real effect data (no
+   `effects` array is exposed for these nodes either) — a rough alpha-channel measurement off the
+   exported "Rectangle 9" glow shape suggests a somewhat larger falloff (~28px) than the current
+   flat `20px`, but since that's still an inference from a rendered screenshot rather than a real
+   effects value, `20px` is kept rather than swapping one guess for another.
+
+   FOLLOW-UP: CONTOUR-HUGGING GLOW. Re-fetched `552:4975` ("Rectangle 9", the gradient shape sitting
+   behind the card that peeks out ~4px/~2px on all sides — see above) in isolation at 4x scale to
+   inspect its blur profile directly. It is not a uniformly diffuse cloud: it reads as a filled
+   rounded-rect whose color stays close to full saturation across nearly its whole footprint and
+   only falls off in the last ~20-30px near the true edge, so the thin sliver that peeks out from
+   behind the card is still near-saturated, with the soft falloff appearing further out as a
+   secondary bloom. A single `box-shadow: 0 0 20px` blur doesn't reproduce that — CSS box-shadow
+   blur fades from ~50% intensity right at the box edge over the whole blur radius, so it reads
+   edge-to-edge as one soft halo (the "diffuse cloud" the live screenshot showed) instead of a crisp
+   ring hugging the border with a softer bloom beyond it. Fixed by stacking two shadow layers: a
+   small-blur, 1px-spread layer at higher opacity (crisp ring right at the contour) plus the
+   original larger-blur layer at the original opacity (outer bloom) — see
+   `--number-stat-glow-tight` below. */
 
 .numberStat {
-  /* Figma (`327:1486`-`327:1495` "12+ / years in entrepreneurship"): `--color-card` fill. */
-  background-color: var(--color-card);
-  border-radius: 16px;
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    linear-gradient(135deg, var(--number-stat-color-start), var(--number-stat-color-end)) border-box;
+  box-shadow:
+    0 0 4px 1px var(--number-stat-glow-tight, transparent),
+    0 0 16px var(--number-stat-glow, transparent);
 }
+@media (min-width: 768px) {
+  .numberStat {
+    border-width: 4px;
+    border-radius: 24px;
+    box-shadow:
+      0 0 6px 1px var(--number-stat-glow-tight, transparent),
+      0 0 22px var(--number-stat-glow, transparent);
+  }
+}
+
+.numberStatPink {
+  /* `552:4979`/`401:7744` "12+ / years in entrepreneurship". `--number-stat-glow-tight` is the
+     same hue at higher opacity for the crisp contour-hugging ring, see `.numberStat` above. */
+  --number-stat-color-start: #f670aa;
+  --number-stat-color-end: #fd945d;
+  --number-stat-glow: rgb(246 112 170 / 20%);
+  --number-stat-glow-tight: rgb(246 112 170 / 55%);
+}
+.numberStatBlue {
+  /* `552:4982`/`401:7747` "3x / platforms founded". */
+  --number-stat-color-start: #98c3e4;
+  --number-stat-color-end: #11bafb;
+  --number-stat-glow: rgb(17 186 251 / 20%);
+  --number-stat-glow-tight: rgb(17 186 251 / 55%);
+}
+.numberStatPurple {
+  /* `552:4985`/`401:7751` "#1 / in creative education". */
+  --number-stat-color-start: #9a85ea;
+  --number-stat-color-end: #ea8aff;
+  --number-stat-glow: rgb(234 138 255 / 20%);
+  --number-stat-glow-tight: rgb(234 138 255 / 55%);
+}
+.numberStatYellow {
+  /* `552:4988`/`401:7755` "300+ / edutainment projects". */
+  --number-stat-color-start: #ffdb6c;
+  --number-stat-color-end: #fda35d;
+  --number-stat-glow: rgb(253 163 93 / 20%);
+  --number-stat-glow-tight: rgb(253 163 93 / 55%);
+}
+
 .numberStatValue {
   /* Figma: the big stat number ("12+") is plain white, NOT brand-color — was `--color-primary`,
-     re-verified against the actual node fill. */
+     re-verified against the actual node fill. Unchanged this pass. */
   color: var(--color-foreground);
 }
 
