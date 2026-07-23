@@ -140,7 +140,7 @@ export function ShineForm({ completeness }: ShineFormProps) {
               >
                 <div className="flex max-w-[277px] flex-col gap-0 md:max-w-[289px]">
                   <p className="flex items-center gap-2 text-base font-bold text-foreground">
-                    <BlockIcon className="size-4 shrink-0" />
+                    <BlockIcon className="size-4 shrink-0 text-primary" />
                     {t(`shine.blocks.${slug}.name`)}
                   </p>
                   <p className="text-sm text-muted-foreground">

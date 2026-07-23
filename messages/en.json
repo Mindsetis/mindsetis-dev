@@ -634,22 +634,34 @@
       "heading": "What founders say after a session",
       "items": [
         {
-          "name": "Erin G.",
-          "quote": "I recently attended a session on event marketing, and it genuinely exceeded my expectations — a rare talent for breaking down complex strategies into clear, actionable steps you can apply right away.",
+          "name": "Erin Glabets",
+          "quote": "I recently attended Anastasia's session on Event Marketing, and it genuinely exceeded my expectations. She has a rare talent for breaking down complex strategies into clear, actionable steps you can apply right away. Three months later, I'm still using the framework she walked us through.",
           "role": "Head of Communication"
         },
         {
-          "name": "Daniel R.",
-          "quote": "One of the most useful hours I've spent this year. Direct, practical, and full of ideas I could apply the very next day.",
+          "name": "Daniel Kovalenko",
+          "quote": "One of the most useful hours I've spent this year. Anastasia walked us through the entire conference production process — concept, staging, run of show — and I left with a checklist I used the very next week.",
           "role": "Founder"
         },
         {
-          "name": "Mira T.",
-          "quote": "Exactly the kind of honest, experienced perspective founders need — no fluff, just real answers to real problems.",
+          "name": "Mira Torres",
+          "quote": "Anastasia coached me before my first keynote and completely changed how I think about stage presence. No fluff, just real, practical feedback that made an immediate difference.",
           "role": "Product Lead"
+        },
+        {
+          "name": "Oksana Petrenko",
+          "quote": "I came in with a scattered personal brand and left with an actual plan. Anastasia asks the right questions and doesn't let you settle for generic answers. Exactly what I needed before our funding round.",
+          "role": "Marketing Director"
+        },
+        {
+          "name": "Lucas Meyer",
+          "quote": "Working with Anastasia on creative strategy for our product launch was the best decision we made that quarter. She builds formats people actually want to engage with — not just another campaign nobody remembers a week later.",
+          "role": "Co-founder"
         }
       ],
       "leaveReview": "Leave a review",
+      "readLess": "Read less",
+      "readMore": "Read more",
       "verifiedMember": "Verified Member"
     },
     "sessionPriceFree": "Session price: Free",
@@ -673,6 +685,7 @@
     "verified": "Verified",
     "videoBlog": {
       "allInterviews": "All interviews with Mindsetters",
+      "clickToWatch": "Click for watching",
       "eyebrow": "BUILT NOT BURN · INTERVIEW",
       "heading": "Watch the full conversation"
     },

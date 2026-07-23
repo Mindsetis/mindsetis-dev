@@ -52,7 +52,7 @@ export default async function MindsetterOnboardingFckupsBlockPage({
   return (
     <BlockShell backHref={backHref} index={index} total={blocks.length}>
       <div className="flex items-center gap-2 md:gap-4">
-        <FckupsBlockIcon className="size-7 md:size-10" />
+        <FckupsBlockIcon className="size-7 text-primary md:size-10" />
         <h1 className="font-display text-[24px] leading-none text-foreground md:text-h3">
           {t('blocks.fckups.title')}
         </h1>
