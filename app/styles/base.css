@@ -1,4 +1,11 @@
 /* Base element styles. */
+html {
+  /* In-page anchor links (e.g. the Mindsetter profile's "Intro about me" buttons scrolling to
+     `#promo-video`) glide instead of snapping — applies site-wide since `scroll-behavior` only
+     takes effect on the document's own scrolling box, not a per-link opt-in. */
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
