@@ -1,14 +1,4 @@
-import {
-  CalendarDays,
-  CalendarOff,
-  CheckCircle2,
-  Eye,
-  Heart,
-  Link2,
-  Play,
-  Share2,
-  User,
-} from 'lucide-react';
+import { CheckCircle2, Eye, Heart, Link2, Play, Share2, User } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -40,6 +30,7 @@ import {
 import { WinCardGlow, WinTrophyIcon } from '@/components/icons/win-card-glow';
 import { CardSlider } from '@/components/profile/CardSlider';
 import { EmblaCarousel } from '@/components/profile/EmblaCarousel';
+import { ExpandableAccordion } from '@/components/profile/ExpandableAccordion';
 import { HelpWithAccordion } from '@/components/profile/HelpWithAccordion';
 import {
   groupInterestsByCategory,
@@ -52,7 +43,6 @@ import {
 } from '@/components/profile/MemberProfileView';
 import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
 import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
-import { RolesAccordion } from '@/components/profile/RolesAccordion';
 import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -151,21 +141,35 @@ function winBorderGradient(color: WinColor): string {
  * Onboarding caps this field at 5 topics ("Topics you're expert in · up to 5", E.1), matching
  * Figma's fixed 5-pill mockup exactly, so a 5-entry cycle (`index % length`) covers every real
  * case. See `.topicPill*` in `MindsetterProfileView.module.css` for the actual color values. */
-const TOPIC_PILL_COLOR_CLASSES = [
-  'topicPillPurple',
-  'topicPillYellow',
-  'topicPillBlue',
-  'topicPillOrange',
-  'topicPillIndigo',
-] as const;
+interface TopicItemStyle {
+  gradient: string;
+  /** Border + text color (claude.txt 2026-07-23 follow-up) — a DIFFERENT palette than the
+   * gradient's own accent stop, not a copy/paste guess (e.g. position 1 is gradient `#a139ae`
+   * but border/text `#e69ef4`). */
+  accent: string;
+}
 
-/** `index % TOPIC_PILL_COLOR_CLASSES.length` is always in-range, but `noUncheckedIndexedAccess`
- * can't prove that from a plain array index, hence the small helper (with a same-value fallback
- * that's unreachable in practice) instead of a non-null assertion at the call site. */
-function topicPillColorClass(index: number): (typeof TOPIC_PILL_COLOR_CLASSES)[number] {
-  return (
-    TOPIC_PILL_COLOR_CLASSES[index % TOPIC_PILL_COLOR_CLASSES.length] ?? TOPIC_PILL_COLOR_CLASSES[0]
-  );
+/** "Topics I'm expert" per-item styling (claude.txt 2026-07-23, "1. Блок Topics i'm expert" item
+ * 2 + follow-up) — positional, not per-topic-value (`profile.topics` has no per-item color
+ * field, and the coloring is purely illustrative variety), cycling once past the 5 given colors
+ * ("Якщо більше то по колу" — same cycling precedent as the old `topicPillColorClass` this
+ * replaces, and `superpowerCardStyle` below). */
+const TOPIC_ITEM_STYLES: readonly [
+  TopicItemStyle,
+  TopicItemStyle,
+  TopicItemStyle,
+  TopicItemStyle,
+  TopicItemStyle,
+] = [
+  { gradient: 'linear-gradient(90deg, #1a1a1a 32.43%, #a139ae 100%)', accent: '#e69ef4' },
+  { gradient: 'linear-gradient(90deg, #1a1a1a 32.43%, #bf9720 100%)', accent: '#fbf286' },
+  { gradient: 'linear-gradient(90deg, #1a1a1a 32.43%, #005a8e 100%)', accent: '#79b9e3' },
+  { gradient: 'linear-gradient(90deg, #1a1a1a 32.43%, #a14428 100%)', accent: '#f98866' },
+  { gradient: 'linear-gradient(90deg, #1a1a1a 32.43%, #0b0e87 100%)', accent: '#6b6fef' },
+];
+
+function topicItemStyle(index: number): TopicItemStyle {
+  return TOPIC_ITEM_STYLES[index % TOPIC_ITEM_STYLES.length] ?? TOPIC_ITEM_STYLES[0];
 }
 
 /** "Numbers" stat-card gradient-border palette — one CSS Module class per card *position*, same
@@ -194,6 +198,57 @@ function numberStatColorClass(index: number): (typeof NUMBER_STAT_COLOR_CLASSES)
  * scroll-snap participation across the remaining two, kept in one place so a future
  * `CardSlider`-based section can't forget `snap-start` and silently break scroll-snap. */
 const SLIDER_ITEM_BASE = 'w-[280px] shrink-0 snap-start';
+
+interface SuperpowerCardStyle {
+  background: string;
+  textClassName?: string;
+}
+
+/** Superpower(s) per-position card background + title/description text color (claude.txt
+ * 2026-07-23, "1. Блок Superpower(s)" items 4/6 — max 3 cards, `MAX_SUPERPOWERS` in
+ * `lib/validation/mindsetter.ts`, so a fixed 3-entry tuple indexed by position is exact, not a
+ * cycling approximation). Card 3's white background needs black title/description text; cards
+ * 1/2 keep the page's default white text. */
+const SUPERPOWER_CARD_STYLES: readonly [
+  SuperpowerCardStyle,
+  SuperpowerCardStyle,
+  SuperpowerCardStyle,
+] = [
+  { background: 'linear-gradient(358.93deg, #1a1a1a 2.16%, #79b9e3 99.53%)' },
+  { background: '#1a1a1a' },
+  { background: '#fff', textClassName: 'text-[#000]' },
+];
+
+/** Same `noUncheckedIndexedAccess`-vs-computed-index situation as `topicItemStyle` above —
+ * `index` is always < 3 in practice (`MAX_SUPERPOWERS`), but the type checker can't prove that
+ * from a plain array index. */
+function superpowerCardStyle(index: number): SuperpowerCardStyle {
+  return SUPERPOWER_CARD_STYLES[index % SUPERPOWER_CARD_STYLES.length] ?? SUPERPOWER_CARD_STYLES[0];
+}
+
+interface SuperpowerNumberColor {
+  text: string;
+  icon: string;
+}
+
+/** Superpower(s) per-position number/icon color — literal per claude.txt item 2 (card 1's
+ * number is white, cards 2 and 3 both share the same gray-text/blue-icon pair despite card 3's
+ * own background being white — as specified, not a copy/paste guess). */
+const SUPERPOWER_NUMBER_COLORS: readonly [
+  SuperpowerNumberColor,
+  SuperpowerNumberColor,
+  SuperpowerNumberColor,
+] = [
+  { text: '#FFFFFF', icon: '#FFFFFF' },
+  { text: '#A5A5A5', icon: '#79B9E3' },
+  { text: '#A5A5A5', icon: '#79B9E3' },
+];
+
+function superpowerNumberColor(index: number): SuperpowerNumberColor {
+  return (
+    SUPERPOWER_NUMBER_COLORS[index % SUPERPOWER_NUMBER_COLORS.length] ?? SUPERPOWER_NUMBER_COLORS[0]
+  );
+}
 
 /** First letter of the first + last "word" of a reviewer's name, uppercased (e.g. "Erin
  * Glabets" → "EG") — computed rather than hardcoded so this keeps working once the `reviews`
@@ -284,20 +339,79 @@ function formatSessionPrice(
   return t('sessionPricePaid', { price: amount });
 }
 
-/** Small bold outlined index badge shared by Superpowers / F*ckUps' numbered card lists.
- * (Roles and Help both moved to their own accordion components — `RolesAccordion.tsx` /
- * `HelpWithAccordion.tsx` — after re-checking their actual Figma node structure; neither uses
- * this badge anymore.) */
-function NumberBadge({ index }: { index: number }) {
+/** Superpower(s) card number's bolt/flash icon — color is per-card-position (see
+ * `SUPERPOWER_NUMBER_COLORS`), not a fixed theme token, hence the `fill` prop rather than a
+ * `currentColor` icon. */
+function SuperpowerNumberIcon({ className, fill }: { className?: string; fill: string }) {
   return (
-    <span
-      className={cn(
-        'inline-flex size-8 shrink-0 items-center justify-center rounded-full text-tiny font-bold',
-        styles.numberBadge,
-      )}
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
     >
-      {index}
-    </span>
+      <path
+        d="M7.58398 5.53325C7.58398 5.69894 7.7183 5.83325 7.88398 5.83325H11.0947C11.3367 5.83325 11.4792 6.10505 11.3414 6.30401L6.96398 12.627C6.79656 12.8688 6.41732 12.7503 6.41732 12.4562V8.46659C6.41732 8.3009 6.283 8.16659 6.11732 8.16659H2.90655C2.66456 8.16659 2.52215 7.89479 2.6599 7.69582L7.03733 1.37287C7.20474 1.13105 7.58398 1.24952 7.58398 1.54363V5.53325Z"
+        fill={fill}
+      />
+    </svg>
+  );
+}
+
+/** Superpower(s) carousel's bespoke prev/next arrows (claude.txt 2026-07-23, "1. Блок
+ * Superpower(s)" item 10) — each SVG draws its own circle/border/fill (unlike the default
+ * `CardSlider` arrows, which get their circular chrome from CSS), so `CardSlider`'s `arrows`
+ * prop renders these bare. Both base SVGs point one direction as given by the design; the other
+ * button reuses the same visual via a horizontal flip (`mirrored`) rather than needing 4 hand-
+ * drawn variants. */
+function SuperpowerArrowOutline({ mirrored }: { mirrored?: boolean }) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={mirrored ? 'scale-x-[-1]' : undefined}
+      aria-hidden="true"
+    >
+      <rect x="0.5" y="0.5" width="47" height="47" rx="23.5" stroke="#79B9E3" />
+      <path
+        d="M31.0572 24.9427C31.5779 24.9427 31.9999 24.5206 32 24C32 23.4793 31.5779 23.0572 31.0572 23.0572H19.0627L21.7488 19.8914C22.022 19.5695 22.022 19.0971 21.7488 18.7752C21.4043 18.3692 20.7778 18.3692 20.4333 18.7752L16.549 23.353C16.2323 23.7262 16.2323 24.2738 16.549 24.647L20.4333 29.2247C20.7778 29.6308 21.4043 29.6308 21.7489 29.2247C22.022 28.9028 22.022 28.4304 21.7488 28.1085L19.0627 24.9428L31.0572 24.9427Z"
+        fill="#79B9E3"
+      />
+    </svg>
+  );
+}
+
+function SuperpowerArrowFilled({ mirrored }: { mirrored?: boolean }) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={mirrored ? 'scale-x-[-1]' : undefined}
+      aria-hidden="true"
+    >
+      <rect
+        x="48"
+        y="48"
+        width="48"
+        height="48"
+        rx="24"
+        transform="rotate(-180 48 48)"
+        fill="#79B9E3"
+      />
+      <path
+        d="M16.9428 23.0573C16.4221 23.0573 16.0001 23.4794 16 24C16 24.5207 16.4221 24.9428 16.9428 24.9428L28.9373 24.9428L26.2512 28.1086C25.978 28.4305 25.978 28.9029 26.2512 29.2248C26.5957 29.6308 27.2222 29.6308 27.5667 29.2248L31.451 24.647C31.7677 24.2738 31.7677 23.7262 31.451 23.353L27.5667 18.7753C27.2222 18.3692 26.5957 18.3692 26.2512 18.7753C25.978 19.0972 25.978 19.5696 26.2512 19.8915L28.9373 23.0572L16.9428 23.0573Z"
+        fill="white"
+      />
+    </svg>
   );
 }
 
@@ -335,11 +449,23 @@ function VideoBlogArrowIcon() {
 /** A section eyebrow row (icon + bold black uppercase label) reused by every content section
  * on this page — the "ABOUT"/"BEYOND BUSINESS" eyebrow pattern from `MemberProfileView`,
  * generalized here since this page has many more of them. */
-function SectionEyebrow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function SectionEyebrow({
+  icon,
+  children,
+  textClassName,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  /** Extra classes merged onto the text span only — e.g. Roles' own `leading-none` (claude.txt
+   * 2026-07-23, "1. Блок Roles" item 1), without touching every other section's eyebrow. */
+  textClassName?: string;
+}) {
   return (
     <span className="inline-flex items-center gap-2">
       {icon}
-      <span className={cn('text-tiny font-bold uppercase', styles.sectionEyebrow)}>{children}</span>
+      <span className={cn('text-tiny font-bold uppercase', styles.sectionEyebrow, textClassName)}>
+        {children}
+      </span>
     </span>
   );
 }
@@ -509,24 +635,6 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         ]
       : [profile.reelLifePhotoUrls];
 
-  /**
-   * Micro-navigation (spec §5.4 "мікро-навігація") — STATIC markup only this stage (ROADMAP
-   * decision, 2026-07-20): plain anchor links to each section's `id`, no scroll-spy/active-state
-   * JS. Items mirror the same data-driven-visibility rule the sections themselves already use
-   * (an item only appears when its target section actually renders) — "Reviews" and "My events"
-   * are always included since both sections always render (static/decorative, see their own
-   * comments below).
-   */
-  const microNavItems: { href: string; label: string }[] = [
-    profile.roles.length > 0 && { href: '#roles', label: t('microNav.roles') },
-    profile.superpowers.length > 0 && { href: '#superpowers', label: t('microNav.superpowers') },
-    profile.helpWith.length > 0 && { href: '#help', label: t('microNav.help') },
-    profile.reelLifePhotoUrls.length > 0 && { href: '#reel-life', label: t('microNav.reelLife') },
-    { href: '#my-events', label: t('microNav.myEvents') },
-    { href: '#reviews', label: t('microNav.reviews') },
-    profile.wins.length > 0 && { href: '#wins', label: t('microNav.wins') },
-  ].filter((item): item is { href: string; label: string } => Boolean(item));
-
   return (
     <div className={styles.section}>
       {variant === 'preview' && (
@@ -612,17 +720,34 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
           <div className="flex w-full flex-col gap-6 lg:max-w-[464px]">
             <div className="flex flex-wrap items-center gap-2">
-              {profile.verification_status === 'verified' && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
-                    memberStyles.pillVerified,
-                  )}
+              {/* TEMPORARY DEMO OVERRIDE (claude.txt 2026-07-23 follow-up: "Verified для демо
+                  виведи просто в коді, не з бази, щоб показати бізнесу, потім приберемо його") —
+                  unconditional instead of gated on `profile.verification_status === 'verified'`
+                  (no test account is actually verified yet), so the pill is visible for a
+                  business demo. REVERT to `{profile.verification_status === 'verified' && (...)}`
+                  once the demo is done. */}
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
+                  styles.pillVerified,
+                )}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="size-3 shrink-0"
+                  aria-hidden="true"
                 >
-                  <CheckCircle2 className="size-3" aria-hidden="true" />
-                  {t('verified')}
-                </span>
-              )}
+                  <path
+                    d="M6 1C3.25 1 1 3.25 1 6C1 8.75 3.25 11 6 11C8.75 11 11 8.75 11 6C11 3.25 8.75 1 6 1ZM8.1 5.15L5.7 7.55C5.5 7.75 5.2 7.75 5 7.55L3.9 6.45C3.7 6.25 3.7 5.95 3.9 5.75C4.1 5.55 4.4 5.55 4.6 5.75L5.35 6.5L7.4 4.45C7.6 4.25 7.9 4.25 8.1 4.45C8.3 4.65 8.3 4.95 8.1 5.15Z"
+                    fill="#08D6AD"
+                  />
+                </svg>
+                {t('verified')}
+              </span>
               {profile.username && (
                 <span
                   className={cn(
@@ -781,36 +906,14 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             )}
           </div>
         </div>
-
-        {/* ============================== MICRO-NAVIGATION (static markup, no scroll-spy) ============================== */}
-        {microNavItems.length > 0 && (
-          <nav
-            aria-label={t('microNav.ariaLabel')}
-            className={cn('-mx-4 mt-10 overflow-x-auto sm:-mx-6 lg:mx-0 lg:mt-16', styles.microNav)}
-          >
-            <ul className="flex w-max items-center gap-6 px-4 py-3 sm:px-6 lg:w-full lg:px-0">
-              {microNavItems.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className={cn(
-                      'whitespace-nowrap text-tiny font-bold uppercase',
-                      styles.microNavLink,
-                    )}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
       </div>
 
       {/* ============================== ROLES ==============================
           Stage 1.10 pixel-polish pass (ROADMAP item 2): rebuilt as an expand/collapse
-          accordion — see `RolesAccordion.tsx` for the full Figma citation + the
-          `isSafeHttpUrl` stored-XSS guard (unchanged, just relocated into that component).
+          accordion — see `ExpandableAccordion.tsx` (shared with Help below) for the full Figma
+          citation + the `isSafeHttpUrl` stored-XSS guard. Two-column layout (eyebrow+title left,
+          accordion right) + block-level width/padding per claude.txt 2026-07-23 "1. Блок Roles"
+          — see the className comments below for the individual item citations.
           STAGE 1.12: own top-level section wrapper now (see HERO's doc comment above for the
           80/150 rhythm + per-section padding citation) — was nested in the old shared wrapper. */}
       {profile.roles.length > 0 && (
@@ -818,19 +921,31 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           id="roles"
           className="mx-auto mt-20 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:mt-[150px] lg:px-[70px]"
         >
-          <div className="flex flex-col gap-8">
-            <SectionEyebrow icon={<MagicFillIcon className="size-4 shrink-0" />}>
-              {t('roles.eyebrow')}
-            </SectionEyebrow>
-            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('roles.heading')}
-            </h2>
-            <RolesAccordion
-              roles={profile.roles}
-              learnMoreLabel={t('roles.learnMore')}
-              expandLabel={t('roles.expand')}
-              collapseLabel={t('roles.collapse')}
-            />
+          <div className="flex flex-col gap-6 lg:flex-row lg:gap-[61px]">
+            <div className="flex flex-col gap-8 lg:flex-1">
+              <SectionEyebrow
+                icon={<MagicFillIcon className="size-4 shrink-0" />}
+                textClassName="leading-none"
+              >
+                {t('roles.eyebrow')}
+              </SectionEyebrow>
+              {/* Hidden on mobile per item 11 ("На телефоні тайтл приховуємо") — ROLES stays as
+                  the lone header above the accordion there. */}
+              <h2 className={cn('hidden font-display lg:block', styles.accordionSectionHeading)}>
+                {t('roles.heading')}
+              </h2>
+            </div>
+            {/* `max-w-[643px]` + `flex-1` (item 4: capped max-width, left column absorbs the
+                rest, both shrink together) — same recipe as the Hero banner's own capped column. */}
+            <div className="lg:max-w-[643px] lg:flex-1">
+              <ExpandableAccordion
+                items={profile.roles}
+                icon={<MagicFillIcon className="size-3 shrink-0 md:size-3.5" />}
+                learnMoreLabel={t('roles.learnMore')}
+                expandLabel={t('roles.expand')}
+                collapseLabel={t('roles.collapse')}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -845,17 +960,15 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           genuinely ABSENT from both mobile frames (`187:4294` and the newer `401:7567` —
           scanned node-by-node: Roles is immediately followed by Superpower(s) on mobile, no
           Topics text nodes anywhere in either frame) — confirming `lg:`-only visibility is
-          correct per design, not a bug, so that part of the prior build stands. What was
-          wrong: no card wrapper, left-aligned text, and a single flat pill color (the prior
-          pass's doc comment reasoned the per-pill rainbow coloring away as "no per-item color
-          field in the data model" — but the coloring is positional/illustrative, not
-          data-driven, so it doesn't need one; restored via `TOPIC_PILL_COLOR_CLASSES` cycling
-          through the 5 pill positions Figma itself uses, `552:4916`-`552:4924`). Figma's pill
-          border reads as a soft color-matched gradient glow — approximated here with a solid
-          border + colored box-shadow halo (`.topicPill`), same "close visual match, not a 1:1
-          vector reproduction" precedent as `.ctaGlow` above.
+          correct per design, not a bug, so that part of the prior build stands.
+          claude.txt 2026-07-23, "1. Блок Topics i'm expert" pass: full restyle of the card
+          wrapper (item 5, unchanged shape) and per-pill backgrounds (item 2, replacing the old
+          `TOPIC_PILL_COLOR_CLASSES` CSS-class cycling with per-position inline gradients + a
+          distinct border/text accent color — see `TOPIC_ITEM_STYLES`/`topicItemStyle` above),
+          plus the heading's own dedicated gradient (`.topicsHeading`, with a forced line break
+          after "mentoring" via `white-space: pre-line` — see `messages/en.json`).
           STAGE 1.12: own top-level section wrapper now (`hidden`/`lg:block` unchanged — still
-          desktop-only); the inner `.topicsCard` card itself is untouched. */}
+          desktop-only). */}
       {profile.topics.length > 0 && (
         <div className="mx-auto mt-20 hidden w-full max-w-[1440px] px-4 sm:px-6 lg:mt-[150px] lg:block lg:px-[70px]">
           <div
@@ -867,54 +980,119 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<MicAiFillIcon className="size-4 shrink-0" />}>
               {t('topics.eyebrow')}
             </SectionEyebrow>
-            <h2 className={cn('font-display text-h2', styles.gradientHeading)}>
-              {t('topics.heading')}
-            </h2>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {profile.topics.map((topic, index) => (
-                <span
-                  key={topic}
-                  className={cn(
-                    'rounded-full px-6 py-4 text-base font-bold',
-                    styles.topicPill,
-                    styles[topicPillColorClass(index)],
-                  )}
-                >
-                  {topic}
-                </span>
-              ))}
+            <h2 className={cn('font-display', styles.topicsHeading)}>{t('topics.heading')}</h2>
+            <div className="mx-auto flex max-w-[640px] flex-wrap items-center justify-center gap-3">
+              {profile.topics.map((topic, index) => {
+                const itemStyle = topicItemStyle(index);
+                return (
+                  <span
+                    key={topic}
+                    className="rounded-full border px-6 py-4 text-base font-bold"
+                    style={{
+                      background: itemStyle.gradient,
+                      borderColor: itemStyle.accent,
+                      color: itemStyle.accent,
+                    }}
+                  >
+                    {topic}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
       {/* ============================== SUPERPOWER(S) ==============================
-          STAGE 1.12: own top-level section wrapper now (content unchanged). */}
+          claude.txt 2026-07-23, "1. Блок Superpower(s)" — mobile is a peek-carousel (item 8:
+          319px cards, next one visible at the edge) with bespoke nav arrows (items 9/10);
+          desktop is a static 3-up row (no scrolling possible since `MAX_SUPERPOWERS` caps the
+          data at 3), so the arrow row is hidden there — same `CardSlider` component the other
+          carousels use, just with its cards' width made responsive and its default arrow chrome
+          swapped out via the `arrows` prop (see `CardSlider.tsx`).
+          STAGE 1.12: own top-level section wrapper now (unchanged). */}
       {profile.superpowers.length > 0 && (
         <div
           id="superpowers"
           className="mx-auto mt-20 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:mt-[150px] lg:px-[70px]"
         >
-          <div className="flex flex-col gap-8">
+          <div className="mb-6 lg:mb-8">
             <SectionEyebrow icon={<FlashlightFillIcon className="size-4 shrink-0" />}>
               {t('superpowers.eyebrow')}
             </SectionEyebrow>
-            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('superpowers.heading')}
-            </h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {profile.superpowers.map((superpower, index) => (
+          </div>
+          <h2
+            className={cn('hidden font-display lg:mb-[50px] lg:block', styles.superpowersHeading)}
+          >
+            {t('superpowers.heading')}
+          </h2>
+          <CardSlider
+            prevLabel={t('carousel.prev')}
+            nextLabel={t('carousel.next')}
+            // Bleed the TRACK past the section's own `px-4 sm:px-6` on mobile/tablet (negative
+            // margin + width compensation reaches the true viewport edge) — the gutter comes
+            // back as real spacer flex items (below), NOT track padding: padding interacting
+            // with `scroll-snap` left `scrollLeft` resting at a non-zero value (the first card
+            // looked stuck to the edge AND the prev arrow read as scrollable at rest — claude.txt
+            // 2026-07-23 follow-up). A plain flex spacer has no such snap ambiguity. Cancelled at
+            // `lg:`, a static non-scrolling row.
+            trackClassName="-mx-4 w-[calc(100%_+_2rem)] gap-4 sm:-mx-6 sm:w-[calc(100%_+_3rem)] lg:mx-0 lg:w-auto lg:gap-5"
+            arrowGapClassName="gap-4"
+            arrowRowClassName="lg:hidden"
+            arrows={{
+              prevEnabled: <SuperpowerArrowFilled mirrored />,
+              prevDisabled: <SuperpowerArrowOutline />,
+              nextEnabled: <SuperpowerArrowFilled />,
+              nextDisabled: <SuperpowerArrowOutline mirrored />,
+            }}
+          >
+            {/* Real flex-item spacers (not track padding — see the `trackClassName` comment
+                above for why), `w-0` since the track's own `gap-4` already contributes the full
+                16px gutter next to each spacer — a nonzero width here would stack on top of
+                that gap (16+16=32px, not 16px). `snap-start` on the spacer itself is required,
+                not optional — without it, `scroll-snap-type: mandatory` had no valid snap point
+                at `scrollLeft: 0` (only the real cards were snap targets, and the nearest one
+                sits a gap-width in), so the browser force-corrected the initial scroll position
+                to card 1's own snap point on load — hiding the spacer and leaving `scrollLeft`
+                non-zero, which also made the prev arrow read as scrollable at rest. */}
+            <div className="w-0 shrink-0 snap-start lg:hidden" aria-hidden="true" />
+            {profile.superpowers.map((superpower, index) => {
+              const cardStyle = superpowerCardStyle(index);
+              const numberColor = superpowerNumberColor(index);
+              // The first/last card do NOT get their own `snap-start` — only the (zero-width)
+              // leading/trailing spacers do. Two snap points 16px apart at each end (spacer's
+              // AND the edge card's own) meant `scrollByPage` could land on either one somewhat
+              // arbitrarily: the card's own point shows it flush against the bled edge (no
+              // gutter), needing one more "prev" press to reach the spacer's point and reveal
+              // the gutter. One snap point per end removes the ambiguity.
+              const isEdgeCard = index === 0 || index === profile.superpowers.length - 1;
+              return (
                 <div
                   key={`${superpower.title}-${index}`}
-                  className={cn('flex flex-col gap-4 p-6', styles.superpowerCard)}
+                  className={cn(
+                    'flex w-[319px] min-h-[285px] shrink-0 flex-col gap-4 rounded-[12px] p-4 lg:w-auto lg:min-h-[370px] lg:shrink lg:flex-1 lg:rounded-[24px] lg:p-8',
+                    !isEdgeCard && 'snap-start',
+                  )}
+                  style={{ background: cardStyle.background }}
                 >
-                  <NumberBadge index={index + 1} />
-                  <h3 className="font-display text-l">{superpower.title}</h3>
-                  <p className="text-body whitespace-pre-line">{superpower.description}</p>
+                  <span
+                    className="mb-auto inline-flex items-center gap-1 text-tiny font-bold tracking-[0.3em] uppercase"
+                    style={{ color: numberColor.text }}
+                  >
+                    <SuperpowerNumberIcon className="size-3.5 shrink-0" fill={numberColor.icon} />
+                    {index + 1}
+                  </span>
+                  <h3 className={cn('font-display text-[24px] lg:text-l', cardStyle.textClassName)}>
+                    {superpower.title}
+                  </h3>
+                  <p className={cn('text-body whitespace-pre-line', cardStyle.textClassName)}>
+                    {superpower.description}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
+              );
+            })}
+            <div className="w-0 shrink-0 snap-start lg:hidden" aria-hidden="true" />
+          </CardSlider>
         </div>
       )}
 
@@ -1184,12 +1362,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       )}
 
       {/* ============================== MY EVENTS ==============================
-          Spec §5.4 requires this section; no Figma frame located and no Events system exists yet
-          (ROADMAP stage 1.10 open item). Product decision: render a minimal, neutral empty state
-          (heading + "no events yet" placeholder) rather than inventing rich markup — same
-          "static/decorative until the real system exists" precedent as Reviews below. Always
-          renders (no backing data to gate visibility on yet).
-          STAGE 1.12: `mt-20 lg:mt-[150px]` replaces the old `py-16` (see HERO's doc comment). */}
+          Hidden per product decision (2026-07-23) — no Events system exists yet (ROADMAP stage
+          1.10 open item), and the previous neutral "no events yet" empty-state placeholder isn't
+          part of this pass's restyle. Markup kept here (commented out) for that later stage:
       <div
         id="my-events"
         className="mx-auto mt-20 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:mt-[150px] lg:px-[70px]"
@@ -1217,6 +1392,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           </div>
         </div>
       </div>
+      */}
 
       {/* ============================== REVIEWS (static, carousel) ==============================
           Figma `552:4496` "Frame 448": the card row (`552:4512` "Frame 273") is 1740px wide across
