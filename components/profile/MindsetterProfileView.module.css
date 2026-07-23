@@ -503,18 +503,59 @@
 /* Confirmed against Figma (`327:1615`/`327:1628`/`327:1667`, re-verified this pass against the
    newer duplicate `552:5079`/`552:5092`/`552:5105`… "Frame 24"/"225"/"226"/… — 7 sample cards):
    every win card is actually a flat BLACK (`#000000`) card with a blurred colored ellipse
-   decoration, not a solid-color fill — `WIN_COLOR_HEX` (below, in the .tsx) is a deliberate
-   simplification from an earlier pass (that palette is shared with `WinsForm.tsx`'s own color
-   picker, see that file's comment) rather than a literal per-node fill match. Out of scope to
-   restructure this pass too (unchanged from the prior decision — only re-verified the white text
-   stays legible against every one of the 7 bright fills). What DID change this pass: Figma's own
-   row is a 4600px-wide OVERFLOWING carousel (7×640px cards) with a dedicated prev/next control,
-   not a `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
+   decoration bleeding off the bottom-right corner plus a smaller flat-color blurred ellipse
+   bleeding off the top-left corner, not a solid-color fill. Restructured this pass — see
+   `WinCardGlow`/`WinTrophyIcon` (`components/icons/win-card-glow.tsx`) and the
+   `WIN_TROPHY_HEX`/`WIN_TOPLEFT_GLOW_HEX`/`WIN_BOTTOMRIGHT_GLOW_HEX` maps in the .tsx (replacing
+   the old single-fill `WIN_COLOR_HEX`). `position: relative` + `overflow: hidden` here are the
+   same "clip the deliberately-bleeding absolutely-positioned glow to the card's own rounded
+   rectangle" precedent as `.ctaBanner`/`.ctaGlow` above, just applied with real SVGs instead of a
+   CSS radial-gradient. What ALSO changed a prior pass: Figma's own row is a 4600px-wide
+   OVERFLOWING carousel (7×640px cards) with a dedicated prev/next control, not a
+   `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
    `md:w-auto` grid-filling). */
 
 .winCard {
+  position: relative;
+  overflow: hidden;
   border-radius: 16px;
+  background-color: #000000;
   color: var(--color-foreground);
+}
+
+/* Fix (2026-07-23): the flat `1px solid --color-border` this rule had (added 2026-07-22) turned
+   out to be wrong once cross-checked against a direct SVG export of `552:5078` "Frame 274" — each
+   win card actually has a 4px-wide, 4-stop linear gradient border running top-left → bottom-right,
+   a DIFFERENT gradient per win color (see `WIN_BORDER_GRADIENT_HEX` in `MindsetterProfileView.tsx`
+   for the 7 stop sets), not a flat generic gray. A plain CSS `border` can't render a gradient with
+   rounded corners, so this reuses the same masked-pseudo-element technique as the `gradient-border`
+   utility in `app/styles/base.css` (content-box-exclude via the `mask`/`-webkit-mask` pair, `padding`
+   as the border width) — copied verbatim minus that utility's hover/active/disabled crossfade
+   (irrelevant for a static card) and its 2px width (this needs 4px). The gradient itself is supplied
+   per-instance via the `--win-border-gradient` custom property, set inline per card in the .tsx —
+   same "shared CSS shape, per-instance color via a prop" pattern `WinCardGlow` already uses for its
+   own colors, just via a CSS variable here since this is a plain border, not an SVG. `z-index: 30`
+   is explicit (this file's established "always be explicit about stacking" precedent, from the
+   glow-tinting investigation above) so this ring always paints above both `WinCardGlow` layers
+   (`z-0`/`z-20`) — though since the interior is masked out, this is a decorative RING only and would
+   never actually cover the card's text regardless of z-index. */
+.winCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  padding: 4px;
+  background: var(--win-border-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* ---- Beyond Business (interests) — page-local dark override of `memberStyles.interestCard`/

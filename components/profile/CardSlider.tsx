@@ -22,18 +22,18 @@ export interface CardSliderProps {
 /**
  * Minimal horizontal card carousel — native CSS scroll-snap + `scrollBy` on the prev/next
  * buttons, no carousel library (none exists in this project's dependencies; Figma's own
- * slider — My WINS `552:5069`"Frame 446", My F*ckUp(s) `552:4700`"Frame 453" — is reproduced
- * with plain browser primitives instead of adding `embla-carousel-react`/`swiper`/etc.). Reviews
- * uses its own dedicated `ReviewsCarousel.tsx` (embla-based) instead, since it needed genuine
- * loop/centered-slide behavior this component doesn't implement.
+ * slider — My F*ckUp(s) `552:4700`"Frame 453", REEL LIFE `552:4610` — is reproduced with plain
+ * browser primitives instead of adding `embla-carousel-react`/`swiper`/etc. directly here).
+ * Reviews and (as of this pass) My WINS use the shared `EmblaCarousel.tsx` (embla-based) instead,
+ * since they needed genuine loop/centered-slide behavior this component doesn't implement.
  *
- * Both Figma card rows are wider than the ~1300px content column (My WINS 4600px across
- * 7×640px cards, My F*ckUp(s) 1964px across 3×641px cards) — i.e. genuinely overflowing
- * carousels, not grids — each paired with an identical circular prev/next control pinned
- * centered below the row (`552:4625`/`552:4620` "Frame 277"/"246", each a pair of 48px circular
- * buttons). Reused here as one small client-component wrapper (the `'use client'` boundary
- * RolesAccordion.tsx already established as this file's precedent for isolated interactivity —
- * everything else on the page stays a Server Component).
+ * My F*ckUp(s)' and REEL LIFE's Figma card rows are both wider than their content column (My
+ * F*ckUp(s) 1964px across 3×641px cards) — i.e. genuinely overflowing carousels, not grids — each
+ * paired with an identical circular prev/next control pinned centered below the row
+ * (`552:4625`/`552:4620` "Frame 277"/"246", each a pair of 48px circular buttons). Reused here as
+ * one small client-component wrapper (the `'use client'` boundary `RolesAccordion.tsx` already
+ * established as this file's precedent for isolated interactivity — everything else on the page
+ * stays a Server Component).
  *
  * Buttons disable at the scroll boundaries (not verified against a specific Figma
  * enabled/disabled state pair — this is standard carousel UX, not literal pixel-matching) rather

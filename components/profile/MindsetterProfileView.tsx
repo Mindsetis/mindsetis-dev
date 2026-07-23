@@ -10,7 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/member-profile/page';
 import {
@@ -38,7 +38,9 @@ import {
   ReelLifeBlockIcon,
   VideoBlogBlockIcon,
 } from '@/components/icons/shine-block-icons';
+import { WinCardGlow, WinTrophyIcon } from '@/components/icons/win-card-glow';
 import { CardSlider } from '@/components/profile/CardSlider';
+import { EmblaCarousel } from '@/components/profile/EmblaCarousel';
 import {
   groupInterestsByCategory,
   isSafeHttpUrl,
@@ -49,7 +51,6 @@ import {
   SOCIAL_KEYS,
 } from '@/components/profile/MemberProfileView';
 import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
-import { ReviewsCarousel } from '@/components/profile/ReviewsCarousel';
 import { RolesAccordion } from '@/components/profile/RolesAccordion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -78,18 +79,69 @@ type VideoJson = {
   videoPath?: string | null;
 } | null;
 
-/** Per-win swatch hex, copied verbatim from `WinsForm.tsx`'s own palette map — see that file's
- * comment for the source (design-provided palette of 7 colors). Kept in sync manually; if that
- * map ever changes, update this one too. */
-const WIN_COLOR_HEX: Record<WinColor, string> = {
+/** Trophy icon fill per win color (Figma `552:5078` "Frame 274", re-verified via literal SVG
+ * export this session) — NOT the same as the card's other accent colors below; the trophy glyph
+ * uses its own muted/shifted shade per card, confirmed by direct inspection (only yellow and
+ * lightblue happen to match their card's other accents 1:1). */
+const WIN_TROPHY_HEX: Record<WinColor, string> = {
   yellow: '#F2C601',
-  purple: '#7729F4',
-  blue: '#172AFB',
-  orange: '#FF5F24',
-  teal: '#17FBD9',
+  purple: '#5557DD',
+  blue: '#0004FF',
+  orange: '#DF8B5F',
+  teal: '#42EB9F',
   lightblue: '#79B9E3',
-  pink: '#FB17AF',
+  pink: '#E44497',
 };
+
+/** Top-left blurred ellipse's flat fill per win color (Figma, same source as above). */
+const WIN_TOPLEFT_GLOW_HEX: Record<WinColor, string> = {
+  yellow: '#F4E460',
+  purple: '#6461DF',
+  blue: '#1612BF',
+  orange: '#DD8153',
+  teal: '#61DFBF',
+  lightblue: '#61BBDF',
+  pink: '#DF61B5',
+};
+
+/** Bottom-right blurred ellipse's linear-gradient stops (stop 1 → stop 2, offset 0 → 1) per win
+ * color (Figma, same source as above — extracted via a raw SVG export of each card's own
+ * gradient, since the Figma MCP bridge can't resolve unnamed local gradients any other way). */
+const WIN_BOTTOMRIGHT_GLOW_HEX: Record<WinColor, [string, string]> = {
+  yellow: ['#F3DA5D', '#FAA147'],
+  purple: ['#E88BF5', '#E69EF4'],
+  blue: ['#2B39CE', '#A5A6E6'],
+  orange: ['#F16722', '#F4B89E'],
+  teal: ['#42EB9F', '#9EF4D2'],
+  lightblue: ['#42C4EB', '#9EE7F4'],
+  pink: ['#EB42AD', '#F49EEE'],
+};
+
+/** Each win card's 4px, 4-stop gradient BORDER (stop 1 → 2 → 3 → 4, at 0%/35%/66%/100%), running
+ * top-left → bottom-right (Figma `552:5078` "Frame 274", verified via a direct SVG export of the
+ * border stroke, cross-confirmed against this file's own `WIN_COLORS` order) — a DIFFERENT
+ * gradient per win color, NOT the flat `--color-border` gray `.winCard` used before (wrong, see
+ * that rule's own fix comment in `MindsetterProfileView.module.css`). Consumed via the
+ * `--win-border-gradient` CSS custom property, set inline per card below (same "shared CSS shape,
+ * per-instance color via a prop" pattern as `WinCardGlow`'s own color props, just a CSS variable
+ * here since this is a plain masked border, not an SVG). */
+const WIN_BORDER_GRADIENT_HEX: Record<WinColor, [string, string, string, string]> = {
+  yellow: ['#FEF694', '#F3E259', '#F5B56C', '#FD9836'],
+  purple: ['#4C50DC', '#E2B7EF', '#EB72F9', '#E6A3F4'],
+  blue: ['#4C50DC', '#BAB7EF', '#7472F9', '#A3AFF4'],
+  orange: ['#DC7C4C', '#EFD4B7', '#F9AC72', '#F4C5A3'],
+  teal: ['#4CDC86', '#B7EFCF', '#72F98F', '#A3F4C7'],
+  lightblue: ['#4CD0DC', '#B7E2EF', '#72EBF9', '#A3F0F4'],
+  pink: ['#DC4CA5', '#EFB7E0', '#F972E9', '#F4A3DA'],
+};
+
+/** Builds the `--win-border-gradient` CSS custom property value for one win card's color —
+ * `to bottom right` matches the Figma citation ("top-left corner to bottom-right corner"), stops
+ * pinned at 0%/35%/66%/100% per `WIN_BORDER_GRADIENT_HEX`. */
+function winBorderGradient(color: WinColor): string {
+  const [stop0, stop35, stop66, stop100] = WIN_BORDER_GRADIENT_HEX[color];
+  return `linear-gradient(to bottom right, ${stop0} 0%, ${stop35} 35%, ${stop66} 66%, ${stop100} 100%)`;
+}
 
 /** "Topics I'm expert" pill palette — one CSS Module class per pill *position* (not per topic
  * value: `profile.topics` has no per-item color field, and Figma's own coloring is purely
@@ -114,11 +166,11 @@ function topicPillColorClass(index: number): (typeof TOPIC_PILL_COLOR_CLASSES)[n
   );
 }
 
-/** Shared base classes for every `CardSlider` item (My WINS / My F*ckUp(s) / REEL LIFE — Reviews
- * moved to `ReviewsCarousel.tsx`'s `embla-carousel-react` track and keeps its own base classes
- * without `snap-start`, see that section below) — same mobile width + scroll-snap participation
- * across the remaining three, kept in one place so a future slider section can't forget
- * `snap-start` and silently break scroll-snap. */
+/** Shared base classes for every `CardSlider` item (My F*ckUp(s) / REEL LIFE — Reviews and, as of
+ * this pass, My WINS both moved to `EmblaCarousel.tsx`'s `embla-carousel-react` track and keep
+ * their own base classes without `snap-start`, see those sections below) — same mobile width +
+ * scroll-snap participation across the remaining two, kept in one place so a future
+ * `CardSlider`-based section can't forget `snap-start` and silently break scroll-snap. */
 const SLIDER_ITEM_BASE = 'w-[280px] shrink-0 snap-start';
 
 /** First letter of the first + last "word" of a reviewer's name, uppercased (e.g. "Erin
@@ -906,10 +958,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       {/* ============================== REVIEWS (static, carousel) ==============================
           Figma `552:4496` "Frame 448": the card row (`552:4512` "Frame 273") is 1740px wide across
           4×420px cards — wider than the ~1300px content column — with a dedicated prev/next
-          control (`552:4605`) centered below it, i.e. a real carousel (see `ReviewsCarousel.tsx`,
-          an `embla-carousel-react`-backed track dedicated to this section — see that file's doc
-          comment for why it isn't `CardSlider.tsx`), not the static `md:grid-cols-3` this section
-          rendered before. */}
+          control (`552:4605`) centered below it, i.e. a real carousel (see `EmblaCarousel.tsx`, the
+          shared `embla-carousel-react`-backed track used by this section and My WINS — see that
+          file's doc comment for why it isn't `CardSlider.tsx`), not the static `md:grid-cols-3`
+          this section rendered before. */}
       {/* Top/bottom padding is intentionally asymmetric: 86px (not 150px) on top because "My
           Events" directly above already contributes its own 64px bottom padding (`py-16`) — 64 +
           86 = the requested 150px visible gap. The bottom side has no such neighbor contribution
@@ -949,7 +1001,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             clip this element's own overflowing children, not stop this box itself from widening
             `body`). */}
         <div className="relative left-1/2 mt-8 w-screen -translate-x-1/2 md:mt-[50px]">
-          <ReviewsCarousel prevLabel={t('carousel.prev')} nextLabel={t('carousel.next')}>
+          <EmblaCarousel prevLabel={t('carousel.prev')} nextLabel={t('carousel.next')}>
             {reviews.map((review, index) => (
               <div
                 key={`${review.name}-${index}`}
@@ -996,7 +1048,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 </div>
               </div>
             ))}
-          </ReviewsCarousel>
+          </EmblaCarousel>
         </div>
       </div>
 
@@ -1010,46 +1062,108 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         />
       </div>
 
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
-        {/* ============================== MY WINS (carousel) ==============================
-            Figma `552:5069` "Frame 446": the card row (`552:5078` "Frame 274") is 4600px wide
-            across 7×640px sample cards — wider than the content column — with its own prev/next
-            control (`552:4625`) centered below, i.e. a carousel (see `CardSlider.tsx`), not the
-            `md:grid-cols-3` this section rendered before. Order fix: this section is FIRST of
-            the three (right after CTA banner #1), not last — see this component's own top doc
-            comment for the full re-measurement citation. */}
-        {profile.wins.length > 0 && (
-          <div id="wins" className="mt-16 flex flex-col gap-8 scroll-mt-24">
+      {/* ============================== MY WINS (carousel) ==============================
+          Figma `552:5069` "Frame 446": the card row (`552:5078` "Frame 274") is 4600px wide
+          across 7×640px sample cards — wider than the content column — with its own prev/next
+          control (`552:4625`) centered below, i.e. a carousel, not the `md:grid-cols-3` this
+          section rendered before. Order fix: this section is FIRST of the three (right after CTA
+          banner #1), not last — see this component's own top doc comment for the full
+          re-measurement citation.
+          Fix (2026-07-23), reverting the immediately preceding round's full-bleed + peek-viewport
+          treatment: re-verified against precise Figma measurements (still `552:5078`/node
+          `327:1080`, 1440px-wide frame) — the card row sits at x=70, the SAME 70px left inset
+          every other section on this page uses (`lg:px-[70px]`), NOT bled to the literal browser
+          viewport edge. 2 cards (640px each) + 1 gap (20px, NOT 16px/`gap-4` — a real correction)
+          = 1300px exactly, which is this page's own standard content-column width (1440 − 70 − 70
+          = 1300, matching e.g. the CTA banner's `max-w-[1300px]`); card 3 starts at x=1390,
+          entirely outside that column — ZERO peek, not a partial sliver. So this section is back
+          to a normal (non-full-bleed) content column, same shape as My Events/Beyond Business
+          above/below, with no separate viewport cap needed: the carousel's viewport is just
+          100% of its own padded parent, which is naturally ~1300px on desktop — exactly the
+          640+20+640 math above. `align="start"` (not the default `'center'`) shows flush-left
+          pairs — embla's default `slidesToScroll: 1` plus a ~1300px viewport that exactly fits
+          2×640+20 naturally shows exactly 2 full cards and scrolls one at a time, matching "2
+          visible, cyclic, one loop step at a time" without any extra config.
+          Card-width breakpoint (2026-07-23 follow-up, code review): the 640px width below is
+          gated on `min-[1450px]:` rather than the more obvious `lg:` (1024px). This wrapper's
+          content column is `viewport − 140px` (70px × 2 side padding) for any real viewport
+          between 1024px and 1440px, only reaching the full 1300px (2×640+20) two-card width once
+          the real viewport hits 1440px (`1440 − 140 = 1300`); above 1440px the wrapper's own
+          `max-w-[1440px]` caps it flat at 1300px. So `lg:` (1024px) would flip cards to 640px
+          while the actual content column is still narrower than 1300px for the very common
+          1024–1439px desktop window range, cropping the second card mid-card inside embla's
+          `overflow-hidden` viewport — contradicting the "always exactly 2 full cards, never
+          cropped" requirement above. `min-[1450px]` (an arbitrary-value Tailwind breakpoint, not
+          a stock one) waits until the column has genuinely reached 1300px, plus a small 10px
+          safety margin for zoom/font-scaling edge cases, before promoting cards to 640px; below
+          that they stay at the existing 280px width (no width was ever defined for the
+          1024–1449px range, so nothing is being removed — only delayed until it's safe). */}
+      {profile.wins.length > 0 && (
+        <div
+          id="wins"
+          className="mx-auto mt-16 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:px-[70px]"
+        >
+          <div className="flex flex-col gap-8">
             <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
               {t('wins.eyebrow')}
             </SectionEyebrow>
             <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
               {t('wins.heading')}
             </h2>
-            <CardSlider
-              prevLabel={t('carousel.prev')}
-              nextLabel={t('carousel.next')}
-              trackClassName="gap-4"
-            >
-              {profile.wins.map((win, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    SLIDER_ITEM_BASE,
-                    'flex flex-col gap-3 p-6 lg:w-[640px]',
-                    styles.winCard,
-                  )}
-                  style={{ backgroundColor: WIN_COLOR_HEX[win.color] }}
-                >
-                  <span className="text-tiny font-bold">{win.year}</span>
-                  <h3 className="font-display text-l">{win.win}</h3>
-                  <p className="text-tiny opacity-90">{win.description}</p>
-                </div>
-              ))}
-            </CardSlider>
+            <div className="mt-8 md:mt-[50px]">
+              <EmblaCarousel
+                prevLabel={t('carousel.prev')}
+                nextLabel={t('carousel.next')}
+                align="start"
+                trackClassName="gap-5"
+              >
+                {profile.wins.map((win, index) => (
+                  <div
+                    key={index}
+                    style={
+                      {
+                        '--win-border-gradient': winBorderGradient(win.color),
+                      } as CSSProperties
+                    }
+                    className={cn(
+                      'w-[280px] shrink-0 min-[1450px]:w-[640px]',
+                      'flex min-h-[250px] flex-col gap-3 p-6',
+                      styles.winCard,
+                      // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between
+                      // the LAST slide and the first when `loop: true` — see the identical fix +
+                      // comment on the Reviews cards above (Reviews stays `gap-4`/`mr-4`; Wins is
+                      // `gap-5`/`mr-5` per the 20px gap measured above).
+                      index === profile.wins.length - 1 && 'mr-5',
+                    )}
+                  >
+                    <WinCardGlow
+                      idSuffix={index}
+                      bottomRightGradient={WIN_BOTTOMRIGHT_GLOW_HEX[win.color]}
+                      topLeftColor={WIN_TOPLEFT_GLOW_HEX[win.color]}
+                    />
+                    {/* Trophy + year pinned to the TOP of the (now taller, `min-h-[250px]`) card —
+                        `z-10` alongside the pre-existing `relative` makes the paint-order-above-the-
+                        glow explicit rather than relying on implicit DOM-order stacking (see
+                        `WinCardGlow`'s own doc comment for the investigation). */}
+                    <span className="relative z-10 inline-flex items-center gap-2 text-tiny font-bold">
+                      <WinTrophyIcon fill={WIN_TROPHY_HEX[win.color]} className="shrink-0" />
+                      {win.year}
+                    </span>
+                    {/* Title + description pinned to the BOTTOM of the card via `mt-auto` — same
+                        "pin to bottom" pattern as the Reviews card's avatar/name row below. */}
+                    <div className="relative z-10 mt-auto flex flex-col gap-3">
+                      <h3 className="font-display text-l">{win.win}</h3>
+                      <p className="text-tiny opacity-90 md:text-[16px]">{win.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </EmblaCarousel>
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
         {/* ============================== MY WAY ============================== */}
         {profile.myWay.length > 0 && (
           <div className="mt-16 flex flex-col gap-8">
