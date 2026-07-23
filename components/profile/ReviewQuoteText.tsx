@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { ReviewPlusIcon } from '@/components/icons/review-icons';
+import { ReviewMinusIcon, ReviewPlusIcon } from '@/components/icons/review-icons';
 import { cn } from '@/lib/utils';
 
 import styles from './MindsetterProfileView.module.css';
@@ -11,6 +11,19 @@ export interface ReviewQuoteTextProps {
   quote: string;
   readMoreLabel: string;
   readLessLabel: string;
+  /**
+   * Preserves literal newlines in `quote` (`white-space: pre-line`) — off by default since
+   * Reviews' own quotes (this component's original caller) don't contain embedded newlines.
+   * The "My F*ckUp(s)" card story text does (its old plain `<p>` carried `whitespace-pre-line`
+   * before being replaced by this component), so that caller passes `true`.
+   */
+  preserveNewlines?: boolean;
+  /**
+   * Gap between the quote text and the "Read more"/"Read less" toggle row — `gap-2` (8px) by
+   * default (Reviews' original spacing, unaffected). My F*ckUp(s) passes `gap-8` (32px, explicit
+   * request) since its cards need more breathing room here than Reviews does.
+   */
+  gapClassName?: string;
 }
 
 /**
@@ -19,9 +32,16 @@ export interface ReviewQuoteTextProps {
  * `ResizeObserver` re-checks this on resize, since the card — and therefore the quote's
  * available width/line count — is responsive). Isolated into its own small `'use client'`
  * component per this file's established precedent (`CardSlider.tsx`/`RolesAccordion.tsx`) so
- * the parent `MindsetterProfileView.tsx` stays a Server Component.
+ * the parent `MindsetterProfileView.tsx` stays a Server Component. Also reused (unchanged) for
+ * the "My F*ckUp(s)" card story text — see `preserveNewlines` above.
  */
-export function ReviewQuoteText({ quote, readMoreLabel, readLessLabel }: ReviewQuoteTextProps) {
+export function ReviewQuoteText({
+  quote,
+  readMoreLabel,
+  readLessLabel,
+  preserveNewlines = false,
+  gapClassName = 'gap-2',
+}: ReviewQuoteTextProps) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -47,8 +67,16 @@ export function ReviewQuoteText({ quote, readMoreLabel, readLessLabel }: ReviewQ
   }, [quote, expanded]);
 
   return (
-    <div className="flex flex-col gap-2">
-      <p ref={textRef} className={cn('text-body', styles.reviewQuote, !expanded && 'line-clamp-5')}>
+    <div className={cn('flex flex-col', gapClassName)}>
+      <p
+        ref={textRef}
+        className={cn(
+          'text-body',
+          styles.reviewQuote,
+          !expanded && 'line-clamp-5',
+          preserveNewlines && 'whitespace-pre-line',
+        )}
+      >
         {quote}
       </p>
       {isOverflowing && (
@@ -58,7 +86,11 @@ export function ReviewQuoteText({ quote, readMoreLabel, readLessLabel }: ReviewQ
           className="inline-flex w-fit items-center gap-[11px] text-tiny font-bold text-primary"
         >
           {expanded ? readLessLabel : readMoreLabel}
-          <ReviewPlusIcon className="shrink-0" />
+          {expanded ? (
+            <ReviewMinusIcon className="shrink-0" />
+          ) : (
+            <ReviewPlusIcon className="shrink-0" />
+          )}
         </button>
       )}
     </div>

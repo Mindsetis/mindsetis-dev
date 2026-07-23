@@ -89,3 +89,24 @@ export function ReviewPlusIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+/**
+ * "-" companion to `ReviewPlusIcon` above, shown once a "Read more"/"Read less" toggle is
+ * expanded (product request: plus becomes minus on "Read less") — just that icon's own
+ * horizontal bar in isolation (same 10×10 box, same rounded-cap thickness), not a new asset.
+ */
+export function ReviewMinusIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="0.666667" y="4" width="8.66667" height="1.33333" rx="0.666667" fill="currentColor" />
+    </svg>
+  );
+}
