@@ -128,16 +128,50 @@
 
 .heroName {
   font-size: 40px;
+  font-weight: 400;
   line-height: 0.9;
-  background: var(--gradient-primary);
+  background: linear-gradient(95.47deg, #fff 5.55%, #87bce6 99.51%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 @media (min-width: 768px) {
   .heroName {
     font-size: 88px;
   }
+}
+
+/* ---- Roles / Help accordion section title (H2) -------------------------------------------
+   claude.txt 2026-07-23, "1. Блок Roles" item 2 — own gradient (close to but distinct from
+   `.heroName`'s, and from the shared `.gradientHeading` 3-stop token), desktop-only (the JSX
+   hides this heading on mobile per that same claude.txt's item 11). */
+
+.accordionSectionHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  background: linear-gradient(95.47deg, #fff 5.49%, #87bce6 99.54%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- Superpower(s) section title (H2) ----------------------------------------------------
+   claude.txt 2026-07-23, "1. Блок Superpower(s)" item 1 — own gradient (yet another distinct
+   stop pair from `.heroName`/`.accordionSectionHeading`), desktop-only (hidden on mobile per
+   that same claude.txt's item 1). */
+
+.superpowersHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  background: linear-gradient(95.47deg, #fff 4.61%, #87bce6 99.97%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Hero @username pill ---------------------------------------------------------------------
@@ -148,9 +182,23 @@
    rather than reusing that class. */
 
 .pillHandle {
+  /* No fill (claude.txt 2026-07-23 follow-up: "в тегу прибери колір фону") — border + text
+     brand-color `#79B9E3` (`--color-primary`) only, previously a solid white chip. */
   border: 1px solid var(--color-primary);
   color: var(--color-primary);
-  background-color: var(--color-foreground);
+  background-color: transparent;
+}
+
+/* ---- Hero "Verified" pill -----------------------------------------------------------------
+   Same shape/fill treatment as `.pillHandle` above (claude.txt 2026-07-23, "1.Банер" item 2:
+   "Verified в стилях як і тег тільки колір #08d6ad") — `#08D6AD` is this app's existing
+   `--color-success` token. Page-local (was `memberStyles.pillVerified`, that sibling class is
+   tuned for the light `MemberProfileView` screen). */
+
+.pillVerified {
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  background-color: transparent;
 }
 
 /* ---- Meta pills (industry / company / role) --------------------------------------------------
@@ -171,6 +219,7 @@
 
 .socialIconButton {
   background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   color: var(--color-foreground);
   transition: background-color 150ms ease;
 }
@@ -180,6 +229,7 @@
 
 .websitePill {
   background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   color: var(--color-foreground);
 }
 
@@ -192,14 +242,10 @@
 
 .portraitFrame,
 .portraitPlaceholder {
+  /* No corner radius at any breakpoint (claude.txt 2026-07-23, "1.Банер" item 12: "прибери з
+     картинки бордер радіус" — was 30px from `lg:` up, removed). */
   border-radius: 0;
   background-color: var(--color-card);
-}
-@media (min-width: 1024px) {
-  .portraitFrame,
-  .portraitPlaceholder {
-    border-radius: 30px;
-  }
 }
 
 /* ---- Shared section eyebrow (icon + bold secondary-text label) --------------------------- */
@@ -334,6 +380,23 @@
   border-radius: 32px;
 }
 
+/* ---- Topics section title (H2) -----------------------------------------------------------
+   claude.txt item 1 — own gradient (yet another distinct stop pair from the other section
+   headings), and `white-space: pre-line` so the JSX's embedded `\n` (forced line break after
+   "mentoring") actually renders. */
+
+.topicsHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  white-space: pre-line;
+  background: linear-gradient(95.47deg, #fff 4.66%, #87bce6 99.94%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 /* Figma gives each pill position a distinct color: a solid-ish colored border that reads as a
    soft gradient glow, and matching bold colored label text, on a `--color-card`-ish dark fill
    (`552:4915`-`552:4923` "Frame 228"-"Frame 232"). The gradient border itself isn't retrievable
@@ -383,21 +446,6 @@
      dominant `--color-card` treatment. */
   background-color: var(--color-card);
   border-radius: 16px;
-}
-
-/* ---- Micro-navigation (static anchor links, spec §5.4 "мікро-навігація") ----------------- */
-
-.microNav {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.microNavLink {
-  color: rgb(255 255 255 / 60%);
-  letter-spacing: 0.05em;
-  transition: color 150ms ease;
-}
-.microNavLink:hover {
-  color: var(--color-foreground);
 }
 
 /* ---- Promo video ----------------------------------------------------------------------------
