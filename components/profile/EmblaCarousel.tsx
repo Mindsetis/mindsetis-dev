@@ -34,6 +34,11 @@ export interface EmblaCarouselProps {
    * this). My WINS passes `'start'` (flush-left pairs — see that call site's own comment for
    * why `'center'` was wrong for a "show 2 full cards, zero peek" row). */
   align?: EmblaOptionsType['align'];
+  /** Extra classes for this component's own root `flex flex-col gap-8` wrapper (the direct
+   * child of the caller's own outer `relative` positioning div) — merged via `cn`. Left
+   * undefined by Reviews/My WINS; My Way passes `pl-[30px]` (explicit request) since that's
+   * the only "div with a `flex` class" directly inside its `relative` wrapper. */
+  className?: string;
 }
 
 /**
@@ -60,6 +65,7 @@ export function EmblaCarousel({
   viewportClassName,
   trackClassName,
   align = 'center',
+  className,
 }: EmblaCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -87,7 +93,7 @@ export function EmblaCarousel({
   }, [emblaApi]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className={cn('flex flex-col gap-8', className)}>
       <div className={cn('overflow-hidden', viewportClassName)} ref={emblaRef}>
         <div className={cn('flex gap-4', trackClassName)}>{children}</div>
       </div>

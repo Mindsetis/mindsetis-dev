@@ -52,6 +52,7 @@ import {
 } from '@/components/profile/MemberProfileView';
 import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
 import { RolesAccordion } from '@/components/profile/RolesAccordion';
+import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -226,6 +227,7 @@ export interface MindsetterProfile {
   topics: string[];
   reelLifePhotoUrls: string[];
   promoVideoUrl: string | null;
+  videoBlogUrl: string | null;
 }
 
 export interface MindsetterProfileViewProps {
@@ -272,6 +274,37 @@ function NumberBadge({ index }: { index: number }) {
     >
       {index}
     </span>
+  );
+}
+
+/** "All interviews" button's trailing arrow (video-blog section) — provided verbatim by the
+ * designer, same "hardcoded fill, not `currentColor`" precedent as `ContinueFillIcon` in
+ * `ShineForm.tsx`: a light-blue (`#79B9E3`) rounded-square backdrop with a white right-arrow
+ * glyph, single-use so it's kept local rather than in `components/icons/`. */
+function VideoBlogArrowIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect
+        x="16"
+        y="16"
+        width="16"
+        height="16"
+        rx="8"
+        transform="rotate(-180 16 16)"
+        fill="#79B9E3"
+      />
+      <path
+        d="M4.9714 7.52865C4.71107 7.52865 4.50003 7.73968 4.50002 8.00001C4.50001 8.26035 4.71106 8.47141 4.9714 8.47141L10.1601 8.47141L8.95358 10.0964C8.84914 10.2371 8.84914 10.4296 8.95358 10.5702C9.11247 10.7842 9.43285 10.7842 9.59174 10.5702L11.0574 8.59612C11.3202 8.24216 11.3202 7.75786 11.0574 7.4039L9.59176 5.42979C9.43286 5.21577 9.11247 5.21578 8.95358 5.4298C8.84914 5.57047 8.84915 5.76294 8.95359 5.9036L10.1601 7.5286L4.9714 7.52865Z"
+        fill="white"
+      />
+    </svg>
   );
 }
 
@@ -324,7 +357,7 @@ function CtaBanner({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center gap-6 overflow-hidden px-4 py-10 text-center sm:px-6 md:justify-center md:gap-8 md:px-0 md:pt-[100px] md:pb-[100px]',
+        'relative flex flex-col items-center gap-6 overflow-hidden px-4 py-10 text-center max-[600px]:px-[15px] max-[600px]:py-[68px] sm:px-6 md:justify-center md:gap-8 md:px-0 md:pt-[100px] md:pb-[100px]',
         styles.ctaBanner,
       )}
     >
@@ -341,7 +374,7 @@ function CtaBanner({
           type="button"
           variant="ghost"
           className={cn(
-            'h-14 px-6 text-base font-bold md:min-w-[188px]',
+            'h-14 px-6 text-base font-bold max-[600px]:w-full md:min-w-[188px]',
             memberStyles.inviteButton,
           )}
         >
@@ -352,7 +385,7 @@ function CtaBanner({
           type="button"
           variant="primaryOutline"
           size="lg"
-          className="shadow-none md:min-w-[188px]"
+          className="shadow-none max-[600px]:w-full md:min-w-[188px]"
         >
           {bookLabel}
         </Button>
@@ -426,10 +459,12 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
   const promoEmbedUrl = profile.promoVideoUrl
     ? null // direct upload — rendered via <video>, not an iframe embed
     : toEmbedUrl(profile.promoVideo?.youtube || profile.promoVideo?.vimeo || null);
-  const hasVideoBlog = Boolean(profile.videoBlog?.youtube || profile.videoBlog?.vimeo);
-  const videoBlogEmbedUrl = toEmbedUrl(
-    profile.videoBlog?.youtube || profile.videoBlog?.vimeo || null,
+  const hasVideoBlog = Boolean(
+    profile.videoBlogUrl || profile.videoBlog?.youtube || profile.videoBlog?.vimeo,
   );
+  const videoBlogEmbedUrl = profile.videoBlogUrl
+    ? null // direct upload — rendered via <video>, not an iframe embed
+    : toEmbedUrl(profile.videoBlog?.youtube || profile.videoBlog?.vimeo || null);
   const reviews = t.raw('reviews.items') as { name: string; role: string; quote: string }[];
 
   /**
@@ -968,7 +1003,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           (CTA Banner #1's wrapper below has zero vertical padding of its own), so it stays a flat
           150px. Do NOT "simplify" this back to a symmetric `py-[150px]` — that would double the
           gap above this section to 214px. */}
-      <div id="reviews" className="pb-16 pt-16 md:pb-[150px] md:pt-[86px]">
+      <div id="reviews" className={cn('pt-16 md:pt-[86px]', styles.paddingBottom150)}>
+        {/* `px-4` (16px) is the unprefixed base tier here — already exactly the requested ≤600px
+            side padding with no change needed (`sm:`/`lg:` only widen it above 640px/1024px). */}
         <div className="mx-auto flex w-full max-w-[1440px] flex-col px-4 sm:px-6 lg:px-[70px]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-col gap-4 md:gap-8">
@@ -977,7 +1014,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               </SectionEyebrow>
               <h2
                 className={cn(
-                  'font-display text-h3 md:text-h2 md:max-w-[588px]',
+                  'font-display text-h3 max-[600px]:hidden md:text-h2 md:max-w-[588px]',
                   styles.gradientHeading,
                   styles.reviewsHeading,
                 )}
@@ -1006,7 +1043,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               <div
                 key={`${review.name}-${index}`}
                 className={cn(
-                  'w-[280px] shrink-0 sm:w-[340px] lg:w-[420px]',
+                  'shrink-0',
                   'flex min-h-[330px] flex-col gap-4 p-6',
                   styles.reviewCard,
                   // embla's own docs: CSS `gap` (this track's `gap-4`) never applies between the
@@ -1053,7 +1090,13 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       </div>
 
       {/* ============================== CTA BANNER #1 ============================== */}
-      <div id="cta-banner-1" className="mx-auto w-full max-w-[1300px] scroll-mt-24 mb-[150px]">
+      <div
+        id="cta-banner-1"
+        className={cn(
+          'mx-auto w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:px-[70px]',
+          styles.spacingBottom150,
+        )}
+      >
         <CtaBanner
           heading={t('ctaBanner1.heading')}
           price={price}
@@ -1101,100 +1144,212 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       {profile.wins.length > 0 && (
         <div
           id="wins"
-          className="mx-auto mt-16 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:px-[70px]"
+          className="mx-auto mt-16 w-full max-w-[1440px] scroll-mt-24 px-4 max-[600px]:px-0 max-[600px]:pl-4 sm:px-6 lg:px-[70px]"
         >
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 max-[768px]:gap-6 max-[768px]:mb-6 md:mb-[50px]">
+            {/* Heading(or, ≤600px, just the eyebrow since the H2 is hidden there)→cards gap:
+                50px on desktop (`md:mb-[50px]`, restored — the section's own carousel wrapper
+                below carries no margin of its own precisely so THIS is the single source of
+                truth for that gap), 24px at ≤768px (`max-[768px]:mb-6`) regardless of whether
+                the H2 itself is visible (601–768px) or hidden (≤600px, `max-[600px]:hidden`) —
+                margin-bottom on this wrapper always lands right after its own last VISIBLE
+                child, so one rule covers both mobile states without extra conditions. */}
             <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
               {t('wins.eyebrow')}
             </SectionEyebrow>
-            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+            <h2
+              className={cn(
+                'font-display text-h3 max-[600px]:hidden md:text-h2',
+                styles.gradientHeading,
+              )}
+            >
               {t('wins.heading')}
             </h2>
-            <div className="mt-8 md:mt-[50px]">
+          </div>
+          {/* No top margin/gap here on purpose (explicit request, both desktop and mobile) — this
+              is a SIBLING of the eyebrow+heading `gap-8` wrapper above, not a child of it, so the
+              carousel sits flush against the heading instead of stacking a flex `gap-8` on top of
+              its own former `mt-8 md:mt-[50px]` (a double-gap bug, same shape as this page's
+              other padding+margin doubling fixes). */}
+          <div>
+            <EmblaCarousel
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              align="start"
+              trackClassName="gap-5"
+            >
+              {profile.wins.map((win, index) => (
+                <div
+                  key={index}
+                  style={
+                    {
+                      '--win-border-gradient': winBorderGradient(win.color),
+                    } as CSSProperties
+                  }
+                  className={cn(
+                    'shrink-0 flex min-h-[250px] flex-col gap-3 p-6',
+                    styles.winCard,
+                    // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between
+                    // the LAST slide and the first when `loop: true` — see the identical fix +
+                    // comment on the Reviews cards above (Reviews stays `gap-4`/`mr-4`; Wins is
+                    // `gap-5`/`mr-5` per the 20px gap measured above).
+                    index === profile.wins.length - 1 && 'mr-5',
+                  )}
+                >
+                  <WinCardGlow
+                    idSuffix={index}
+                    bottomRightGradient={WIN_BOTTOMRIGHT_GLOW_HEX[win.color]}
+                    topLeftColor={WIN_TOPLEFT_GLOW_HEX[win.color]}
+                  />
+                  {/* Trophy + year pinned to the TOP of the (now taller, `min-h-[250px]`) card —
+                        `z-10` alongside the pre-existing `relative` makes the paint-order-above-the-
+                        glow explicit rather than relying on implicit DOM-order stacking (see
+                        `WinCardGlow`'s own doc comment for the investigation). */}
+                  <span className="relative z-10 inline-flex items-center gap-2 text-tiny font-bold">
+                    <WinTrophyIcon fill={WIN_TROPHY_HEX[win.color]} className="shrink-0" />
+                    {win.year}
+                  </span>
+                  {/* Title + description pinned to the BOTTOM of the card via `mt-auto` — same
+                        "pin to bottom" pattern as the Reviews card's avatar/name row below. */}
+                  <div className="relative z-10 mt-auto flex flex-col gap-3">
+                    <h3 className="font-display text-l">{win.win}</h3>
+                    <p className="text-tiny opacity-90 md:text-[16px]">{win.description}</p>
+                  </div>
+                </div>
+              ))}
+            </EmblaCarousel>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
+        {/* ============================== MY WAY (carousel) ==============================
+            STAGE re-architecture (2026-07-23): the previous pass built this as a static CSS Grid
+            (3 separate `.map()` passes + a dynamic `gridTemplateColumns` sized to
+            `profile.myWay.length`) — wrong. Fresh re-verification against `327:1080` (1440px
+            frame) shows this is a genuine horizontally-scrolling CAROUSEL, the exact same "peek"
+            pattern already built for My WINS below (`EmblaCarousel.tsx`, `align="start"`): on the
+            1440px frame only 3 of the 4 stages are fully visible, the 4th is cropped to a ~24px
+            sliver at the frame's right edge (its year text spans x=1416–1578, starting inside the
+            frame but extending 138px past the 1440px boundary). Stage pitch (start-to-start
+            spacing, derived from the 4 stages' year x-positions 100→527→968→1416) is ~440px —
+            approximated below as a 420px slide (`w-[420px]`) + a 20px track gap
+            (`trackClassName="gap-5"`, same gap size as My WINS), landing on the 440px pitch
+            exactly. Figma doesn't expose a clean separate "card width" vs "gap" number here (same
+            limitation `WIN_BORDER_GRADIENT_HEX` etc. cite elsewhere), so this split is a
+            best-estimate that may need a follow-up visual check, not a claim of pixel-perfect
+            accuracy. Kept inside this section's existing non-full-bleed `max-w-[1440px] px-4
+            sm:px-6 lg:px-[70px]` wrapper (same shape as My WINS, NOT Reviews' full-bleed
+            `w-screen` treatment) — this section already lived in a normal content column like
+            every other section on the page, and My Way's peek is far smaller than Reviews' own
+            (Reviews' cards visibly peek on both sides via `align="center"`; My Way only needs a
+            small trailing peek of the next stage via `align="start"`, the same "N full slides, no
+            single centered active one" shape My WINS already uses, not Reviews' pattern).
+            `align="start"` (not `"center"`) matches that.
+
+            Each stage is now ONE self-contained slide, used identically at every breakpoint — no
+            vertical gap within a slide anymore (removed per explicit instruction: spacing now
+            comes only from each piece's own margin, e.g. `.wayConnector`'s `margin-top: 20px`),
+            top to bottom: year → a vertical connector bar (`.wayConnector`, `position: relative`,
+            `z-index: -1`, with a small white 7×7px circle `::before` at its own top edge so the
+            line visually starts from that circle's center — genuinely absent from Figma, added
+            per explicit, repeated product-owner request, not a missed design detail) → the
+            numbered step badge + title/description row (`.wayCard` now padding-free, per explicit
+            instruction). The ONE shared dashed rule (`.wayLongLine`) is no longer per-slide — it's
+            a single absolutely-positioned overlay rendered ONCE for the whole carousel (see the
+            `relative` wrapper around `<EmblaCarousel>` below), since Figma's own `Line 9` really
+            is one element spanning every stage and a per-slide copy can't reproduce that in a
+            real horizontally-scrolling carousel. Includes the mandatory embla "gap missing at
+            loop seam" fix (`mr-5` on the last slide only — same pattern as Reviews/My WINS). */}
+        {profile.myWay.length > 0 && (
+          <div
+            id="my-way"
+            className={cn(
+              // At ≤600px: cancel the shared parent wrapper's own `px-4` (16px each side) via
+              // a matching negative margin, then re-add ONLY the left 16px — so this section's
+              // right edge bleeds to the true viewport edge (paddings: 0, except pl-4) without
+              // touching that parent wrapper (also shared by fckups/video-blog, not all of which
+              // were asked to bleed this way).
+              'flex flex-col gap-6 scroll-mt-24 max-[600px]:-mx-4 max-[600px]:pl-4',
+              styles.spacing150,
+            )}
+          >
+            <div className="flex flex-col gap-8">
+              <SectionEyebrow icon={<MyWayBlockIcon className="size-4" />}>
+                {t('myWay.eyebrow')}
+              </SectionEyebrow>
+              <h2
+                className={cn(
+                  'font-display text-h3 max-[600px]:hidden md:max-w-[635px] md:text-h2',
+                  styles.gradientHeading,
+                )}
+              >
+                {t('myWay.heading')}
+              </h2>
+            </div>
+            <div className="relative">
+              {/* ONE shared dashed rule for the whole carousel (not per-slide) — Figma's own
+                  `Line 9` really is a single element spanning every stage at once, which doesn't
+                  work as a per-slide copy in a real horizontally-scrolling carousel (the earlier
+                  `.wayLongLine`-per-slide approach). Fixed here as an absolutely-positioned
+                  overlay OUTSIDE the scrolling track, anchored to this `relative` wrapper, so it
+                  stays visually still while slides scroll underneath it — same trick used to make
+                  a "shared" element coexist with an independently-draggable carousel.
+                  Desktop: 18px above the step-badge/number row (`top-[161px]`, corrected from an
+                  earlier 36px-above estimate). Mobile/tablet (≤768px) gets its own smaller
+                  estimate (`top-[99px]`) since both the year's fluid font-size and
+                  `.wayConnector`'s own shorter mobile height change how tall everything above the
+                  badge row is at these widths — still an estimate pending live visual check, same
+                  as before. Its `left` lives on `.wayLongLine` itself (`left: -7px`). */}
+              <div
+                className={cn(
+                  'pointer-events-none absolute top-[99px] right-0 md:top-[161px]',
+                  styles.wayLongLine,
+                )}
+                aria-hidden="true"
+              />
               <EmblaCarousel
                 prevLabel={t('carousel.prev')}
                 nextLabel={t('carousel.next')}
                 align="start"
                 trackClassName="gap-5"
               >
-                {profile.wins.map((win, index) => (
+                {profile.myWay.map((stage, index) => (
                   <div
                     key={index}
-                    style={
-                      {
-                        '--win-border-gradient': winBorderGradient(win.color),
-                      } as CSSProperties
-                    }
                     className={cn(
-                      'w-[280px] shrink-0 min-[1450px]:w-[640px]',
-                      'flex min-h-[250px] flex-col gap-3 p-6',
-                      styles.winCard,
-                      // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between
-                      // the LAST slide and the first when `loop: true` — see the identical fix +
-                      // comment on the Reviews cards above (Reviews stays `gap-4`/`mr-4`; Wins is
-                      // `gap-5`/`mr-5` per the 20px gap measured above).
-                      index === profile.wins.length - 1 && 'mr-5',
+                      'flex shrink-0 flex-col',
+                      styles.waySlide,
+                      // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between the
+                      // LAST slide and the first when `loop: true` — same fix as Reviews/My WINS.
+                      index === profile.myWay.length - 1 && 'mr-5',
                     )}
                   >
-                    <WinCardGlow
-                      idSuffix={index}
-                      bottomRightGradient={WIN_BOTTOMRIGHT_GLOW_HEX[win.color]}
-                      topLeftColor={WIN_TOPLEFT_GLOW_HEX[win.color]}
-                    />
-                    {/* Trophy + year pinned to the TOP of the (now taller, `min-h-[250px]`) card —
-                        `z-10` alongside the pre-existing `relative` makes the paint-order-above-the-
-                        glow explicit rather than relying on implicit DOM-order stacking (see
-                        `WinCardGlow`'s own doc comment for the investigation). */}
-                    <span className="relative z-10 inline-flex items-center gap-2 text-tiny font-bold">
-                      <WinTrophyIcon fill={WIN_TROPHY_HEX[win.color]} className="shrink-0" />
-                      {win.year}
-                    </span>
-                    {/* Title + description pinned to the BOTTOM of the card via `mt-auto` — same
-                        "pin to bottom" pattern as the Reviews card's avatar/name row below. */}
-                    <div className="relative z-10 mt-auto flex flex-col gap-3">
-                      <h3 className="font-display text-l">{win.win}</h3>
-                      <p className="text-tiny opacity-90 md:text-[16px]">{win.description}</p>
+                    <div className={cn('relative', styles.wayYearBlock)}>
+                      <span className={styles.wayYear}>
+                        {stage.yearFrom}–{stage.yearTo}
+                      </span>
+                      <div className={styles.wayConnector} aria-hidden="true" />
+                    </div>
+                    <div className="flex items-start gap-6 max-[768px]:flex-col max-[768px]:gap-4">
+                      <span
+                        className={cn(
+                          'flex size-8 shrink-0 items-center justify-center rounded-full text-tiny font-bold',
+                          styles.wayStep,
+                        )}
+                      >
+                        {index + 1}
+                      </span>
+                      <div className={cn('flex flex-col gap-2', styles.wayCard)}>
+                        <h3 className={cn('font-display text-l', styles.wayProjectHeading)}>
+                          {stage.project}
+                        </h3>
+                        <p className="text-[16px] text-foreground">{stage.description}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </EmblaCarousel>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
-        {/* ============================== MY WAY ============================== */}
-        {profile.myWay.length > 0 && (
-          <div className="mt-16 flex flex-col gap-8">
-            <SectionEyebrow icon={<MyWayBlockIcon className="size-4" />}>
-              {t('myWay.eyebrow')}
-            </SectionEyebrow>
-            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('myWay.heading')}
-            </h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:overflow-visible">
-              {profile.myWay.map((stage, index) => (
-                <div key={index} className="flex w-[280px] shrink-0 flex-col gap-3 md:w-auto">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'flex size-8 items-center justify-center rounded-full text-tiny font-bold',
-                        styles.wayStep,
-                      )}
-                    >
-                      {index + 1}
-                    </span>
-                    <span className={cn('font-display text-l', styles.wayYear)}>
-                      {stage.yearFrom}–{stage.yearTo}
-                    </span>
-                  </div>
-                  <div className={cn('flex flex-col gap-2 p-6', styles.wayCard)}>
-                    <h3 className="font-display text-l">{stage.project}</h3>
-                    <p className="text-tiny text-foreground/70">{stage.description}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -1214,13 +1369,29 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             onboarding step that fills it in is `app/[locale]/mindsetter-onboarding/blocks/
             fckups/page.tsx`. */}
         {profile.fckups.length > 0 && (
-          <div className="mt-16 flex flex-col gap-8">
-            <SectionEyebrow icon={<FckupsBlockIcon className="size-4" />}>
-              {t('fckups.eyebrow')}
-            </SectionEyebrow>
-            <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-              {t('fckups.heading')}
-            </h2>
+          <div
+            id="fckups"
+            className={cn(
+              // Same shared-parent-padding-bleed trick as My Way above — see that section's own
+              // comment.
+              'flex flex-col gap-8 scroll-mt-24 md:gap-[50px] max-[600px]:-mx-4 max-[600px]:pl-4',
+              styles.spacing150,
+            )}
+          >
+            <div className="flex flex-col gap-8">
+              <SectionEyebrow icon={<FckupsBlockIcon className="size-4 text-[#FF4C58]" />}>
+                {t('fckups.eyebrow')}
+              </SectionEyebrow>
+              <h2
+                className={cn(
+                  'font-display text-h3 max-[600px]:hidden md:max-w-[770px] md:text-h2',
+                  styles.gradientHeading,
+                  styles.fckupsHeading,
+                )}
+              >
+                {t('fckups.heading')}
+              </h2>
+            </div>
             <CardSlider
               prevLabel={t('carousel.prev')}
               nextLabel={t('carousel.next')}
@@ -1231,12 +1402,26 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   key={index}
                   className={cn(
                     SLIDER_ITEM_BASE,
-                    'flex flex-col gap-4 p-6 lg:w-[640px]',
+                    'flex flex-col gap-4 p-6 md:p-8',
                     styles.sectionCard,
+                    styles.fckupsCard,
                   )}
                 >
-                  <NumberBadge index={index + 1} />
-                  <p className="text-body whitespace-pre-line">{fckup.story}</p>
+                  <div className="inline-flex items-center gap-1.5">
+                    <FckupsBlockIcon className="size-3.5 shrink-0 text-[#FF4C58]" />
+                    {/* Figma (`552:4713` etc.): a bare number, NOT the circled `NumberBadge` Roles/
+                        Help use — no fill/stroke/corner-radius behind it at all. */}
+                    <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground">
+                      {index + 1}
+                    </span>
+                  </div>
+                  <ReviewQuoteText
+                    quote={fckup.story}
+                    readMoreLabel={t('reviews.readMore')}
+                    readLessLabel={t('reviews.readLess')}
+                    gapClassName="gap-8"
+                    preserveNewlines
+                  />
                 </div>
               ))}
             </CardSlider>
@@ -1245,34 +1430,64 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
 
         {/* ============================== BUILT NOT BURN · INTERVIEW ============================== */}
         {hasVideoBlog && (
-          <div className="mt-16 flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+          <div
+            id="video-blog"
+            className={cn(
+              'flex flex-col gap-6 scroll-mt-24 md:flex-row md:items-center md:justify-between md:gap-8',
+              styles.spacing150,
+            )}
+          >
             <div className="flex flex-col gap-6 md:max-w-[500px]">
               <SectionEyebrow icon={<VideoBlogBlockIcon className="size-4" />}>
                 {t('videoBlog.eyebrow')}
               </SectionEyebrow>
-              <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
+              <h2
+                className={cn(
+                  'font-display text-h3 max-[600px]:hidden md:text-h2',
+                  styles.gradientHeading,
+                  styles.videoBlogHeading,
+                )}
+              >
                 {t('videoBlog.heading')}
               </h2>
-              <Button type="button" variant="outline" className="w-fit">
+              {/* Desktop-only button — mobile has its own copy AFTER the video below, since at
+                  ≤600px the requested order is eyebrow → video → full-width button, which needs
+                  the button to be a sibling of the video (not nested in this text column) to
+                  reorder via plain DOM order rather than fighting `flex` with `order` across two
+                  different containers. */}
+              <Button type="button" variant="outline" className="hidden w-fit gap-2 md:inline-flex">
                 {t('videoBlog.allInterviews')}
+                <VideoBlogArrowIcon />
               </Button>
             </div>
-            {videoBlogEmbedUrl && (
+            {(profile.videoBlogUrl || videoBlogEmbedUrl) && (
               <div
                 className={cn(
-                  'relative aspect-[9/16] w-full max-w-[372px] overflow-hidden',
+                  'relative h-[400px] w-full max-w-[640px] overflow-hidden max-[600px]:h-[220px]',
                   styles.videoPanel,
                 )}
               >
-                <iframe
-                  className="size-full"
-                  src={videoBlogEmbedUrl}
-                  title={t('videoBlog.heading')}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {profile.videoBlogUrl ? (
+                  <VideoBlogPlayer
+                    src={profile.videoBlogUrl}
+                    title={t('videoBlog.heading')}
+                    clickToWatchLabel={t('videoBlog.clickToWatch')}
+                  />
+                ) : (
+                  <iframe
+                    className="size-full"
+                    src={videoBlogEmbedUrl!}
+                    title={t('videoBlog.heading')}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
               </div>
             )}
+            <Button type="button" variant="outline" className="w-full gap-2 md:hidden">
+              {t('videoBlog.allInterviews')}
+              <VideoBlogArrowIcon />
+            </Button>
           </div>
         )}
       </div>
@@ -1280,7 +1495,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       {/* ============================== CTA BANNER #2 ============================== */}
       <div
         id="cta-banner-2"
-        className="mx-auto mt-16 w-full max-w-[1300px] scroll-mt-24 mb-[150px]"
+        className={cn(
+          'mx-auto mt-16 w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:px-[70px]',
+          styles.spacingBottom150,
+        )}
       >
         <CtaBanner
           heading={t('ctaBanner2.heading')}
@@ -1292,7 +1510,13 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
 
       {/* ============================== BEYOND BUSINESS ============================== */}
       {interestGroups.length > 0 && (
-        <div className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 lg:px-[70px]">
+        <div
+          id="beyond-business"
+          className={cn(
+            'mx-auto w-full max-w-[1440px] scroll-mt-24 px-4 pb-16 sm:px-6 lg:px-[70px]',
+            styles.spacing150,
+          )}
+        >
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-8">
               <span className="inline-flex items-center gap-2">
@@ -1304,7 +1528,13 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   {t('beyondBusiness.eyebrow')}
                 </span>
               </span>
-              <h2 className={cn('hidden font-display text-h2 md:block', styles.gradientHeading)}>
+              <h2
+                className={cn(
+                  'hidden font-display text-h2 md:block',
+                  styles.gradientHeading,
+                  styles.beyondBusinessHeading,
+                )}
+              >
                 {t('beyondBusiness.heading')}
               </h2>
             </div>

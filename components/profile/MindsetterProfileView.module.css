@@ -54,13 +54,62 @@
   color: var(--color-foreground);
 }
 
+/* ---- Shared 150/100/80 section spacing tiers (mobile/tablet pass) -------------------------
+   Every section that had a flat 150px top/bottom margin (or, for Reviews, padding-bottom) now
+   steps down as the viewport narrows: >1024px stays 150px (unchanged), ≤1024px becomes 100px,
+   ≤768px becomes 80px (persists down to the smallest phone — no further tier was requested).
+   One shared custom property so the three per-property variants below (top+bottom margin,
+   bottom-only margin, bottom-only padding — each section only ever needed ONE of these) don't
+   repeat the same three pixel values three times over. Plain `@media` (not Tailwind `md:`/`lg:`)
+   so "at 1024/768" reads as "at this width and narrower", matching the literal request, rather
+   than fighting Tailwind's inclusive-at-the-breakpoint `min-width` semantics. */
+.spacing150,
+.spacingBottom150,
+.paddingBottom150 {
+  --section-spacing-150: 150px;
+}
+@media (max-width: 1024px) {
+  .spacing150,
+  .spacingBottom150,
+  .paddingBottom150 {
+    --section-spacing-150: 100px;
+  }
+}
+@media (max-width: 768px) {
+  .spacing150,
+  .spacingBottom150,
+  .paddingBottom150 {
+    --section-spacing-150: 80px;
+  }
+}
+.spacing150 {
+  margin-top: var(--section-spacing-150);
+  margin-bottom: var(--section-spacing-150);
+}
+.spacingBottom150 {
+  margin-bottom: var(--section-spacing-150);
+}
+.paddingBottom150 {
+  padding-bottom: var(--section-spacing-150);
+}
+
 /* ---- Shared gradient headings (hero H1 + every section H2, see file doc comment) ---------- */
 
 .gradientHeading {
+  /* Mobile/tablet pass: every section H2 must shrink fluidly (not jump at a single `md:`
+     breakpoint) down to exactly 24px at a 375px viewport (explicit request) — `clamp()` anchored
+     between 375px→24px and 1440px→72px (this page's own grid cap, matching the desktop
+     `--text-h2` token these headings already reach via their `md:text-h2` Tailwind class). This
+     wins the cascade over the callers' own `text-h3 md:text-h2` Tailwind classes for the same
+     reason `.reviewsHeading`/`.ctaHeading`/etc. already win it for `background` (CSS-module rule,
+     same specificity, later in the compiled stylesheet). */
+  font-size: clamp(1.5rem, 0.4437rem + 4.507vw, 4.5rem);
   background: var(--gradient-primary);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  padding-bottom: 8px;
+  line-height: 90%;
 }
 
 /* ---- Hero name (H1) -------------------------------------------------------------------------
@@ -166,12 +215,44 @@
   }
 }
 
+.fckupsCard {
+  /* My F*ckUp(s) card width — was `SLIDER_ITEM_BASE`'s shared `w-[280px]` + a `lg:w-[640px]`
+     Tailwind override; moved to its own dedicated class (can't edit `SLIDER_ITEM_BASE` itself,
+     shared with Reel Life) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
+     explicit request) can be added reliably — same reasoning as `.reviewCard`/`.winCard`/
+     `.waySlide` above. */
+  width: 280px;
+}
+@media (min-width: 1024px) {
+  .fckupsCard {
+    width: 640px;
+  }
+}
+@media (max-width: 600px) {
+  .fckupsCard {
+    width: 90%;
+  }
+}
+
 /* ---- Help / F*ckUps — numbered list cards ------------------------------------------------ */
 
 .numberBadge {
   /* Theme-neutral (no background of its own — border + text only), unchanged by this pass. */
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
+}
+
+.fckupsHeading {
+  /* My F*ckUp(s)' own H2 gradient (Figma, confirmed this pass), distinct from the shared
+     `.gradientHeading` token used by every other section H2 on this page — a RED-tinted gradient
+     (`#FF4C58`), not the blue `--gradient-primary`/`.reviewsHeading`/`.ctaHeading` stops used
+     elsewhere. Same "placed after `.gradientHeading` in source order so it wins the `background`
+     property cascade" technique as `.reviewsHeading`/`.ctaHeading` — `.gradientHeading` still
+     supplies `background-clip: text`/`color: transparent`. */
+  background: linear-gradient(95.47deg, #fff 4.81%, #ff3a47 99.87%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Roles accordion (stage 1.10 pixel-polish pass, re-themed this pass) ------------------ */
@@ -324,10 +405,26 @@
   color: var(--color-foreground);
   border-radius: 16px; /* Figma mobile `261:1610` "Frame 58" */
 }
+@media (max-width: 600px) {
+  .ctaBanner {
+    /* Dedicated mobile background image (explicit request), not just a smaller-viewport crop of
+       the desktop `gradient1.png`) — paired with the same `--color-card` ("grey shadow" in
+       Figma) background-color the base rule above already sets as a fallback while the image
+       loads, made explicit here per request rather than left implicit via inheritance. */
+    background-image: url('/images/gradient-mobile.png');
+    background-color: var(--color-card);
+  }
+}
 @media (min-width: 768px) {
   .ctaBanner {
     border-radius: 30px; /* Figma desktop `327:1443`/`327:2636` "Frame 58"/"Frame 237" */
-    width: 1300px;
+    /* Was a hardcoded `width: 1300px` — ignored the parent grid column's actual available
+       width, so the banner overflowed the page grid on any viewport narrower than
+       1300px + the column's own side gutters (e.g. 1140px, where `lg:px-[70px]` leaves only
+       ~1000px of column). `max-width` + `width: 100%` caps it at the same 1300px Figma value
+       while still shrinking to fit inside its container like every other section. */
+    width: 100%;
+    max-width: 1300px;
   }
 }
 
@@ -357,6 +454,7 @@
      `--gradient-primary` token — see the citation above confirming it's a pixel-exact match for
      Figma's own shared "gradient" text style. */
   font-size: 24px;
+  padding-bottom: 8px;
   line-height: 90%;
   max-width: 890px;
   background: linear-gradient(95.47deg, #fff 5.02%, #87bce6 99.77%);
@@ -428,10 +526,31 @@
      as the previously-cited `327:1326`-`327:1395` — re-verified against the newer duplicate frame
      this pass, see `MindsetterProfileView.tsx`'s own top-of-file comment): `--color-card` fill,
      white text throughout, fixed 420px width (part of a 1740px-wide overflowing row — see
-     `CardSlider.tsx`), not a grid column. */
+     `CardSlider.tsx`), not a grid column.
+     Width moved here from Tailwind (`w-[280px] sm:w-[340px] lg:w-[420px]`) per an explicit
+     mobile/tablet pass request: the visible slide COUNT must be guaranteed exactly (2 full
+     slides ≤768px, 1 full slide ≤600px), which a fixed per-breakpoint pixel width can't promise
+     at every viewport — only a fraction-of-container width can. Plain `@media` (not Tailwind
+     arbitrary variants) so this doesn't depend on generated-utility source order to win. */
   background-color: var(--color-card);
   border-radius: 16px;
   color: var(--color-foreground);
+  width: 420px;
+}
+@media (max-width: 1024px) {
+  .reviewCard {
+    width: 340px;
+  }
+}
+@media (max-width: 768px) {
+  .reviewCard {
+    width: calc((100% - 16px) / 2);
+  }
+}
+@media (max-width: 600px) {
+  .reviewCard {
+    width: 100%;
+  }
 }
 
 .reviewQuote {
@@ -455,6 +574,25 @@
   -webkit-text-fill-color: transparent;
 }
 
+.videoBlogHeading {
+  /* Video-blog section's own H2 gradient — same "placed after `.gradientHeading` in source
+     order so it wins the `background` cascade" precedent as `.reviewsHeading`/`.ctaHeading`/
+     `.fckupsHeading` above. */
+  background: linear-gradient(95.47deg, #fff 4.93%, #87bce6 99.81%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.beyondBusinessHeading {
+  /* "Beyond Business" (the tags/interests section) H2 gradient — same override precedent as
+     `.videoBlogHeading`/`.reviewsHeading`/`.ctaHeading`/`.fckupsHeading` above. */
+  background: linear-gradient(95.47deg, #fff 4.57%, #87bce6 99.99%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ---- Reel Life gallery (carousel, see `CardSlider.tsx`) ---------------------------------------
    STAGE 1.11 RE-VERIFICATION (2026-07-21): re-measured against the newest duplicates — desktop
    tiles (`552:4642`-`552:4649` "Rectangle 13"-"20") are 530×417 with `cornerRadius: 30`; mobile
@@ -470,7 +608,17 @@
   overflow: hidden;
 }
 
-/* ---- My Way timeline --------------------------------------------------------------------- */
+/* ---- My Way timeline (carousel, see `EmblaCarousel.tsx`) ---------------------------------- */
+/* STAGE re-architecture (2026-07-23): re-verified against `327:1080` — this is a genuine
+   horizontally-scrolling carousel (only 3 of 4 stages fully visible on the 1440px frame, the 4th
+   cropped to a ~24px sliver), not the static CSS Grid a previous pass built. Each stage is now
+   ONE self-contained slide, identical at every breakpoint — see `MindsetterProfileView.tsx`'s own
+   inline comment on that section for the full citation + the estimated 420px-slide/20px-gap
+   split. `.wayConnector` (new) and the `.waySharedLine` → `.wayLongLine` rename are both part of
+   this pass; `.wayCard`/`.wayStep` are unchanged from the prior dark re-theme pass. `.wayYear`
+   and `.wayConnector` were revised again in a follow-up pass the same day — see their own rule
+   comments below (short 94px hairline `.wayYearLine` removed; `.wayYear` gained a `padding-bottom`
+   the connector now runs through). */
 
 .wayCard {
   /* Figma (`327:1540` "Frame 64" etc.): the project title/description sit directly on the page,
@@ -482,13 +630,117 @@
 }
 
 .wayYear {
-  /* Figma ("2014"/"2018"/"2020"/"2024", `327:1294`-`327:1297`): same gradient-text fill as the
-     section H2 headings (see file doc comment) — was flat `--color-primary`. */
+  /* Re-verified via direct node inspection of `327:1080` this pass: the year label is its OWN
+     dedicated size/gradient — 72px Cal Sans (`--font-display`), NOT the shared `.gradientHeading`
+     size/gradient this rule borrowed before (that relied on the caller's `text-l` Tailwind class,
+     32px). Same "per-section custom gradient override" precedent as `.reviewsHeading`/
+     `.ctaHeading` above — a dedicated 2-stop gradient, not `--gradient-primary`.
+     Mobile/tablet pass: font-size is now fluid (`clamp()`) rather than a flat 72px, reaching
+     exactly 32px at a 375px viewport per explicit request — anchored the same way as
+     `.gradientHeading`'s own clamp below (375px low reference, 1440px — this page's own grid
+     cap — high reference). Gradient stops also updated to the newly-supplied values. */
   font-family: var(--font-display);
-  background: var(--gradient-primary);
+  font-weight: 400;
+  font-size: clamp(2rem, 1.1197rem + 3.756vw, 4.5rem);
+  line-height: 90%;
+  background: linear-gradient(95.47deg, #fff 6.47%, #87bce6 99.06%);
   background-clip: text;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+.wayProjectHeading {
+  /* My Way's project-title H3 (`text-l`, 32px) — fluid `clamp()` down to exactly 24px, now
+     anchored at a 600px viewport (corrected from an earlier 375px anchor — explicit request). */
+  font-size: clamp(1.5rem, 1.1429rem + 0.952vw, 2rem);
+}
+
+.waySlide {
+  /* Width moved here from a Tailwind `w-[420px]` so a ≤600px mobile tier (1 full slide + a 20%
+     peek of the next, corrected from an earlier 15% — explicit request) can be added — same
+     reasoning as `.reviewCard`/`.winCard` above. */
+  width: 420px;
+}
+@media (max-width: 600px) {
+  .waySlide {
+    width: 80%;
+  }
+}
+
+/* Purely an identification hook for the year+connector wrapper div (alongside the Tailwind
+   `relative` utility already on it) — no properties of its own needed, added per explicit
+   request so the block has a real, findable class name instead of just a bare `relative`. */
+.wayYearBlock {
+}
+
+/* Vertical connector bar running from the year down toward the step badge below (genuinely
+   ABSENT from Figma — exhaustively re-checked every VECTOR/LINE/RECTANGLE/ELLIPSE node in this
+   coordinate range and found only horizontal hairlines, nothing vertical — but requested
+   repeatedly by the product owner regardless, so treated as a deliberate addition beyond the
+   design, not a missed detail). `position: relative` (not absolute) — it's a normal-flow child of
+   `.wayYearBlock` now, its own `margin-top: 20px` supplies the gap below the year (the slide's own
+   vertical gap was removed entirely per explicit instruction, so every gap between stacked pieces
+   now comes from a specific element's own margin instead of a shared flex `gap`). `left: 15px`
+   nudges it to align under the step badge below (badge is `size-8`/32px, so 15px sits close to
+   its horizontal center). `z-index: -1` keeps it behind the year/text content. The small white
+   circle `::before` sits at this element's own top edge so the line visually runs from that
+   circle's center downward, per the explicit "від середини кружечка йде лінія" ask. */
+.wayConnector {
+  z-index: -1;
+  position: relative;
+  left: 15px;
+  margin-top: 20px;
+  bottom: 0;
+  width: 1px;
+  height: 94px;
+  background-color: var(--color-border);
+}
+@media (max-width: 768px) {
+  .wayConnector {
+    /* Explicit mobile/tablet correction — shorter connector to match the smaller stacked
+       layout at these widths. */
+    height: 55px;
+  }
+}
+.wayConnector::before {
+  content: '';
+  position: absolute;
+  top: -3.5px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+/* ONE shared dashed rule for the whole carousel (Figma's own `Line 9`, re-exported as a literal
+   SVG this pass and confirmed to be a horizontal dashed hairline, ~1373px wide) — rendered via a
+   plain CSS dashed border rather than embedding that fixed-width SVG directly, since a real
+   `<border-style: dashed>` rule scales/tiles correctly to any container width without distorting
+   the dash pattern the way stretching a fixed-viewBox vector would. No longer per-slide (see the
+   `.tsx`'s own comment on why a single shared overlay replaced the earlier per-slide-copy
+   approach) — this class is now applied ONCE, absolutely positioned, not repeated per stage.
+   Positioning itself (top/left offsets — 36px above the step-badge row, left edge starting at
+   the connector circle's x) lives on the `.tsx` wrapper div, not here. The line's own dedicated
+   start-marker circle (7×7px, `#747474` — explicit spec, deliberately NOT the same white
+   `.wayConnector::before` dot used for the vertical connector, a separate marker) is this rule's
+   own `::before`, centered on the line's left edge so the dashes visually run out of it. */
+.wayLongLine {
+  position: relative;
+  left: -7px;
+  height: 0;
+  border-top: 1px dashed var(--color-border);
+}
+.wayLongLine::before {
+  content: '';
+  position: absolute;
+  left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #747474;
 }
 
 .wayStep {
@@ -521,6 +773,21 @@
   border-radius: 16px;
   background-color: #000000;
   color: var(--color-foreground);
+  /* Width moved here from the Tailwind classes on the card div (`w-[calc((100%-20px)/2)]
+     min-[1450px]:w-[640px]`) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
+     explicit request) can be added without depending on generated-utility source order to win
+     against the other two width rules — same reasoning as `.reviewCard` above. */
+  width: calc((100% - 20px) / 2);
+}
+@media (min-width: 1450px) {
+  .winCard {
+    width: 640px;
+  }
+}
+@media (max-width: 600px) {
+  .winCard {
+    width: 90%;
+  }
 }
 
 /* Fix (2026-07-23): the flat `1px solid --color-border` this rule had (added 2026-07-22) turned

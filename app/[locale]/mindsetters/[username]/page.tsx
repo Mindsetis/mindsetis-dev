@@ -186,20 +186,27 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
   const videoBlog = (mindsetterProfile?.video_blog ?? null) as {
     youtube?: string | null;
     vimeo?: string | null;
+    videoPath?: string | null;
   } | null;
   const reelLifePaths = (
     Array.isArray(mindsetterProfile?.reel_life) ? mindsetterProfile.reel_life : []
   ).filter((path): path is string => typeof path === 'string' && path.length > 0);
   const promoVideoPath = promoVideo?.videoPath?.trim() || null;
+  const videoBlogPath = videoBlog?.videoPath?.trim() || null;
 
-  const [reelLifeUrlMap, promoVideoUrlMap] = await Promise.all([
+  const [reelLifeUrlMap, promoVideoUrlMap, videoBlogUrlMap] = await Promise.all([
     resolveSignedUrls('reel-life', reelLifePaths),
     resolveSignedUrls('promo-video', promoVideoPath ? [promoVideoPath] : []),
+    // `video_blog` reuses the `promo-video` bucket (same owner-scoped Storage policies already
+    // grant this) rather than adding a dedicated bucket + migration for what is, storage-wise,
+    // the same "one private video file per Mindsetter" shape as promo_video's own direct upload.
+    resolveSignedUrls('promo-video', videoBlogPath ? [videoBlogPath] : []),
   ]);
   const reelLifePhotoUrls = reelLifePaths
     .map((path) => reelLifeUrlMap.get(path))
     .filter((url): url is string => Boolean(url));
   const promoVideoUrl = promoVideoPath ? (promoVideoUrlMap.get(promoVideoPath) ?? null) : null;
+  const videoBlogUrl = videoBlogPath ? (videoBlogUrlMap.get(videoBlogPath) ?? null) : null;
 
   return (
     <MindsetterProfileView
@@ -237,6 +244,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         topics: Array.isArray(sessionSettings?.topics) ? sessionSettings.topics : [],
         reelLifePhotoUrls,
         promoVideoUrl,
+        videoBlogUrl,
       }}
     />
   );
