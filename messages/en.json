@@ -589,6 +589,8 @@
       "heading": "The failures that built everything you see here"
     },
     "help": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "eyebrow": "WHAT CAN I HELP WITH",
       "heading": "The challenges I help founders navigate"
     },
@@ -619,6 +621,7 @@
       "heading": "The track record"
     },
     "promo": {
+      "clickToWatch": "Click for watching",
       "eyebrow": "PROMO VIDEO",
       "heading": "Two minutes that will tell you more than any bio"
     },

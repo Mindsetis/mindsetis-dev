@@ -589,6 +589,8 @@
       "heading": "Los fracasos que construyeron todo lo que ves aquí"
     },
     "help": {
+      "collapse": "Contraer",
+      "expand": "Expandir",
       "eyebrow": "EN QUÉ PUEDO AYUDAR",
       "heading": "Los desafíos que ayudo a resolver a los fundadores"
     },
@@ -619,6 +621,7 @@
       "heading": "La trayectoria"
     },
     "promo": {
+      "clickToWatch": "Haz clic para ver",
       "eyebrow": "VIDEO PROMOCIONAL",
       "heading": "Dos minutos que dicen más que cualquier biografía"
     },
