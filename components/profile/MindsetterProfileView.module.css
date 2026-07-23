@@ -37,25 +37,87 @@
  * Numbers / Reviews / My F*ckUp(s) / Reel Life / meta pills / social icons / website pill / Roles
  * are `--color-card` (`#1a1a1a`) surfaces; My Way's own project cards are NOT filled at all in
  * Figma (plain text directly on the page) — `.wayCard` reflects that (background removed, not
- * just recolored). Superpowers and Topics both got dedicated per-position color passes later
- * (claude.txt 2026-07-23) — see `SUPERPOWER_CARD_STYLES`/`TOPIC_ITEM_GRADIENTS` in
- * `MindsetterProfileView.tsx` rather than this file, since those are inline per-item styles, not
- * CSS Module classes. `!important` is used only where noted (inherited from the sibling file's
- * own Button-override precedent — not needed anywhere in this file).
+ * just recolored). Superpowers' mockup content alternates between a white card and a dark card
+ * per item (illustrative variety, same idea as My WINS' per-item bright colors) with no
+ * corresponding per-item color field in this app's data model — simplified here to the page's
+ * dominant `--color-card` treatment for every card, consistently. Topics is its own case: the
+ * whole eyebrow+heading+pills block sits inside ONE big `--color-card` card (`552:4907`, 32px
+ * radius), and — unlike Superpowers — the per-pill rainbow coloring (`327:1509`-`327:1518` /
+ * `552:4916`-`552:4924`) IS reproduced (see `.topicPill*` below): it's positional (pill #1 is
+ * always purple, #2 yellow, etc.), not tied to topic content, so it needs no data-model change.
+ * `!important` is used only where noted (inherited from the sibling file's own Button-override
+ * precedent — not needed anywhere in this file).
  */
 
 .section {
   background-color: var(--color-background);
   color: var(--color-foreground);
+  /* REEL LIFE's full-bleed slider breaks out via `w-screen -mx-[50vw]` — `100vw` can exceed the
+     actual viewport width by the scrollbar's own width, which otherwise leaves the whole PAGE
+     with a stray horizontal scrollbar. Clipping it here contains that overflow to this section
+     without affecting the slider's own intentional inner `overflow-x-auto`. */
+  overflow-x: hidden;
+}
+
+/* ---- Shared 150/100/80 section spacing tiers (mobile/tablet pass) -------------------------
+   Every section that had a flat 150px top/bottom margin (or, for Reviews, padding-bottom) now
+   steps down as the viewport narrows: >1024px stays 150px (unchanged), ≤1024px becomes 100px,
+   ≤768px becomes 80px (persists down to the smallest phone — no further tier was requested).
+   One shared custom property so the three per-property variants below (top+bottom margin,
+   bottom-only margin, bottom-only padding — each section only ever needed ONE of these) don't
+   repeat the same three pixel values three times over. Plain `@media` (not Tailwind `md:`/`lg:`)
+   so "at 1024/768" reads as "at this width and narrower", matching the literal request, rather
+   than fighting Tailwind's inclusive-at-the-breakpoint `min-width` semantics. */
+.spacing150,
+.spacingBottom150,
+.paddingBottom150 {
+  --section-spacing-150: 150px;
+}
+@media (max-width: 1024px) {
+  .spacing150,
+  .spacingBottom150,
+  .paddingBottom150 {
+    --section-spacing-150: 100px;
+  }
+}
+@media (max-width: 768px) {
+  .spacing150,
+  .spacingBottom150,
+  .paddingBottom150 {
+    --section-spacing-150: 80px;
+  }
+}
+.spacing150 {
+  margin-top: var(--section-spacing-150);
+  margin-bottom: var(--section-spacing-150);
+}
+.spacingBottom150 {
+  margin-bottom: var(--section-spacing-150);
+}
+.paddingBottom150 {
+  padding-bottom: var(--section-spacing-150);
 }
 
 /* ---- Shared gradient headings (hero H1 + every section H2, see file doc comment) ---------- */
 
 .gradientHeading {
+  /* Mobile/tablet pass: every section H2 must shrink fluidly (not jump at a single `md:`
+     breakpoint) down to exactly 24px at a 375px viewport (explicit request) — `clamp()` anchored
+     between 375px→24px and 1440px→72px (this page's own grid cap, matching the desktop
+     `--text-h2` token these headings already reach via their `md:text-h2` Tailwind class). This
+     wins the cascade over the callers' own `text-h3 md:text-h2` Tailwind classes for the same
+     reason `.reviewsHeading`/`.ctaHeading`/etc. already win it for `background` (CSS-module rule,
+     same specificity, later in the compiled stylesheet). */
+  font-size: clamp(1.5rem, 0.4437rem + 4.507vw, 4.5rem);
   background: var(--gradient-primary);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  /* Page-local override, scoped to this file's section headings only — explicit line-height
+     (matches the shared `--text-h2--line-height`/`--text-h3--line-height` token default of 0.9)
+     plus 8px of bottom padding, per request, instead of loosening the line-height itself. */
+  line-height: 0.9;
+  padding-bottom: 8px;
 }
 
 /* ---- Hero name (H1) -------------------------------------------------------------------------
@@ -66,13 +128,11 @@
 
 .heroName {
   font-size: 40px;
-  font-weight: 400;
   line-height: 0.9;
-  background: linear-gradient(95.47deg, #fff 5.55%, #87bce6 99.51%);
+  background: var(--gradient-primary);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  -webkit-text-fill-color: transparent;
 }
 @media (min-width: 768px) {
   .heroName {
@@ -80,59 +140,17 @@
   }
 }
 
-/* ---- Roles / Help accordion section title (H2) -------------------------------------------
-   claude.txt 2026-07-23, "1. Блок Roles" item 2 — own gradient (close to but distinct from
-   `.heroName`'s, and from the shared `.gradientHeading` 3-stop token), desktop-only (the JSX
-   hides this heading on mobile per that same claude.txt's item 11). Reused as-is by "What can
-   I help with" (2026-07-23 follow-up: "зроби блок по стилях такий як Roles") — renamed from
-   `.rolesHeading` since it's no longer Roles-exclusive. */
-
-.accordionSectionHeading {
-  font-size: 72px;
-  font-weight: 400;
-  line-height: 0.9;
-  background: linear-gradient(95.47deg, #fff 5.49%, #87bce6 99.54%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ---- Superpower(s) section title (H2) ----------------------------------------------------
-   claude.txt 2026-07-23, "1. Блок Superpower(s)" item 1 — own gradient (yet another distinct
-   stop pair from `.heroName`/`.accordionSectionHeading`), desktop-only (hidden on mobile per
-   that same claude.txt's item 1). */
-
-.superpowersHeading {
-  font-size: 72px;
-  font-weight: 400;
-  line-height: 0.9;
-  background: linear-gradient(95.47deg, #fff 4.61%, #87bce6 99.97%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
 /* ---- Hero @username pill ---------------------------------------------------------------------
-   No fill (claude.txt 2026-07-23 follow-up: "в тегу прибери колір фону") — border + text brand
-   color `#79B9E3` (`--color-primary`) only. */
+   Figma (`327:1090` "Frame 1"): literal white `#FFFFFF` chip (pops against the black page,
+   exactly as drawn — not a token-driven dark surface), border + text brand color `#79B9E3`
+   (`--color-primary`). Differs from `memberStyles.pillHandle` (that page's own border/text color
+   is `--color-primary-active`, a darker blue tuned for its white section) — page-local copy
+   rather than reusing that class. */
 
 .pillHandle {
   border: 1px solid var(--color-primary);
   color: var(--color-primary);
-  background-color: transparent;
-}
-
-/* ---- Hero "Verified" pill -----------------------------------------------------------------
-   Same shape/fill treatment as `.pillHandle` above (claude.txt 2026-07-23, "1.Банер" item 2:
-   "Verified в стилях як і тег тільки колір #08d6ad") — `#08D6AD` is this app's existing
-   `--color-success` token. */
-
-.pillVerified {
-  border: 1px solid var(--color-success);
-  color: var(--color-success);
-  background-color: transparent;
+  background-color: var(--color-foreground);
 }
 
 /* ---- Meta pills (industry / company / role) --------------------------------------------------
@@ -153,7 +171,6 @@
 
 .socialIconButton {
   background-color: var(--color-card);
-  border: 1px solid var(--color-border);
   color: var(--color-foreground);
   transition: background-color 150ms ease;
 }
@@ -163,21 +180,26 @@
 
 .websitePill {
   background-color: var(--color-card);
-  border: 1px solid var(--color-border);
   color: var(--color-foreground);
 }
 
 /* ---- Hero portrait / placeholder --------------------------------------------------------------
-   No corner radius at any breakpoint (claude.txt 2026-07-23, "1.Банер" item 12: "прибери з
-   картинки бордер радіус" — was 30px from `lg:` up, removed) — only the placeholder backdrop
-   color changes, `--color-card` instead of light `#f4f4f4` (no Figma frame for the empty-avatar
-   state; this is the closest existing dark-surface token, same "no data to sample" precedent as
-   the light version's own fallback). */
+   Same shape rules as `memberStyles.portraitFrame`/`.portraitPlaceholder` (full-bleed mobile,
+   30px radius from `lg:` up) — only the placeholder backdrop color changes, `--color-card`
+   instead of light `#f4f4f4` (no Figma frame for the empty-avatar state; this is the closest
+   existing dark-surface token, same "no data to sample" precedent as the light version's own
+   fallback). */
 
 .portraitFrame,
 .portraitPlaceholder {
   border-radius: 0;
   background-color: var(--color-card);
+}
+@media (min-width: 1024px) {
+  .portraitFrame,
+  .portraitPlaceholder {
+    border-radius: 30px;
+  }
 }
 
 /* ---- Shared section eyebrow (icon + bold secondary-text label) --------------------------- */
@@ -201,12 +223,47 @@
   }
 }
 
-/* ---- Help / F*ckUps — numbered list cards ------------------------------------------------ */
+.fckupsCard {
+  /* My F*ckUp(s) card width — was `SLIDER_ITEM_BASE`'s shared `w-[280px]` + a `lg:w-[640px]`
+     Tailwind override; moved to its own dedicated class (can't edit `SLIDER_ITEM_BASE` itself,
+     shared with Reel Life) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
+     explicit request) can be added reliably — same reasoning as `.reviewCard`/`.winCard`/
+     `.waySlide` above. */
+  width: 280px;
+}
+@media (min-width: 1024px) {
+  .fckupsCard {
+    width: 640px;
+  }
+}
+@media (max-width: 600px) {
+  .fckupsCard {
+    width: 90%;
+  }
+}
+
+/* ---- Superpowers / F*ckUps — numbered list cards ------------------------------------------
+   NOTE: Help used to share this badge too, but a re-check against `552:4991`/`401:7758` found
+   it's actually an accordion identical in shape to Roles below (bag icon + plain index number,
+   not this circular badge) — see `HelpWithAccordion.tsx` and `.helpIndexNumber` below. */
 
 .numberBadge {
   /* Theme-neutral (no background of its own — border + text only), unchanged by this pass. */
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
+}
+
+.fckupsHeading {
+  /* My F*ckUp(s)' own H2 gradient (Figma, confirmed this pass), distinct from the shared
+     `.gradientHeading` token used by every other section H2 on this page — a RED-tinted gradient
+     (`#FF4C58`), not the blue `--gradient-primary`/`.reviewsHeading`/`.ctaHeading` stops used
+     elsewhere. Same "placed after `.gradientHeading` in source order so it wins the `background`
+     property cascade" technique as `.reviewsHeading`/`.ctaHeading` — `.gradientHeading` still
+     supplies `background-clip: text`/`color: transparent`. */
+  background: linear-gradient(95.47deg, #fff 4.81%, #ff3a47 99.87%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Roles accordion (stage 1.10 pixel-polish pass, re-themed this pass) ------------------ */
@@ -242,33 +299,90 @@
   color: var(--color-primary-hover, var(--color-primary));
 }
 
+/* ---- Help accordion (see `HelpWithAccordion.tsx` for the Figma node citations, `552:4991`
+   desktop "Frame 444" / `401:7758` mobile "Frame 480") — structurally the same accordion
+   pattern as Roles above, kept as its own rules rather than reusing `.roleRowBorder`/
+   `.roleIndexNumber` since the index-number letter-spacing differs (Figma's Help row number
+   uses the same 30%/"tiny spacing" style as the section eyebrow, not Roles' own 5%). --------- */
+
+.helpRowBorder {
+  /* Figma's own row divider (`--color-border`, `#747474`), same token as `.roleRowBorder`. */
+  border-color: var(--color-border);
+}
+
+.helpIndexNumber {
+  /* Figma: "secondary text" (`#a5a5a5`, `--color-muted-foreground`) at 30% letter-spacing —
+     the exact same text style Figma uses for the section eyebrow ("tiny spacing (PC)"/"MOB/tiny
+     spacing"), not Roles' 5% value. */
+  color: var(--color-muted-foreground);
+  letter-spacing: 0.3em;
+}
+
+.helpToggleClosed {
+  /* The collapsed-row glyph (`AddCircleFillIcon`, `currentColor`) — Figma's raw fill is white,
+     which reads correctly on this screen's actual dark background (same as `.roleToggleClosed`). */
+  color: var(--color-foreground);
+}
+
 /* ---- Topics I'm expert (whole-section card + pills) ------------------------------------------
-   claude.txt 2026-07-23, "1. Блок Topics i'm expert" — one dark card wraps the eyebrow, heading,
-   and pill row together; radius/padding are responsive (item 5), so those live as Tailwind
-   classes in the JSX now instead of here. Per-item pill gradients (item 2) are literal one-off
-   values cycled by position, same `WIN_COLOR_HEX`/`SUPERPOWER_CARD_STYLES`-style precedent —
-   applied inline in the JSX, replacing the previous border+glow pill treatment entirely (not
-   just recolored), so no more per-color CSS classes are needed here. */
+   `552:4907` "Frame 433": one `--color-card` card wraps the eyebrow, heading, and pill row
+   together (32px radius, 56px padding on desktop) — unlike every other section on this page,
+   which is flat page-background with individual item cards, not a single outer card. */
 
 .topicsCard {
   background-color: var(--color-card);
+  border-radius: 32px;
 }
 
-/* ---- Topics section title (H2) -----------------------------------------------------------
-   claude.txt item 1 — own gradient (yet another distinct stop pair from the other section
-   headings), desktop-only (hidden on mobile per that same item), and `white-space: pre-line`
-   so the JSX's embedded `\n` (forced line break after "mentoring") actually renders. */
+/* Figma gives each pill position a distinct color: a solid-ish colored border that reads as a
+   soft gradient glow, and matching bold colored label text, on a `--color-card`-ish dark fill
+   (`552:4915`-`552:4923` "Frame 228"-"Frame 232"). The gradient border itself isn't retrievable
+   pixel-for-pixel through this read-only bridge (same limitation as `.ctaGlow` above) — a solid
+   border + a soft color-matched `box-shadow` halo is used instead as a close visual match. Each
+   `--topic-pill-color` below is the exact hex Figma uses for that pill position; only the 3rd
+   (`552:4920` "Conference production") maps to this app's own `--color-primary` token — the
+   other 4 have no bound Figma style (raw one-off hex in the file itself, not just here), so they
+   stay as hardcoded hex per this file's established `WIN_COLOR_HEX`-style precedent
+   (`MindsetterProfileView.tsx`). */
+.topicPill {
+  background-color: var(--color-card);
+  border: 1.5px solid var(--topic-pill-color, var(--color-primary));
+  color: var(--topic-pill-color, var(--color-primary));
+  box-shadow: 0 0 24px var(--topic-pill-glow, rgb(121 185 227 / 25%));
+}
+.topicPillPurple {
+  /* `552:4916` "Creative strategy" */
+  --topic-pill-color: #e69ef4;
+  --topic-pill-glow: rgb(230 158 244 / 25%);
+}
+.topicPillYellow {
+  /* `552:4918` "Personal brand" */
+  --topic-pill-color: #fbf286;
+  --topic-pill-glow: rgb(251 242 134 / 25%);
+}
+.topicPillBlue {
+  /* `552:4920` "Conference production" — matches `--color-primary` (Figma "brand color" style). */
+  --topic-pill-color: var(--color-primary);
+  --topic-pill-glow: rgb(121 185 227 / 25%);
+}
+.topicPillOrange {
+  /* `552:4922` "Speaker dev" */
+  --topic-pill-color: #f98866;
+  --topic-pill-glow: rgb(249 136 102 / 25%);
+}
+.topicPillIndigo {
+  /* `552:4924` "Event marketing" */
+  --topic-pill-color: #6b6fef;
+  --topic-pill-glow: rgb(107 111 239 / 25%);
+}
 
-.topicsHeading {
-  font-size: 72px;
-  font-weight: 400;
-  line-height: 0.9;
-  white-space: pre-line;
-  background: linear-gradient(95.47deg, #fff 4.66%, #87bce6 99.94%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+/* ---- Superpowers --------------------------------------------------------------------------- */
+
+.superpowerCard {
+  /* See file doc comment re: Figma's alternating white/dark mockup cards, unified to the page's
+     dominant `--color-card` treatment. */
+  background-color: var(--color-card);
+  border-radius: 16px;
 }
 
 /* ---- Micro-navigation (static anchor links, spec §5.4 "мікро-навігація") ----------------- */
@@ -286,7 +400,57 @@
   color: var(--color-foreground);
 }
 
-/* ---- Promo video / Built Not Burn video panels ------------------------------------------- */
+/* ---- Promo video ----------------------------------------------------------------------------
+   STAGE 1.11 RE-VERIFICATION (2026-07-23): re-measured against `552:4953` "Frame 58" (desktop)
+   and `401:8067`-`401:8076` (mobile) — this section is NOT the previous stacked/centered
+   "eyebrow → heading → 900px 16:9 panel" layout. Desktop wraps the eyebrow+heading (left) and a
+   PORTRAIT video thumbnail (right, `552:4956` "Frame 37": 372×524, `cornerRadius: 16`,
+   `#1a1a1a` "grey shadow") inside ONE full-bleed rounded card (`Frame 58`, 30px radius) with a
+   black-to-brand-blue radial glow background. Mobile has NO such wrapping card — just the
+   eyebrow directly above a flush, full-width 345×450 thumbnail (same `cornerRadius: 16`
+   `#1a1a1a` fill) — and genuinely drops the "Two minutes…" H2 entirely (confirmed: no matching
+   text node anywhere under the mobile frame `401:7567`), so the card background/padding and the
+   heading are both gated `md:` in the JSX (`.promoCard` below only paints anything from `md:` up;
+   the `<h2>` is `hidden md:block`). The video thumbnail's own pre-play state (play glyph +
+   "Click for watching" caption, `552:4957`-`552:4960` / `401:8073`-`401:8076`) is handled by
+   `PromoVideoPlayer.tsx`, not this file.
+
+   BACKGROUND-IS-ACTUALLY-AN-IMAGE CORRECTION (2026-07-23, 2nd follow-up pass): the previous
+   pass above modeled this as a CSS gradient — wrong premise. Re-investigated the raw fill and
+   it's an IMAGE paint, not a gradient: `552:4955` (the un-named full-bleed rect sitting behind
+   the card's text/thumbnail) is named "75", and the identical pattern — a generic numeric name,
+   exact card pixel dimensions, no children — recurs on the SAME background rect in this
+   profile's other duplicate "Full Profile" mockup frames (`337:2307`, `383:2546`, all also named
+   "75"), which is the telltale signature of a dropped-in photo/texture asset (Figma auto-names
+   an inserted image after its source filename) reused across every copy of this section, not a
+   hand-drawn vector gradient (those don't get bare-number auto-names). `get_node` still can't
+   surface the raw image bytes/hash through this read-only bridge (fills come back empty for any
+   non-solid paint, gradient or image alike — confirmed again), so there's no direct "export this
+   fill" path, but exporting the rect NODE itself (`552:4955` has no children, so its screenshot
+   is exactly its own fill, pixel-for-pixel, uncontaminated by the sibling text/thumbnail layers
+   stacked on top of it in the live design) works as a substitute for a raw asset export. Pulled
+   it at 2x, downsampled to the card's native 1296×650 and re-encoded as WebP (this is a very
+   soft, low-frequency blurred glow — no visible quality loss, and it shrinks to ~6KB) —
+   `public/images/promo-video-card-bg.webp`. No repo convention existed yet for local static
+   decorative images (no `public/` directory before this), so this is the first asset there;
+   `background-size: 100% 100%` (not `cover`) so the glow's corners stay anchored to the card's
+   corners at every width instead of cropping as the card's aspect ratio changes across the `md:`
+   → `lg:` range, matching how the previous (gradient) attempt always spanned 100%/100% too. */
+
+.promoCard {
+  border-radius: 16px;
+}
+@media (min-width: 768px) {
+  .promoCard {
+    border-radius: 30px;
+    background-color: #000000;
+    background-image: url('/images/promo-video-card-bg.webp');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+}
+
+/* ---- Built Not Burn video panel ------------------------------------------------------------ */
 
 .videoPanel {
   background-color: var(--color-card);
@@ -298,16 +462,106 @@
   }
 }
 
-/* ---- Numbers stat row ---------------------------------------------------------------------- */
+/* ---- Numbers stat row -----------------------------------------------------------------------
+   STAGE 1.12 RE-VERIFICATION: re-measured against the current duplicate (`552:4979`-`552:4988`
+   "Frame 217"-"220", cross-checked against mobile `401:7744`-`401:7755`, same content/layout).
+   `--color-card` fill was already correct; corner radius was wrong (flat 16px — actually 12px
+   mobile / 24px desktop, same 2-step pattern as `.videoPanel` above) and the per-card two-tone
+   gradient border+glow (Figma's own `Rectangle 9`-`12`/`401:7743` etc., one distinct gradient per
+   card *position*) was missing entirely. That gradient isn't retrievable pixel-exact through this
+   read-only bridge (same limitation as `.topicPill`'s glow above) — colors below are sampled from
+   an exported screenshot of the section instead, and the border itself uses the standard
+   padding-box/border-box double-background technique (respects `border-radius` correctly, unlike
+   `border-image`). No bound Figma style exists for these (illustrative variety, not semantic —
+   same precedent as `.topicPill`), and the data model allows more stat items than Figma's 4-card
+   mockup (`MAX_NUMBERS = 10`), so the 4-color palette cycles by position — see
+   `NUMBER_STAT_COLOR_CLASSES`/`numberStatColorClass` in `MindsetterProfileView.tsx`.
+
+   FOLLOW-UP PRECISION RE-VERIFICATION: `get_node`/`get_nodes_info` on the card frames themselves
+   never expose the gradient fill/stroke as structured paint data (fills/strokes/effects come back
+   empty for any non-solid, non-shared-style paint via this read-only bridge) — confirmed again
+   this pass, so the gradient stop hexes below are still screenshot samples, unchanged, kept as-is
+   per the same limitation. What *did* change: the actual border-and-glow shape isn't a stroke on
+   the card frame at all — it's a separate, larger rounded rect sitting behind it (Figma's own
+   "Rectangle 9"-"12" siblings, e.g. `552:4975` 310×266 behind `552:4979` 302×258, and `401:7568`
+   168×132 behind `401:7744` 164×128) peeking out on all sides. Measuring that size delta (and
+   independently re-confirming by sampling the composited card screenshot's edge pixels) gives a
+   real border width of **~4px on desktop, ~2px on mobile** — the previous flat `1.5px` guess was
+   wrong at both breakpoints. Corner radius (12/24px) and the glow's flat `20px` blur were already
+   right in structure; the glow's blur *radius* still can't be read as real effect data (no
+   `effects` array is exposed for these nodes either) — a rough alpha-channel measurement off the
+   exported "Rectangle 9" glow shape suggests a somewhat larger falloff (~28px) than the current
+   flat `20px`, but since that's still an inference from a rendered screenshot rather than a real
+   effects value, `20px` is kept rather than swapping one guess for another.
+
+   FOLLOW-UP: CONTOUR-HUGGING GLOW. Re-fetched `552:4975` ("Rectangle 9", the gradient shape sitting
+   behind the card that peeks out ~4px/~2px on all sides — see above) in isolation at 4x scale to
+   inspect its blur profile directly. It is not a uniformly diffuse cloud: it reads as a filled
+   rounded-rect whose color stays close to full saturation across nearly its whole footprint and
+   only falls off in the last ~20-30px near the true edge, so the thin sliver that peeks out from
+   behind the card is still near-saturated, with the soft falloff appearing further out as a
+   secondary bloom. A single `box-shadow: 0 0 20px` blur doesn't reproduce that — CSS box-shadow
+   blur fades from ~50% intensity right at the box edge over the whole blur radius, so it reads
+   edge-to-edge as one soft halo (the "diffuse cloud" the live screenshot showed) instead of a crisp
+   ring hugging the border with a softer bloom beyond it. Fixed by stacking two shadow layers: a
+   small-blur, 1px-spread layer at higher opacity (crisp ring right at the contour) plus the
+   original larger-blur layer at the original opacity (outer bloom) — see
+   `--number-stat-glow-tight` below. */
 
 .numberStat {
-  /* Figma (`327:1486`-`327:1495` "12+ / years in entrepreneurship"): `--color-card` fill. */
-  background-color: var(--color-card);
-  border-radius: 16px;
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    linear-gradient(135deg, var(--number-stat-color-start), var(--number-stat-color-end)) border-box;
+  box-shadow:
+    0 0 4px 1px var(--number-stat-glow-tight, transparent),
+    0 0 16px var(--number-stat-glow, transparent);
 }
+@media (min-width: 768px) {
+  .numberStat {
+    border-width: 4px;
+    border-radius: 24px;
+    box-shadow:
+      0 0 6px 1px var(--number-stat-glow-tight, transparent),
+      0 0 22px var(--number-stat-glow, transparent);
+  }
+}
+
+.numberStatPink {
+  /* `552:4979`/`401:7744` "12+ / years in entrepreneurship". `--number-stat-glow-tight` is the
+     same hue at higher opacity for the crisp contour-hugging ring, see `.numberStat` above. */
+  --number-stat-color-start: #f670aa;
+  --number-stat-color-end: #fd945d;
+  --number-stat-glow: rgb(246 112 170 / 20%);
+  --number-stat-glow-tight: rgb(246 112 170 / 55%);
+}
+.numberStatBlue {
+  /* `552:4982`/`401:7747` "3x / platforms founded". */
+  --number-stat-color-start: #98c3e4;
+  --number-stat-color-end: #11bafb;
+  --number-stat-glow: rgb(17 186 251 / 20%);
+  --number-stat-glow-tight: rgb(17 186 251 / 55%);
+}
+.numberStatPurple {
+  /* `552:4985`/`401:7751` "#1 / in creative education". */
+  --number-stat-color-start: #9a85ea;
+  --number-stat-color-end: #ea8aff;
+  --number-stat-glow: rgb(234 138 255 / 20%);
+  --number-stat-glow-tight: rgb(234 138 255 / 55%);
+}
+.numberStatYellow {
+  /* `552:4988`/`401:7755` "300+ / edutainment projects". */
+  --number-stat-color-start: #ffdb6c;
+  --number-stat-color-end: #fda35d;
+  --number-stat-glow: rgb(253 163 93 / 20%);
+  --number-stat-glow-tight: rgb(253 163 93 / 55%);
+}
+
 .numberStatValue {
   /* Figma: the big stat number ("12+") is plain white, NOT brand-color — was `--color-primary`,
-     re-verified against the actual node fill. */
+     re-verified against the actual node fill. Unchanged this pass. */
   color: var(--color-foreground);
 }
 
@@ -320,13 +574,33 @@
    extra separation/border is needed here beyond the existing `.ctaGlow` accent below. */
 
 .ctaBanner {
-  background-color: var(--color-card);
+  background-color: var(--color-card); /* fallback while the image loads */
+  background-image: url('/images/gradient1.png');
+  background-size: cover;
+  background-position: center;
   color: var(--color-foreground);
   border-radius: 16px; /* Figma mobile `261:1610` "Frame 58" */
+}
+@media (max-width: 600px) {
+  .ctaBanner {
+    /* Dedicated mobile background image (explicit request), not just a smaller-viewport crop of
+       the desktop `gradient1.png`) — paired with the same `--color-card` ("grey shadow" in
+       Figma) background-color the base rule above already sets as a fallback while the image
+       loads, made explicit here per request rather than left implicit via inheritance. */
+    background-image: url('/images/gradient-mobile.png');
+    background-color: var(--color-card);
+  }
 }
 @media (min-width: 768px) {
   .ctaBanner {
     border-radius: 30px; /* Figma desktop `327:1443`/`327:2636` "Frame 58"/"Frame 237" */
+    /* Was a hardcoded `width: 1300px` — ignored the parent grid column's actual available
+       width, so the banner overflowed the page grid on any viewport narrower than
+       1300px + the column's own side gutters (e.g. 1140px, where `lg:px-[70px]` leaves only
+       ~1000px of column). `max-width` + `width: 100%` caps it at the same 1300px Figma value
+       while still shrinking to fit inside its container like every other section. */
+    width: 100%;
+    max-width: 1300px;
   }
 }
 
@@ -356,16 +630,18 @@
      `--gradient-primary` token — see the citation above confirming it's a pixel-exact match for
      Figma's own shared "gradient" text style. */
   font-size: 24px;
-  line-height: 1;
-  background: var(--gradient-primary);
+  padding-bottom: 8px;
+  line-height: 90%;
+  max-width: 890px;
+  background: linear-gradient(95.47deg, #fff 5.02%, #87bce6 99.77%);
   background-clip: text;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 @media (min-width: 768px) {
   .ctaHeading {
     font-size: var(--text-h2);
-    line-height: 0.9;
   }
 }
 
@@ -426,10 +702,31 @@
      as the previously-cited `327:1326`-`327:1395` — re-verified against the newer duplicate frame
      this pass, see `MindsetterProfileView.tsx`'s own top-of-file comment): `--color-card` fill,
      white text throughout, fixed 420px width (part of a 1740px-wide overflowing row — see
-     `CardSlider.tsx`), not a grid column. */
+     `CardSlider.tsx`), not a grid column.
+     Width moved here from Tailwind (`w-[280px] sm:w-[340px] lg:w-[420px]`) per an explicit
+     mobile/tablet pass request: the visible slide COUNT must be guaranteed exactly (2 full
+     slides ≤768px, 1 full slide ≤600px), which a fixed per-breakpoint pixel width can't promise
+     at every viewport — only a fraction-of-container width can. Plain `@media` (not Tailwind
+     arbitrary variants) so this doesn't depend on generated-utility source order to win. */
   background-color: var(--color-card);
   border-radius: 16px;
   color: var(--color-foreground);
+  width: 420px;
+}
+@media (max-width: 1024px) {
+  .reviewCard {
+    width: 340px;
+  }
+}
+@media (max-width: 768px) {
+  .reviewCard {
+    width: calc((100% - 16px) / 2);
+  }
+}
+@media (max-width: 600px) {
+  .reviewCard {
+    width: 100%;
+  }
 }
 
 .reviewQuote {
@@ -440,6 +737,36 @@
   /* Theme-neutral (border + text only), unchanged by this pass. */
   border: 1px solid var(--color-success);
   color: var(--color-success);
+}
+
+.reviewsHeading {
+  /* Reviews' own H2 gradient (Figma), distinct from the shared `.gradientHeading` token used by
+     every other section H2 on this page — placed after `.reviewBadge` so, at equal specificity,
+     it wins the `background` property cascade over `.gradientHeading` when both classes are
+     applied together; `.gradientHeading` still supplies `background-clip: text`/`color: transparent`. */
+  background: linear-gradient(95.47deg, #fff 4.99%, #87bce6 99.78%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.videoBlogHeading {
+  /* Video-blog section's own H2 gradient — same "placed after `.gradientHeading` in source
+     order so it wins the `background` cascade" precedent as `.reviewsHeading`/`.ctaHeading`/
+     `.fckupsHeading` above. */
+  background: linear-gradient(95.47deg, #fff 4.93%, #87bce6 99.81%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.beyondBusinessHeading {
+  /* "Beyond Business" (the tags/interests section) H2 gradient — same override precedent as
+     `.videoBlogHeading`/`.reviewsHeading`/`.ctaHeading`/`.fckupsHeading` above. */
+  background: linear-gradient(95.47deg, #fff 4.57%, #87bce6 99.99%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Reel Life gallery (carousel, see `CardSlider.tsx`) ---------------------------------------
@@ -457,7 +784,17 @@
   overflow: hidden;
 }
 
-/* ---- My Way timeline --------------------------------------------------------------------- */
+/* ---- My Way timeline (carousel, see `EmblaCarousel.tsx`) ---------------------------------- */
+/* STAGE re-architecture (2026-07-23): re-verified against `327:1080` — this is a genuine
+   horizontally-scrolling carousel (only 3 of 4 stages fully visible on the 1440px frame, the 4th
+   cropped to a ~24px sliver), not the static CSS Grid a previous pass built. Each stage is now
+   ONE self-contained slide, identical at every breakpoint — see `MindsetterProfileView.tsx`'s own
+   inline comment on that section for the full citation + the estimated 420px-slide/20px-gap
+   split. `.wayConnector` (new) and the `.waySharedLine` → `.wayLongLine` rename are both part of
+   this pass; `.wayCard`/`.wayStep` are unchanged from the prior dark re-theme pass. `.wayYear`
+   and `.wayConnector` were revised again in a follow-up pass the same day — see their own rule
+   comments below (short 94px hairline `.wayYearLine` removed; `.wayYear` gained a `padding-bottom`
+   the connector now runs through). */
 
 .wayCard {
   /* Figma (`327:1540` "Frame 64" etc.): the project title/description sit directly on the page,
@@ -469,13 +806,117 @@
 }
 
 .wayYear {
-  /* Figma ("2014"/"2018"/"2020"/"2024", `327:1294`-`327:1297`): same gradient-text fill as the
-     section H2 headings (see file doc comment) — was flat `--color-primary`. */
+  /* Re-verified via direct node inspection of `327:1080` this pass: the year label is its OWN
+     dedicated size/gradient — 72px Cal Sans (`--font-display`), NOT the shared `.gradientHeading`
+     size/gradient this rule borrowed before (that relied on the caller's `text-l` Tailwind class,
+     32px). Same "per-section custom gradient override" precedent as `.reviewsHeading`/
+     `.ctaHeading` above — a dedicated 2-stop gradient, not `--gradient-primary`.
+     Mobile/tablet pass: font-size is now fluid (`clamp()`) rather than a flat 72px, reaching
+     exactly 32px at a 375px viewport per explicit request — anchored the same way as
+     `.gradientHeading`'s own clamp below (375px low reference, 1440px — this page's own grid
+     cap — high reference). Gradient stops also updated to the newly-supplied values. */
   font-family: var(--font-display);
-  background: var(--gradient-primary);
+  font-weight: 400;
+  font-size: clamp(2rem, 1.1197rem + 3.756vw, 4.5rem);
+  line-height: 90%;
+  background: linear-gradient(95.47deg, #fff 6.47%, #87bce6 99.06%);
   background-clip: text;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+.wayProjectHeading {
+  /* My Way's project-title H3 (`text-l`, 32px) — fluid `clamp()` down to exactly 24px, now
+     anchored at a 600px viewport (corrected from an earlier 375px anchor — explicit request). */
+  font-size: clamp(1.5rem, 1.1429rem + 0.952vw, 2rem);
+}
+
+.waySlide {
+  /* Width moved here from a Tailwind `w-[420px]` so a ≤600px mobile tier (1 full slide + a 20%
+     peek of the next, corrected from an earlier 15% — explicit request) can be added — same
+     reasoning as `.reviewCard`/`.winCard` above. */
+  width: 420px;
+}
+@media (max-width: 600px) {
+  .waySlide {
+    width: 80%;
+  }
+}
+
+/* Purely an identification hook for the year+connector wrapper div (alongside the Tailwind
+   `relative` utility already on it) — no properties of its own needed, added per explicit
+   request so the block has a real, findable class name instead of just a bare `relative`. */
+.wayYearBlock {
+}
+
+/* Vertical connector bar running from the year down toward the step badge below (genuinely
+   ABSENT from Figma — exhaustively re-checked every VECTOR/LINE/RECTANGLE/ELLIPSE node in this
+   coordinate range and found only horizontal hairlines, nothing vertical — but requested
+   repeatedly by the product owner regardless, so treated as a deliberate addition beyond the
+   design, not a missed detail). `position: relative` (not absolute) — it's a normal-flow child of
+   `.wayYearBlock` now, its own `margin-top: 20px` supplies the gap below the year (the slide's own
+   vertical gap was removed entirely per explicit instruction, so every gap between stacked pieces
+   now comes from a specific element's own margin instead of a shared flex `gap`). `left: 15px`
+   nudges it to align under the step badge below (badge is `size-8`/32px, so 15px sits close to
+   its horizontal center). `z-index: -1` keeps it behind the year/text content. The small white
+   circle `::before` sits at this element's own top edge so the line visually runs from that
+   circle's center downward, per the explicit "від середини кружечка йде лінія" ask. */
+.wayConnector {
+  z-index: -1;
+  position: relative;
+  left: 15px;
+  margin-top: 20px;
+  bottom: 0;
+  width: 1px;
+  height: 94px;
+  background-color: var(--color-border);
+}
+@media (max-width: 768px) {
+  .wayConnector {
+    /* Explicit mobile/tablet correction — shorter connector to match the smaller stacked
+       layout at these widths. */
+    height: 55px;
+  }
+}
+.wayConnector::before {
+  content: '';
+  position: absolute;
+  top: -3.5px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+/* ONE shared dashed rule for the whole carousel (Figma's own `Line 9`, re-exported as a literal
+   SVG this pass and confirmed to be a horizontal dashed hairline, ~1373px wide) — rendered via a
+   plain CSS dashed border rather than embedding that fixed-width SVG directly, since a real
+   `<border-style: dashed>` rule scales/tiles correctly to any container width without distorting
+   the dash pattern the way stretching a fixed-viewBox vector would. No longer per-slide (see the
+   `.tsx`'s own comment on why a single shared overlay replaced the earlier per-slide-copy
+   approach) — this class is now applied ONCE, absolutely positioned, not repeated per stage.
+   Positioning itself (top/left offsets — 36px above the step-badge row, left edge starting at
+   the connector circle's x) lives on the `.tsx` wrapper div, not here. The line's own dedicated
+   start-marker circle (7×7px, `#747474` — explicit spec, deliberately NOT the same white
+   `.wayConnector::before` dot used for the vertical connector, a separate marker) is this rule's
+   own `::before`, centered on the line's left edge so the dashes visually run out of it. */
+.wayLongLine {
+  position: relative;
+  left: -7px;
+  height: 0;
+  border-top: 1px dashed var(--color-border);
+}
+.wayLongLine::before {
+  content: '';
+  position: absolute;
+  left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #747474;
 }
 
 .wayStep {
@@ -490,18 +931,74 @@
 /* Confirmed against Figma (`327:1615`/`327:1628`/`327:1667`, re-verified this pass against the
    newer duplicate `552:5079`/`552:5092`/`552:5105`… "Frame 24"/"225"/"226"/… — 7 sample cards):
    every win card is actually a flat BLACK (`#000000`) card with a blurred colored ellipse
-   decoration, not a solid-color fill — `WIN_COLOR_HEX` (below, in the .tsx) is a deliberate
-   simplification from an earlier pass (that palette is shared with `WinsForm.tsx`'s own color
-   picker, see that file's comment) rather than a literal per-node fill match. Out of scope to
-   restructure this pass too (unchanged from the prior decision — only re-verified the white text
-   stays legible against every one of the 7 bright fills). What DID change this pass: Figma's own
-   row is a 4600px-wide OVERFLOWING carousel (7×640px cards) with a dedicated prev/next control,
-   not a `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
+   decoration bleeding off the bottom-right corner plus a smaller flat-color blurred ellipse
+   bleeding off the top-left corner, not a solid-color fill. Restructured this pass — see
+   `WinCardGlow`/`WinTrophyIcon` (`components/icons/win-card-glow.tsx`) and the
+   `WIN_TROPHY_HEX`/`WIN_TOPLEFT_GLOW_HEX`/`WIN_BOTTOMRIGHT_GLOW_HEX` maps in the .tsx (replacing
+   the old single-fill `WIN_COLOR_HEX`). `position: relative` + `overflow: hidden` here are the
+   same "clip the deliberately-bleeding absolutely-positioned glow to the card's own rounded
+   rectangle" precedent as `.ctaBanner`/`.ctaGlow` above, just applied with real SVGs instead of a
+   CSS radial-gradient. What ALSO changed a prior pass: Figma's own row is a 4600px-wide
+   OVERFLOWING carousel (7×640px cards) with a dedicated prev/next control, not a
+   `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
    `md:w-auto` grid-filling). */
 
 .winCard {
+  position: relative;
+  overflow: hidden;
   border-radius: 16px;
+  background-color: #000000;
   color: var(--color-foreground);
+  /* Width moved here from the Tailwind classes on the card div (`w-[calc((100%-20px)/2)]
+     min-[1450px]:w-[640px]`) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
+     explicit request) can be added without depending on generated-utility source order to win
+     against the other two width rules — same reasoning as `.reviewCard` above. */
+  width: calc((100% - 20px) / 2);
+}
+@media (min-width: 1450px) {
+  .winCard {
+    width: 640px;
+  }
+}
+@media (max-width: 600px) {
+  .winCard {
+    width: 90%;
+  }
+}
+
+/* Fix (2026-07-23): the flat `1px solid --color-border` this rule had (added 2026-07-22) turned
+   out to be wrong once cross-checked against a direct SVG export of `552:5078` "Frame 274" — each
+   win card actually has a 4px-wide, 4-stop linear gradient border running top-left → bottom-right,
+   a DIFFERENT gradient per win color (see `WIN_BORDER_GRADIENT_HEX` in `MindsetterProfileView.tsx`
+   for the 7 stop sets), not a flat generic gray. A plain CSS `border` can't render a gradient with
+   rounded corners, so this reuses the same masked-pseudo-element technique as the `gradient-border`
+   utility in `app/styles/base.css` (content-box-exclude via the `mask`/`-webkit-mask` pair, `padding`
+   as the border width) — copied verbatim minus that utility's hover/active/disabled crossfade
+   (irrelevant for a static card) and its 2px width (this needs 4px). The gradient itself is supplied
+   per-instance via the `--win-border-gradient` custom property, set inline per card in the .tsx —
+   same "shared CSS shape, per-instance color via a prop" pattern `WinCardGlow` already uses for its
+   own colors, just via a CSS variable here since this is a plain border, not an SVG. `z-index: 30`
+   is explicit (this file's established "always be explicit about stacking" precedent, from the
+   glow-tinting investigation above) so this ring always paints above both `WinCardGlow` layers
+   (`z-0`/`z-20`) — though since the interior is masked out, this is a decorative RING only and would
+   never actually cover the card's text regardless of z-index. */
+.winCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  padding: 4px;
+  background: var(--win-border-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* ---- Beyond Business (interests) — page-local dark override of `memberStyles.interestCard`/

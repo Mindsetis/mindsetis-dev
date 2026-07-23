@@ -621,6 +621,7 @@
       "heading": "La trayectoria"
     },
     "promo": {
+      "clickToWatch": "Haz clic para ver",
       "eyebrow": "VIDEO PROMOCIONAL",
       "heading": "Dos minutos que dicen más que cualquier biografía"
     },
@@ -633,22 +634,34 @@
       "heading": "Lo que dicen los fundadores después de una sesión",
       "items": [
         {
-          "name": "Erin G.",
-          "quote": "Recientemente asistí a una sesión sobre marketing de eventos y realmente superó mis expectativas — un talento poco común para desglosar estrategias complejas en pasos claros y accionables.",
+          "name": "Erin Glabets",
+          "quote": "Recientemente asistí a la sesión de Anastasia sobre Marketing de Eventos, y realmente superó mis expectativas. Tiene un talento poco común para desglosar estrategias complejas en pasos claros y accionables que puedes aplicar de inmediato. Tres meses después, sigo usando el marco de trabajo que compartió.",
           "role": "Directora de Comunicación"
         },
         {
-          "name": "Daniel R.",
-          "quote": "Una de las horas más útiles que he invertido este año. Directo, práctico y lleno de ideas que pude aplicar al día siguiente.",
+          "name": "Daniel Kovalenko",
+          "quote": "Una de las horas más útiles que he invertido este año. Anastasia nos guió por todo el proceso de producción de conferencias — concepto, escenario, guion — y me fui con una lista que usé la semana siguiente.",
           "role": "Fundador"
         },
         {
-          "name": "Mira T.",
-          "quote": "Exactamente el tipo de perspectiva honesta y experimentada que necesitan los fundadores — sin relleno, solo respuestas reales a problemas reales.",
+          "name": "Mira Torres",
+          "quote": "Anastasia me preparó antes de mi primera keynote y cambió por completo mi forma de pensar sobre la presencia en el escenario. Sin relleno, solo comentarios prácticos y reales que marcaron una diferencia inmediata.",
           "role": "Líder de Producto"
+        },
+        {
+          "name": "Oksana Petrenko",
+          "quote": "Llegué con una marca personal dispersa y me fui con un plan real. Anastasia hace las preguntas correctas y no te deja conformarte con respuestas genéricas. Justo lo que necesitaba antes de nuestra ronda de financiación.",
+          "role": "Directora de Marketing"
+        },
+        {
+          "name": "Lucas Meyer",
+          "quote": "Trabajar con Anastasia en la estrategia creativa para el lanzamiento de nuestro producto fue la mejor decisión que tomamos ese trimestre. Ella crea formatos con los que la gente realmente quiere interactuar, no otra campaña más que nadie recuerda.",
+          "role": "Cofundador"
         }
       ],
       "leaveReview": "Dejar una reseña",
+      "readLess": "Leer menos",
+      "readMore": "Leer más",
       "verifiedMember": "Miembro verificado"
     },
     "sessionPriceFree": "Precio de la sesión: Gratis",
@@ -672,6 +685,7 @@
     "verified": "Verificado",
     "videoBlog": {
       "allInterviews": "Todas las entrevistas con Mindsetters",
+      "clickToWatch": "Haz clic para ver",
       "eyebrow": "BUILT NOT BURN · ENTREVISTA",
       "heading": "Mira la conversación completa"
     },
