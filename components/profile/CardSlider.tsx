@@ -17,6 +17,23 @@ export interface CardSliderProps {
   /** Per-section card width/gap tuning (e.g. `gap-4` + each card's own `w-[…]` class lives on
    * the card itself, not here) — merged onto the scrollable track. */
   trackClassName?: string;
+  /** Gap between the two arrow buttons — defaults to `gap-3` (12px, every other caller's value).
+   * Superpower(s) needs 16px (claude.txt 2026-07-23 "1. Блок Superpower(s)" item 9). */
+  arrowGapClassName?: string;
+  /** Classes merged onto the arrow-row wrapper — e.g. Superpower(s) hides it at `lg:` (its cards
+   * never overflow past a 3-up desktop layout, so there's nothing to scroll to there). */
+  arrowRowClassName?: string;
+  /** Fully self-contained enabled/disabled icon pairs for the prev/next buttons — when given,
+   * REPLACES the default `ArrowLeft`/`ArrowRight` + outline/filled circular chrome entirely
+   * (the SVG already draws its own circle/border/fill, and gets no hover treatment), used by
+   * Superpower(s)' bespoke arrows (claude.txt item 10). Omitted → falls back to the existing
+   * look every other `CardSlider` caller already relies on. */
+  arrows?: {
+    prevEnabled: ReactNode;
+    prevDisabled: ReactNode;
+    nextEnabled: ReactNode;
+    nextDisabled: ReactNode;
+  };
 }
 
 /**
@@ -39,7 +56,15 @@ export interface CardSliderProps {
  * enabled/disabled state pair — this is standard carousel UX, not literal pixel-matching) rather
  * than always being clickable no-ops.
  */
-export function CardSlider({ children, prevLabel, nextLabel, trackClassName }: CardSliderProps) {
+export function CardSlider({
+  children,
+  prevLabel,
+  nextLabel,
+  trackClassName,
+  arrowGapClassName,
+  arrowRowClassName,
+  arrows,
+}: CardSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -81,30 +106,60 @@ export function CardSlider({ children, prevLabel, nextLabel, trackClassName }: C
       >
         {children}
       </div>
-      <div className="flex items-center justify-center gap-3">
+      <div
+        className={cn(
+          'flex items-center justify-center',
+          arrowGapClassName ?? 'gap-3',
+          arrowRowClassName,
+        )}
+      >
         <button
           type="button"
           aria-label={prevLabel}
           disabled={!canScrollPrev}
           onClick={() => scrollByPage(-1)}
-          className={cn(
-            'flex size-12 items-center justify-center rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-40',
-            styles.sliderArrowOutline,
-          )}
+          className={
+            arrows
+              ? 'flex size-12 items-center justify-center disabled:cursor-not-allowed'
+              : cn(
+                  'flex size-12 items-center justify-center rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-40',
+                  styles.sliderArrowOutline,
+                )
+          }
         >
-          <ArrowLeft className="size-5" aria-hidden="true" />
+          {arrows ? (
+            canScrollPrev ? (
+              arrows.prevEnabled
+            ) : (
+              arrows.prevDisabled
+            )
+          ) : (
+            <ArrowLeft className="size-5" aria-hidden="true" />
+          )}
         </button>
         <button
           type="button"
           aria-label={nextLabel}
           disabled={!canScrollNext}
           onClick={() => scrollByPage(1)}
-          className={cn(
-            'flex size-12 items-center justify-center rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-40',
-            styles.sliderArrowFilled,
-          )}
+          className={
+            arrows
+              ? 'flex size-12 items-center justify-center disabled:cursor-not-allowed'
+              : cn(
+                  'flex size-12 items-center justify-center rounded-full transition-opacity disabled:cursor-not-allowed disabled:opacity-40',
+                  styles.sliderArrowFilled,
+                )
+          }
         >
-          <ArrowRight className="size-5" aria-hidden="true" />
+          {arrows ? (
+            canScrollNext ? (
+              arrows.nextEnabled
+            ) : (
+              arrows.nextDisabled
+            )
+          ) : (
+            <ArrowRight className="size-5" aria-hidden="true" />
+          )}
         </button>
       </div>
     </div>

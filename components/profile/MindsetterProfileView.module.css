@@ -37,16 +37,11 @@
  * Numbers / Reviews / My F*ckUp(s) / Reel Life / meta pills / social icons / website pill / Roles
  * are `--color-card` (`#1a1a1a`) surfaces; My Way's own project cards are NOT filled at all in
  * Figma (plain text directly on the page) — `.wayCard` reflects that (background removed, not
- * just recolored). Superpowers' mockup content alternates between a white card and a dark card
- * per item (illustrative variety, same idea as My WINS' per-item bright colors) with no
- * corresponding per-item color field in this app's data model — simplified here to the page's
- * dominant `--color-card` treatment for every card, consistently. Topics is its own case: the
- * whole eyebrow+heading+pills block sits inside ONE big `--color-card` card (`552:4907`, 32px
- * radius), and — unlike Superpowers — the per-pill rainbow coloring (`327:1509`-`327:1518` /
- * `552:4916`-`552:4924`) IS reproduced (see `.topicPill*` below): it's positional (pill #1 is
- * always purple, #2 yellow, etc.), not tied to topic content, so it needs no data-model change.
- * `!important` is used only where noted (inherited from the sibling file's own Button-override
- * precedent — not needed anywhere in this file).
+ * just recolored). Superpowers and Topics both got dedicated per-position color passes later
+ * (claude.txt 2026-07-23) — see `SUPERPOWER_CARD_STYLES`/`TOPIC_ITEM_GRADIENTS` in
+ * `MindsetterProfileView.tsx` rather than this file, since those are inline per-item styles, not
+ * CSS Module classes. `!important` is used only where noted (inherited from the sibling file's
+ * own Button-override precedent — not needed anywhere in this file).
  */
 
 .section {
@@ -71,11 +66,13 @@
 
 .heroName {
   font-size: 40px;
+  font-weight: 400;
   line-height: 0.9;
-  background: var(--gradient-primary);
+  background: linear-gradient(95.47deg, #fff 5.55%, #87bce6 99.51%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 @media (min-width: 768px) {
   .heroName {
@@ -83,17 +80,59 @@
   }
 }
 
+/* ---- Roles / Help accordion section title (H2) -------------------------------------------
+   claude.txt 2026-07-23, "1. Блок Roles" item 2 — own gradient (close to but distinct from
+   `.heroName`'s, and from the shared `.gradientHeading` 3-stop token), desktop-only (the JSX
+   hides this heading on mobile per that same claude.txt's item 11). Reused as-is by "What can
+   I help with" (2026-07-23 follow-up: "зроби блок по стилях такий як Roles") — renamed from
+   `.rolesHeading` since it's no longer Roles-exclusive. */
+
+.accordionSectionHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  background: linear-gradient(95.47deg, #fff 5.49%, #87bce6 99.54%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- Superpower(s) section title (H2) ----------------------------------------------------
+   claude.txt 2026-07-23, "1. Блок Superpower(s)" item 1 — own gradient (yet another distinct
+   stop pair from `.heroName`/`.accordionSectionHeading`), desktop-only (hidden on mobile per
+   that same claude.txt's item 1). */
+
+.superpowersHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  background: linear-gradient(95.47deg, #fff 4.61%, #87bce6 99.97%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ---- Hero @username pill ---------------------------------------------------------------------
-   Figma (`327:1090` "Frame 1"): literal white `#FFFFFF` chip (pops against the black page,
-   exactly as drawn — not a token-driven dark surface), border + text brand color `#79B9E3`
-   (`--color-primary`). Differs from `memberStyles.pillHandle` (that page's own border/text color
-   is `--color-primary-active`, a darker blue tuned for its white section) — page-local copy
-   rather than reusing that class. */
+   No fill (claude.txt 2026-07-23 follow-up: "в тегу прибери колір фону") — border + text brand
+   color `#79B9E3` (`--color-primary`) only. */
 
 .pillHandle {
   border: 1px solid var(--color-primary);
   color: var(--color-primary);
-  background-color: var(--color-foreground);
+  background-color: transparent;
+}
+
+/* ---- Hero "Verified" pill -----------------------------------------------------------------
+   Same shape/fill treatment as `.pillHandle` above (claude.txt 2026-07-23, "1.Банер" item 2:
+   "Verified в стилях як і тег тільки колір #08d6ad") — `#08D6AD` is this app's existing
+   `--color-success` token. */
+
+.pillVerified {
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  background-color: transparent;
 }
 
 /* ---- Meta pills (industry / company / role) --------------------------------------------------
@@ -114,6 +153,7 @@
 
 .socialIconButton {
   background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   color: var(--color-foreground);
   transition: background-color 150ms ease;
 }
@@ -123,26 +163,21 @@
 
 .websitePill {
   background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   color: var(--color-foreground);
 }
 
 /* ---- Hero portrait / placeholder --------------------------------------------------------------
-   Same shape rules as `memberStyles.portraitFrame`/`.portraitPlaceholder` (full-bleed mobile,
-   30px radius from `lg:` up) — only the placeholder backdrop color changes, `--color-card`
-   instead of light `#f4f4f4` (no Figma frame for the empty-avatar state; this is the closest
-   existing dark-surface token, same "no data to sample" precedent as the light version's own
-   fallback). */
+   No corner radius at any breakpoint (claude.txt 2026-07-23, "1.Банер" item 12: "прибери з
+   картинки бордер радіус" — was 30px from `lg:` up, removed) — only the placeholder backdrop
+   color changes, `--color-card` instead of light `#f4f4f4` (no Figma frame for the empty-avatar
+   state; this is the closest existing dark-surface token, same "no data to sample" precedent as
+   the light version's own fallback). */
 
 .portraitFrame,
 .portraitPlaceholder {
   border-radius: 0;
   background-color: var(--color-card);
-}
-@media (min-width: 1024px) {
-  .portraitFrame,
-  .portraitPlaceholder {
-    border-radius: 30px;
-  }
 }
 
 /* ---- Shared section eyebrow (icon + bold secondary-text label) --------------------------- */
@@ -208,64 +243,32 @@
 }
 
 /* ---- Topics I'm expert (whole-section card + pills) ------------------------------------------
-   `552:4907` "Frame 433": one `--color-card` card wraps the eyebrow, heading, and pill row
-   together (32px radius, 56px padding on desktop) — unlike every other section on this page,
-   which is flat page-background with individual item cards, not a single outer card. */
+   claude.txt 2026-07-23, "1. Блок Topics i'm expert" — one dark card wraps the eyebrow, heading,
+   and pill row together; radius/padding are responsive (item 5), so those live as Tailwind
+   classes in the JSX now instead of here. Per-item pill gradients (item 2) are literal one-off
+   values cycled by position, same `WIN_COLOR_HEX`/`SUPERPOWER_CARD_STYLES`-style precedent —
+   applied inline in the JSX, replacing the previous border+glow pill treatment entirely (not
+   just recolored), so no more per-color CSS classes are needed here. */
 
 .topicsCard {
   background-color: var(--color-card);
-  border-radius: 32px;
 }
 
-/* Figma gives each pill position a distinct color: a solid-ish colored border that reads as a
-   soft gradient glow, and matching bold colored label text, on a `--color-card`-ish dark fill
-   (`552:4915`-`552:4923` "Frame 228"-"Frame 232"). The gradient border itself isn't retrievable
-   pixel-for-pixel through this read-only bridge (same limitation as `.ctaGlow` above) — a solid
-   border + a soft color-matched `box-shadow` halo is used instead as a close visual match. Each
-   `--topic-pill-color` below is the exact hex Figma uses for that pill position; only the 3rd
-   (`552:4920` "Conference production") maps to this app's own `--color-primary` token — the
-   other 4 have no bound Figma style (raw one-off hex in the file itself, not just here), so they
-   stay as hardcoded hex per this file's established `WIN_COLOR_HEX`-style precedent
-   (`MindsetterProfileView.tsx`). */
-.topicPill {
-  background-color: var(--color-card);
-  border: 1.5px solid var(--topic-pill-color, var(--color-primary));
-  color: var(--topic-pill-color, var(--color-primary));
-  box-shadow: 0 0 24px var(--topic-pill-glow, rgb(121 185 227 / 25%));
-}
-.topicPillPurple {
-  /* `552:4916` "Creative strategy" */
-  --topic-pill-color: #e69ef4;
-  --topic-pill-glow: rgb(230 158 244 / 25%);
-}
-.topicPillYellow {
-  /* `552:4918` "Personal brand" */
-  --topic-pill-color: #fbf286;
-  --topic-pill-glow: rgb(251 242 134 / 25%);
-}
-.topicPillBlue {
-  /* `552:4920` "Conference production" — matches `--color-primary` (Figma "brand color" style). */
-  --topic-pill-color: var(--color-primary);
-  --topic-pill-glow: rgb(121 185 227 / 25%);
-}
-.topicPillOrange {
-  /* `552:4922` "Speaker dev" */
-  --topic-pill-color: #f98866;
-  --topic-pill-glow: rgb(249 136 102 / 25%);
-}
-.topicPillIndigo {
-  /* `552:4924` "Event marketing" */
-  --topic-pill-color: #6b6fef;
-  --topic-pill-glow: rgb(107 111 239 / 25%);
-}
+/* ---- Topics section title (H2) -----------------------------------------------------------
+   claude.txt item 1 — own gradient (yet another distinct stop pair from the other section
+   headings), desktop-only (hidden on mobile per that same item), and `white-space: pre-line`
+   so the JSX's embedded `\n` (forced line break after "mentoring") actually renders. */
 
-/* ---- Superpowers --------------------------------------------------------------------------- */
-
-.superpowerCard {
-  /* See file doc comment re: Figma's alternating white/dark mockup cards, unified to the page's
-     dominant `--color-card` treatment. */
-  background-color: var(--color-card);
-  border-radius: 16px;
+.topicsHeading {
+  font-size: 72px;
+  font-weight: 400;
+  line-height: 0.9;
+  white-space: pre-line;
+  background: linear-gradient(95.47deg, #fff 4.66%, #87bce6 99.94%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ---- Micro-navigation (static anchor links, spec §5.4 "мікро-навігація") ----------------- */

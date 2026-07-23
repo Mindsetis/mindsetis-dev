@@ -589,6 +589,8 @@
       "heading": "The failures that built everything you see here"
     },
     "help": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "eyebrow": "WHAT CAN I HELP WITH",
       "heading": "The challenges I help founders navigate"
     },
@@ -665,7 +667,7 @@
     },
     "topics": {
       "eyebrow": "TOPICS I'M EXPERT",
-      "heading": "I conduct mentoring sessions on these topics"
+      "heading": "I conduct mentoring\nsessions on these topics"
     },
     "verified": "Verified",
     "videoBlog": {
