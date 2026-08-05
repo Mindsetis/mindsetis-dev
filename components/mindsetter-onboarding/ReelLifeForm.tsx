@@ -10,7 +10,7 @@ import {
   deleteReelLifePhoto,
   saveReelLife,
   uploadReelLifePhoto,
-} from '@/app/[locale]/mindsetter-onboarding/actions';
+} from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { finalizeMindsetterOnboarding } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { finalizeMindsetterOnboarding } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { MindsetterCongratsCtas } from '@/components/mindsetter-onboarding/MindsetterCongratsCtas';
 import { redirect } from '@/i18n/navigation';

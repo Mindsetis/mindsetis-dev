@@ -47,17 +47,32 @@
     "label": "Language"
   },
   "home": {
-    "hero": {
-      "clickToWatch": "Click for watching",
-      "continue": "Continue",
-      "emailLabel": "Email",
-      "emailPlaceholder": "you@example.com",
-      "or": "or",
-      "seeFeatures": "See platform features",
-      "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
-      "title": "Not everyone builds something from nothing.",
-      "tourLabel": "Take a 2-min platform tour",
-      "watchLabel": "Watch to understand why"
+    "placeholder": {
+      "hero": {
+        "title": "Space for business owners, founders & CEOs",
+        "subtitle": "1:1 sessions with people who've solved what you're facing. Peer groups and masterminds to work through your questions together."
+      },
+      "form": {
+        "heading": "Leave your contacts — we'll reach out when we launch.",
+        "firstName": {
+          "label": "First name",
+          "placeholder": "Kateryna"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "anakondra@gmail.com"
+        },
+        "socialLink": {
+          "label": "LinkedIn or Instagram",
+          "placeholder": "https://www.instagram.com/..."
+        },
+        "submit": "Apply to Join",
+        "duplicateEmail": "This email has already been submitted."
+      },
+      "thankYou": {
+        "title": "Thank you for providing your contact information",
+        "subtitle": "We will let you know the launch date of our platform and send you a link to register."
+      }
     }
   },
   "onboarding": {

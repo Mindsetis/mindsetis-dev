@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { type Control, useForm, type UseFormReturn, useWatch } from 'react-hook-form';
 
-import { saveSuperpowers } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveSuperpowers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';

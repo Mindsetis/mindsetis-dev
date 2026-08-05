@@ -1,7 +1,7 @@
 import { CheckCircle2, Eye, Share2, User } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
-import type { SocialsJson } from '@/app/[locale]/member-profile/page';
+import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import {
   BallPenFillIcon,
   ChatAiFillIcon,
@@ -198,7 +198,7 @@ export function resolveLanguageText(profile: { languages: string[] | null }): st
 
 /**
  * Shared presentational component for the "Member Profile" view — the two call sites
- * (`app/[locale]/dashboard/profile/page.tsx` self-view, `app/[locale]/members/[username]/
+ * (`app/[locale]/(app)/dashboard/profile/page.tsx` self-view, `app/[locale]/(app)/members/[username]/
  * page.tsx` public view) are structurally IDENTICAL below the banner (confirmed via a direct
  * Figma node-diff of `401:6375` vs `383:4667`), so this stays a single Server Component
  * (no client interactivity needed — Edit Profile / Share Profile / Invite to event are all

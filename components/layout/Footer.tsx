@@ -19,6 +19,16 @@ const SOCIAL_LINKS = [
   { key: 'youtube', Icon: YoutubeIcon, href: 'https://youtube.com' },
 ] as const;
 
+type FooterProps = {
+  /**
+   * `'full'` (default) — newsletter form, both link columns, social icons, and the
+   * credits row, used everywhere via `app/[locale]/(app)/layout.tsx`. `'minimal'` — just the
+   * "Credits" row (logo + copyright), used by the coming-soon homepage placeholder (stage
+   * 1.11, ROADMAP), which sits outside the `(app)` route group and renders its own chrome.
+   */
+  variant?: 'full' | 'minimal';
+};
+
 /**
  * Primary site footer — Figma "Footer / 1 /" (Welcome Screen, desktop + mobile). Server
  * Component; the only client island is the newsletter email form.
@@ -29,10 +39,31 @@ const SOCIAL_LINKS = [
  * `/` for internal placeholders) so the layout/spacing is correct; swap in the actual
  * pages/URLs once they exist.
  */
-export default async function Footer() {
-  const t = await getTranslations('footer');
+export default async function Footer({ variant = 'full' }: FooterProps) {
   const tNav = await getTranslations('nav');
   const year = new Date().getFullYear();
+
+  const t = await getTranslations('footer');
+
+  if (variant === 'minimal') {
+    // Figma `866:4842` "Footer / 1 /" (the Заглушка's own Credits-only footer): 50px vertical /
+    // 64px horizontal padding — was missing a `lg:` vertical override (flat `py-8`/32px at every
+    // breakpoint), unlike the `full` variant below (which uses its own distinct `lg:py-20`,
+    // measured off a different, taller Figma frame that also has the newsletter/columns above
+    // this same Credits row).
+    return (
+      <footer className="rounded-t-[30px] bg-card px-4 py-8 sm:px-6 lg:rounded-t-[50px] lg:px-16 lg:py-[50px]">
+        <div className="mx-auto flex max-w-large flex-col items-center gap-2 text-tiny text-foreground sm:flex-row sm:justify-between sm:gap-4">
+          <Link href="/" className="font-display text-2xl leading-none text-primary lg:text-l">
+            {tNav('brand')}
+          </Link>
+          <span>
+            &copy; {year} {tNav('brand')}. {t('rights')}
+          </span>
+        </div>
+      </footer>
+    );
+  }
 
   const columnOneLinks = t.raw('columns.one.links') as string[];
   const columnTwoLinks = t.raw('columns.two.links') as string[];

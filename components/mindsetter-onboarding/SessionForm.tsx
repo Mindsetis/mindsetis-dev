@@ -11,7 +11,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { saveSession } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveSession } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import {
   ShineOptionCheckedIcon,

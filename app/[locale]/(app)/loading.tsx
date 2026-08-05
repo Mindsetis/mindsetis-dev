@@ -1,11 +1,6 @@
 /**
  * Route-level loading state for the [locale] segment. Simple pulse skeleton — the
  * full loading/skeleton primitives land with the UI Kit (Stage 0.8).
- *
- * Duplicated (not shared) from `app/[locale]/(app)/loading.tsx`: the homepage
- * (`app/[locale]/page.tsx`) sits outside the `(app)` route group, and Next.js doesn't
- * support sharing a single loading boundary across sibling route-group + non-group
- * segments — each segment needs its own file.
  */
 export default function Loading() {
   return (

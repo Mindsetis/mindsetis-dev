@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 
-import { saveVideoBlog } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveVideoBlog } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

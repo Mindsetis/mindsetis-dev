@@ -12,7 +12,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { saveHelp } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveHelp } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
