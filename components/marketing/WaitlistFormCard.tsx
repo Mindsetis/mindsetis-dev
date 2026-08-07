@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { submitHomepageWaitlist } from '@/app/[locale]/actions';
@@ -28,8 +28,12 @@ import {
 /**
  * "Apply to Join" waitlist form card — Figma "Заглушка" form card. On a successful
  * `submitHomepageWaitlist` call, swaps client-side (no route change) into the "Thank you"
- * state (Figma `870:4928` desktop / `870:4977` mobile) occupying the same position — the
- * hero above (`HomepagePlaceholder`) is untouched, only this card area changes.
+ * state (Figma `870:4928` desktop / `870:4977` mobile). That state fully REPLACES the hero
+ * title/subtitle too (not just the card) — Figma's own Thank You frame shows only the thank
+ * you heading/subtitle above the footer, no hero — so this component owns rendering both the
+ * hero heading (`home.placeholder.hero`) and its own form/thank-you content, toggling between
+ * them on the same `submitted` flag; `HomepagePlaceholder` only renders the section chrome
+ * (background glow) around it.
  *
  * PIXEL-ACCURACY PASS (re-verified against the live Figma nodes):
  * - Card (`866:4827` "Frame 144"): `#1a1a1a` fill, 1px `#747474` border, 16px radius, 32px
@@ -61,18 +65,27 @@ import {
  */
 export function WaitlistFormCard() {
   const t = useTranslations('home.placeholder');
+  const tHero = useTranslations('home.placeholder.hero');
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<HomepageWaitlistInput>({
     resolver: zodResolver(homepageWaitlistSchema),
-    defaultValues: { firstName: '', email: '', socialLink: '' },
+    defaultValues: { firstName: '', email: '', socialLink: '', company: '' },
   });
+
+  /**
+   * When this form became interactive — sent with the submit so the Server Action can reject
+   * submissions that land faster than a human could type (see `MIN_SUBMIT_ELAPSED_MS`).
+   * Stamped in an effect rather than during render: `Date.now()` is impure, and the value is
+   * meaningless server-side anyway (SSR would stamp render time, not the visitor's).
+   */
+  const [formLoadedAt, setFormLoadedAt] = useState<number>(() => Date.now());
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
-    const result = await submitHomepageWaitlist(values);
+    const result = await submitHomepageWaitlist({ ...values, formLoadedAt });
     if (!result.ok) {
       // `conflict` (duplicate email, see `submitHomepageWaitlist`) gets a localized inline
       // field error instead of the server's hardcoded fallback message — same "prefer a
@@ -90,114 +103,152 @@ export function WaitlistFormCard() {
     setSubmitted(true);
   });
 
+  useEffect(() => {
+    if (!submitted) return;
+
+    const timer = setTimeout(() => {
+      form.reset();
+      // Re-stamp so the freshly-reset form gets its own "loaded at" baseline.
+      setFormLoadedAt(Date.now());
+      setSubmitted(false);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [submitted, form]);
+
   if (submitted) {
     return (
-      <div className="flex w-full max-w-[560px] flex-col items-center gap-3 text-center">
-        {/* Figma: `870:5469` mobile "MOB/H2" is 24px/24px (100%), not the shared `--text-h1`
-            mobile step (32px) — no existing token covers this exact size, so it's set explicitly
-            rather than reusing `text-h1`. Desktop `870:4955` "H3 (PC)" is 48px/90%, which *is*
-            the shared `--text-h3` token. */}
-        <h2 className="bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text font-display text-[1.5rem] leading-none text-transparent md:text-h3 md:leading-[0.9]">
-          {t('thankYou.title')}
+      <div className="flex max-w-[915px] flex-col items-center gap-4 text-center">
+        <h2 className="bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text font-display text-h1 leading-none text-transparent md:text-h2 md:leading-[0.9]">
+          {t.rich('thankYou.title', { br: () => <br /> })}
         </h2>
         <p className="font-sans text-body font-bold text-foreground md:max-w-[688px] md:font-display md:text-m md:font-normal">
-          {t('thankYou.subtitle')}
+          {t.rich('thankYou.subtitle', { br: () => <br /> })}
         </p>
       </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-[480px] gap-6 rounded-2xl border-border bg-card p-8">
-      <CardContent className="flex flex-col gap-6 p-0">
-        <h2 className="bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text text-center font-sans text-body font-bold text-transparent md:bg-none md:bg-clip-border md:font-display md:text-m md:font-normal md:text-foreground">
-          {t('form.heading')}
-        </h2>
+    <>
+      <div className="flex max-w-[860px] flex-col items-center gap-4 text-center">
+        <h1 className="bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text font-display text-h1 leading-none text-transparent md:text-h2 md:leading-[0.9]">
+          {tHero('title')}
+        </h1>
+        <p className="font-sans text-body font-bold text-foreground md:max-w-[688px] md:font-display md:text-m md:font-normal">
+          {tHero('subtitle')}
+        </p>
+      </div>
 
-        <Form {...form}>
-          <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-            {formError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            ) : null}
+      <Card className="w-full max-w-[480px] gap-6 border-0 bg-transparent p-0 md:rounded-2xl md:border md:border-border md:bg-card md:p-8">
+        <CardContent className="flex flex-col gap-6 p-0">
+          <h2 className="mx-auto w-[80%] bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text text-center font-sans text-body font-bold text-transparent md:mx-0 md:w-full md:bg-none md:bg-clip-border md:font-display md:text-m md:font-normal md:text-foreground">
+            {t('form.heading')}
+          </h2>
 
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <span className="inline-flex items-center gap-1">
-                      {t('form.firstName.label')} <span className="text-primary">*</span>
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      autoComplete="given-name"
-                      placeholder={t('form.firstName.placeholder')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <Form {...form}>
+            <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+              {formError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              ) : null}
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <span className="inline-flex items-center gap-1">
-                      {t('form.email.label')} <span className="text-primary">*</span>
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      placeholder={t('form.email.placeholder')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      <span className="inline-flex items-center gap-1">
+                        {t('form.firstName.label')} <span className="text-primary">*</span>
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        autoComplete="given-name"
+                        placeholder={t('form.firstName.placeholder')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="socialLink"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <span className="inline-flex items-center gap-1">
-                      {t('form.socialLink.label')} <span className="text-primary">*</span>
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      autoComplete="url"
-                      placeholder={t('form.socialLink.placeholder')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      <span className="inline-flex items-center gap-1">
+                        {t('form.email.label')} <span className="text-primary">*</span>
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        autoComplete="email"
+                        placeholder={t('form.email.placeholder')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type="submit" variant="primary" size="lg" loading={form.formState.isSubmitting}>
-              <JoinIcon />
-              {t('form.submit')}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              {/* Optional as of stage 1.11 — no required-marker asterisk, unlike the two above. */}
+              <FormField
+                control={form.control}
+                name="socialLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('form.socialLink.label')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        autoComplete="url"
+                        placeholder={t('form.socialLink.placeholder')}
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Honeypot: invisible to humans (off-screen, not just `display:none` — some bots
+                  skip hidden inputs), untabbable, excluded from the a11y tree and autofill.
+                  Anything typed here means the submitter is a bot; the Server Action then
+                  fakes a success without writing a row. */}
+              <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+                <label htmlFor="company-website">Company website</label>
+                <input
+                  id="company-website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  {...form.register('company')}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                loading={form.formState.isSubmitting}
+              >
+                <JoinIcon />
+                {t('form.submit')}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </>
   );
 }

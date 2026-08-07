@@ -44,6 +44,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+# Captured output of a backgrounded `npm run dev` — local noise, never committed.
+.dev-server.log
 
 # ── Vercel ───────────────────────────────────────────────────
 .vercel

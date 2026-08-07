@@ -26,7 +26,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <main className="flex-1">
         <HomepagePlaceholder />
       </main>
-      <Footer variant="minimal" />
+      <Footer variant="minimal" className="relative z-[5] -mt-[50px]" />
     </>
   );
 }

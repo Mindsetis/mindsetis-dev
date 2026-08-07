@@ -33,6 +33,14 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+/**
+ * Minimum time (ms) between the form mounting and a submit landing on the server. Real
+ * visitors need seconds to type three fields; scripted submits fire near-instantly. Paired
+ * with the honeypot below — see `submitHomepageWaitlist` for how a trip is handled (silently,
+ * never as a visible validation error, so a bot can't tune its way past the check).
+ */
+export const MIN_SUBMIT_ELAPSED_MS = 2_000;
+
 export const homepageWaitlistSchema = z.object({
   firstName: z
     .string()
@@ -41,17 +49,44 @@ export const homepageWaitlistSchema = z.object({
     .max(MAX_FIRST_NAME_LENGTH, `First name must be at most ${MAX_FIRST_NAME_LENGTH} characters.`),
   email: emailSchema,
   /**
-   * "LinkedIn or Instagram" — a real link, not necessarily typed with a scheme (visitors
-   * commonly paste `linkedin.com/in/...` without `https://`). Bare domains/paths are
-   * accepted and normalized by prefixing `https://` before the http(s)-only check, so the
+   * "LinkedIn or Instagram" — OPTIONAL (product change, stage 1.11: a visitor can join the
+   * waitlist with just a name + email). A blank/whitespace-only value normalizes to
+   * `undefined` so "not supplied" has exactly one representation all the way down to the
+   * column's SQL NULL (see `20260806120000_homepage_waitlist_optional_social_link.sql`).
+   *
+   * When a link IS supplied it's still a real link, not necessarily typed with a scheme
+   * (visitors commonly paste `linkedin.com/in/...` without `https://`). Bare domains/paths
+   * are accepted and normalized by prefixing `https://` before the http(s)-only check, so a
    * stored value is always a real absolute URL.
    */
   socialLink: z
     .string()
     .trim()
-    .min(1, 'Add your LinkedIn or Instagram link.')
     .max(MAX_SOCIAL_LINK_LENGTH, 'That link is too long.')
-    .transform((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`))
-    .refine(isHttpUrl, 'Enter a valid LinkedIn or Instagram link.'),
+    .transform((value) => {
+      if (!value) return undefined;
+      return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    })
+    .refine((value) => value === undefined || isHttpUrl(value), {
+      message: 'Enter a valid LinkedIn or Instagram link.',
+    })
+    .optional(),
+
+  /**
+   * Honeypot — a field no human ever sees (visually hidden, `tabIndex={-1}`,
+   * `autoComplete="off"`, `aria-hidden`), named to look attractive to a naive form-filling
+   * bot. Any non-empty value means the submitter was not a person. Deliberately NOT rejected
+   * with a validation error here: the Server Action treats a trip as a fake success, so the
+   * bot gets a 200 and never learns which field burned it.
+   */
+  company: z.string().max(MAX_SOCIAL_LINK_LENGTH).optional(),
+
+  /**
+   * Epoch-ms timestamp stamped when the form mounted in the browser, used for the
+   * minimum-elapsed-time check (`MIN_SUBMIT_ELAPSED_MS`). Client-supplied and therefore
+   * forgeable by a determined attacker — this is a cheap filter for unsophisticated bots,
+   * NOT a substitute for the IP rate limit.
+   */
+  formLoadedAt: z.number().int().positive().optional(),
 });
 export type HomepageWaitlistInput = z.infer<typeof homepageWaitlistSchema>;

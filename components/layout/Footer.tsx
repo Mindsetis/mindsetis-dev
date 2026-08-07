@@ -8,6 +8,7 @@ import {
   YoutubeIcon,
 } from '@/components/icons/social-icons';
 import { Link } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 import { NewsletterForm } from './NewsletterForm';
 
@@ -27,6 +28,8 @@ type FooterProps = {
    * 1.11, ROADMAP), which sits outside the `(app)` route group and renders its own chrome.
    */
   variant?: 'full' | 'minimal';
+  /** Extra classes for the outer `<footer>` — e.g. the homepage placeholder's overlap offset. */
+  className?: string;
 };
 
 /**
@@ -39,7 +42,7 @@ type FooterProps = {
  * `/` for internal placeholders) so the layout/spacing is correct; swap in the actual
  * pages/URLs once they exist.
  */
-export default async function Footer({ variant = 'full' }: FooterProps) {
+export default async function Footer({ variant = 'full', className }: FooterProps) {
   const tNav = await getTranslations('nav');
   const year = new Date().getFullYear();
 
@@ -52,13 +55,20 @@ export default async function Footer({ variant = 'full' }: FooterProps) {
     // measured off a different, taller Figma frame that also has the newsletter/columns above
     // this same Credits row).
     return (
-      <footer className="rounded-t-[30px] bg-card px-4 py-8 sm:px-6 lg:rounded-t-[50px] lg:px-16 lg:py-[50px]">
-        <div className="mx-auto flex max-w-large flex-col items-center gap-2 text-tiny text-foreground sm:flex-row sm:justify-between sm:gap-4">
+      <footer
+        className={cn(
+          'rounded-t-[30px] bg-card px-4 py-6 sm:px-6 lg:rounded-t-[50px] lg:px-16 lg:py-[50px]',
+          className,
+        )}
+      >
+        <div className="mx-auto flex max-w-large flex-row items-center justify-between gap-4 text-tiny text-foreground">
           <Link href="/" className="font-display text-2xl leading-none text-primary lg:text-l">
             {tNav('brand')}
           </Link>
-          <span>
-            &copy; {year} {tNav('brand')}. {t('rights')}
+          <span className="text-right">
+            &copy; {year} {tNav('brand')}.
+            <br />
+            {t('rights')}
           </span>
         </div>
       </footer>

@@ -70,8 +70,8 @@
         "duplicateEmail": "Este correo ya fue enviado."
       },
       "thankYou": {
-        "title": "Gracias por darnos tu información de contacto",
-        "subtitle": "Te avisaremos la fecha de lanzamiento de nuestra plataforma y te enviaremos un enlace para registrarte."
+        "title": "Gracias por darnos tu<br></br>información de contacto",
+        "subtitle": "Te avisaremos la fecha de lanzamiento de nuestra plataforma<br></br>y te enviaremos un enlace para registrarte."
       }
     }
   },

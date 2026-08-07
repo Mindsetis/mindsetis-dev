@@ -1,5 +1,6 @@
-import { getTranslations } from 'next-intl/server';
+import { cn } from '@/lib/utils';
 
+import styles from './HomepagePlaceholder.module.css';
 import { WaitlistFormCard } from './WaitlistFormCard';
 
 /**
@@ -23,34 +24,29 @@ import { WaitlistFormCard } from './WaitlistFormCard';
  *   own padding is the only constraint at that width, per `866:5541`'s full-bleed 343px box).
  * - Decorative glow: re-verified this is NOT the same asset as `public/images/gradient1.png`/
  *   `gradient-mobile.png` (those fade a neon cyan-turquoise top edge to black — this page's own
- *   glow, screenshotted at `866:4823`/`870:4928`, is a `--color-primary`-toned blue that grows
- *   from black at the top through blue into a near-white core low on the page, then the footer
- *   covers whatever's below) — reusing the wrong asset would visibly mismatch its color. The
- *   underlying Figma vector (`866:4826`, a huge blurred blob positioned mostly OFF the visible
- *   frame) has no resolvable fill through this bridge either (same limitation documented
- *   extensively in `MindsetterProfileView.module.css`'s own glow rules), so this stays a CSS
- *   `radial-gradient` approximation — just a taller/stronger one anchored lower with a
- *   brighter near-white core, closer to the screenshot than the previous flat single-stop
- *   version.
+ *   glow is a `--color-primary`-toned blue that grows from black at the top through blue into a
+ *   near-white core low on the page). A hand-tuned CSS `radial-gradient` was tried first (the
+ *   underlying Figma vector, `866:4825`/`866:5579`, has no resolvable fill through this
+ *   read-only bridge — same limitation documented in `MindsetterProfileView.module.css`'s own
+ *   glow rules), but no set of gradient stops matched the design's actual soft/irregular blur,
+ *   and a fixed `h-[480px]`/`h-[820px]` panel didn't track the section's real (content-driven,
+ *   locale-dependent) height — leaving a visible dark gap above the footer that the design
+ *   doesn't have. Replaced with the ACTUAL rasterized `bg` layer exported straight from Figma
+ *   (`866:4824` desktop / `866:5578` mobile — just the black-fill + glow-blob layer, no
+ *   text/form/footer) as `public/images/homepage-glow-{desktop,mobile}.png`, applied via a
+ *   `background-size: cover; background-position: bottom` CSS background (small dedicated
+ *   `HomepagePlaceholder.module.css` — Tailwind's arbitrary background-image utility broke
+ *   webpack's CSS url resolution for a `/`-containing path, same CSS Module precedent as
+ *   `MemberProfileView.module.css`) on an absolute `inset-0` layer — `cover`/`bottom` make it
+ *   track the section's actual rendered height and keep the image's already-bright bottom edge
+ *   flush against the footer, matching Figma's own composition (confirmed via node tree: the
+ *   footer, `866:4842`, is a separate opaque `#1a1a1a` sibling layer painted OVER `bg` with no
+ *   blend — a deliberate hard seam by design, not something to fade the image into).
  */
-export async function HomepagePlaceholder() {
-  const t = await getTranslations('home.placeholder.hero');
-
+export function HomepagePlaceholder() {
   return (
-    <section className="relative isolate flex min-h-[70vh] flex-col items-center justify-center gap-10 overflow-hidden px-4 py-16 sm:px-6 lg:gap-16 lg:py-24">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[480px] bg-[radial-gradient(ellipse_140%_100%_at_50%_100%,rgba(255,255,255,0.3)_0%,rgba(121,185,227,0.6)_28%,rgba(121,185,227,0.25)_55%,transparent_78%)] md:h-[820px]"
-      />
-
-      <div className="flex max-w-[800px] flex-col items-center gap-4 text-center">
-        <h1 className="bg-[linear-gradient(95.47deg,#fff_4.71%,#87bce6_99.92%)] bg-clip-text font-display text-h1 leading-none text-transparent md:text-h2 md:leading-[0.9]">
-          {t('title')}
-        </h1>
-        <p className="font-sans text-body font-bold text-foreground md:max-w-[688px] md:font-display md:text-m md:font-normal">
-          {t('subtitle')}
-        </p>
-      </div>
+    <section className="relative isolate flex min-h-[88vh] flex-col items-center justify-center gap-10 overflow-hidden px-4 pt-12 pb-24 sm:px-6 lg:gap-16 lg:pt-24 lg:pb-[146px]">
+      <div aria-hidden="true" className={cn('pointer-events-none -z-10', styles.glow)} />
 
       <WaitlistFormCard />
     </section>

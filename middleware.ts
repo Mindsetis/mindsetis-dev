@@ -100,11 +100,144 @@ function matchesPrefix(path: string, prefixes: string[]): boolean {
 }
 
 /**
- * Root middleware: locale routing (next-intl) → Supabase session refresh → auth gating.
- * Order matters: resolve the locale-aware response first, refresh cookies on top of it,
- * then decide redirects using the freshly-resolved user.
+ * HTTP Basic Auth realm shown in the browser's password prompt.
+ */
+const BASIC_AUTH_REALM = 'Mindsetis';
+
+/**
+ * Length-independent comparison that does not bail on the first differing byte.
+ *
+ * `crypto.timingSafeEqual` does not exist in the Edge runtime this middleware runs in, and a
+ * plain `===` leaks how many leading characters were correct through response timing. The
+ * risk against a holding-page password is remote, but the fix is five lines.
+ */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/**
+ * Decode a base64 Basic-Auth payload as UTF-8.
+ *
+ * `Buffer` is not available in the Edge runtime, and bare `atob` yields a binary string that
+ * mangles any non-ASCII character — so a password containing, say, "ї" would never match.
+ * Going through `Uint8Array` + `TextDecoder` handles the full range, and the `charset="UTF-8"`
+ * hint on the challenge below asks browsers to encode it the same way.
+ */
+function decodeBase64Utf8(value: string): string {
+  try {
+    const binary = atob(value);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Site-wide HTTP Basic Auth gate — returns a 401 challenge to close the site, or `null` to
+ * let the request through to the pipeline below.
+ *
+ * WHY IN CODE AND NOT IN VERCEL
+ *   Vercel's built-in Deployment Protection does exactly this, but password protection is a
+ *   paid add-on (~$150/month) on top of Pro — not worth it to hide a pre-launch site. This
+ *   is the same thing in ~40 lines, free on any plan.
+ *
+ * NOT SECURITY — ACCESS CONTROL
+ *   One shared password for everyone, sent base64-encoded (encoding, not encryption). It is
+ *   only meaningful over HTTPS, which Vercel always provides. It keeps the site away from
+ *   casual visitors and crawlers before launch; it is NOT a substitute for the app's real
+ *   Supabase authentication, which runs underneath it (see the prefix lists above).
+ *
+ * ENABLED BY ENVIRONMENT, NOT BY CODE
+ *   The gate activates only when `SITE_AUTH_PASSWORD` is set. Locally that variable does not
+ *   exist, so `npm run dev` is never gated, and lifting the gate at launch is deleting one
+ *   Vercel environment variable — no commit, no redeploy of changed source.
+ *
+ * Distinct from `COMING_SOON_MODE` below and deliberately kept separate: this hides the WHOLE
+ * origin from everyone without the password, while the coming-soon gate leaves the homepage
+ * placeholder publicly readable and only folds the rest of the site into it. They compose —
+ * password-gated pre-launch now, public placeholder later, full site last.
+ */
+function basicAuthChallenge(request: NextRequest): NextResponse | null {
+  const expectedPassword = process.env.SITE_AUTH_PASSWORD;
+  const expectedUser = process.env.SITE_AUTH_USER ?? '';
+
+  // Not configured — local development, and any deployment where the gate is deliberately
+  // lifted. Open, on purpose.
+  if (!expectedPassword) return null;
+
+  const header = request.headers.get('authorization');
+
+  if (header?.startsWith('Basic ')) {
+    const decoded = decodeBase64Utf8(header.slice('Basic '.length));
+    const separator = decoded.indexOf(':');
+    if (separator !== -1) {
+      const user = decoded.slice(0, separator);
+      const password = decoded.slice(separator + 1);
+      // An unset SITE_AUTH_USER means "any username" — browsers still render two fields, and
+      // forcing a username people have to remember adds nothing to a shared password.
+      const userMatches = expectedUser === '' || safeEqual(user, expectedUser);
+      if (userMatches && safeEqual(password, expectedPassword)) {
+        return null;
+      }
+    }
+  }
+
+  return new NextResponse('Authentication required.', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': `Basic realm="${BASIC_AUTH_REALM}", charset="UTF-8"`,
+      // Never let a proxy or CDN cache the challenge or an authorised response.
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+/**
+ * Paths the locale/session pipeline must never touch — Next internals, static files, and
+ * Route Handlers. These used to be carved out by the `matcher` regex at the bottom, but the
+ * Basic-Auth gate has to see EVERY request (a closed site must not serve its assets either),
+ * so the matcher now takes everything and this exclusion happens one step later, immediately
+ * after the gate. The conditions mirror the previous matcher exactly.
+ */
+function isPipelineExempt(pathname: string): boolean {
+  const rest = pathname.slice(1);
+  return (
+    rest.startsWith('_next/static') ||
+    rest.startsWith('_next/image') ||
+    rest.startsWith('favicon.ico') ||
+    rest.startsWith('api') ||
+    rest.includes('.')
+  );
+}
+
+/**
+ * Site-wide "coming soon" gate (ROADMAP stage 1.11) — while `true`, every route except the
+ * homepage placeholder (`/`) bounces back to it, so nothing else is reachable by URL or by
+ * clicking around the site. Toggle via env var (no code change/redeploy of this file needed
+ * to flip it — just update the var and redeploy the env, or restart locally) instead of
+ * hardcoding the redirect, so it's a one-line flip to open the site back up.
+ */
+const COMING_SOON_MODE = process.env.COMING_SOON_MODE === 'true';
+
+/**
+ * Root middleware: Basic Auth gate → locale routing (next-intl) → Supabase session refresh →
+ * coming-soon gate → auth gating. Order matters: the password gate runs before anything else
+ * (a closed site reveals nothing, not even a redirect or a locale cookie), then the
+ * locale-aware response is resolved, cookies refreshed on top of it, and only then are
+ * redirects decided using the freshly-resolved user.
  */
 export default async function middleware(request: NextRequest): Promise<NextResponse> {
+  const challenge = basicAuthChallenge(request);
+  if (challenge) return challenge;
+
+  // Past the gate, static assets and Route Handlers skip the locale/session pipeline — they
+  // were never part of it (see `isPipelineExempt`).
+  if (isPipelineExempt(request.nextUrl.pathname)) return NextResponse.next();
+
   const intlResponse = intlMiddleware(request);
 
   // If next-intl already wants to redirect (e.g. add a locale prefix), let it — auth
@@ -116,6 +249,13 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
   const { response, user } = await updateSession(request, intlResponse);
   const { locale, rest } = splitLocale(request.nextUrl.pathname);
+
+  if (COMING_SOON_MODE && rest !== '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = localePath(locale, '/');
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
 
   if (!user && matchesPrefix(rest, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
@@ -158,8 +298,10 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
 export const config = {
   matcher: [
-    // Skip Next internals, static files, and API routes; run everywhere else
-    // (including bare "/") so locale + auth handling apply consistently.
-    '/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)',
+    // EVERYTHING, static assets and Route Handlers included — "the site is closed" has to
+    // mean the whole origin, so the Basic-Auth gate must see every request. The old
+    // Next-internals/static/api carve-out still applies to the locale + auth pipeline; it
+    // just moved inside the handler (`isPipelineExempt`), one step after the gate.
+    '/(.*)',
   ],
 };

@@ -70,8 +70,8 @@
         "duplicateEmail": "This email has already been submitted."
       },
       "thankYou": {
-        "title": "Thank you for providing your contact information",
-        "subtitle": "We will let you know the launch date of our platform and send you a link to register."
+        "title": "Thank you for providing your<br></br>contact information",
+        "subtitle": "We will let you know the launch date of our platform<br></br>and send you a link to register."
       }
     }
   },

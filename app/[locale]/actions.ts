@@ -17,7 +17,7 @@ import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
-import { homepageWaitlistSchema } from '@/lib/validation/homepage-waitlist';
+import { homepageWaitlistSchema, MIN_SUBMIT_ELAPSED_MS } from '@/lib/validation/homepage-waitlist';
 import { emailCaptureSchema } from '@/lib/validation/marketing';
 
 /** Postgres unique-violation error code. */
@@ -71,16 +71,45 @@ export const subscribeNewsletter = createAction(
  * unique index and Postgres raises `23505`, which is surfaced as a `conflict` error the
  * client form shows inline on the email field — this form has a hard "you already applied"
  * product requirement, not a silent re-submission.
+ *
+ * ANTI-AUTOMATION. This is a fully anonymous, unauthenticated write path, so it carries two
+ * zero-infra bot filters ON TOP OF the declared IP rate limit:
+ *   1. Honeypot (`company`) — a field only a form-filling bot would populate.
+ *   2. Minimum elapsed time (`formLoadedAt` + `MIN_SUBMIT_ELAPSED_MS`) — a submit landing
+ *      within ~2s of the form mounting wasn't typed by a human.
+ * Either trip returns a FAKE SUCCESS: no row is written, but the caller gets the same `ok`
+ * result a real submission gets, so a bot can't diff responses to discover which signal
+ * caught it (and a false positive on a real visitor at least doesn't show a broken form).
+ *
+ * NOTE: the `rateLimit` option below is declared but only ENFORCES once Upstash is
+ * provisioned — `lib/rate-limit.ts` no-ops when `UPSTASH_REDIS_REST_*` are unset (deferred
+ * infra, ROADMAP 0.2). Until then these two filters are the only throttle on this endpoint,
+ * and they stop naive bots, not a determined attacker replaying the Server Action directly.
  */
 export const submitHomepageWaitlist = createAction(
   homepageWaitlistSchema,
-  async ({ firstName, email, socialLink }) => {
+  async ({ firstName, email, socialLink, company, formLoadedAt }) => {
+    // Honeypot filled, or submitted faster than a human could type: drop it on the floor and
+    // report success. Logged (without the payload) so a spike is visible in server logs.
+    const trippedHoneypot = Boolean(company && company.trim().length > 0);
+    const trippedTiming =
+      formLoadedAt !== undefined && Date.now() - formLoadedAt < MIN_SUBMIT_ELAPSED_MS;
+    if (trippedHoneypot || trippedTiming) {
+      console.warn('[marketing.submitHomepageWaitlist] bot filter tripped:', {
+        honeypot: trippedHoneypot,
+        timing: trippedTiming,
+      });
+      return null;
+    }
+
     const supabase = createServiceClient();
 
     const { error } = await supabase.from('homepage_waitlist').insert({
       first_name: firstName,
       email,
-      social_link: socialLink,
+      // Optional field: normalize "not supplied" to SQL NULL, never an empty string
+      // (`20260806120000_homepage_waitlist_optional_social_link.sql`).
+      social_link: socialLink ?? null,
     });
 
     if (error) {
