@@ -9,6 +9,14 @@ declare namespace NodeJS {
   interface ProcessEnv {
     // App
     readonly NEXT_PUBLIC_SITE_URL: string;
+    // Pre-launch switch — "true" closes the site down to the waitlist placeholder, anything
+    // else opens the full landing page and every route. Read via lib/config/coming-soon.ts,
+    // never directly. Optional: unset means "open".
+    readonly COMING_SOON_MODE?: string;
+    // Pre-launch HTTP Basic Auth gate (middleware.ts). The gate is ACTIVE only while
+    // SITE_AUTH_PASSWORD is set; SITE_AUTH_USER empty/unset accepts any username.
+    readonly SITE_AUTH_USER?: string;
+    readonly SITE_AUTH_PASSWORD?: string;
 
     // Supabase (active)
     readonly NEXT_PUBLIC_SUPABASE_URL: string;

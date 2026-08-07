@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 
 import { localePath, routing } from '@/i18n/routing';
+import { COMING_SOON_MODE } from '@/lib/config/coming-soon';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -215,15 +216,6 @@ function isPipelineExempt(pathname: string): boolean {
 }
 
 /**
- * Site-wide "coming soon" gate (ROADMAP stage 1.11) — while `true`, every route except the
- * homepage placeholder (`/`) bounces back to it, so nothing else is reachable by URL or by
- * clicking around the site. Toggle via env var (no code change/redeploy of this file needed
- * to flip it — just update the var and redeploy the env, or restart locally) instead of
- * hardcoding the redirect, so it's a one-line flip to open the site back up.
- */
-const COMING_SOON_MODE = process.env.COMING_SOON_MODE === 'true';
-
-/**
  * Root middleware: Basic Auth gate → locale routing (next-intl) → Supabase session refresh →
  * coming-soon gate → auth gating. Order matters: the password gate runs before anything else
  * (a closed site reveals nothing, not even a redirect or a locale cookie), then the
@@ -250,6 +242,9 @@ export default async function middleware(request: NextRequest): Promise<NextResp
   const { response, user } = await updateSession(request, intlResponse);
   const { locale, rest } = splitLocale(request.nextUrl.pathname);
 
+  // Pre-launch gate: everything but the homepage bounces back to it. The other half of this
+  // switch lives in `app/[locale]/page.tsx` (which homepage to render) — see
+  // `lib/config/coming-soon.ts`.
   if (COMING_SOON_MODE && rest !== '/') {
     const url = request.nextUrl.clone();
     url.pathname = localePath(locale, '/');

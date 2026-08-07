@@ -18,6 +18,7 @@ import { ActionError } from '@/lib/api/errors';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import { homepageWaitlistSchema, MIN_SUBMIT_ELAPSED_MS } from '@/lib/validation/homepage-waitlist';
+import { signupIntentSchema } from '@/lib/validation/leads';
 import { emailCaptureSchema } from '@/lib/validation/marketing';
 
 /** Postgres unique-violation error code. */
@@ -131,4 +132,43 @@ export const submitHomepageWaitlist = createAction(
     return null;
   },
   { rateLimit: { key: 'marketing:homepage-waitlist', limit: 5, window: '10 m' } },
+);
+
+/**
+ * Record a homepage "signup intent" lead (spec §5.2, reworked stage 1.7) — the email typed
+ * into the landing hero's `HeroEmailCta` on the visitor's way into `/sign-up`. Upserts into
+ * `leads`; `signUp` later flips that same row's `registered` flag once the account is
+ * actually created.
+ *
+ * Restored alongside the full landing page, which `COMING_SOON_MODE=false` brings back (see
+ * `lib/config/coming-soon.ts`) — so this action is reachable ONLY in that mode. It stayed
+ * deleted between ROADMAP stage 1.11 and the flag; the `leads` table it writes to was never
+ * dropped, so nothing schema-side had to be recreated.
+ *
+ * Service-role client, like `submitHomepageWaitlist`: `leads` grants the anon role no INSERT.
+ * Distinct from `subscribeNewsletter`, which writes `newsletter_emails` as anon.
+ */
+export const recordSignupIntent = createAction(
+  signupIntentSchema,
+  async ({ email }) => {
+    const supabase = createServiceClient();
+
+    const { error } = await supabase
+      .from('leads')
+      .upsert({ email: email.toLowerCase() }, { onConflict: 'email' });
+
+    if (error) {
+      console.error('[marketing.recordSignupIntent] upsert failed:', {
+        code: error.code,
+        message: error.message,
+      });
+      throw new ActionError(
+        'internal_error',
+        'Could not save your details right now. Please try again.',
+      );
+    }
+
+    return null;
+  },
+  { rateLimit: { key: 'marketing:signup-intent', limit: 5, window: '10 m' } },
 );

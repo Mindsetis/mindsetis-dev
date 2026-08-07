@@ -47,6 +47,18 @@
     "label": "Idioma"
   },
   "home": {
+    "hero": {
+      "clickToWatch": "Haz clic para ver",
+      "continue": "Continuar",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "or": "o",
+      "seeFeatures": "Ver funciones de la plataforma",
+      "subtitle": "Esta plataforma es para quienes actúan — quienes cambian el mundo a través de sus acciones y su mentalidad. Son los Mindsetters.",
+      "title": "No todos construyen algo de la nada.",
+      "tourLabel": "Haz un recorrido de 2 minutos por la plataforma",
+      "watchLabel": "Míralo para entender por qué"
+    },
     "placeholder": {
       "hero": {
         "title": "Espacio para dueños de negocio, fundadores y CEOs",

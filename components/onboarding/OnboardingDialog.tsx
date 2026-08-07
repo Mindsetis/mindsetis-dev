@@ -41,9 +41,9 @@ type OnboardingDialogProps = {
  * Onboarding tour popup — Figma "Onboarding - 1..4" (mobile) / "Onboarding - 1..3 - 1440 px"
  * (desktop). Previously its own route (`/onboarding`); reworked into a popup (direct product
  * request, 2026-07-18) opened from a "See platform features"-style button instead of a page
- * navigation. That original homepage hero trigger was removed with the ROADMAP stage 1.11
- * coming-soon placeholder swap; the current caller is `RolesPreviewCta` (see its own doc
- * comment).
+ * navigation. Two callers: the landing hero's `OnboardingCta` (the original trigger — live
+ * only while `COMING_SOON_MODE` is off, since the waitlist placeholder replaces that hero
+ * otherwise) and `RolesPreviewCta` (see its own doc comment).
  *
  * The `DialogContent` container (positioning, radius, border, close button) reuses the same
  * shape as `WhoIsMindsetterDialog` — mobile bottom sheet / desktop centered 30px-rounded modal
