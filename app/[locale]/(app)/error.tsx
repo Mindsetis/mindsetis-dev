@@ -13,11 +13,6 @@ type ErrorPageProps = {
 /**
  * Route-level error boundary for the [locale] segment. Must be a Client Component
  * (Next.js requirement for error.tsx).
- *
- * Duplicated (not shared) from `app/[locale]/(app)/error.tsx`: the homepage
- * (`app/[locale]/page.tsx`) sits outside the `(app)` route group, and Next.js doesn't
- * support sharing a single error boundary across sibling route-group + non-group
- * segments — each segment needs its own file.
  */
 export default function Error({ error, reset }: ErrorPageProps) {
   const t = useTranslations('error');

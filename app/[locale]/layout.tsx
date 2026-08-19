@@ -7,10 +7,9 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import Footer from '@/components/layout/Footer';
-import Header from '@/components/layout/Header';
 import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
+import { siteUrl } from '@/lib/auth/site-url';
 import { cn } from '@/lib/utils';
 
 // Body/UI font (400/500/700) — feeds the `--font-sans` token in app/globals.css.
@@ -45,8 +44,24 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
+  // Absolute base for the canonical/hreflang URLs built with relative paths below and in
+  // `app/[locale]/page.tsx`. Same origin the auth emails link to, so there is exactly one
+  // source of truth for "where does this deployment live".
+  metadataBase: new URL(siteUrl('/')),
   title: 'Mindsetis Community',
   description: 'A member-first community platform for 1:1 sessions and events.',
+  // SITE-WIDE DEFAULT: KEEP OUT OF SEARCH RESULTS.
+  //
+  // Inherited by every route under `[locale]` — auth, onboarding wizards, member profiles,
+  // the back-office — and deliberately overridden in exactly ONE place: the waitlist
+  // homepage (`app/[locale]/page.tsx`), the only page meant to be found. Adding a route
+  // therefore makes it non-indexable by default; opting in has to be a conscious edit.
+  //
+  // Belt and braces with `app/robots.ts`: robots.txt asks crawlers not to FETCH these URLs,
+  // this header tells any crawler that fetched one anyway not to INDEX it. Neither alone
+  // covers both cases — a `Disallow`ed URL can still be listed from an external link, and a
+  // `noindex` is only honored if the page was actually read.
+  robots: { index: false, follow: false },
 };
 
 type LocaleLayoutProps = {
@@ -68,9 +83,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     <html lang={locale} className={cn('dark', manrope.variable, calSans.variable)}>
       <body className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale}>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          {children}
           <Toaster />
         </NextIntlClientProvider>
       </body>

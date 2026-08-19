@@ -58,6 +58,33 @@
       "title": "No todos construyen algo de la nada.",
       "tourLabel": "Haz un recorrido de 2 minutos por la plataforma",
       "watchLabel": "Míralo para entender por qué"
+    },
+    "placeholder": {
+      "hero": {
+        "title": "Espacio para dueños de negocio, fundadores y CEOs",
+        "subtitle": "Sesiones 1:1 con personas que ya resolvieron lo que tú estás enfrentando. Grupos y masterminds para trabajar tus preguntas en conjunto."
+      },
+      "form": {
+        "heading": "Déjanos tus datos — te contactaremos cuando lancemos.",
+        "firstName": {
+          "label": "Nombre",
+          "placeholder": "Kateryna"
+        },
+        "email": {
+          "label": "Correo electrónico",
+          "placeholder": "anakondra@gmail.com"
+        },
+        "socialLink": {
+          "label": "LinkedIn o Instagram",
+          "placeholder": "https://www.instagram.com/..."
+        },
+        "submit": "Aplicar para unirme",
+        "duplicateEmail": "Este correo ya fue enviado."
+      },
+      "thankYou": {
+        "title": "Gracias por darnos tu<br></br>información de contacto",
+        "subtitle": "Te avisaremos la fecha de lanzamiento de nuestra plataforma<br></br>y te enviaremos un enlace para registrarte."
+      }
     }
   },
   "onboarding": {

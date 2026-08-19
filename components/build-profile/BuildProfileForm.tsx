@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { saveBuildProfile } from '@/app/[locale]/build-profile/actions';
+import { saveBuildProfile } from '@/app/[locale]/(app)/build-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

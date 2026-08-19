@@ -1,0 +1,22 @@
+/**
+ * The decorative background glow behind `HomepagePlaceholder`'s hero, as an actual exported
+ * Figma raster (`public/images/homepage-glow-{mobile,desktop}.png`) rather than a Tailwind
+ * arbitrary background-image utility with a `/`-containing path — that broke webpack's CSS
+ * url resolution entirely, so this one declaration is isolated here instead (same precedent
+ * as `MemberProfileView.module.css`).
+ */
+.glow {
+  position: absolute;
+  top: 22%;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-image: url('/images/homepage-glow-mobile.png');
+  background-size: cover;
+  background-position: top center;
+}
+@media (min-width: 768px) {
+  .glow {
+    background-image: url('/images/homepage-glow-desktop.png');
+  }
+}

@@ -10,6 +10,10 @@ import { OnboardingCta } from './OnboardingCta';
  * (`OnboardingCta`), which opens the onboarding tour as a popup rather than navigating to a
  * page (reworked 2026-07-18 — see `OnboardingCta`/`OnboardingDialog`).
  *
+ * Rendered by `app/[locale]/page.tsx` only when `COMING_SOON_MODE` is off; the waitlist
+ * placeholder takes the homepage otherwise. Header/Footer come from that page, not from a
+ * layout — the homepage sits outside the `(app)` route group (see its doc comment).
+ *
  * The video embed is a placeholder test YouTube video (2026-07-18) — swap in the real
  * platform-intro video once that asset exists. The email capture below records a "signup
  * intent" lead (spec §5.2, reworked stage 1.7) and routes straight into `/sign-up`.
