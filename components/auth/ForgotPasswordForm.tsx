@@ -17,15 +17,26 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { type ForgotPasswordInput, forgotPasswordSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
 
+/**
+ * "Reset your password" form — Figma `679:8913`.
+ *
+ * On success it NAVIGATES to `/forgot-password/sent?email=…` rather than swapping itself for an
+ * inline success message the way it used to. The design draws "Check your email" as its own
+ * screen, and a route survives a refresh, which the old in-component `sent` flag did not — the
+ * page would silently fall back to an empty form the moment the visitor reloaded while waiting
+ * for the mail.
+ *
+ * The action itself is unchanged and still never reveals whether the address exists.
+ */
 export function ForgotPasswordForm() {
   const t = useTranslations('auth');
+  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
 
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -40,28 +51,12 @@ export function ForgotPasswordForm() {
       setFormError(result.error.message);
       return;
     }
-    setSent(true);
+    router.push(`/forgot-password/sent?email=${encodeURIComponent(values.email)}`);
   });
-
-  if (sent) {
-    return (
-      <div className="flex flex-col gap-4 text-center">
-        <Alert variant="success">
-          <AlertDescription>{t('forgotPassword.successMessage')}</AlertDescription>
-        </Alert>
-        <Link
-          href="/login"
-          className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          {t('forgotPassword.backToLogin')}
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
@@ -73,7 +68,9 @@ export function ForgotPasswordForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('fields.email')}</FormLabel>
+              <FormLabel>
+                {t('fields.email')} <span className="text-primary">*</span>
+              </FormLabel>
               <FormControl>
                 <Input type="email" autoComplete="email" {...field} />
               </FormControl>
@@ -82,20 +79,17 @@ export function ForgotPasswordForm() {
           )}
         />
 
-        <Button type="submit" size="lg" loading={form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          variant="primaryOutline"
+          size="lg"
+          loading={form.formState.isSubmitting}
+          className="w-full"
+        >
           {form.formState.isSubmitting
             ? t('forgotPassword.submitting')
             : t('forgotPassword.submit')}
         </Button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          <Link
-            href="/login"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            {t('forgotPassword.backToLogin')}
-          </Link>
-        </p>
       </form>
     </Form>
   );
