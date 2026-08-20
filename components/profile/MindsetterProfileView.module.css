@@ -120,6 +120,20 @@
   padding-bottom: 8px;
 }
 
+/* ---- Philosophy attribution -----------------------------------------------------------------
+   The "— NAME" line under the Reel Life quote (Figma `911:11554`): brand gradient text rather
+   than a flat color, same `--gradient-primary` the section headings use. Size/tracking/uppercase
+   stay in the caller's Tailwind classes — this rule only owns the gradient fill, exactly like
+   `.gradientHeading` does for the headings. */
+
+.quoteAuthor {
+  background: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ---- Hero name (H1) -------------------------------------------------------------------------
    Page-local replacement for `memberStyles.heroName` (that sibling class is flat `#000000` for
    its own light screen) — same 40px mobile / 88px desktop sizing (Figma: `327:1081`, "H1 (PC)"
@@ -148,7 +162,10 @@
    hides this heading on mobile per that same claude.txt's item 11). */
 
 .accordionSectionHeading {
-  font-size: 72px;
+  /* Fluid like every other section heading (see
+     `.gradientHeading`) — these were a hard 72px, which is why they used to be hidden below
+     1024px entirely. */
+  font-size: clamp(1.5rem, 0.4437rem + 4.507vw, 4.5rem);
   font-weight: 400;
   line-height: 0.9;
   background: linear-gradient(95.47deg, #fff 5.49%, #87bce6 99.54%);
@@ -164,7 +181,10 @@
    that same claude.txt's item 1). */
 
 .superpowersHeading {
-  font-size: 72px;
+  /* Fluid like every other section heading (see
+     `.gradientHeading`) — these were a hard 72px, which is why they used to be hidden below
+     1024px entirely. */
+  font-size: clamp(1.5rem, 0.4437rem + 4.507vw, 4.5rem);
   font-weight: 400;
   line-height: 0.9;
   background: linear-gradient(95.47deg, #fff 4.61%, #87bce6 99.97%);
@@ -248,6 +268,39 @@
   background-color: var(--color-card);
 }
 
+/* ---- Hero "Intro about me" pill (overlaid on the portrait, see the `.tsx`'s own citation) -
+   Figma's node carries no fill at all — just a 1px `gradient / brand` border — so this can't
+   use the `.numberStat`/padding-box double-background trick (that needs an OPAQUE padding-box
+   layer, which would incorrectly paint over the photo showing through). Same masked
+   pseudo-element ring technique as `.winCard::before` below instead (transparent interior,
+   1px instead of that rule's 4px). `--gradient-primary` is a pixel-exact match for Figma's own
+   "gradient / brand" style (`get_styles`: `#C3E4F9` 0% → `#79B9E3` ~49.5% → `#21B8E6` 100%). */
+.introButton {
+  /* No `position` of its own — the `<a>` already gets `position: absolute` from the Tailwind
+     utility classes at the call site (it's overlaid on the portrait), which is equally valid as
+     a containing block for the `::before` ring below; declaring `position: relative` here too
+     would fight that utility class at equal CSS specificity with an unpredictable winner. */
+  background-color: transparent;
+}
+.introButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-primary);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 /* ---- Shared section eyebrow (icon + bold secondary-text label) --------------------------- */
 
 .sectionEyebrow {
@@ -269,12 +322,44 @@
   }
 }
 
+/* My F*ckUp(s) track. Full-width (its wrapper carries no `max-w`/padding — see the JSX), so cards
+   are clipped by the WINDOW, not by a 1440px column. `--fckups-gutter` is the distance from the
+   window edge to the content grid, i.e. where the section heading starts — identical arithmetic to
+   `.winsTrack`'s own gutter, see there for the full writeup. `scroll-padding-inline-start` offsets
+   the snapport so a card parks on the grid while the first card's snap still lands at
+   `scrollLeft: 0`. */
+.fckupsTrack {
+  --fckups-gutter: 16px;
+
+  scroll-padding-inline-start: var(--fckups-gutter);
+}
+@media (min-width: 640px) {
+  .fckupsTrack {
+    --fckups-gutter: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .fckupsTrack {
+    --fckups-gutter: max(70px, calc((100% - 1440px) / 2 + 70px));
+  }
+}
+
+/* The row's own inset to the content grid, on the two edge cards rather than on spacer elements —
+   see `.winsFirstCard` for why. */
+.fckupsFirstCard {
+  margin-inline-start: var(--fckups-gutter);
+}
+.fckupsLastCard {
+  margin-inline-end: var(--fckups-gutter);
+}
+
 .fckupsCard {
   /* My F*ckUp(s) card width — was `SLIDER_ITEM_BASE`'s shared `w-[280px]` + a `lg:w-[640px]`
      Tailwind override; moved to its own dedicated class (can't edit `SLIDER_ITEM_BASE` itself,
-     shared with Reel Life) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
-     explicit request) can be added reliably — same reasoning as `.reviewCard`/`.winCard`/
-     `.waySlide` above. */
+     shared with Reel Life) so a ≤600px mobile tier can be added reliably — same reasoning as
+     `.reviewCard`/`.winCard`/`.waySlide` above.
+     Both non-mobile tiers are flat pixel values, so the track going full-width (2026-08-06) left
+     them untouched — unlike `.winCard`, whose percentage-based tiers all had to be rewritten. */
   width: 280px;
 }
 @media (min-width: 1024px) {
@@ -283,8 +368,13 @@
   }
 }
 @media (max-width: 600px) {
+  /* One full card plus a sliver of the next (explicit request, 2026-08-06): a fixed 319px rather
+     than the previous `90%`. A percentage would now be read off the WINDOW (the track is no longer
+     the padded column), and it couldn't promise a specific peek across phone sizes anyway.
+     `max-width` keeps the gutters intact on very narrow screens where 319px wouldn't fit. */
   .fckupsCard {
-    width: 90%;
+    width: 319px;
+    max-width: calc(100% - 32px);
   }
 }
 
@@ -773,8 +863,49 @@
 }
 @media (max-width: 600px) {
   .reviewCard {
-    width: 100%;
+    /* Minus BOTH gutters, not `100%`. The track is bled out to the full screen width and the row
+       is then inset by one gutter, so a `100%`-wide card started at 16px and ran 16px past the
+       right edge of the screen. Subtracting the pair keeps one gutter on each side, matching
+       where the section heading sits. */
+    width: calc(100% - 32px);
   }
+}
+
+/* REVIEWS track. Full-width (its wrapper carries no `max-w`/padding — see the JSX), so cards are
+   clipped by the WINDOW, not by a 1440px column. `--reviews-gutter` is the distance from the
+   window edge to the content grid, i.e. where the section heading starts — identical arithmetic to
+   `.winsTrack`'s own gutter, see there for the full writeup.
+
+   This replaced a pair of zero-height gutter SPACERS on 2026-08-06. The spacers positioned the row
+   correctly but carried their own snap points, one gutter away from the card grid, so the snap
+   positions were unevenly spaced: a press meant to advance one card travelled a card-pitch-plus-a-
+   gutter (506px against a 436px pitch) and left middle cards flush against the window edge. With
+   the gutter supplied by `scroll-padding` plus edge-card margins instead, every stop is exactly
+   one pitch from the next and every card parks on the grid — the same setup the other three
+   full-bleed sections use. */
+.reviewsTrack {
+  --reviews-gutter: 16px;
+
+  scroll-padding-inline-start: var(--reviews-gutter);
+}
+@media (min-width: 640px) {
+  .reviewsTrack {
+    --reviews-gutter: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .reviewsTrack {
+    --reviews-gutter: max(70px, calc((100% - 1440px) / 2 + 70px));
+  }
+}
+
+/* The row's own inset to the content grid, on the two edge cards rather than on spacer elements —
+   see `.winsFirstCard` for why. */
+.reviewsFirstCard {
+  margin-inline-start: var(--reviews-gutter);
+}
+.reviewsLastCard {
+  margin-inline-end: var(--reviews-gutter);
 }
 
 .reviewQuote {
@@ -859,13 +990,17 @@
      size/gradient this rule borrowed before (that relied on the caller's `text-l` Tailwind class,
      32px). Same "per-section custom gradient override" precedent as `.reviewsHeading`/
      `.ctaHeading` above — a dedicated 2-stop gradient, not `--gradient-primary`.
-     Mobile/tablet pass: font-size is now fluid (`clamp()`) rather than a flat 72px, reaching
-     exactly 32px at a 375px viewport per explicit request — anchored the same way as
-     `.gradientHeading`'s own clamp below (375px low reference, 1440px — this page's own grid
-     cap — high reference). Gradient stops also updated to the newly-supplied values. */
+     Mobile/tablet pass: font-size is fluid (`clamp()`) rather than flat, reaching exactly 32px
+     at a 375px viewport per explicit request — anchored the same way as `.gradientHeading`'s
+     own clamp below (375px low reference, 1440px — this page's own grid cap — high reference).
+     Gradient stops also updated to the newly-supplied values.
+     2026-08-05: the desktop cap dropped from 72px to 48px (product request). Only the upper
+     anchor moved — 32px at 375px is unchanged — so the slope was recomputed rather than
+     nudged: (48-32)/(1440-375) = 1.5023vw, intercept 32 - 1.5023vw x 375px = 26.366px
+     = 1.6479rem. Verified: 32px at 375px, 48px at 1440px. */
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2rem, 1.1197rem + 3.756vw, 4.5rem);
+  font-size: clamp(2rem, 1.6479rem + 1.5023vw, 3rem);
   line-height: 90%;
   background: linear-gradient(95.47deg, #fff 6.47%, #87bce6 99.06%);
   background-clip: text;
@@ -880,15 +1015,61 @@
   font-size: clamp(1.5rem, 1.1429rem + 0.952vw, 2rem);
 }
 
+/* My Way carousel area — the `relative` wrapper holding BOTH the shared dashed rule and the
+   track, which is why `--way-gutter` is declared here rather than on the track: the rule is a
+   sibling of the track, not a descendant, and needs the same number to start in the right place.
+
+   `--way-gutter` is the distance from the window edge to the content grid, i.e. where the section
+   heading starts. Up to 1440 that is the page padding; above it the 1440-wide column stops growing
+   and centres, so the gutter is 70px plus half the leftover width. Every consumer resolves the
+   `100%` term against the full window: the dashed rule against this positioned wrapper, the
+   track's scroll-padding against its scrollport, the edge slides against the track's content box.
+   Identical to `.winsTrack`'s own gutter — see there for the longer writeup. */
+.wayCarousel {
+  --way-gutter: 16px;
+}
+@media (min-width: 640px) {
+  .wayCarousel {
+    --way-gutter: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .wayCarousel {
+    --way-gutter: max(70px, calc((100% - 1440px) / 2 + 70px));
+  }
+}
+
+/* Offsets the snapport so a snapped slide parks ON the content grid instead of flush against the
+   bled window edge. Shifts the snap position only, not the layout, so the first slide still snaps
+   at `scrollLeft: 0` and the prev arrow reads as disabled at rest. */
+.wayTrack {
+  scroll-padding-inline-start: var(--way-gutter);
+}
+
+/* The row's own inset to the grid, on the edge slides rather than on spacer elements — this
+   track's 20px `gap-5` is wider than the 16px mobile gutter, so a spacer would need a negative
+   width. See `.winsFirstCard` for the full reasoning. */
+.wayFirstSlide {
+  margin-inline-start: var(--way-gutter);
+}
+.wayLastSlide {
+  margin-inline-end: var(--way-gutter);
+}
+
 .waySlide {
-  /* Width moved here from a Tailwind `w-[420px]` so a ≤600px mobile tier (1 full slide + a 20%
-     peek of the next, corrected from an earlier 15% — explicit request) can be added — same
+  /* Width moved here from a Tailwind `w-[420px]` so a ≤600px mobile tier can be added — same
      reasoning as `.reviewCard`/`.winCard` above. */
   width: 420px;
 }
 @media (max-width: 600px) {
   .waySlide {
-    width: 80%;
+    /* Capped at 276px on phones (explicit request, 2026-08-06), replacing the previous `80%`.
+       A fixed number is what makes the peek of the next stage predictable instead of a fraction
+       of whatever phone it lands on. `max-width` keeps the gutters intact on the narrow end:
+       below a ~308px viewport the cap is unreachable and the slide shrinks with the screen rather
+       than pushing past it. */
+    width: 276px;
+    max-width: calc(100% - 32px);
   }
 }
 
@@ -950,16 +1131,64 @@
    start-marker circle (7×7px, `#747474` — explicit spec, deliberately NOT the same white
    `.wayConnector::before` dot used for the vertical connector, a separate marker) is this rule's
    own `::before`, centered on the line's left edge so the dashes visually run out of it. */
-.wayLongLine {
+/* The step-badge/title row. Only needs to be a positioning context for the dashed segment above,
+   which is what pins that segment a fixed distance above THIS row's text at every breakpoint. */
+.wayStepRow {
   position: relative;
-  left: -7px;
+}
+
+/* One slide's piece of the dashed timeline (2026-08-06: back to per-slide, by explicit request —
+   the previous single overlay sat outside the scroller and so stayed still while the stages moved
+   under it, which read as broken).
+
+   Continuity across slides: every slide is the same width and every track gap is the same 20px,
+   so a segment of `slide + gap` in each slide tiles the row end-to-end. Equal-length segments also
+   put the browser's dash pattern in the same phase in each one, so the seams don't show.
+
+   `top: -32px` is measured from the row's own top edge, i.e. the rule sits exactly 32px above the
+   slide's text — the point of anchoring it here rather than at a hand-tuned offset from the
+   carousel's top, which had to be re-guessed per breakpoint (`top-[99px]`/`md:top-[161px]`) as the
+   year's fluid font-size and the connector's height changed what was above it. */
+.wayLongLine {
+  position: absolute;
+  top: -32px;
+  left: 0;
+  /* `+ 20px` bridges the track's own `gap-5` to the next slide's segment. */
+  width: calc(100% + 20px);
   height: 0;
   border-top: 1px dashed var(--color-border);
 }
-.wayLongLine::before {
+/* First slide only: reaches 7px further left, the same lead-in the single overlay had, and carries
+   the timeline's one start-marker dot (7×7px, `#747474` — deliberately NOT the white
+   `.wayConnector::before` dot, a separate marker). Repeating the dot on every segment would read
+   as a bullet per stage, which it isn't. */
+.wayLongLineStart {
+  left: -7px;
+  width: calc(100% + 27px);
+}
+.wayLongLineStart::before {
   content: '';
   position: absolute;
   left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #747474;
+}
+/* Last slide: no gap to bridge, so the line stops at the stage it belongs to instead of running
+   on into the trailing gutter (which would also push the track's scrollable width out by 20px).
+   Carries the closing marker dot — the mirror of `.wayLongLineStart`'s, same 7×7px `#747474`,
+   centered on the line's right end so the dashes visually run into it. `::after` rather than
+   `::before` so a single-stage timeline (both classes on the one segment) still gets both dots
+   instead of the two rules fighting over one pseudo-element. */
+.wayLongLineEnd {
+  width: 100%;
+}
+.wayLongLineEnd::after {
+  content: '';
+  position: absolute;
+  right: -3.5px;
   top: -3.5px;
   width: 7px;
   height: 7px;
@@ -991,6 +1220,55 @@
    `md:grid-cols-3` — see `CardSlider.tsx`; card width is now a fixed 640px at `lg:` (was
    `md:w-auto` grid-filling). */
 
+/* My WINS track. Full-width (its wrapper carries no `max-w`/padding — see the JSX), so cards are
+   clipped by the WINDOW rather than by a 1440px column.
+
+   `--wins-gutter` is the distance from the window edge to the content grid, i.e. where the section
+   heading starts. Up to 1440 that is just the page padding; above it the 1440-wide column stops
+   growing and centres, so the gutter becomes 70px plus half the leftover width. `100%` resolves
+   against the scrollport (and, for the spacer below, against this track's content box — the same
+   number), which makes `(100% - 1440px) / 2` exactly that leftover half. `max()` floors it at 70px
+   for everything below 1440, where the expression would go negative.
+
+   `scroll-padding-inline-start` is what lets every card carry a plain `snap-start` and still park
+   ON the grid instead of flush against the bled window edge — it shifts the snapport, not the
+   layout, so the first card's snap position is still `scrollLeft: 0` and the prev arrow correctly
+   reads as disabled at rest. (Real `padding` here would leave `scrollLeft` resting off-zero, which
+   is why Reviews uses spacer-only snap points instead — this section can do the simpler thing.) */
+.winsTrack {
+  --wins-gutter: 16px;
+
+  scroll-padding-inline-start: var(--wins-gutter);
+}
+@media (min-width: 640px) {
+  .winsTrack {
+    --wins-gutter: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .winsTrack {
+    --wins-gutter: max(70px, calc((100% - 1440px) / 2 + 70px));
+  }
+}
+
+/* The row's own inset to the content grid, put on the two EDGE CARDS rather than on spacer
+   elements (which is how Reviews does it — see `.reviewsGutterSpacer`).
+   Spacers don't work here: this track's `gap-5` (20px) is WIDER than the 16px mobile gutter, so
+   the spacer would need a negative width. Taking the 4px deficit as a negative end margin fixes
+   the left edge but not the right — a negative margin on the LAST flex item doesn't shrink the
+   scrollable overflow region, so the row still ended 20px from the edge instead of 16px.
+   A margin on the edge card itself has neither problem: nothing precedes the first card, so no
+   gap is added to it, and a POSITIVE end margin on the last flex item does extend scrollable
+   overflow (the same well-known behaviour the old `mr-5` loop hack here relied on).
+   `--wins-gutter` is inherited from `.winsTrack`; its `100%` term resolves against this card's
+   containing block — the track's content box — i.e. the same window width the track measured. */
+.winsFirstCard {
+  margin-inline-start: var(--wins-gutter);
+}
+.winsLastCard {
+  margin-inline-end: var(--wins-gutter);
+}
+
 .winCard {
   position: relative;
   overflow: hidden;
@@ -998,19 +1276,38 @@
   background-color: #000000;
   color: var(--color-foreground);
   /* Width moved here from the Tailwind classes on the card div (`w-[calc((100%-20px)/2)]
-     min-[1450px]:w-[640px]`) so a ≤600px mobile tier (1 full slide + a 10% peek of the next,
-     explicit request) can be added without depending on generated-utility source order to win
-     against the other two width rules — same reasoning as `.reviewCard` above. */
-  width: calc((100% - 20px) / 2);
+     min-[1450px]:w-[640px]`) so a ≤600px mobile tier can be added without depending on
+     generated-utility source order to win against the other width rules — same reasoning as
+     `.reviewCard` above.
+
+     REWRITTEN 2026-08-06, when the track went full-width: `100%` here is the TRACK, and the track
+     is now the whole window rather than the padded 1440px column, so the old plain
+     `(100% - 20px) / 2` would have sized a card off the window and blown every card up (702px
+     instead of 632px at a 1425px viewport). Each tier below therefore subtracts its own gutters
+     explicitly — window − both gutters − the 20px `gap-5` between the two cards, halved — which
+     reproduces the previous numbers exactly at every width (verified at 620/800/1200/1425/1500).
+     The `min-width: 1450px` tier is gone, folded into the `min(100%, 1440px)` below: the column
+     stops growing at 1440, so that expression IS the old flat 640px from 1440 up, without a
+     second breakpoint. */
+  width: calc((100% - 32px - 20px) / 2);
 }
-@media (min-width: 1450px) {
+@media (min-width: 640px) {
   .winCard {
-    width: 640px;
+    width: calc((100% - 48px - 20px) / 2);
+  }
+}
+@media (min-width: 1024px) {
+  .winCard {
+    width: calc((min(100%, 1440px) - 140px - 20px) / 2);
   }
 }
 @media (max-width: 600px) {
+  /* One full slide plus a visible sliver of the next (explicit request, 2026-08-06): a fixed
+     319px rather than the previous `90%`, so on a 375px phone the card runs 16→335 and the next
+     one starts at 355 — a 20px peek that reads as "there is more to swipe". A percentage can't
+     promise a specific peek width across phone sizes; this can. */
   .winCard {
-    width: 90%;
+    width: 319px;
   }
 }
 

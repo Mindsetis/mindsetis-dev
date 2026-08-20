@@ -18,7 +18,8 @@ import { z } from 'zod';
 import { INTEREST_VALUES } from '@/lib/constants/interests';
 import { LANGUAGE_VALUES } from '@/lib/constants/languages';
 
-import { usernameSchema } from './common';
+import { isLatinOnly, LATIN_ONLY_MESSAGE, usernameSchema } from './common';
+import { vmsg } from './messages';
 
 export const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // matches the `avatars` bucket's file_size_limit
 export const ACCEPTED_AVATAR_MIME_TYPES = ['image/png', 'image/jpeg'] as const;
@@ -51,7 +52,7 @@ function isHttpUrl(value: string): boolean {
 const optionalUrlSchema = z
   .union([
     z.literal(''),
-    z.string().trim().url('Enter a valid URL.').refine(isHttpUrl, 'Enter a valid URL.'),
+    z.string().trim().url(vmsg('urlInvalid')).refine(isHttpUrl, vmsg('urlInvalid')),
   ])
   .optional();
 
@@ -68,13 +69,16 @@ const optionalUrlSchema = z
  * a saved `avatar_url` must not force re-picking a file).
  */
 const avatarFileSchema = z
-  .instanceof(File, { message: 'Profile photo is required.' })
-  .refine((file) => file.size > 0, 'Profile photo is required.')
+  .instanceof(File, { message: vmsg('avatarRequired') })
+  .refine((file) => file.size > 0, vmsg('avatarRequired'))
   .refine(
     (file) => (ACCEPTED_AVATAR_MIME_TYPES as readonly string[]).includes(file.type),
-    'Only PNG or JPEG images are allowed.',
+    vmsg('imageType'),
   )
-  .refine((file) => file.size <= MAX_AVATAR_SIZE_BYTES, 'Image must be at most 5 MB.')
+  .refine(
+    (file) => file.size <= MAX_AVATAR_SIZE_BYTES,
+    vmsg('imageMax', { max: MAX_AVATAR_SIZE_BYTES / (1024 * 1024) }),
+  )
   .optional();
 
 export type MemberProfileSchemaOptions = {
@@ -96,50 +100,90 @@ export type MemberProfileSchemaOptions = {
  * against the real DB row inside the handler — the server must not trust a client-supplied
  * "I already have a photo" flag for something this cheap to just look up.
  */
+/**
+ * The step's own (non-social) fields, exported as a plain shape so the cabinet's Hero editor
+ * (`lib/validation/dashboard-profile.ts`) can build its schema from the SAME field definitions
+ * instead of restating them. Splitting these out is a pure refactor — `createMemberProfileSchema`
+ * below composes exactly the object it always did, so the wizard's validation is unchanged.
+ */
+export const memberProfileCoreFields = {
+  username: usernameSchema,
+  // Location is submitted as two identifiers, never as display text. The Server Action
+  // re-derives the country/city/region names and the IANA timezone from `geo_countries`
+  // and `geo_cities` — a client-supplied "Kyiv" string is exactly the free-text mess the
+  // code-backed picker exists to eliminate, and trusting it would let a caller write any
+  // label they like onto a profile that the catalog then filters on.
+  countryCode: z
+    .string()
+    .trim()
+    .length(2, vmsg('countryRequired'))
+    .regex(/^[A-Za-z]{2}$/, vmsg('countryRequired')),
+  // A digit string rather than `z.coerce.number()`: coercion makes the field's inferred
+  // *input* type `unknown`, which breaks the RHF resolver typing this file's header
+  // documents. The Server Action converts it once, after validation.
+  cityGeonameId: z
+    .string()
+    .trim()
+    .regex(/^\d{1,12}$/, vmsg('cityRequired')),
+  languages: z
+    .array(z.enum(LANGUAGE_VALUES))
+    .min(1, vmsg('languagesRequired'))
+    .max(LANGUAGE_VALUES.length),
+  bio: z
+    .string()
+    .trim()
+    .min(1, vmsg('bioRequired'))
+    .max(MAX_BIO_LENGTH, vmsg('bioMax', { max: MAX_BIO_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+  // `.refine` before `.optional()`, not after: applied to the optional schema the predicate
+  // would receive `undefined` for an untouched field and throw inside the regex test.
+  about: z
+    .string()
+    .max(MAX_ABOUT_LENGTH, vmsg('aboutMax', { max: MAX_ABOUT_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE)
+    .optional(),
+  avatar: avatarFileSchema,
+  // Not marked `*` on the Figma frame — 0 to `MAX_INTERESTS` selections are allowed.
+  interestIds: z
+    .array(z.enum(INTEREST_VALUES))
+    .max(MAX_INTERESTS, vmsg('interestsMax', { max: MAX_INTERESTS })),
+} as const;
+
+/**
+ * The social-channel fields, likewise exported so the cabinet's "Social links" section — which
+ * edits exactly these and nothing else — reuses them rather than redefining the URL rules.
+ */
+export const socialLinkFields = {
+  // The one mandatory channel is now the COMPANY WEBSITE, not LinkedIn (2026-08-05
+  // product decision): a company site is the stronger signal for a member-first
+  // community, and demanding LinkedIn excluded people who simply do not use it.
+  website: z
+    .string()
+    .trim()
+    .min(1, vmsg('websiteRequired'))
+    .url(vmsg('urlInvalid'))
+    .refine(isHttpUrl, vmsg('urlInvalid')),
+  linkedin: optionalUrlSchema,
+  instagram: optionalUrlSchema,
+  facebook: optionalUrlSchema,
+  tiktok: optionalUrlSchema,
+  threads: optionalUrlSchema,
+  youtube: optionalUrlSchema,
+} as const;
+
 export function createMemberProfileSchema({
   avatarRequired = true,
 }: MemberProfileSchemaOptions = {}) {
   return z
     .object({
-      username: usernameSchema,
-      country: z.string().trim().min(1, 'Country is required.').max(120, 'Country is too long.'),
-      city: z.string().trim().min(1, 'City is required.').max(120, 'City is too long.'),
-      languages: z
-        .array(z.enum(LANGUAGE_VALUES))
-        .min(1, 'Select at least one language.')
-        .max(LANGUAGE_VALUES.length),
-      bio: z
-        .string()
-        .trim()
-        .min(1, 'Bio is required.')
-        .max(MAX_BIO_LENGTH, `Bio must be at most ${MAX_BIO_LENGTH} characters.`),
-      about: z
-        .string()
-        .max(MAX_ABOUT_LENGTH, `About must be at most ${MAX_ABOUT_LENGTH} characters.`)
-        .optional(),
-      avatar: avatarFileSchema,
-      // Not marked `*` on the Figma frame — 0 to `MAX_INTERESTS` selections are allowed.
-      interestIds: z
-        .array(z.enum(INTEREST_VALUES))
-        .max(MAX_INTERESTS, `You can select up to ${MAX_INTERESTS} interests.`),
-      linkedin: z
-        .string()
-        .trim()
-        .min(1, 'Linkedin URL is required.')
-        .url('Enter a valid URL.')
-        .refine(isHttpUrl, 'Enter a valid URL.'),
-      instagram: optionalUrlSchema,
-      facebook: optionalUrlSchema,
-      tiktok: optionalUrlSchema,
-      threads: optionalUrlSchema,
-      youtube: optionalUrlSchema,
-      website: optionalUrlSchema,
+      ...memberProfileCoreFields,
+      ...socialLinkFields,
     })
     .superRefine((data, ctx) => {
       if (avatarRequired && !data.avatar) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Profile photo is required.',
+          message: vmsg('avatarRequired'),
           path: ['avatar'],
         });
       }
@@ -154,12 +198,14 @@ export type MemberProfileInput = z.infer<typeof memberProfileSchema>;
 
 /** Keys of the optional social-link fields, in the Figma frame's display order. */
 export const OPTIONAL_SOCIAL_FIELDS = [
+  // LinkedIn heads the optional list because the form renders the required Company Website
+  // above it — so the on-screen order stays Company Website, LinkedIn, then the rest.
+  'linkedin',
   'instagram',
   'facebook',
   'tiktok',
   'threads',
   'youtube',
-  'website',
 ] as const;
 
 /** Coerce a FormData-decoded value (string | string[] | File | undefined) into an array. */

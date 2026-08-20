@@ -101,6 +101,21 @@ export interface CardSliderProps {
    * breakpoint, since the runtime `scrollWidth`/`clientWidth` measurement is already
    * breakpoint-correct by construction. */
   initialScrollAlign?: 'start' | 'center';
+  /**
+   * How far one prev/next press travels.
+   *
+   * `'page'` (default, unchanged for Superpower(s) and REEL LIFE) scrolls 90% of the visible
+   * width, so a wide desktop row advances by however many cards happen to fit in that distance —
+   * usually two or three.
+   *
+   * `'item'` advances to the NEIGHBOURING snap position instead: exactly one card per press at
+   * every width (2026-08-06 request, "щоб скролились по 1 слайду і на десктопі теж"). Opted into
+   * by the four full-bleed sections — Reviews, My WINS, My Way, My F*ckUp(s) — rather than made
+   * the default, so the two sections that were not part of that pass keep the paging feel they
+   * have today. Has no effect when `snap` is `false`: without snap positions there is nothing to
+   * step between, so those callers fall back to the proportional scroll.
+   */
+  scrollStep?: 'page' | 'item';
 }
 
 /**
@@ -108,8 +123,9 @@ export interface CardSliderProps {
  * buttons, no carousel library (none exists in this project's dependencies; Figma's own
  * slider — My F*ckUp(s) `552:4700`"Frame 453", REEL LIFE `552:4610` — is reproduced with plain
  * browser primitives instead of adding `embla-carousel-react`/`swiper`/etc. directly here).
- * Reviews and (as of this pass) My WINS use the shared `EmblaCarousel.tsx` (embla-based) instead,
- * since they needed genuine loop/centered-slide behavior this component doesn't implement.
+ * Reviews and My WINS moved here from `EmblaCarousel.tsx` on 2026-08-06 — see that file's doc
+ * comment for why embla can't drive a row of fixed-width cards that bleeds to the window edge.
+ * My Way is the one section still on embla, for its seamless infinite loop.
  *
  * My F*ckUp(s)' and REEL LIFE's Figma card rows are both wider than their content column (My
  * F*ckUp(s) 1964px across 3×641px cards) — i.e. genuinely overflowing carousels, not grids — each
@@ -133,6 +149,7 @@ export function CardSlider({
   arrows,
   snap = true,
   initialScrollAlign = 'start',
+  scrollStep = 'page',
 }: CardSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -160,18 +177,66 @@ export function CardSlider({
 
     updateScrollState();
     track.addEventListener('scroll', updateScrollState, { passive: true });
-    window.addEventListener('resize', updateScrollState);
+
+    // A `ResizeObserver` on the track rather than a `window` resize listener: the track's own
+    // width can change without the window doing anything (a font finishing loading, an image
+    // settling, a sibling section reflowing), and each of those flips whether the content
+    // actually overflows. Window resize catches only the narrowest of those cases.
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(track);
+
     return () => {
       track.removeEventListener('scroll', updateScrollState);
-      window.removeEventListener('resize', updateScrollState);
+      resizeObserver.disconnect();
     };
   }, [children]);
+
+  /**
+   * Nothing to scroll in either direction means the content already fits — so the arrow row is
+   * removed rather than left permanently disabled.
+   *
+   * Deliberately derived from live scroll measurements, not from a child count: whether three
+   * cards overflow depends entirely on the viewport, and the `ResizeObserver` above re-runs
+   * this on every width change, so the arrows reappear on a narrow screen without a single
+   * breakpoint being hardcoded.
+   */
+  const hasScrollableContent = canScrollPrev || canScrollNext;
 
   function scrollByPage(direction: -1 | 1) {
     const track = trackRef.current;
     if (!track) return;
 
-    track.scrollBy({ left: direction * track.clientWidth * 0.9, behavior: 'smooth' });
+    const scrollProportionally = () =>
+      track.scrollBy({ left: direction * track.clientWidth * 0.9, behavior: 'smooth' });
+
+    // Without snapping there are no positions to step between, so `'item'` has nothing to aim at.
+    if (scrollStep !== 'item' || !snap) return scrollProportionally();
+
+    // Move by exactly one card PITCH (card width + the track's gap) and let the browser's own
+    // snapping settle the sub-pixel remainder. Every caller of `scrollStep: 'item'` lays out
+    // uniformly sized cards, so one pitch is always precisely the distance between two adjacent
+    // snap positions — which means the destination lands ON the next one rather than short of it.
+    //
+    // Deliberately NOT computed from absolute snap positions: those need the track's
+    // `scroll-padding`, and `getComputedStyle().scrollPaddingLeft` hands back the UNRESOLVED
+    // declaration (these tracks use `max(70px, calc((100% - 1440px) / 2 + 70px))`, which only
+    // resolves at used-value time), so parsing it yields NaN. Pitch is a pure layout measurement
+    // and sidesteps the whole problem — and because it is a delta, any constant padding cancels
+    // out of it anyway.
+    //
+    // Gutter spacers are skipped. They are real flex items but not cards, so measuring from one
+    // gives a gutter-sized "pitch" instead of a card-sized one. `aria-hidden` is the reliable
+    // test, not width: Reviews' spacers are zero-width on a phone but 54px from `lg` up, which is
+    // exactly where a width-based filter would quietly let them through.
+    const cards = Array.from(track.children).filter(
+      (child) => child.getAttribute('aria-hidden') !== 'true',
+    );
+    if (cards.length < 2) return scrollProportionally();
+
+    const pitch = (cards[1] as HTMLElement).offsetLeft - (cards[0] as HTMLElement).offsetLeft;
+    if (!(pitch > 0)) return scrollProportionally();
+
+    track.scrollBy({ left: direction * pitch, behavior: 'smooth' });
   }
 
   return (
@@ -192,6 +257,7 @@ export function CardSlider({
           'flex items-center justify-center',
           arrowGapClassName ?? 'gap-3',
           arrowRowClassName,
+          !hasScrollableContent && 'hidden',
         )}
       >
         <button

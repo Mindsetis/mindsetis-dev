@@ -7,6 +7,7 @@ import { getSessionContext } from '@/lib/auth/guards';
 import type { InterestValue } from '@/lib/constants/interests';
 import { INTEREST_VALUES } from '@/lib/constants/interests';
 import type { LanguageValue } from '@/lib/constants/languages';
+import { listCountries } from '@/lib/geo/countries';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -63,9 +64,31 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   // `MemberProfileForm`'s `initial*` props).
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('country, city, bio, about, languages, interests, avatar_url, socials')
+    .select(
+      'country, city, country_code, region_code, region_name, city_geoname_id, timezone, bio, about, languages, interests, avatar_url, socials',
+    )
     .eq('id', session.user.id)
     .maybeSingle();
+
+  // The country list is small, stable reference data — one server query here beats a client
+  // round-trip on mount. Cities stay a remote search (see `CityCombobox`).
+  const countries = await listCountries();
+
+  // Rebuild the saved city from the profile's own denormalized snapshot + codes, so the
+  // trigger renders the previously-chosen city immediately instead of blanking until the
+  // user searches again. Requires the id — a legacy free-text-only row degrades to "unset",
+  // which is correct: it was never a real GeoNames selection.
+  const initialCity =
+    profileData?.city_geoname_id && profileData.city && profileData.country_code
+      ? {
+          geonameId: profileData.city_geoname_id,
+          name: profileData.city,
+          regionCode: profileData.region_code,
+          regionName: profileData.region_name,
+          countryCode: profileData.country_code,
+          timezone: profileData.timezone,
+        }
+      : null;
   const socials = (profileData?.socials ?? {}) as SocialsJson;
   // Guard against a slug that's no longer in the code-defined catalog (e.g. a tag renamed
   // or removed from `lib/constants/interests.ts` after this profile saved it) — an unknown
@@ -94,8 +117,9 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
 
         <MemberProfileForm
           initialUsername={session.profile.username}
-          initialCountry={profileData?.country ?? undefined}
-          initialCity={profileData?.city ?? undefined}
+          initialCountryCode={profileData?.country_code ?? undefined}
+          initialCity={initialCity}
+          countries={countries}
           initialLanguages={(profileData?.languages ?? undefined) as LanguageValue[] | undefined}
           initialBio={profileData?.bio ?? undefined}
           initialAbout={profileData?.about ?? undefined}

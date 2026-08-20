@@ -6,6 +6,7 @@ import { MindsetterProfileView } from '@/components/profile/MindsetterProfileVie
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
+import type { Expertise } from '@/lib/validation/mindsetter';
 
 type MindsetterProfilePageProps = {
   params: Promise<{ locale: string; username: string }>;
@@ -31,9 +32,16 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  * AND `mindsetter_profiles.is_public = true` AND `profiles.is_blocked = false` (the "published
  * after verification" public branch — `is_public` is staff-only-settable, guard-triggered in
  * `20260701100100_profiles.sql`, so this implicitly requires staff verification already), OR
- * the viewer is the profile owner (any state — sees the `preview` variant, same UX precedent as
- * `/dashboard/profile`), OR the viewer is staff. Everyone else — or a nonexistent username, or a
- * profile that isn't (yet) a Mindsetter at all — resolves to `null` → `notFound()`.
+ * the viewer is the profile owner (any state — sees the `preview` variant, the same viewer-derived
+ * banner `/members/[username]` now resolves too), OR the viewer is staff. Everyone else — or a
+ * nonexistent username, or a profile that isn't (yet) a Mindsetter at all — resolves to `null` →
+ * `notFound()`.
+ *
+ * Since the 2026-08-10 "one profile page per account" pass this is the CANONICAL page for every
+ * `account_type = 'mindsetter'` account: `/members/[username]` redirects here rather than
+ * rendering a second, Member-shaped page for the same person (see that route's doc comment for
+ * the one deliberate exception — a finished-but-unpublished Mindsetter, invisible here to
+ * non-owners, still falls back to the Member view there).
  *
  * `mindsetter_profiles`/`session_settings` are fetched via the regular request-scoped client
  * (RLS already encodes this exact gate for them — `mindsetter_profiles_read` /
@@ -45,7 +53,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, industry, country, city, languages, interests, socials, verification_status, account_type, is_blocked',
+      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, industry, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
     )
     .eq('username', username)
     .maybeSingle();
@@ -62,7 +70,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
     supabase
       .from('mindsetter_profiles')
       .select(
-        'roles, superpowers, promo_video, numbers, help_with, wins, my_way, fckups, philosophy, reel_life, video_blog, is_public',
+        'roles, superpowers, promo_video, numbers, help_with, wins, my_way, fckups, philosophy, philosophy_author, reel_life, video_blog, is_public',
       )
       .eq('id', profile.id)
       .maybeSingle(),
@@ -224,6 +232,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         industry: profile.industry,
         country: profile.country,
         city: profile.city,
+        regionName: profile.region_name,
         languages: profile.languages,
         interests: profile.interests,
         socials: profile.socials,
@@ -237,11 +246,19 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         myWay,
         fckups,
         philosophy: mindsetterProfile?.philosophy ?? null,
+        philosophyAuthor: mindsetterProfile?.philosophy_author ?? null,
         videoBlog,
         sessionType: sessionSettings?.session_type ?? null,
         priceCents: sessionSettings?.price_cents ?? null,
         currency: sessionSettings?.currency ?? null,
-        topics: Array.isArray(sessionSettings?.topics) ? sessionSettings.topics : [],
+        // "Topics I'm expert" pills come from the HELP step's card titles, not from
+        // `session_settings.topics` (2026-08-05 product decision). Those two diverged in
+        // meaning: session topics are what a booker can pick when scheduling, and include
+        // ad-hoc "+ Add custom" entries that were never meant to describe the Mindsetter's
+        // expertise publicly. The Help cards are the curated list, so the profile shows those.
+        topics: helpWith
+          .map((item) => (item as Expertise).title)
+          .filter((title): title is string => Boolean(title?.trim())),
         reelLifePhotoUrls,
         promoVideoUrl,
         videoBlogUrl,
