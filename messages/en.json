@@ -1,7 +1,17 @@
 {
   "nav": {
+    "accountMenu": {
+      "closeSheet": "Close menu",
+      "editProfile": "Edit Profile",
+      "logOut": "Log out",
+      "settings": "Settings",
+      "sheetTitle": "Account menu",
+      "signingOut": "Signing out…",
+      "trigger": "Account menu for {name}",
+      "viewPublicProfile": "View public profile"
+    },
     "brand": "Mindsetis",
-    "join": "Join",
+    "join": "Apply to Join",
     "login": "Log in",
     "signOut": "Sign out",
     "signingOut": "Signing out…"
@@ -52,10 +62,11 @@
       "continue": "Continue",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
+      "legal": "By signing up, you accept our <terms>Terms</terms> & <privacy>Privacy Policy</privacy>.",
       "or": "or",
       "seeFeatures": "See platform features",
-      "subtitle": "This platform is for those who do — who change the world through their actions and minds. They are Mindsetters.",
-      "title": "Not everyone builds something from nothing.",
+      "subtitle": "Build your stand-out profile, run 1:1 sessions & join P2P events for real connections",
+      "title": "Join a curated network of entrepreneurs, founders, and CEOs",
       "tourLabel": "Take a 2-min platform tour",
       "watchLabel": "Watch to understand why"
     }
@@ -87,9 +98,10 @@
     }
   },
   "notFound": {
-    "title": "Page not found",
-    "description": "The page you're looking for doesn't exist or has been moved.",
-    "back": "Back to home"
+    "back": "Go to homepage",
+    "description": "The link might be incorrect, or this feature hasn't been launched yet. Don't worry, nothing is broken on your side.",
+    "logInOrSignUp": "Log in / Sign up",
+    "title": "Page not found"
   },
   "error": {
     "title": "Something went wrong",
@@ -114,6 +126,14 @@
       },
       "title": "What do you build?"
     },
+    "checkEmail": {
+      "hint": "Nothing arrived? Check spam, or request a new link.",
+      "resend": "Resend link",
+      "resending": "Sending…",
+      "resent": "Reset link sent again",
+      "subtitle": "We sent a reset link to {email}. It is valid for 30 minutes.",
+      "title": "Check your email"
+    },
     "errors": {
       "invalidLink": "Your link is invalid or expired."
     },
@@ -126,8 +146,7 @@
       "backToLogin": "Back to log in",
       "submit": "Send reset link",
       "submitting": "Sending…",
-      "subtitle": "Enter your email and we'll send you a reset link.",
-      "successMessage": "If an account exists for that email, we've sent a password reset link.",
+      "subtitle": "Enter the email you signed up with and we will send you a link to set a new password.",
       "title": "Reset your password"
     },
     "memberProfile": {
@@ -142,11 +161,17 @@
       },
       "city": {
         "label": "City",
-        "placeholder": "New York"
+        "placeholder": "Select your city",
+        "searchPlaceholder": "Start typing your city…",
+        "empty": "No cities found.",
+        "loading": "Searching…",
+        "pickCountryFirst": "Choose a country first"
       },
       "country": {
         "label": "Country",
-        "placeholder": "USA"
+        "placeholder": "Select your country",
+        "searchPlaceholder": "Search countries…",
+        "empty": "No countries found."
       },
       "interests": {
         "all": "All",
@@ -165,7 +190,10 @@
         "hint": "Only PNG or JPEG",
         "label": "Profile photo",
         "replace": "Replace photo",
-        "upload": "Upload photo"
+        "requirements": "JPG or PNG · square · at least 800×800",
+        "upload": "Upload photo",
+        "uploadTitle": "Upload profile photo",
+        "uploaded": "uploaded"
       },
       "socials": {
         "facebook": "Facebook URL",
@@ -174,25 +202,30 @@
         "placeholder": "Link",
         "threads": "Threads URL",
         "tiktok": "Tik-tok URL",
-        "website": "Website URL",
+        "website": "Company Website URL",
         "youtube": "Youtube URL"
       },
       "title": "Set your identity"
     },
+    "passwordChanged": {
+      "submit": "Log in",
+      "subtitle": "You can now log in with your new password.",
+      "title": "Password changed"
+    },
     "resetPassword": {
-      "submit": "Update password",
-      "submitting": "Updating…",
-      "subtitle": "Choose a new password for your account.",
+      "newPassword": "New password",
+      "repeatPassword": "Repeat new password",
+      "submit": "Save new password",
+      "submitting": "Saving…",
+      "subtitle": "Choose a password you have not used on Mindsetis before.",
       "title": "Set a new password"
     },
     "signIn": {
-      "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?",
-      "resetSuccess": "Password updated. Please sign in.",
-      "signUpLink": "Sign up",
-      "submit": "Sign in",
-      "submitting": "Signing in…",
-      "subtitle": "Sign in to continue to Mindsetis Community.",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Not a member yet?",
+      "signUpLink": "Apply to join",
+      "submit": "Log in",
+      "submitting": "Logging in…",
       "title": "Welcome back"
     },
     "signUp": {
@@ -228,13 +261,35 @@
     },
     "welcome": {
       "ctas": {
+        "applyForMindsetter": "Apply for Mindsetter",
+        "continueAsMember": "Continue as Member",
         "findEvent": "Find Mindsetis event",
         "findMindsetter": "Find Mindseter for me",
-        "findMindsetterInfo": "Find out who a Mindsetter is",
         "inviteEvent": "Invite on Mindsetis event",
+        "learnMore": "Learn more",
         "seeProfile": "See how looks my profile page"
       },
-      "modal": {
+      "memberTitle": "<accent>Congratulations!</accent><br></br>You are now a member of the community.",
+      "mindsetterPitch": {
+        "features": {
+          "growth": {
+            "body": "Create impact and earn with the platform.",
+            "title": "Grow & Earn"
+          },
+          "sessions": {
+            "body": "Lead, host, and share your mindset.",
+            "title": "Host 1:1 Sessions & Events"
+          },
+          "website": {
+            "body": "Showcase your authentic founder story in a custom web page.",
+            "cta": "See example",
+            "title": "Personal Brand Website"
+          }
+        },
+        "heading": "If you have experience to share, apply as a Mindsetter to unlock:"
+      },
+      "title": "<accent>Congratulations!</accent><brDesktop></brDesktop> Your Member application<br></br>has been received.",
+      "whoIsMindsetter": {
         "becomeMindsetter": "Cool, I want to become a Mindsetter",
         "checklist": {
           "experience": "Ready to share real experience",
@@ -259,9 +314,9 @@
             "title": "Your own personal site"
           }
         },
-        "title": "Who is Mindsetter?"
-      },
-      "title": "Congratulations! You are now a member of the community."
+        "title": "Who is Mindsetter?",
+        "trigger": "What's the difference between Member and Mindsetter? 🧐"
+      }
     }
   },
   "mindsetterOnboarding": {
@@ -277,6 +332,7 @@
       "addRole": "Add role",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Character limit: {max} characters",
+      "editLinkTitle": "Edit link title",
       "linkPlaceholder": "Link",
       "linkPreviewLoading": "Loading preview…",
       "removeLink": "Remove link",
@@ -475,6 +531,8 @@
         "valuePlaceholder": "e.g. 3×"
       },
       "philosophy": {
+        "authorLabel": "Quote author",
+        "authorPlaceholder": "Leave empty if these are your own words",
         "cardTitle": "Quote",
         "quoteLabel": "Your quote",
         "quotePlaceholder": "Character limit: {max} characters",
@@ -497,16 +555,16 @@
         "youtubeLabel": "Youtube URL"
       },
       "reelLife": {
-        "activateHint": "Add at least 3 photos to activate this section.",
         "addPhoto": "Add Photo",
         "errors": {
           "invalidType": "Only PNG or JPEG images are allowed.",
-          "tooLarge": "Image must be at most 10 MB."
+          "tooLarge": "Image must be at most 5 MB."
         },
+        "recommendedHint": "Add at least {count} photos to show this section on your profile — fewer is fine, it just stays hidden for now.",
         "removePhoto": "Remove photo",
         "reorderHint": "Hold and drag to change order.",
         "title": "Reel Life",
-        "uploadHint": "PNG or JPEG · Max 10MB per<br></br>photo",
+        "uploadHint": "PNG or JPEG · Max 5MB per<br></br>photo",
         "uploadLabel": "Upload photo"
       },
       "videoBlog": {
@@ -545,7 +603,10 @@
         "inviteEvent": "Invite on Mindsetis event",
         "seeProfile": "See how looks my profile page"
       },
-      "title": "Congratulations! You are now a mindsetter of the community."
+      "title": "<accent>Congratulations!</accent> You are now a Mindsetter of the community.",
+      "video": {
+        "caption": "Click for watching"
+      }
     }
   },
   "profile": {
@@ -576,6 +637,7 @@
       "next": "Next",
       "prev": "Previous"
     },
+    "closeDialog": "Close",
     "ctaBanner1": {
       "heading": "Are you ready to get valuable expert advice right now?"
     },
@@ -585,6 +647,7 @@
     "editProfile": "Edit Profile",
     "favorite": "Add to favorites",
     "fckups": {
+      "dialogTitle": "MY F*CKUP",
       "eyebrow": "MY F*CKUP(S)",
       "heading": "The failures that built everything you see here"
     },
@@ -627,7 +690,7 @@
     },
     "reelLife": {
       "eyebrow": "REEL LIFE",
-      "heading": "My business, my life — in pictures"
+      "heading": "My business, my life —<br></br>in pictures"
     },
     "reviews": {
       "eyebrow": "REVIEWS",
@@ -664,19 +727,19 @@
       "readMore": "Read more",
       "verifiedMember": "Verified Member"
     },
-    "sessionPriceFree": "Session price: Free",
-    "sessionPricePaid": "Session price: {price}",
-    "shareProfile": "Share Profile",
-    "superpowers": {
-      "eyebrow": "SUPERPOWER(S)",
-      "heading": "What makes me different"
-    },
     "roles": {
       "collapse": "Collapse",
       "expand": "Expand",
       "eyebrow": "ROLES",
       "heading": "What I've built and who I am across ventures",
       "learnMore": "Click the link to learn more"
+    },
+    "sessionPriceFree": "Session price: Free",
+    "sessionPricePaid": "Session price: {price}",
+    "shareProfile": "Share Profile",
+    "superpowers": {
+      "eyebrow": "SUPERPOWER(S)",
+      "heading": "What makes me different"
     },
     "topics": {
       "eyebrow": "TOPICS I'M EXPERT",
@@ -726,6 +789,747 @@
       "greetingGeneric": "Hi there,",
       "heading": "Welcome to Mindsetis Community",
       "subject": "Welcome to Mindsetis Community"
+    }
+  },
+  "common": {
+    "comingSoon": "Coming soon",
+    "imageOptimize": {
+      "intro": "Too heavy? Paste this into your favourite AI and attach the photo:",
+      "prompt": "Compress this image so the file is under {maxSizeMb} MB. Keep it a PNG or JPEG, keep the original proportions, and keep it as sharp as you can — reduce the file size, not the visible quality. Send the result back as a downloadable file.",
+      "copy": "Copy prompt",
+      "copied": "Copied"
+    },
+    "scrollToTop": "TO TOP"
+  },
+  "dashboard": {
+    "header": {
+      "becomeMindsetter": "Become a Mindsetter",
+      "completenessLabel": "Profile completeness",
+      "edit": "Edit",
+      "verified": "Verified",
+      "viewPublicProfile": "View public profile"
+    },
+    "nav": {
+      "ariaLabel": "Cabinet",
+      "groups": {
+        "account": "Account",
+        "cabinet": "Cabinet",
+        "mindsetter": "Mindsetter"
+      },
+      "items": {
+        "bookings": "Bookings",
+        "earnings": "Earnings",
+        "myProfile": "My Profile",
+        "overview": "Overview",
+        "sessionsSetup": "Sessions Setup",
+        "settings": "Settings"
+      }
+    },
+    "profile": {
+      "allSections": "All sections",
+      "cancel": "Cancel",
+      "nickname": "Nickname",
+      "nicknameHint": "This is your profile link. Changing it breaks links you have already shared — the old address stops working.",
+      "optionalPrefix": "Optional · {text}",
+      "preview": {
+        "label": "How it looks on your profile",
+        "toggle": "Preview this section on your profile"
+      },
+      "saveChanges": "Save changes",
+      "saved": "Changes saved",
+      "sections": {
+        "hero": {
+          "editorHint": "This is the first thing people see on your public profile.",
+          "hint": "Photo, name, nickname, country, city, language, bio, company, role, industry",
+          "title": "Hero"
+        },
+        "socialLinks": {
+          "editorHint": "Leave a field empty and that icon simply will not appear.",
+          "hint": "Company website · LinkedIn · Instagram · and more",
+          "title": "Social links"
+        },
+        "roles": {
+          "editorHint": "What you build and who you are across ventures. At least one role is required.",
+          "empty": "Not added — at least one role is required",
+          "filled": "{count, plural, one {# role added} other {# roles added}}",
+          "title": "Roles"
+        },
+        "superpowers": {
+          "editorHint": "Up to three. Short and specific beats long and vague.",
+          "empty": "Not added — up to three",
+          "filled": "{count, plural, one {# superpower added} other {# superpowers added}}",
+          "title": "Superpowers"
+        },
+        "helpWith": {
+          "editorHint": "One to five things founders can come to you for. Shown as an accordion on your profile.",
+          "empty": "Not added — one to five things you help with",
+          "filled": "{count, plural, one {# topic added} other {# topics added}}",
+          "title": "What I help with"
+        },
+        "promoVideo": {
+          "editorHint": "A one-to-two minute vertical video. Profiles with a promo video get booked noticeably more often.",
+          "empty": "Not added — profiles with video get booked more often",
+          "filled": "Video added",
+          "title": "Promo video"
+        },
+        "reelLife": {
+          "editorHint": "Optional. The section appears on your profile once you add {min} photos (up to {max}) · PNG or JPEG, max 5 MB each",
+          "filled": "{count, plural, one {# photo added} other {# photos added}}",
+          "title": "Reel Life"
+        },
+        "numbers": {
+          "editorHint": "Optional. Three or four figures that make your scale tangible.",
+          "empty": "not added",
+          "filled": "{count, plural, one {# number added} other {# numbers added}}",
+          "title": "Numbers"
+        },
+        "wins": {
+          "editorHint": "Optional. Shown as a carousel of coloured cards on your profile.",
+          "empty": "not added",
+          "filled": "{count, plural, one {# win added} other {# wins added}}",
+          "title": "My Wins"
+        },
+        "myWay": {
+          "editorHint": "Your path as a timeline. Each stage is one project or chapter.",
+          "empty": "Not added — your path as a timeline",
+          "filled": "{count, plural, one {# milestone added} other {# milestones added}}",
+          "title": "My Way"
+        },
+        "fckups": {
+          "editorHint": "Optional. Leave it empty and the section stays hidden on your public profile.",
+          "empty": "not added · hidden from your public profile",
+          "filled": "{count, plural, one {# story added} other {# stories added}}",
+          "title": "F*ckUp(s)"
+        },
+        "philosophy": {
+          "title": "My Philosophy",
+          "editorHint": "Optional. One line you actually live by — it heads your Reel Life section.",
+          "empty": "Not added — one line you live by",
+          "filled": "Quote added"
+        },
+        "videoBlog": {
+          "editorHint": "Your interview or other video content. Linked to the BUILT NOT BURN page.",
+          "empty": "Not added — linked to the BUILT NOT BURN page",
+          "filled": "Interview linked · BUILT NOT BURN",
+          "title": "Video block"
+        }
+      },
+      "subtitleMember": "a fuller profile gets more invitations",
+      "subtitleMindsetter": "each section is saved separately",
+      "title": "Your profile"
+    },
+    "sessions": {
+      "title": "Session Settings",
+      "intro": "Set up your availability, pricing, and session topics to start receiving booking requests from the community. You can offer paid consultations or start with free sessions to gain your first reviews, build trust, and give back to the community.",
+      "importantLabel": "Important",
+      "important": "You can switch between free and paid sessions or update your pricing at any time. Changes will apply to all new bookings — already scheduled sessions remain unchanged.",
+      "accepting": {
+        "title": "Accepting bookings",
+        "description": "Turn this off while you are away — your profile stays visible, the Book a Session button becomes disabled with an explanation.",
+        "toggle": "Open for 1:1 sessions"
+      },
+      "price": {
+        "changeAnytime": "You can change this anytime",
+        "description": "Members can pick any duration you enable below.",
+        "durationsLabel": "Available durations",
+        "indicateLabel": "Indicate session price",
+        "payoutAccount": "Payouts go to Wise · ending 4417 — change it in <earnings>Earnings</earnings>",
+        "payoutGuarantee": "Payments are held safely by Mindsetis until the session is completed. Funds are released to your balance once the member confirms the session, or automatically within 48 hours after the call if no issues are reported.",
+        "payoutTitle": "Payout Guarantee",
+        "title": "Price and duration"
+      },
+      "topics": {
+        "title": "Session topics",
+        "description": "Members choose one of these when booking. Keep them close to what you actually want to talk about.",
+        "add": "Add topic",
+        "dialogTitle": "Add a session topic",
+        "dialogHint": "Pick one of your existing topics or type a new one.",
+        "searchPlaceholder": "Search or type a topic",
+        "suggested": "Suggested for you",
+        "addConfirm": "Add topic"
+      },
+      "availability": {
+        "title": "Weekly availability",
+        "description": "We automatically convert your availability into your client's local timezone",
+        "daysLabel": "Available days",
+        "addRange": "add range",
+        "removeRange": "Remove this time range",
+        "unavailable": "Unavailable",
+        "fromLabel": "From",
+        "toLabel": "To",
+        "weekday": {
+          "mon": "Monday",
+          "tue": "Tuesday",
+          "wed": "Wednesday",
+          "thu": "Thursday",
+          "fri": "Friday",
+          "sat": "Saturday",
+          "sun": "Sunday"
+        }
+      },
+      "cancellation": {
+        "title": "Cancellation policy",
+        "description": "Set by Mindsetis, the same for everyone · members see it before they confirm",
+        "windows": {
+          "full": {
+            "when": "More than 24 h before",
+            "refund": "Full refund"
+          },
+          "half": {
+            "when": "24 h — 2 h before",
+            "refund": "50% refund"
+          },
+          "none": {
+            "when": "Under 2 h · no-show",
+            "refund": "No refund"
+          }
+        },
+        "rules": {
+          "cancel": "If you cancel — the member is refunded in full, whenever it happens",
+          "reschedule": "Rescheduling — allowed once, no later than 24 h before the session"
+        }
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "account": {
+        "title": "Account",
+        "email": "Email",
+        "changePassword": {
+          "title": "Change password",
+          "fields": {
+            "current": "Current password",
+            "new": "New password",
+            "repeat": "Repeat new password"
+          },
+          "submit": "Change password",
+          "success": "Password changed"
+        }
+      }
+    }
+  },
+  "validation": {
+    "aboutMax": "About must be at most {max} characters.",
+    "authorMax": "Author must be at most {max} characters.",
+    "availabilityRequired": "Add availability for at least one day.",
+    "avatarRequired": "Profile photo is required.",
+    "bioMax": "Bio must be at most {max} characters.",
+    "bioRequired": "Bio is required.",
+    "cityRequired": "Select your city from the list.",
+    "companyMax": "Company must be at most {max} characters.",
+    "companyRequired": "Company is required.",
+    "countryRequired": "Select your country from the list.",
+    "descriptionMax": "Description must be at most {max} characters.",
+    "descriptionRequired": "Description is required.",
+    "durationsRequired": "Enable at least one session length.",
+    "emailInvalid": "Enter a valid email address.",
+    "emailRequired": "Email is required.",
+    "emailTooLong": "Email is too long.",
+    "expertiseMax": "You can add up to {max} expertise entries.",
+    "expertiseRequired": "Add at least one expertise.",
+    "fckupsMax": "You can add up to {max} f*ckups.",
+    "fckupsRequired": "Add at least one f*ckup.",
+    "firstNameRequired": "First name is required.",
+    "imageMax": "Image must be at most {max} MB.",
+    "imageType": "Only PNG or JPEG images are allowed.",
+    "industryRequired": "Please select an industry.",
+    "interestsMax": "You can select up to {max} interests.",
+    "invalidRedirect": "Invalid redirect.",
+    "labelMax": "Label must be at most {max} characters.",
+    "labelRequired": "Label is required.",
+    "languagesRequired": "Select at least one language.",
+    "lastNameRequired": "Second name is required.",
+    "latinOnly": "Use Latin characters only.",
+    "linksMax": "You can add up to {max} links.",
+    "nameMax": "Name is too long.",
+    "numbersMax": "You can add up to {max} numbers.",
+    "numbersRequired": "Add at least one number.",
+    "passwordMax": "Password must be at most {max} characters.",
+    "passwordMin": "Password must be at least {min} characters.",
+    "passwordNumber": "Include at least one number.",
+    "passwordRequired": "Password is required.",
+    "passwordUnchanged": "Your new password must be different from your current one.",
+    "passwordUppercase": "Include at least one uppercase letter.",
+    "passwordsMismatch": "Passwords do not match.",
+    "photoInvalid": "Invalid photo.",
+    "photoRequired": "Select a photo.",
+    "photosMax": "You can add up to {max} photos.",
+    "priceRequired": "Enter a price greater than $0.",
+    "projectMax": "Project name must be at most {max} characters.",
+    "projectRequired": "Project name is required.",
+    "quoteMax": "Quote must be at most {max} characters.",
+    "quoteRequired": "Quote is required.",
+    "roleMax": "Role must be at most {max} characters.",
+    "roleRequired": "Role is required.",
+    "rolesMax": "You can add up to {max} roles.",
+    "rolesRequired": "Add at least one role.",
+    "stagesMax": "You can add up to {max} stages.",
+    "stagesRequired": "Add at least one stage.",
+    "storyMax": "Story must be at most {max} characters.",
+    "storyRequired": "Story is required.",
+    "superpowersMax": "You can add up to {max} superpowers.",
+    "superpowersRequired": "Add at least one superpower.",
+    "timeInvalid": "Enter a valid time (HH:mm).",
+    "timeRangeReversed": "\"To\" time must be later than the \"From\" time.",
+    "timeRangesMax": "Up to {max} time ranges per day.",
+    "timeRangesOverlap": "Time ranges cannot overlap.",
+    "timezoneRequired": "Timezone is required.",
+    "titleMax": "Title must be at most {max} characters.",
+    "titleRequired": "Title is required.",
+    "topicsMax": "You can select up to {max} topics.",
+    "topicsRequired": "Select at least one topic.",
+    "urlInvalid": "Enter a valid URL.",
+    "usernameChars": "Use only letters, numbers, and underscores.",
+    "usernameMax": "Username must be at most {max} characters.",
+    "usernameMin": "Username must be at least {min} characters.",
+    "valueMax": "Value must be at most {max} characters.",
+    "valueRequired": "Value is required.",
+    "vimeoHost": "Enter a Vimeo link (vimeo.com).",
+    "vimeoVideo": "Link to a single Vimeo video (vimeo.com/123456789) — not a channel or a folder.",
+    "websiteRequired": "Company website URL is required.",
+    "winMax": "Win must be at most {max} characters.",
+    "winRequired": "Win is required.",
+    "winsMax": "You can add up to {max} wins.",
+    "winsRequired": "Add at least one win.",
+    "yearFromMax": "Start year must be at most {max} characters.",
+    "yearFromRequired": "Start year is required.",
+    "yearMax": "Year must be at most {max} characters.",
+    "yearRangeReversed": "\"To\" year cannot be earlier than the \"From\" year.",
+    "yearRequired": "Year is required.",
+    "yearToMax": "End year must be at most {max} characters.",
+    "yearToRequired": "End year is required.",
+    "youtubeHost": "Enter a YouTube link (youtube.com or youtu.be).",
+    "youtubeVideo": "Link to a single YouTube video (a watch, youtu.be or Shorts link) — not a channel or playlist."
+  },
+  "legal": {
+    "breadcrumb": {
+      "home": "Home",
+      "legal": "Legal"
+    },
+    "eyebrow": "LEGAL",
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated 13 August 2026 · FOP Kondratska",
+      "intro": [
+        "This Privacy Policy explains how Mindsetis collects, uses, shares, and protects your personal data when you use our website, mobile applications, and related services (collectively, the \"Platform\")."
+      ],
+      "sections": [
+        {
+          "heading": "Who We Are & Data Controller",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Mindsetis is a registered trademark owned by Anastasiia Kondratska (an individual). The Platform is operated, and data processing is managed, by Sole Proprietor (FOP) Kondratska, registered under the laws of Ukraine. Sole Proprietor Kondratska acts as the Data Controller (or \"Business\" under U.S. laws) for your personal data."
+            },
+            {
+              "type": "paragraph",
+              "text": "For any privacy-related inquiries, data requests, or to exercise your rights, please contact our Privacy Officer at privacy@mindsetis.com."
+            }
+          ]
+        },
+        {
+          "heading": "Information We Collect",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We collect personal information directly from you, automatically through your device, and from select third parties:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Account Data: Name, email address, password hash, language preferences, and timezone.",
+                "Profile & Public Data: Profile photo, professional role, company, location, and any information you voluntarily publish in your profile.",
+                "Verification Data: Identity verification is conducted by our third-party verification providers. We only receive and store the verification result (e.g., \"verified\"), never your identity documents.",
+                "Booking & Interaction Data: Details of sessions, events, requests, and messages sent through the Platform.",
+                "Payment Data: Payment transactions are processed securely by independent payment processors (e.g., Stripe, PayPal). We do not collect, store, or process complete credit card numbers.",
+                "Technical & Usage Data: IP address, device type, operating system, browser settings, and cookie data as specified in our Cookies Policy."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Legal Bases for Processing & How We Use Data",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We process your personal data for the following purposes:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Contractual Necessity: To create and manage your account, facilitate bookings, process transactions, and provide Platform functionality.",
+                "Legitimate Interests: To ensure Platform security, verify real users, prevent fraud, improve our services, and analyze usage trends.",
+                "Consent: To send marketing communications, conduct non-essential analytics, or deploy non-essential cookies. You can withdraw your consent at any time.",
+                "Legal Compliance: To comply with applicable tax, accounting, and legal obligations."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Data Sharing & Third-Party Processors",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We do not sell your personal information. We share data only with authorized Service Providers bound by strict data protection agreements:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Infrastructure & Hosting: Cloud servers and technical infrastructure.",
+                "Communication & Calls: Google Meet, Zoom, or email notification providers.",
+                "Payment & Verification: Payment gateways (Stripe) and identity verification partners.",
+                "Analytics: Privacy-compliant analytics providers (subject to your cookie preferences)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "International Data Transfers",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Because our operations and service providers are located globally, your personal data may be transferred to, and stored in, countries outside your state, province, or country of residence (including Ukraine, the United States, and the EEA)."
+            },
+            {
+              "type": "paragraph",
+              "text": "Where required by applicable law (e.g., GDPR, UK GDPR), we ensure international transfers are protected by standard contractual safeguards, including Standard Contractual Clauses (SCCs) adopted by the European Commission or adequacy decisions."
+            }
+          ]
+        },
+        {
+          "heading": "Data Retention & Deletion",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We retain your personal information only as long as necessary to fulfill the purposes outlined in this Policy or as required by law:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Active Accounts: Data is kept for the duration of your active account.",
+                "Account Deletion: Upon account deletion, personal profile and account data are purged from our active systems within 30 days.",
+                "Legal Obligations: Financial and transactional records are retained for the statutory period required for tax, accounting, and anti-fraud purposes (typically 3–5 years)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Your Privacy Rights",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Depending on your place of residence, you may have the following legal rights regarding your personal data:"
+            },
+            {
+              "type": "subheading",
+              "text": "A. European Economic Area (EEA), UK & Swiss Residents (GDPR / UK GDPR)"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Access, Rectification & Erasure: The right to request access to, correction of, or deletion of your personal data (\"Right to be Forgotten\").",
+                "Portability & Restriction: The right to request a copy of your data in a structured format or restrict its processing.",
+                "Withdrawal of Consent & Objection: The right to withdraw consent at any time or object to processing based on legitimate interests.",
+                "Supervisory Authority: The right to lodge a complaint with your local Data Protection Authority (DPA)."
+              ]
+            },
+            {
+              "type": "subheading",
+              "text": "B. United States Residents (CCPA / CPRA & State Privacy Laws)"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Right to Know & Access: Request details regarding the categories and specific pieces of personal information collected.",
+                "No Sale / No Sharing of Personal Data: We do not sell or share your personal information for cross-context behavioral advertising as defined by the CCPA/CPRA.",
+                "Non-Discrimination: We will not discriminate against you for exercising any of your privacy rights."
+              ]
+            },
+            {
+              "type": "subheading",
+              "text": "C. Canadian Residents (PIPEDA)"
+            },
+            {
+              "type": "paragraph",
+              "text": "You have the right to access your personal data, challenge its accuracy, and withdraw consent for data collection or processing at any time."
+            },
+            {
+              "type": "paragraph",
+              "text": "How to Exercise Your Rights: To exercise any of these rights, please email us at privacy@mindsetis.com. We will respond to verified requests within statutory timeframes (30 days for GDPR, 45 days for CCPA)."
+            }
+          ]
+        },
+        {
+          "heading": "Children's Privacy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The Platform is not directed to individuals under the age of 18 (or the age of legal majority in your jurisdiction). We do not knowingly collect personal data from children. If we learn that we have collected personal data from a minor without parental consent, we will delete it immediately."
+            }
+          ]
+        },
+        {
+          "heading": "Security Measures",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We implement industry-standard technical, organizational, and physical security measures to protect your personal data against unauthorized access, loss, alteration, or disclosure. However, no internet transmission is 100% secure."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to This Privacy Policy",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We may update this Privacy Policy from time to time to reflect legal or operational changes. If we make material updates, we will notify you by email or via a notice on the Platform at least 14 days before the changes take effect."
+            }
+          ]
+        }
+      ],
+      "contact": {
+        "heading": "Contact Us",
+        "body": "If you have any questions, concerns, or complaints regarding this Privacy Policy, please contact our Legal & Data Protection team:\nEmail: legal@mindsetis.com / privacy@mindsetis.com\nData Controller: Sole Proprietor (FOP) Kondratska, Ukraine."
+      }
+    },
+    "termsOfUse": {
+      "title": "Terms of Use",
+      "lastUpdated": "Last updated August 14, 2026 · Sole Proprietor (FOP) Kondratska",
+      "intro": [
+        "Welcome to Mindsetis! These Terms of Service (\"Terms\") govern your access to and use of the website, applications, and services provided by Mindsetis (collectively, the \"Platform\").",
+        "Please read these Terms carefully. By clicking \"Continue\", registering, or submitting an application to join Mindsetis, you agree to be bound by these Terms. If you do not agree, you must not access or use the Platform."
+      ],
+      "sections": [
+        {
+          "heading": "Ownership & Operator",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Mindsetis is a registered trademark owned by Anastasiia Kondratska. The Platform is operated and owned by Sole Proprietor (FOP) Kondratska, registered under the laws of Ukraine (\"Company\", \"we\", \"us\", or \"our\")."
+            }
+          ]
+        },
+        {
+          "heading": "Eligibility & Application",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Curated Community: Mindsetis is an exclusive, curated network for entrepreneurs, founders, CEOs, and executives.",
+                "Verification & Approval: Access requires an application and approval process. We reserve the right to accept, reject, or revoke membership for any applicant or user at our sole discretion, without justification, to maintain community standards.",
+                "Accuracy: You warrant that all information provided during registration and profile creation is truthful, accurate, and kept up to date."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Account Access & Security",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Authentication: Access to your account is provided via secure sign-in links (\"Magic Links\") or authorized third-party authentication.",
+                "Account Responsibility: You are responsible for the confidentiality of your access link and account. Notify us immediately at info@mindsetis.com if you suspect unauthorized access."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Community Guidelines & Code of Conduct",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "As a member of Mindsetis, you agree to foster a respectful, collaborative, and professional environment. You strictly agree NOT to:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Unsolicited Pitching & Spam: Use 1:1 sessions, P2P events, or member lists for aggressive sales pitches, spam, or unsolicited mass commercial offers.",
+                "Breach of Confidentiality: Share, publish, or disclose private information, business secrets, or insights shared by other members without their explicit prior written consent.",
+                "No-Shows & Unprofessional Behavior: Repeatedly fail to show up for scheduled 1:1 sessions without prior cancellation or notice.",
+                "Harassment: Engage in hate speech, discrimination, harassment, defamation, or unethical behavior toward any member or staff."
+              ]
+            },
+            {
+              "type": "paragraph",
+              "text": "Violation of these guidelines will result in immediate suspension or permanent deletion of your account without notice or refund."
+            }
+          ]
+        },
+        {
+          "heading": "1:1 Sessions and Peer-to-Peer (P2P) Events",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Platform Role: Mindsetis facilitates connections, scheduling, and networking. We do not participate in, control, or take responsibility for opinions, advice, or agreements made between members during sessions.",
+                "No Business Guarantee: Mindsetis makes no guarantees regarding specific business outcomes, funding, partnerships, or financial results arising from interactions on the Platform."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Intellectual Property & User Content",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Your Content: You retain full ownership of all text, images, logos, case studies, and media you upload to your personal Mindsetis profile (\"User Content\").",
+                "License to Mindsetis: By posting User Content, you grant Mindsetis a non-exclusive, worldwide, royalty-free license to display, host, and distribute your content strictly within the Platform.",
+                "Mindsetis IP: All software, design layouts, branding, algorithms, and Platform materials are the exclusive property of Sole Proprietor Kondratska, protected by international copyright and trademark laws."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Account Termination",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Termination by You: You may request to delete your account at any time by contacting us at info@mindsetis.com.",
+                "Termination by Us: We may suspend or terminate your account immediately if you breach these Terms, violate Community Guidelines, or harm the reputation or security of Mindsetis."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Disclaimer of Warranties",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "The Platform and all services are provided on an \"AS IS\" and \"AS AVAILABLE\" basis. Mindsetis explicitly disclaims all warranties of any kind, whether express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
+            }
+          ]
+        },
+        {
+          "heading": "Limitation of Liability",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "To the maximum extent permitted by applicable law, Sole Proprietor Kondratska, its founder, and service providers shall not be liable for any indirect, incidental, special, or consequential damages, including loss of profits, data, or business opportunities, arising from your use of the Platform or interactions with other members."
+            }
+          ]
+        },
+        {
+          "heading": "Governing Law & Dispute Resolution",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These Terms shall be governed by and construed in accordance with the laws of Ukraine. Any disputes arising out of or relating to these Terms or the Platform shall be resolved through negotiation, or, if unresolvable, submitted to the competent courts of Ukraine."
+            }
+          ]
+        },
+        {
+          "heading": "Changes to Terms",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We reserve the right to modify these Terms at any time. If material changes are made, we will notify you by email or via a prominent notice on the Platform at least 14 days before the new terms take effect. Continued use of the Platform after such changes constitutes acceptance."
+            }
+          ]
+        }
+      ],
+      "contact": {
+        "heading": "Contact Us",
+        "body": "For legal questions or concerns regarding these Terms, please contact our Legal Team:\nEmail: info@mindsetis.com\nOperator: Sole Proprietor (FOP) Kondratska, Ukraine."
+      }
+    },
+    "cookiesPolicy": {
+      "title": "Cookies Policy",
+      "lastUpdated": "Last updated 12 August 2026 · Mindsetis OÜ",
+      "intro": [
+        "This policy explains what cookies Mindsetis uses, what each of them does, and how you can change your choice at any time."
+      ],
+      "sections": [
+        {
+          "heading": "What cookies are",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "A cookie is a small file a website stores on your device. It lets the site remember you between visits — that you are logged in, which language you chose, what you already dismissed."
+            }
+          ]
+        },
+        {
+          "heading": "Strictly necessary",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These keep the site working and cannot be switched off. They hold your session, protect forms from abuse and remember your cookie choice itself."
+            },
+            {
+              "type": "paragraph",
+              "text": "Legal basis: our legitimate interest in running a secure service. Consent is not required."
+            }
+          ]
+        },
+        {
+          "heading": "Functional",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These remember your preferences — interface language, timezone, whether a banner was closed. Turning them off means telling us the same things again on every visit."
+            }
+          ]
+        },
+        {
+          "heading": "Analytics",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These tell us which pages people open and where they stop, so we can fix what does not work. The data is aggregated and never used to identify you personally."
+            },
+            {
+              "type": "paragraph",
+              "text": "Set only with your consent."
+            }
+          ]
+        },
+        {
+          "heading": "Marketing",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These measure whether an ad brought someone to Mindsetis. We do not sell your data and we do not build advertising profiles."
+            },
+            {
+              "type": "paragraph",
+              "text": "Set only with your consent."
+            }
+          ]
+        },
+        {
+          "heading": "Third parties",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Some cookies come from services we rely on:"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Stripe — payment processing and fraud prevention.",
+                "Google — authentication and video calls.",
+                "Our analytics provider — aggregated usage statistics."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Changing your choice",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Open Cookie settings in the footer at any time to change what you allow. You can also clear cookies in your browser, though that will log you out."
+            }
+          ]
+        }
+      ],
+      "contact": {
+        "heading": "Questions about this document?",
+        "body": "Write to legal@mindsetis.com and we will answer within five working days."
+      }
     }
   }
 }
