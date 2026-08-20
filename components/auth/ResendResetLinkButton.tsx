@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 
-import { requestPasswordReset } from '@/app/[locale]/(auth)/actions';
+import { requestPasswordReset } from '@/app/[locale]/(app)/(auth)/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';

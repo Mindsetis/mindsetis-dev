@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { resendConfirmationEmail } from '@/app/[locale]/verify-email/actions';
+import { resendConfirmationEmail } from '@/app/[locale]/(app)/verify-email/actions';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';
 

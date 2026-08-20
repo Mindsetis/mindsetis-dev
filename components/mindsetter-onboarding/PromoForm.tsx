@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 
-import { savePromo } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { savePromo } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';

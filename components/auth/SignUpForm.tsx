@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { signUp } from '@/app/[locale]/(auth)/actions';
+import { signUp } from '@/app/[locale]/(app)/(auth)/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {

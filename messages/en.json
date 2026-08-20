@@ -69,6 +69,33 @@
       "title": "Join a curated network of entrepreneurs, founders, and CEOs",
       "tourLabel": "Take a 2-min platform tour",
       "watchLabel": "Watch to understand why"
+    },
+    "placeholder": {
+      "hero": {
+        "title": "Space for business owners, founders & CEOs",
+        "subtitle": "1:1 sessions with people who've solved what you're facing. Peer groups and masterminds to work through your questions together."
+      },
+      "form": {
+        "heading": "Leave your contacts — we'll reach out when we launch.",
+        "firstName": {
+          "label": "First name",
+          "placeholder": "Kateryna"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "anakondra@gmail.com"
+        },
+        "socialLink": {
+          "label": "LinkedIn or Instagram",
+          "placeholder": "https://www.instagram.com/..."
+        },
+        "submit": "Apply to Join",
+        "duplicateEmail": "This email has already been submitted."
+      },
+      "thankYou": {
+        "title": "Thank you for providing your<br></br>contact information",
+        "subtitle": "We will let you know the launch date of our platform<br></br>and send you a link to register."
+      }
     }
   },
   "onboarding": {

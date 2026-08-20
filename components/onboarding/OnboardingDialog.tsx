@@ -32,8 +32,7 @@ type OnboardingDialogProps = {
    * this (closing the popup) instead of the default `Link`-to-`/sign-up` "Ok, continue
    * registration" button. Used by `RolesPreviewCta` (Mindsetter onboarding "Your roles" step's
    * "See how it looks" preview) — that caller is already mid-onboarding, so "continue
-   * registration" doesn't apply. Omitted by the homepage's `OnboardingCta`, which keeps the
-   * original sign-up-linking behavior unchanged.
+   * registration" doesn't apply. Omitted for the default sign-up-linking behavior.
    */
   onFinish?: () => void;
 };
@@ -41,8 +40,10 @@ type OnboardingDialogProps = {
 /**
  * Onboarding tour popup — Figma "Onboarding - 1..4" (mobile) / "Onboarding - 1..3 - 1440 px"
  * (desktop). Previously its own route (`/onboarding`); reworked into a popup (direct product
- * request, 2026-07-18) opened from the Welcome-screen hero's "See platform features" button
- * (`OnboardingCta`) instead of a page navigation.
+ * request, 2026-07-18) opened from a "See platform features"-style button instead of a page
+ * navigation. Two callers: the landing hero's `OnboardingCta` (the original trigger — live
+ * only while `COMING_SOON_MODE` is off, since the waitlist placeholder replaces that hero
+ * otherwise) and `RolesPreviewCta` (see its own doc comment).
  *
  * The `DialogContent` container (positioning, radius, border, close button) reuses the same
  * shape as `PlatformFeeModal` — mobile bottom sheet / desktop centered 30px-rounded modal
@@ -53,7 +54,7 @@ type OnboardingDialogProps = {
  * (`/onboarding?email=...` from the sign-up "Back" link) existed only to restore what a visitor
  * had already typed on the sign-up form if they navigated back into onboarding and forward
  * again. Now that "Back" just returns to the homepage instead of reopening this popup (see
- * `app/[locale]/sign-up/page.tsx`), that round-trip has no reason to exist — "Finish" always
+ * `app/[locale]/(app)/sign-up/page.tsx`), that round-trip has no reason to exist — "Finish" always
  * routes to a plain `/sign-up`.
  *
  * NOTE: Figma has no desktop frame for step 4 (only two duplicate copies of step 3 exist at

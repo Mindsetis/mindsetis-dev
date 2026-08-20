@@ -8,6 +8,10 @@ import { HeroEmailCta } from './HeroEmailCta';
  * name) / "Welcome Screen " (`1112:19307`, mobile). Server Component; the only client island is
  * the email capture form at the bottom (`HeroEmailCta`).
  *
+ * Rendered by `app/[locale]/page.tsx` only when `COMING_SOON_MODE` is off; the waitlist
+ * placeholder takes the homepage otherwise. Header/Footer come from that page, not from a
+ * layout — the homepage sits outside the `(app)` route group (see its doc comment).
+ *
  * 2026-08-18: the video block ("Watch to understand why" label, video placeholder, "or"
  * divider, "Take a 2-min platform tour" label, "See platform features" `OnboardingCta`) was
  * REMOVED from here. It's still present in this frame's own Figma layer tree (`Frame 277`

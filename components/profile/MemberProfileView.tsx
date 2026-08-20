@@ -1,7 +1,7 @@
 import { CheckCircle2, Share2, User } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
-import type { SocialsJson } from '@/app/[locale]/member-profile/page';
+import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import {
   BallPenFillIcon,
   ChatAiFillIcon,

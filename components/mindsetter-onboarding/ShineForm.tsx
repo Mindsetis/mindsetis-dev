@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { saveShine } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveShine } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { CompletenessIcon } from '@/components/icons/onboarding-section-icons';
 import {
   SHINE_BLOCK_ICONS,

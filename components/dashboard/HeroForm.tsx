@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { saveHeroSection } from '@/app/[locale]/dashboard/profile/actions';
+import { saveHeroSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CityCombobox, type CitySelection } from '@/components/geo/CityCombobox';

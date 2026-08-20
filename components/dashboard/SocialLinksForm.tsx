@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { saveSocialLinks } from '@/app/[locale]/dashboard/profile/actions';
+import { saveSocialLinks } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';

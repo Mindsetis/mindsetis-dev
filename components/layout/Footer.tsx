@@ -8,6 +8,7 @@ import {
   YoutubeIcon,
 } from '@/components/icons/social-icons';
 import { Link } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 import { NewsletterForm } from './NewsletterForm';
 
@@ -18,6 +19,18 @@ const SOCIAL_LINKS = [
   { key: 'linkedin', Icon: LinkedinIcon, href: 'https://linkedin.com' },
   { key: 'youtube', Icon: YoutubeIcon, href: 'https://youtube.com' },
 ] as const;
+
+type FooterProps = {
+  /**
+   * `'full'` (default) — newsletter form, both link columns, social icons, and the
+   * credits row, used everywhere via `app/[locale]/(app)/layout.tsx`. `'minimal'` — just the
+   * "Credits" row (logo + copyright), used by the coming-soon homepage placeholder (stage
+   * 1.11, ROADMAP), which sits outside the `(app)` route group and renders its own chrome.
+   */
+  variant?: 'full' | 'minimal';
+  /** Extra classes for the outer `<footer>` — e.g. the homepage placeholder's overlap offset. */
+  className?: string;
+};
 
 /**
  * Primary site footer — Figma "Footer / 1 /" (Welcome Screen, desktop + mobile). Server
@@ -37,10 +50,38 @@ const SOCIAL_LINKS = [
  * "Cookies Settings", not the page titles, so left as-is rather than "fixing" a mismatch that's
  * in the design itself.
  */
-export default async function Footer() {
-  const t = await getTranslations('footer');
+export default async function Footer({ variant = 'full', className }: FooterProps) {
   const tNav = await getTranslations('nav');
   const year = new Date().getFullYear();
+
+  const t = await getTranslations('footer');
+
+  if (variant === 'minimal') {
+    // Figma `866:4842` "Footer / 1 /" (the Заглушка's own Credits-only footer): 50px vertical /
+    // 64px horizontal padding — was missing a `lg:` vertical override (flat `py-8`/32px at every
+    // breakpoint), unlike the `full` variant below (which uses its own distinct `lg:py-20`,
+    // measured off a different, taller Figma frame that also has the newsletter/columns above
+    // this same Credits row).
+    return (
+      <footer
+        className={cn(
+          'rounded-t-[30px] bg-card px-4 py-6 sm:px-6 lg:rounded-t-[50px] lg:px-16 lg:py-[50px]',
+          className,
+        )}
+      >
+        <div className="mx-auto flex max-w-large flex-row items-center justify-between gap-4 text-tiny text-foreground">
+          <Link href="/" className="font-display text-2xl leading-none text-primary lg:text-l">
+            {tNav('brand')}
+          </Link>
+          <span className="text-right">
+            &copy; {year} {tNav('brand')}.
+            <br />
+            {t('rights')}
+          </span>
+        </div>
+      </footer>
+    );
+  }
 
   const columnOneLinks = t.raw('columns.one.links') as string[];
   const columnTwoLinks = t.raw('columns.two.links') as string[];

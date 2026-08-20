@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import type { SocialsJson } from '@/app/[locale]/member-profile/page';
+import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { SocialLinksForm } from '@/components/dashboard/SocialLinksForm';
 import { redirect } from '@/i18n/navigation';

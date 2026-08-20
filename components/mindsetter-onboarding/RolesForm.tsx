@@ -13,7 +13,10 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { fetchRoleLinkPreview, saveRoles } from '@/app/[locale]/mindsetter-onboarding/actions';
+import {
+  fetchRoleLinkPreview,
+  saveRoles,
+} from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';

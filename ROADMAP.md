@@ -956,6 +956,51 @@ across breakpoints (desktop 1440px + mobile 375px) on hosted-seeded data are all
 widget end-to-end wiring (stays deferred to the §5.8/§5.9 booking stage, out of this stage's
 scope), confirming the final route slug, and the unrelated infra lint ticket.
 
+### 1.11 — Homepage placeholder (Figma "Заглушка") + waitlist form
+**Status:** ✅ Done
+**Started:** 2026-08-05
+**Completed:** 2026-08-05
+
+Replaced the homepage (`app/[locale]/page.tsx`, previously `HeroSection`) with a "coming soon"
+placeholder page built from the Figma frame "Заглушка" (`866:4823` desktop / `866:4885` mobile):
+hero headline/subtext + a contact-form card (First name / Email / LinkedIn-or-Instagram / "Apply
+to Join"), with a "Thank you" success state (`870:4928`/`870:4977`) after submit. Required a
+route-group split (`app/[locale]/(app)/` for all pre-existing routes with the full Header/Footer;
+homepage stays outside it with a minimal Header/Footer) plus a new `variant?: 'full'|'minimal'`
+prop on the shared `Header`/`Footer` components (default `'full'` unchanged everywhere else).
+
+- [x] Migration `supabase/migrations/20260805181705_homepage_waitlist.sql`: `homepage_waitlist`
+  table (first_name, email, social_link, timestamps), case-insensitive unique index on email,
+  RLS with **no client insert/update policy at all** (writes are service-role-only), staff-only
+  select/delete via `is_staff()`. Verified live against the hosted project: anon INSERT → 42501
+  blocked, anon SELECT → empty, duplicate email → 23505.
+- [x] Zod schema (`lib/validation/homepage-waitlist.ts`) + Server Action `submitHomepageWaitlist`
+  (`app/[locale]/actions.ts`) — rate-limited (`marketing:homepage-waitlist`, 5/10min/IP),
+  service-role INSERT, catches `23505` for a friendly "already submitted" inline error instead
+  of upserting.
+- [x] Route-group split: all pre-existing routes moved into `app/[locale]/(app)/*` under a new
+  `(app)/layout.tsx` (full Header/main/Footer); root `app/[locale]/layout.tsx` now just renders
+  `{children}`; route groups don't change URLs (verified, e.g. `/sign-up`/`/login` unchanged).
+- [x] `variant?: 'full'|'minimal'` prop added to `components/layout/Header.tsx`/`Footer.tsx`
+  (minimal header = centered logo only; minimal footer = logo + copyright "Credits" row only).
+- [x] Homepage placeholder: `components/marketing/HomepagePlaceholder.tsx` (hero + decorative
+  glow + Thank-you state) + `components/marketing/WaitlistFormCard.tsx` (form card, client-side
+  swap to Thank-you on success), pixel-matched against Figma frames `866:4823`/`866:4885` (form)
+  and `870:4928`/`870:4977` (Thank you) by `figma-designer`. Homepage (`app/[locale]/page.tsx`)
+  sits outside `(app)` with its own `error.tsx`/`loading.tsx` boundary.
+- [x] i18n keys `home.placeholder.*` added to `messages/en.json`/`es.json`.
+- [x] Removed now-dead code superseded by the new placeholder: `HeroSection.tsx`,
+  `OnboardingCta.tsx`, `HeroEmailCta.tsx`, the `recordSignupIntent` Server Action + its
+  `marketing:signup-intent` rate-limit bucket, `lib/validation/leads.ts`, and the `home.hero.*`
+  i18n keys (stage 1.7's lead-capture flow had no remaining caller).
+- [x] Review loop: `code-reviewer` (returned for rework once — missing error/loading boundary +
+  dead code — fixed and re-verified), `security-auditor` (clean), `qa` (build/typecheck/lint
+  clean, live RLS/unique-constraint verification + live end-to-end Server Action submission
+  test on the hosted project including the duplicate-rejection path, secret-leak clean),
+  `browser-tester` (live E2E pass desktop+mobile: placeholder renders, minimal header/footer
+  scoped only to `/`, full header/footer intact elsewhere, happy-path submit + duplicate-email
+  rejection + client-side invalid-email validation confirmed, no console/network errors).
+
 ### 1.6 — Member Profile view page (self + any-member-by-username)
 **Status:** ✅ Done
 **Started:** 2026-07-15

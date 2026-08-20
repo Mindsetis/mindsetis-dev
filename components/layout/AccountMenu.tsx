@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 
-import { signOut } from '@/app/[locale]/(auth)/actions';
+import { signOut } from '@/app/[locale]/(app)/(auth)/actions';
 import {
   MenuExternalIcon,
   MenuLogoutIcon,

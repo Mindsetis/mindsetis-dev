@@ -7,7 +7,7 @@ import type { SVGProps } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { type Control, useController, useForm, useWatch } from 'react-hook-form';
 
-import { saveSessionSettings } from '@/app/[locale]/dashboard/sessions/actions';
+import { saveSessionSettings } from '@/app/[locale]/(app)/dashboard/sessions/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { WeeklyAvailabilityField } from '@/components/dashboard/WeeklyAvailabilityField';

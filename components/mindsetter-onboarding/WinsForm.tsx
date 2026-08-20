@@ -12,8 +12,8 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { saveWinsSection } from '@/app/[locale]/dashboard/profile/actions';
-import { saveWins } from '@/app/[locale]/mindsetter-onboarding/actions';
+import { saveWinsSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
+import { saveWins } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';

@@ -25,9 +25,12 @@ import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/mar
  * (the write itself runs as service-role — see that action's doc comment), then hands
  * the visitor into sign-up regardless of whether that best-effort call succeeded — carrying
  * the email along as a query param so `SignUpForm` can prefill it (Zod-validated again at
- * that boundary via `emailSchema.safeParse` in `app/[locale]/sign-up/page.tsx`). A failure to
- * record the lead is not the visitor's problem (nothing looked wrong to them — they're still
- * headed to sign-up), so it's only logged, never surfaced as an error toast.
+ * that boundary via `emailSchema.safeParse` in `app/[locale]/(app)/sign-up/page.tsx`). A
+ * failure to record the lead is not the visitor's problem (nothing looked wrong to them —
+ * they're still headed to sign-up), so it's only logged, never surfaced as an error toast.
+ *
+ * Reachable only with `COMING_SOON_MODE` off, along with the rest of the landing page — the
+ * `/sign-up` this pushes to is itself redirected back to `/` while the gate is up.
  *
  * The legal line below the button (`home.hero.legal`, added 2026-08-18) links to the two real
  * legal pages built the same day (`/terms-of-use`, `/privacy-policy` — see `LegalPage`). Two

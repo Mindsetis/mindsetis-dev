@@ -418,6 +418,33 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          social_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          social_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          social_link?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string

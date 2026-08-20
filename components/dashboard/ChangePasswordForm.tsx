@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { changePassword } from '@/app/[locale]/dashboard/settings/actions';
+import { changePassword } from '@/app/[locale]/(app)/dashboard/settings/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { PasswordRequirements, PasswordToggle } from '@/components/auth/password-field';
 import { Alert, AlertDescription } from '@/components/ui/alert';

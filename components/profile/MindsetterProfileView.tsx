@@ -2,7 +2,7 @@ import { CheckCircle2, Link2, Play, Share2, User } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
-import type { SocialsJson } from '@/app/[locale]/member-profile/page';
+import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import {
   BagIcon,
   FlashlightFillIcon,
@@ -307,7 +307,7 @@ function getReviewerInitials(name: string): string {
  * Everything this screen renders — one `profiles` row joined 1:1 with `mindsetter_profiles`,
  * plus the Mindsetter's current `session_settings` row. Explicit shape (not `Database['public']`
  * generated types — same staleness precedent as `MemberProfile` in `MemberProfileView.tsx`);
- * both fetch call sites (`app/[locale]/mindsetters/[username]/page.tsx`, present/future
+ * both fetch call sites (`app/[locale]/(app)/mindsetters/[username]/page.tsx`, present/future
  * self-preview routes) select exactly this column allow-list, never `select('*')`.
  *
  * `reelLifePhotoUrls` / `promoVideoUrl` are NOT raw DB columns — they're already-resolved signed
