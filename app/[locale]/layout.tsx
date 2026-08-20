@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 
 import Footer from '@/components/layout/Footer';
 import Header from '@/components/layout/Header';
+import { ScrollToTopButton } from '@/components/layout/ScrollToTopButton';
 import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
@@ -71,6 +72,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <ScrollToTopButton />
           <Toaster />
         </NextIntlClientProvider>
       </body>
