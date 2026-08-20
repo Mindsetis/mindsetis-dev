@@ -1,0 +1,31 @@
+-- =============================================================================
+-- Drop profiles.is_location_remote — the "Remote / Location-independent" option
+-- was decided against
+-- =============================================================================
+-- Added in 20260805100500_geo_reference.sql as an escape hatch for members with
+-- no fixed city (digital nomads), on the reasoning that a REQUIRED city dropdown
+-- with no "none of these" option pushes such users into picking an arbitrary
+-- city — the exact free-text-style pollution the code-backed picker exists to
+-- prevent.
+--
+-- Product decided otherwise (2026-08-05): country and city stay mandatory at
+-- registration, and the timezone a session actually runs in is collected
+-- separately in the Mindsetter's session settings (`session_settings.timezone`,
+-- see 20260718160224_mindsetter_onboarding_schema_alignment.sql). With that
+-- decision made, no code path ever writes or reads this column.
+--
+-- Dropping rather than leaving it: the column carried a `comment on column`
+-- describing a feature that does not exist, which actively misleads anyone
+-- reading the schema later. A dead column that documents a rejected behaviour
+-- is worse than no column — and re-adding it is a two-line migration if the
+-- decision is ever revisited.
+--
+-- Safe to drop: verified no reference anywhere in app/, components/, lib/ or
+-- scripts/ (it was never wired into the form, the Zod schemas, or the Server
+-- Action), and `profiles` RLS is table-level (`profiles_read` /
+-- `profiles_update_own` / `profiles_update_staff`), so removing a column needs
+-- no policy change.
+-- =============================================================================
+
+alter table profiles
+  drop column if exists is_location_remote;
