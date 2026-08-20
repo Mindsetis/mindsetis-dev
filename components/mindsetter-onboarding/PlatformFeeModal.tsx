@@ -1,13 +1,12 @@
 'use client';
 
-import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
+  DialogCloseButton,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -73,9 +72,9 @@ const INFO_KEYS = ['payout', 'changeAnytime', 'cancellation'] as const;
 
 /**
  * "Platform fee & payouts" info modal (onboarding doc section 5's nested modal) — opened from
- * the "How it works" card on the Personal-session step (`SessionForm.tsx`). Container chrome
+ * the "How it works" card on the former Personal-session step. Container chrome
  * (bottom sheet mobile / centered rounded desktop modal, custom close X) copies
- * `WhoIsMindsetterDialog`'s established pattern verbatim, per the build prompt's explicit
+ * `OnboardingDialog`'s established pattern verbatim, per the build prompt's explicit
  * instruction to match that styling.
  */
 export function PlatformFeeModal({ open, onOpenChange, onAgree }: PlatformFeeModalProps) {
@@ -100,15 +99,7 @@ export function PlatformFeeModal({ open, onOpenChange, onAgree }: PlatformFeeMod
           'md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-[32px] md:border-0 md:p-8',
         ].join(' ')}
       >
-        <DialogClose asChild>
-          <button
-            type="button"
-            className="absolute top-6 right-6 flex size-8 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-input transition-colors hover:border-primary hover:text-primary"
-          >
-            <X className="size-4" aria-hidden="true" />
-            <span className="sr-only">{t('close')}</span>
-          </button>
-        </DialogClose>
+        <DialogCloseButton label={t('close')} className="absolute top-6 right-6" />
 
         <DialogHeader className="gap-0 border-b border-border pr-10 pb-4 text-left">
           <DialogTitle className="text-[22px] text-primary">{t('title')}</DialogTitle>
