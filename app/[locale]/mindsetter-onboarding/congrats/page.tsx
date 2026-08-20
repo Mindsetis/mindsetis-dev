@@ -17,17 +17,14 @@ type MindsetterCongratsPageProps = {
  * mirroring `finalizeMindsetterOnboarding`'s guard
  * (`docs/mindsetter-extended-onboarding.md` section B/8).
  *
- * Reordered per product decision D9 (ROADMAP stage 1.9 follow-up) — "Personal session" is now
- * the LAST core step: roles(0) → superpowers(1) → help(2) → shine(3) → session(4), so this
- * array's index order changed from `[roles, superpowers, help, session, shine]` to
- * `[roles, superpowers, help, shine, session]`.
+ * "Personal session" left the wizard on 2026-08-13 — 1:1 settings moved to the cabinet
+ * (`/dashboard/sessions`), so the Shine picker is the last core step and this array ends there.
  */
 const CORE_STEP_ROUTES = [
   '/mindsetter-onboarding/roles',
   '/mindsetter-onboarding/superpowers',
   '/mindsetter-onboarding/help',
   '/mindsetter-onboarding/shine',
-  '/mindsetter-onboarding/session',
 ] as const;
 
 function coreStepRedirectRoute(onboardingStep: number): string {
@@ -39,8 +36,8 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * Extended Mindsetter onboarding — Mindsetter Congrats screen
  * (`docs/mindsetter-extended-onboarding.md` section 8, `CONGRATS_ROUTE` in
  * `lib/mindsetter-onboarding/blocks.ts`). Reached once the core wizard (Roles → Superpowers →
- * Help → Shine picker → [optional blocks] → Personal session, reordered per decision D9) is
- * done — `SessionForm`'s own "Save and continue" is what actually lands here now.
+ * Help → Shine picker → [optional blocks]) is done — either the last optional block's "Save and
+ * continue" or the picker's own "Skip" lands here.
  *
  * Unlike every earlier step, this page doesn't just render a form — on load it calls
  * `finalizeMindsetterOnboarding()` (section B's resolved decision D1: completing the core wizard
@@ -49,17 +46,30 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * (`finalized: false` — e.g. someone hand-navigates straight to this URL), this page redirects
  * back to whichever core step `onboardingStep` says is next, instead of showing congrats
  * prematurely. A same-shape `ok: false` (unexpected internal error) falls back to the last core
- * step ("Personal session") rather than rendering a broken congrats screen.
+ * step (the Shine picker) rather than rendering a broken congrats screen.
  *
  * Distinct from the Member congrats screen (`/welcome`, `WelcomeCtas`) — no "Who is Mindsetter?"
  * info modal, no dismiss/swap-after-confirm button; see `MindsetterCongratsCtas`'s own doc
  * comment.
  *
- * Renders a `RegistrationBackLink` back to `/mindsetter-onboarding/session` (product fix, stage
- * 1.9 follow-up), same chrome convention every core step's own page.tsx already uses. Going back
- * is safe even though `account_type` has already flipped to `'mindsetter'` by the time this page
- * renders — `saveSession`'s write path uses the service-role client and stays idempotent, so
- * revisiting/resubmitting that step doesn't undo the flip or duplicate anything.
+ * Renders a `RegistrationBackLink` back to the Shine picker, same chrome convention every core
+ * step's own page.tsx already uses. Going back is safe even though `account_type` has already
+ * flipped to `'mindsetter'` by the time this page renders — every step's write path is idempotent,
+ * so revisiting one doesn't undo the flip or duplicate anything.
+ *
+ * Figma: "Mindsetter profile 6/6 - 1440 px" (`400:5587`, desktop) / "Congrats screen"
+ * (`261:4319`, mobile) — re-verified 2026-08-18 against a fresh selection (this frame family's
+ * name is reused across many unrelated step-preview frames in the file, so the node-id is the
+ * only reliable anchor). Back→title gap is 52px desktop in the Figma layer tree; kept the
+ * mobile `mb-8` this page already had (Figma's mobile frame has no Back element to measure
+ * against at all — same "keep the shared Back link on both breakpoints anyway" call already
+ * made for `/welcome`, see `RegistrationStepHeader`'s doc comment).
+ *
+ * The heading's "Congratulations!" is gradient-filled — same exact stops as `/welcome`'s own
+ * accent span (`WelcomeScreen.tsx`), not the `--gradient-primary` button token (per that
+ * component's doc comment, the two gradients differ slightly by design). Unlike `/welcome`,
+ * this heading has no manual line breaks at all in Figma (desktop AND mobile both wrap the same
+ * single continuous string naturally), so the `t.rich` call only needs the `accent` tag.
  */
 export default async function MindsetterOnboardingCongratsPage({
   params,
@@ -78,7 +88,7 @@ export default async function MindsetterOnboardingCongratsPage({
   const result = await finalizeMindsetterOnboarding({});
 
   if (!result.ok) {
-    redirect({ href: '/mindsetter-onboarding/session', locale });
+    redirect({ href: '/mindsetter-onboarding/shine', locale });
     return null;
   }
 
@@ -89,16 +99,24 @@ export default async function MindsetterOnboardingCongratsPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[28px]">
+      <div className="relative mb-8 md:mb-[52px]">
         <RegistrationBackLink
-          href="/mindsetter-onboarding/session"
+          href="/mindsetter-onboarding/shine"
           label={tAuth('signUp.back')}
           className="md:static md:translate-y-0"
         />
       </div>
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-        <h1 className="font-display text-h1 text-foreground md:text-h3">{t('congrats.title')}</h1>
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 md:gap-8">
+        <h1 className="font-display text-h1 text-foreground md:text-h3">
+          {t.rich('congrats.title', {
+            accent: (chunks) => (
+              <span className="bg-[linear-gradient(91.2deg,#c3e4fa_1.66%,#79b9e3_50.18%,#21b8e6_99.72%)] bg-clip-text text-transparent">
+                {chunks}
+              </span>
+            ),
+          })}
+        </h1>
         <MindsetterCongratsCtas username={session.profile.username} />
       </div>
     </div>
