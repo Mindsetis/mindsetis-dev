@@ -12,10 +12,13 @@ import {
   useWatch,
 } from 'react-hook-form';
 
+import { saveWinsSection } from '@/app/[locale]/dashboard/profile/actions';
 import { saveWins } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,11 +41,15 @@ import {
   type Win,
   WIN_COLORS,
   type WinColor,
+  winsCabinetSchema,
   type WinsStepInput,
   winsStepSchema,
 } from '@/lib/validation/mindsetter';
 
 type WinsFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved wins, when the caller revisits this block. */
   initialWins?: Win[];
   /** Where "Save and continue" navigates once saved (`nextBlockHref`). */
@@ -274,16 +281,21 @@ function WinCard({ control, index, onRemove, id, draggable }: WinCardProps) {
 
 /** Optional block "My Wins" (onboarding doc section 7). Mirrors `HelpForm.tsx`'s `useFieldArray`
  * structure, plus the per-card color swatch picker. */
-export function WinsForm({ initialWins, nextHref }: WinsFormProps) {
+export function WinsForm({ initialWins, nextHref, editMode }: WinsFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<WinsStepInput> = useForm<WinsStepInput>({
-    resolver: zodResolver(winsStepSchema),
+    // Cabinet mode relaxes the wizard's "at least one" rule so this optional section can be saved
+    // EMPTY — that empty save is how it gets cleared again. It also starts with zero rows when
+    // nothing is saved yet (the wizard seeds one blank row, which here would force the caller to
+    // fill something just to close the section). See the cabinet schema's own doc comment.
+    resolver: zodResolver(editMode ? winsCabinetSchema : winsStepSchema),
     mode: 'onChange',
     defaultValues: {
-      wins: initialWins?.length ? initialWins : [EMPTY_WIN],
+      wins: initialWins?.length ? initialWins : editMode ? [] : [EMPTY_WIN],
     },
   });
 
@@ -292,10 +304,18 @@ export function WinsForm({ initialWins, nextHref }: WinsFormProps) {
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
-    const result = await saveWins(values);
+    const result = editMode ? await saveWinsSection(values) : await saveWins(values);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
+      return;
+    }
+
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
       return;
     }
 
@@ -319,7 +339,9 @@ export function WinsForm({ initialWins, nextHref }: WinsFormProps) {
                 id={field.id}
                 control={form.control}
                 index={index}
-                onRemove={fields.length > 1 ? () => remove(index) : undefined}
+                // Cabinet mode can delete down to zero rows (that's how the section is
+                // cleared); the wizard keeps its last row undeletable, since it requires one.
+                onRemove={editMode || fields.length > 1 ? () => remove(index) : undefined}
                 draggable={fields.length > 1}
               />
             ))}
@@ -333,18 +355,17 @@ export function WinsForm({ initialWins, nextHref }: WinsFormProps) {
           </Button>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-          // The parent's `gap-4 md:gap-6` (16px/24px) already spaces every sibling — this
-          // negative margin narrows JUST this gap (Add win → Save and continue) down to the
-          // requested 12px mobile / 16px desktop, without touching spacing elsewhere in the form.
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
           className={fields.length < MAX_WINS ? 'mt-[-4px] md:mt-[-8px]' : undefined}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        />
       </form>
     </Form>
   );

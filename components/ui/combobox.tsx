@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  keywordAwareFilter,
   SelectChevronIcon,
 } from '@/components/ui/command';
 import {
@@ -25,6 +26,13 @@ type ComboboxOption = {
   /** Optional secondary line rendered under `label` in the LIST (e.g. a timezone's "UTC+3"
    * short-offset). Omitted → single-line option, unchanged from the original behavior. */
   description?: string;
+  /**
+   * Extra strings this option should match while typing, but never display — e.g. the
+   * country field's localized spellings, so "Україна" and "España" find Ukraine and Spain
+   * in an English-labelled list. Only meaningful with cmdk's client-side filtering (a
+   * remote-search field filters on the server instead).
+   */
+  keywords?: string[];
 };
 
 /**
@@ -77,6 +85,25 @@ type ComboboxProps = {
    * default check-circle (selected) / chevron (empty) swap — e.g. the timezone field's static
    * chevron. Omitted → the default check/chevron behavior. */
   trailingIcon?: ReactNode;
+  /**
+   * Controlled search text. Pass together with `shouldFilter={false}` for a REMOTE-search field
+   * (e.g. `CityCombobox`, whose 170k-row list can never be shipped to the client): the owner
+   * debounces this value, fetches, and feeds the results back in as `options`. Omitted → the
+   * `CommandInput` stays uncontrolled and cmdk filters `options` locally, unchanged.
+   */
+  searchValue?: string;
+  onSearchValueChange?: (value: string) => void;
+  /**
+   * `false` disables cmdk's built-in client-side filtering — required when `options` are already
+   * the server's answer for `searchValue`, otherwise cmdk would filter the result set a second
+   * time against its own fuzzy matcher and drop legitimate rows (a server hit on an alias like
+   * "Kiev" returns the row labelled "Kyiv", which cmdk's local matcher would then hide).
+   */
+  shouldFilter?: boolean;
+  /** Replaces `emptyLabel` while a remote search is in flight, so the list doesn't flash
+   * "nothing found" between keystroke and response. */
+  isLoading?: boolean;
+  loadingLabel?: string;
 };
 
 /**
@@ -124,6 +151,11 @@ export function Combobox({
   leftIcon,
   triggerDescription,
   trailingIcon,
+  searchValue,
+  onSearchValueChange,
+  shouldFilter,
+  isLoading,
+  loadingLabel,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -227,17 +259,35 @@ export function Combobox({
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Command className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}>
-          {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
+        <Command
+          shouldFilter={shouldFilter}
+          filter={
+            options.some((option) => option.keywords?.length) ? keywordAwareFilter : undefined
+          }
+          className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}
+        >
+          {searchable ? (
+            <CommandInput
+              placeholder={searchPlaceholder}
+              {...(onSearchValueChange
+                ? { value: searchValue ?? '', onValueChange: onSearchValueChange }
+                : {})}
+            />
+          ) : null}
           <CommandList>
-            <CommandEmpty>{emptyLabel}</CommandEmpty>
+            <CommandEmpty>{isLoading ? (loadingLabel ?? emptyLabel) : emptyLabel}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = option.value === value;
                 return (
                   <CommandItem
                     key={option.value}
-                    value={option.label}
+                    // With local filtering, cmdk matches the query against this prop, so it must
+                    // be the human-readable label. With remote results it must instead be the
+                    // unique id: city labels legitimately repeat ("Springfield" ×6), and cmdk
+                    // keys its selection state by this value.
+                    value={shouldFilter === false ? option.value : option.label}
+                    keywords={option.keywords}
                     onSelect={() => select(option.value)}
                     className={cn(isSelected && 'text-foreground')}
                   >

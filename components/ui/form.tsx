@@ -7,7 +7,9 @@ import type { ControllerProps, FieldPath, FieldValues } from 'react-hook-form';
 import { Controller, FormProvider, useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { Label } from '@/components/ui/label';
+import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { cn } from '@/lib/utils';
+import { isLatinOnly, LATIN_ONLY_MESSAGE } from '@/lib/validation/common';
 
 /**
  * Standard shadcn Form primitives, wired to React Hook Form. Pairs with
@@ -150,9 +152,40 @@ function FormMessageIcon() {
   );
 }
 
-function FormMessage({ className, children, ...props }: ComponentProps<'p'>) {
-  const { error, formMessageId } = useFormField();
-  const body = error ? String(error.message ?? '') : children;
+type FormMessageProps = ComponentProps<'p'> & {
+  /**
+   * Whether to run the live Latin-script check against this field's value (default `true`).
+   *
+   * Pass `false` for fields whose content is never rendered in the brand font and where a
+   * character restriction would be actively harmful — i.e. PASSWORDS: silently telling someone
+   * their existing password is "invalid" because it has Cyrillic in it would be wrong, and we
+   * deliberately don't restrict what a password may contain.
+   */
+  latinOnly?: boolean;
+};
+
+function FormMessage({ className, children, latinOnly = true, ...props }: FormMessageProps) {
+  const { error, name, formMessageId } = useFormField();
+  // Schema messages arrive as encoded `validation.*` references (see `lib/validation/messages.ts`)
+  // — from the client resolver AND from a Server Action's `fieldErrors` — and are turned into
+  // locale text here, the first point in either path where a locale exists. Anything that isn't
+  // an encoded reference (an `ActionError` sentence) passes through untouched.
+  const tValidation = useValidationMessage();
+  // Live (per-keystroke) counterpart to the Zod `isLatinOnly` rule on the schema side. Fields are
+  // wired through `FormField`/`Controller`, so this re-renders as the caller types — the point of
+  // running it here rather than leaving it to the resolver, which only speaks up on submit.
+  // Non-string values (selects, arrays, files, numbers) are skipped rather than stringified.
+  const value = useWatch({ name });
+  const hasNonLatin = latinOnly && typeof value === 'string' && !isLatinOnly(value);
+
+  // A resolver error still wins: it is the reason the submit failed, and once the caller edits
+  // the field RHF re-validates on change — at which point the schema's own Latin rule surfaces
+  // here anyway, with the identical message.
+  const body = error
+    ? tValidation(String(error.message ?? ''))
+    : hasNonLatin
+      ? tValidation(LATIN_ONLY_MESSAGE)
+      : children;
 
   if (!body) {
     return null;

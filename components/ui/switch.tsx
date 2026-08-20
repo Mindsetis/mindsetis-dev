@@ -33,10 +33,13 @@ function Switch({ checked, onCheckedChange, disabled, className, ...props }: Swi
       data-state={checked ? 'checked' : 'unchecked'}
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
+      // 44×24 track with a 20px knob and a 2px inset all round (2026-08-13 spec): `p-0.5` is that
+      // inset, so the knob travels 44 − 20 − 2 − 2 = 20px (`translate-x-5`) between ends. Track is
+      // `#747474` off / `#79b9e3` on; the knob stays white in both states.
       className={cn(
-        'inline-flex h-7 w-11 shrink-0 cursor-pointer items-center rounded-full bg-white p-2 outline-none transition-colors',
+        'inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full bg-[#747474] p-0.5 outline-none transition-colors',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        checked && 'bg-[#79b9e3]',
+        checked && 'bg-primary',
         'disabled:cursor-not-allowed disabled:opacity-60',
         className,
       )}
@@ -45,8 +48,8 @@ function Switch({ checked, onCheckedChange, disabled, className, ...props }: Swi
       <span
         aria-hidden="true"
         className={cn(
-          'size-3 rounded-full bg-black transition-transform',
-          checked && 'translate-x-4',
+          'size-5 rounded-full bg-white transition-transform',
+          checked && 'translate-x-5',
         )}
       />
     </button>

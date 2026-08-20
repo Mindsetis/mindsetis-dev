@@ -13,8 +13,13 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
-import { BLOCK_SLUGS, type BlockSlug, buildBlockHref } from '@/lib/mindsetter-onboarding/blocks';
-import type { CompletenessTier } from '@/lib/mindsetter-onboarding/completeness';
+import {
+  BLOCK_SLUGS,
+  type BlockSlug,
+  buildBlockHref,
+  CONGRATS_ROUTE,
+} from '@/lib/mindsetter-onboarding/blocks';
+import type { CompletenessTier } from '@/lib/profile/completeness';
 
 type ShineFormProps = {
   completeness: {
@@ -93,9 +98,9 @@ export function ShineForm({ completeness }: ShineFormProps) {
   }
 
   function handleSkip() {
-    // Personal session is the next (and last) core step regardless of which/any optional blocks
-    // were picked (product decision D9 — Personal session moved after this picker).
-    void advanceAndNavigate('/mindsetter-onboarding/session');
+    // Skipping every optional block ends the wizard outright — this picker is the last core step
+    // since "Personal session" moved to the cabinet (2026-08-13).
+    void advanceAndNavigate(CONGRATS_ROUTE);
   }
 
   function handleContinue() {

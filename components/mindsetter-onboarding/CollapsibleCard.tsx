@@ -150,7 +150,21 @@ export function CollapsibleCard({
     // second click to actually add a card. Listening on `click` lets that button's own `onClick`
     // (append) and this collapse both run on one completed click, in the same React batch.
     function handleOutsideClick(event: MouseEvent) {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+      const target = event.target as Node | null;
+      if (!target) return;
+
+      // The clicked node may already have been REMOVED from the document by the time this
+      // document-level listener runs: React flushes a discrete click's state update (and the
+      // resulting DOM removal) before the event finishes bubbling. That happens on this
+      // card's own "remove link" X — the node was inside the card a moment ago, but
+      // `contains()` now reports false because it is detached, so the card read its own
+      // delete button as a click somewhere else and collapsed itself.
+      //
+      // A detached target can never be meaningfully "outside" anything, so skip it. A click
+      // that genuinely lands outside always has a target still in the document.
+      if (!target.isConnected) return;
+
+      if (cardRef.current && !cardRef.current.contains(target)) {
         setExpanded(false);
       }
     }

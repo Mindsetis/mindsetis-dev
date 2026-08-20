@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link2, Loader2, Plus, Video } from 'lucide-react';
+import { Link2, Loader2, Pencil, Plus, Video } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -15,8 +15,10 @@ import {
 
 import { fetchRoleLinkPreview, saveRoles } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,9 +31,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { useRouter } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
+import { isLatinOnly, LATIN_ONLY_MESSAGE } from '@/lib/validation/common';
 import {
   MAX_ROLE_DESCRIPTION_LENGTH,
+  MAX_ROLE_LINK_TITLE_LENGTH,
   MAX_ROLE_LINKS,
   MAX_ROLE_TITLE_LENGTH,
   MAX_ROLES,
@@ -43,6 +49,9 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type RolesFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved roles, when the caller revisits this step. */
   initialRoles?: Role[];
 };
@@ -109,14 +118,102 @@ function getHostname(value: string): string | null {
  * other type (article/link/unset) gets a generic link icon.
  * // TODO: swap the non-video type icon for the exact Figma SVG when provided.
  */
-function LinkPreviewCard({ title, mediaType }: { title: string; mediaType?: RoleLinkMediaType }) {
+function LinkPreviewCard({
+  title,
+  mediaType,
+  onTitleChange,
+  editLabel,
+}: {
+  title: string;
+  mediaType?: RoleLinkMediaType;
+  /** Commits an edited title. Writes to the link's `ogTitle`, which is also what the public
+   * profile renders — so the scraped title and a hand-written one are the same field, and the
+   * member sees exactly the label their profile will show. */
+  onTitleChange: (next: string) => void;
+  editLabel: string;
+}) {
   const Icon = mediaType === 'video' ? Video : Link2;
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+
+  // This label is edited in a bare `<input>` inside the preview row, not through a
+  // `FormField`/`FormMessage`, so the live Latin check the rest of the form gets for free is
+  // wired here by hand. The row is a single compact line with nowhere to hang an error message,
+  // so the feedback is the draft turning red as it is typed.
+  const draftHasNonLatin = !isLatinOnly(draft);
+  const tValidation = useValidationMessage();
+
+  function commit() {
+    setIsEditing(false);
+    const next = draft.trim();
+    // An emptied field falls back to the scraped/hostname title rather than saving a blank
+    // label — a link with no visible text would be unclickable in practice. A non-Latin one
+    // falls back the same way instead of writing a label the profile font can't draw.
+    if (!next || next === title || !isLatinOnly(next)) {
+      setDraft(title);
+      return;
+    }
+    onTitleChange(next);
+  }
+
+  function cancel() {
+    setDraft(title);
+    setIsEditing(false);
+  }
+
   return (
     <div className="flex items-center gap-2 rounded-[8px] border border-[#747474] bg-[#000] p-2">
       <span className="flex shrink-0 items-center justify-center rounded-[2px] bg-[#1a1a1a] px-[13px] py-[7px]">
         <Icon className="h-[10px] w-[14px]" aria-hidden="true" />
       </span>
-      <span className="truncate text-[12px] font-medium text-foreground">{title}</span>
+
+      {isEditing ? (
+        <input
+          autoFocus
+          value={draft}
+          maxLength={MAX_ROLE_LINK_TITLE_LENGTH}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commit();
+            }
+            if (event.key === 'Escape') cancel();
+          }}
+          aria-invalid={draftHasNonLatin}
+          title={draftHasNonLatin ? tValidation(LATIN_ONLY_MESSAGE) : undefined}
+          // Borderless and transparent so the row does not visibly change shape when it
+          // flips between reading and editing.
+          className={cn(
+            'min-w-0 flex-1 bg-transparent text-[12px] font-medium outline-none',
+            draftHasNonLatin ? 'text-destructive' : 'text-foreground',
+          )}
+        />
+      ) : (
+        <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground">
+          {title}
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={() => {
+          if (isEditing) {
+            commit();
+            return;
+          }
+          // Seed from the CURRENT title on every entry, not once at mount: a later scrape can
+          // replace `title` while this component stays mounted, and a stale draft would
+          // silently overwrite the newer value.
+          setDraft(title);
+          setIsEditing(true);
+        }}
+        className="shrink-0 cursor-pointer text-muted-foreground transition-colors hover:text-primary"
+      >
+        <Pencil className="size-3.5" aria-hidden="true" />
+        <span className="sr-only">{editLabel}</span>
+      </button>
     </div>
   );
 }
@@ -265,19 +362,28 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
    * component doc comment on `LinkPreviewCard` for the design this matches. Falls back to the
    * URL's own hostname when `ogTitle` never resolved (no scrape yet, or the scrape came back
    * empty); shows nothing at all for an unparsable URL, per product decision. */
-  function renderLinkPreview(link: RoleLink | undefined, isLoading: boolean) {
+  function renderLinkPreview(link: RoleLink | undefined, linkIndex: number, isLoading: boolean) {
     if (isLoading) return <LinkPreviewLoading label={t('roles.linkPreviewLoading')} />;
 
     const url = link?.url?.trim();
     if (!url) return null;
 
-    if (link?.ogTitle) {
-      return <LinkPreviewCard title={link.ogTitle} mediaType={link.mediaType} />;
-    }
+    // The hostname fallback is shown when no scrape has landed — and is equally editable, so a
+    // member whose site has no og:title can still give the link a readable label instead of
+    // publishing a bare domain.
+    const displayTitle = link?.ogTitle || getHostname(url);
+    if (!displayTitle) return null;
 
-    const hostname = getHostname(url);
-    if (!hostname) return null;
-    return <LinkPreviewCard title={hostname} mediaType={link?.mediaType} />;
+    return (
+      <LinkPreviewCard
+        title={displayTitle}
+        mediaType={link?.mediaType}
+        editLabel={t('roles.editLinkTitle')}
+        onTitleChange={(next) =>
+          setValue(`roles.${index}.links.${linkIndex}.ogTitle`, next, { shouldDirty: true })
+        }
+      />
+    );
   }
 
   return (
@@ -444,7 +550,7 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
                   </FormItem>
                 )}
               />
-              {renderLinkPreview(link, isLoading)}
+              {renderLinkPreview(link, linkIndex, isLoading)}
             </div>
           );
         })}
@@ -471,9 +577,10 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), plus a
  * `useFieldArray` of Role cards (each with its own nested links field array, see `RoleCard`).
  */
-export function RolesForm({ initialRoles }: RolesFormProps) {
+export function RolesForm({ initialRoles, editMode }: RolesFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<RolesStepInput> = useForm<RolesStepInput>({
@@ -498,6 +605,15 @@ export function RolesForm({ initialRoles }: RolesFormProps) {
 
     // Step 2/5 — "Your superpowers" (not built yet in this foundation slice; wired ahead of
     // the route existing, same precedent as the Member wizard's earlier steps).
+    // Cabinet mode returns to the section list; the wizard continues to step 2/5.
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
+      return;
+    }
+
     router.push('/mindsetter-onboarding/superpowers');
   });
 
@@ -533,14 +649,16 @@ export function RolesForm({ initialRoles }: RolesFormProps) {
             </Button>
           ) : null}
 
-          <Button
-            type="submit"
-            variant="primaryOutline"
-            size="lg"
-            loading={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-          </Button>
+          <StepActions
+            onCancel={() => {
+              // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+              // the section rather than navigating, so this is an undo, not an exit.
+              form.reset();
+              setFormError(null);
+            }}
+            editMode={editMode}
+            isSubmitting={form.formState.isSubmitting}
+          />
         </div>
       </form>
     </Form>

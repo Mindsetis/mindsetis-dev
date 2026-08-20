@@ -15,21 +15,34 @@ import { z } from 'zod';
 
 import { INDUSTRY_VALUES } from '@/lib/constants/industries';
 
+import { isLatinOnly, LATIN_ONLY_MESSAGE } from './common';
+import { vmsg } from './messages';
+
 export const MAX_COMPANY_LENGTH = 120;
 export const MAX_ROLE_LENGTH = 120;
 
-export const buildProfileSchema = z.object({
+/**
+ * Exported as a shape (not just the assembled schema) so the cabinet's Hero editor can compose
+ * these three fields with the step-3 ones into a single form — the Figma cabinet frame merges
+ * both wizard steps into one "Hero" section. Pure refactor: `buildProfileSchema` below is the
+ * same object it always was, so the wizard step is unchanged.
+ */
+export const buildProfileFields = {
   company: z
     .string()
     .trim()
-    .min(1, 'Company is required.')
-    .max(MAX_COMPANY_LENGTH, `Company must be at most ${MAX_COMPANY_LENGTH} characters.`),
+    .min(1, vmsg('companyRequired'))
+    .max(MAX_COMPANY_LENGTH, vmsg('companyMax', { max: MAX_COMPANY_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   role: z
     .string()
     .trim()
-    .min(1, 'Role is required.')
-    .max(MAX_ROLE_LENGTH, `Role must be at most ${MAX_ROLE_LENGTH} characters.`),
-  industry: z.enum(INDUSTRY_VALUES, { message: 'Please select an industry.' }),
-});
+    .min(1, vmsg('roleRequired'))
+    .max(MAX_ROLE_LENGTH, vmsg('roleMax', { max: MAX_ROLE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+  industry: z.enum(INDUSTRY_VALUES, { message: vmsg('industryRequired') }),
+} as const;
+
+export const buildProfileSchema = z.object(buildProfileFields);
 
 export type BuildProfileInput = z.infer<typeof buildProfileSchema>;

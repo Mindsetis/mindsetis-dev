@@ -129,6 +129,44 @@ function CommandItem({ className, ...props }: ComponentProps<typeof CommandPrimi
   );
 }
 
+/** Lower-case + drop combining diacritics, so "Espana" matches "España" and vice versa. */
+const foldForMatch = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase()
+    .trim();
+
+/**
+ * Deterministic prefix/substring scorer, passed to `Command`'s `filter` prop INSTEAD of
+ * cmdk's default fuzzy matcher — but only for lists whose options carry `keywords` (today:
+ * the country and language pickers).
+ *
+ * cmdk's built-in `command-score` is fuzzy and weights an item's own value above its
+ * keywords, which ranked Germany THIRD for the Spanish query "Alemania" — behind
+ * "Democratic Republic of the Congo" and "Dominican Republic", whose labels happen to
+ * contain those letters in order. When the alias IS the user's entire query, an exact hit
+ * must win outright, so scoring here is explicit: exact > prefix > substring > no match
+ * (0 hides the row).
+ *
+ * Lives here rather than in one picker because both `Combobox` and `LanguagesMultiSelect`
+ * need it and neither owns the other; scoped to keyword-bearing lists on purpose, so every
+ * other list in the app keeps cmdk's fuzzy behavior unchanged.
+ */
+function keywordAwareFilter(value: string, search: string, keywords?: string[]): number {
+  const query = foldForMatch(search);
+  if (!query) return 1;
+
+  let best = 0;
+  for (const candidate of [value, ...(keywords ?? [])]) {
+    const folded = foldForMatch(candidate);
+    if (folded === query) return 1;
+    if (folded.startsWith(query)) best = Math.max(best, 0.8);
+    else if (folded.includes(query)) best = Math.max(best, 0.4);
+  }
+  return best;
+}
+
 export {
   Command,
   CommandEmpty,
@@ -136,5 +174,6 @@ export {
   CommandInput,
   CommandItem,
   CommandList,
+  keywordAwareFilter,
   SelectChevronIcon,
 };

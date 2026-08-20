@@ -12,10 +12,13 @@ import {
   useWatch,
 } from 'react-hook-form';
 
+import { saveFckupsSection } from '@/app/[locale]/dashboard/profile/actions';
 import { saveFckups } from '@/app/[locale]/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
 import {
   type Fckup,
+  fckupsCabinetSchema,
   type FckupsStepInput,
   fckupsStepSchema,
   MAX_FCKUP_STORY_LENGTH,
@@ -37,6 +41,9 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type FckupsFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved f*ckups, when the caller revisits this block. */
   initialFckups?: Fckup[];
   /** Where "Save and continue" navigates once saved (`nextBlockHref`). */
@@ -135,16 +142,21 @@ function FckupCard({ control, index, onRemove, id, draggable }: FckupCardProps) 
 /** Optional block "My F*ckUp(s)" (onboarding doc section 7). Mirrors `HelpForm.tsx`'s
  * `useFieldArray` structure; the add-button copy is "Add f*ckup" — the design mockup wrongly
  * says "Add stage" here, fixed per the onboarding doc's E.4 silent-fix list. */
-export function FckupsForm({ initialFckups, nextHref }: FckupsFormProps) {
+export function FckupsForm({ initialFckups, nextHref, editMode }: FckupsFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<FckupsStepInput> = useForm<FckupsStepInput>({
-    resolver: zodResolver(fckupsStepSchema),
+    // Cabinet mode relaxes the wizard's "at least one" rule so this optional section can be saved
+    // EMPTY — that empty save is how it gets cleared again. It also starts with zero rows when
+    // nothing is saved yet (the wizard seeds one blank row, which here would force the caller to
+    // fill something just to close the section). See the cabinet schema's own doc comment.
+    resolver: zodResolver(editMode ? fckupsCabinetSchema : fckupsStepSchema),
     mode: 'onChange',
     defaultValues: {
-      fckups: initialFckups?.length ? initialFckups : [EMPTY_FCKUP],
+      fckups: initialFckups?.length ? initialFckups : editMode ? [] : [EMPTY_FCKUP],
     },
   });
 
@@ -153,10 +165,18 @@ export function FckupsForm({ initialFckups, nextHref }: FckupsFormProps) {
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
-    const result = await saveFckups(values);
+    const result = editMode ? await saveFckupsSection(values) : await saveFckups(values);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
+      return;
+    }
+
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
       return;
     }
 
@@ -180,7 +200,9 @@ export function FckupsForm({ initialFckups, nextHref }: FckupsFormProps) {
                 id={field.id}
                 control={form.control}
                 index={index}
-                onRemove={fields.length > 1 ? () => remove(index) : undefined}
+                // Cabinet mode can delete down to zero rows (that's how the section is
+                // cleared); the wizard keeps its last row undeletable, since it requires one.
+                onRemove={editMode || fields.length > 1 ? () => remove(index) : undefined}
                 draggable={fields.length > 1}
               />
             ))}
@@ -194,18 +216,17 @@ export function FckupsForm({ initialFckups, nextHref }: FckupsFormProps) {
           </Button>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-          // The parent's `gap-4 md:gap-6` (16px/24px) already spaces every sibling — this
-          // negative margin narrows JUST this gap (Add f*ckup → Save and continue) down to the
-          // requested 12px mobile / 16px desktop, without touching spacing elsewhere in the form.
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
           className={fields.length < MAX_FCKUPS ? 'mt-[-4px] md:mt-[-8px]' : undefined}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        />
       </form>
     </Form>
   );
