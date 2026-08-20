@@ -18,6 +18,7 @@
  *   styles/tokens/spacing.css     — page/section spacing, container widths
  *   styles/tokens/radius.css      — corner radius scale
  *   styles/tokens/effects.css     — shadows, gradients
+ *   styles/tokens/motion.css      — keyframe animations (`animate-*` utilities)
  *   styles/base.css               — base element styles (body, ...)
  *
  * To change an existing value, edit it in the matching file. To add a new token category,
@@ -28,5 +29,6 @@
 @import './styles/tokens/spacing.css';
 @import './styles/tokens/radius.css';
 @import './styles/tokens/effects.css';
+@import './styles/tokens/motion.css';
 
 @import './styles/base.css';
