@@ -51,3 +51,6 @@ yarn-error.log*
 # Figma/browser test screenshot artifacts
 .figma-shots-tmp/
 signup-checklist-*.png
+
+# GeoNames dump cache (scripts/seed-geo.mjs) — re-downloadable, never committed
+.geonames-cache/
