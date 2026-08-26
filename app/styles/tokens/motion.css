@@ -1,0 +1,68 @@
+/**
+ * Mindsetis UI Kit — motion.
+ *
+ * Tailwind v4 turns every `--animate-*` custom property in `@theme` into a matching `animate-*`
+ * utility; anything that also needs its own state rules (a `:hover` override, say) is declared
+ * as an `@utility` instead, the same way `gradient-fill` is in `styles/base.css`.
+ */
+
+/**
+ * `cta-hover-lift` — the button rises a few pixels, sways as if settling in the air, and drops
+ * back down. Repeats on a long cycle; stops entirely while the pointer is over it.
+ *
+ * Used on the "See how looks my profile page" CTAs (`WelcomeCtas`,
+ * `MindsetterCongratsCtas`), which sit at the very end of a wizard: the caller has just
+ * finished and has no obvious reason to keep looking, so the button has to ask for attention
+ * on its own.
+ *
+ * WHY IT STOPS ON HOVER: once the pointer is on the button the animation has done its job —
+ * and a target that keeps moving under the cursor is genuinely harder to click. `animation:
+ * none` (rather than `animation-play-state: paused`) is deliberate: pausing would freeze the
+ * button mid-air at whatever angle it happened to be, which reads as broken. Cutting the
+ * animation returns it to its untransformed resting state instantly.
+ *
+ * TIMING: motion occupies roughly the last third of the 4.5s cycle; the first ~3s is dead
+ * still. A continuously moving CTA becomes background noise the eye learns to filter out.
+ *
+ * The sway decays (1.1° → 0.9° → 0.5°) so it reads as something settling rather than as a
+ * mechanical wag. All of it is one `transform`, so it composites on the GPU and never reflows
+ * the page — nothing around the button shifts.
+ */
+@utility cta-hover-lift {
+  animation: cta-hover-lift 4.5s ease-in-out infinite;
+
+  &:hover {
+    animation: none;
+  }
+
+  /* Repetitive motion is exactly what this setting exists to suppress. */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes cta-hover-lift {
+  /* Resting, untouched, for the first two-thirds of the cycle. */
+  0%,
+  62% {
+    transform: translateY(0) rotate(0deg);
+  }
+  /* Lifts off. */
+  70% {
+    transform: translateY(-6px) rotate(0deg);
+  }
+  /* Sways, each swing smaller than the last. */
+  76% {
+    transform: translateY(-6px) rotate(-1.1deg);
+  }
+  82% {
+    transform: translateY(-6px) rotate(0.9deg);
+  }
+  88% {
+    transform: translateY(-6px) rotate(-0.5deg);
+  }
+  /* Settles back down. */
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}

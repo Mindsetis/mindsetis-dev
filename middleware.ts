@@ -32,9 +32,10 @@ const PROTECTED_PREFIXES = [
   '/mindsetter-onboarding',
   // `/members/[username]` (Member profile view, stage 1.6 — renamed from `/profile/[username]`,
   // then from `/member/[username]`): visible to any REGISTERED member, not anonymous visitors —
-  // product decision, deliberately not restricted to the profile's own owner or to verified
-  // Mindsetters (that's a separate, future, spec-§5.4 "public Mindsetter profile" page this
-  // route does not replace). Distinct from `/member-profile` above (the registration-wizard
+  // product decision, deliberately not restricted to the profile's own owner (the owner just
+  // gets the `preview` banner there instead of a separate self-view route). Mindsetters are
+  // redirected off it to the unauthenticated-public spec-§5.4 `/mindsetters/[username]`, which
+  // is NOT in this list. Distinct from `/member-profile` above (the registration-wizard
   // editing form) — `matchesPrefix` requires an exact match or a `/` boundary, so the two
   // prefixes don't collide.
   '/members',

@@ -13,6 +13,26 @@ body {
 }
 
 /**
+ * Cabinet footer corner fix — pages built on the `/dashboard` shell (marked via
+ * `data-cabinet-shell` on `app/[locale]/dashboard/layout.tsx`'s root wrapper) run a full-bleed
+ * #1a1a1a panel behind their left sidebar column, flush all the way down to the site Footer's
+ * own top edge (see that layout's own doc comment). The Footer is that SAME #1a1a1a (`bg-card`)
+ * and rounds BOTH its top corners (`rounded-t-[30px] lg:rounded-t-[50px]`) — correct everywhere
+ * else, but here it carves a curved notch of the page's black background into what should read
+ * as one continuous panel, right where the sidebar meets the footer. Squaring off just the
+ * top-left corner removes that notch; the top-right corner (over the black content column, not
+ * the sidebar panel) is left alone.
+ *
+ * `:has()` keeps this a pure CSS relationship — the Footer is a SIBLING of `<main>`, not a
+ * descendant of the dashboard tree (`app/[locale]/layout.tsx`) — instead of threading a
+ * "which route is this" prop through the global Footer just to zero one corner's radius on one
+ * route family.
+ */
+main:has([data-cabinet-shell]) + footer {
+  border-top-left-radius: 0;
+}
+
+/**
  * Gradient-border helper — `Button`'s `primaryOutline` variant needs a gradient edge, which
  * plain Tailwind `border-*` utilities can't render. Drawn via TWO masked pseudo-elements
  * instead of the double-`background-clip` trick, since the mask approach doesn't need to know

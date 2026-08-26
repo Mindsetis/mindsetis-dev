@@ -7,8 +7,9 @@ import { useForm, type UseFormReturn } from 'react-hook-form';
 
 import { saveVideoBlog } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -22,6 +23,9 @@ import { useRouter } from '@/i18n/navigation';
 import { type VideoBlogStepInput, videoBlogStepSchema } from '@/lib/validation/mindsetter';
 
 type VideoBlogFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved `video_blog` jsonb, when the caller revisits this block. */
   initialVideoBlog?: { youtube?: string | null; vimeo?: string | null } | null;
   /** Where "Save and continue" navigates once saved — the next picked block, or Personal
@@ -37,9 +41,10 @@ type VideoBlogFormProps = {
  * video upload is planned for it at all (unlike `promo_video`, which defers upload past MVP but
  * still shows the placeholder dropzone).
  */
-export function VideoBlogForm({ initialVideoBlog, nextHref }: VideoBlogFormProps) {
+export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlogFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<VideoBlogStepInput> = useForm<VideoBlogStepInput>({
@@ -58,6 +63,14 @@ export function VideoBlogForm({ initialVideoBlog, nextHref }: VideoBlogFormProps
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
+      return;
+    }
+
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
       return;
     }
 
@@ -115,14 +128,16 @@ export function VideoBlogForm({ initialVideoBlog, nextHref }: VideoBlogFormProps
           />
         </div>
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );

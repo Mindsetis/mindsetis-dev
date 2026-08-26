@@ -2,16 +2,18 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { saveMemberProfile } from '@/app/[locale]/(app)/member-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { CityCombobox, type CitySelection } from '@/components/geo/CityCombobox';
 import { AvatarUpload } from '@/components/member-profile/AvatarUpload';
 import { InterestsPicker } from '@/components/member-profile/InterestsPicker';
 import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { FieldHint } from '@/components/ui/field-hint';
 import {
   Form,
@@ -25,7 +27,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
 import type { InterestValue } from '@/lib/constants/interests';
-import { type LanguageValue, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
+import {
+  buildLanguageAliases,
+  type LanguageValue,
+  SUPPORTED_LANGUAGES,
+} from '@/lib/constants/languages';
+import type { CountryOption } from '@/lib/geo/countries';
 import {
   createMemberProfileSchema,
   MAX_ABOUT_LENGTH,
@@ -54,8 +61,14 @@ type MemberProfileFormProps = {
    * fall back to an empty value, same as a brand-new profile. See
    * `app/[locale]/member-profile/page.tsx`.
    */
-  initialCountry?: string;
-  initialCity?: string;
+  /** ISO 3166-1 alpha-2 of the saved country, if this step was completed before. */
+  initialCountryCode?: string;
+  /** Saved city, rebuilt from the profile's denormalized snapshot + codes so the trigger can
+   * show it without a lookup round-trip on mount. */
+  initialCity?: CitySelection | null;
+  /** Whole `geo_countries` list (252 rows), loaded once in the RSC page. Small enough to pass
+   * down as a prop — unlike cities, which are 170k rows and must stay a remote search. */
+  countries: readonly CountryOption[];
   initialLanguages?: LanguageValue[];
   initialBio?: string;
   initialAbout?: string;
@@ -77,8 +90,9 @@ type MemberProfileFormProps = {
  */
 export function MemberProfileForm({
   initialUsername,
-  initialCountry,
+  initialCountryCode,
   initialCity,
+  countries,
   initialLanguages,
   initialBio,
   initialAbout,
@@ -100,8 +114,8 @@ export function MemberProfileForm({
     mode: 'onChange',
     defaultValues: {
       username: initialUsername,
-      country: initialCountry ?? '',
-      city: initialCity ?? '',
+      countryCode: initialCountryCode ?? '',
+      cityGeonameId: initialCity ? String(initialCity.geonameId) : '',
       languages: initialLanguages ?? [],
       bio: initialBio ?? '',
       about: initialAbout ?? '',
@@ -119,13 +133,41 @@ export function MemberProfileForm({
   const bioValue = useWatch({ control: form.control, name: 'bio' }) ?? '';
   const aboutValue = useWatch({ control: form.control, name: 'about' }) ?? '';
 
+  // The city's display data (name + region + timezone) is held outside RHF on purpose: the
+  // validated form value is just the GeoNames id, and the Server Action re-derives every
+  // label from the database rather than trusting anything sent from here.
+  const [selectedCity, setSelectedCity] = useState<CitySelection | null>(initialCity ?? null);
+  const countryCodeValue = useWatch({ control: form.control, name: 'countryCode' }) ?? '';
+  // Built once per mount rather than baked into the catalog constant: the aliases come from
+  // `Intl.DisplayNames`, which is a runtime API, and keeping them out of
+  // `SUPPORTED_LANGUAGES` leaves that file a plain, reviewable data table.
+  const languageOptions = useMemo(
+    () =>
+      SUPPORTED_LANGUAGES.map((language) => ({
+        value: language.value,
+        label: language.label,
+        keywords: buildLanguageAliases(language.code, language.label),
+      })),
+    [],
+  );
+
+  const countryOptions = useMemo(
+    () =>
+      countries.map((country) => ({
+        value: country.code,
+        label: country.name,
+        keywords: country.searchNames,
+      })),
+    [countries],
+  );
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
     const formData = new FormData();
     formData.append('username', values.username);
-    formData.append('country', values.country);
-    formData.append('city', values.city);
+    formData.append('countryCode', values.countryCode);
+    formData.append('cityGeonameId', values.cityGeonameId);
     for (const language of values.languages) formData.append('languages', language);
     formData.append('bio', values.bio);
     if (values.about) formData.append('about', values.about);
@@ -134,7 +176,7 @@ export function MemberProfileForm({
     // requiring a re-upload on every resubmission of this step.
     if (values.avatar) formData.append('avatar', values.avatar);
     for (const id of values.interestIds) formData.append('interestIds', id);
-    formData.append('linkedin', values.linkedin);
+    formData.append('website', values.website);
     for (const field of OPTIONAL_SOCIAL_FIELDS) {
       const fieldValue = values[field];
       if (fieldValue) formData.append(field, fieldValue);
@@ -188,22 +230,34 @@ export function MemberProfileForm({
 
           <FormField
             control={form.control}
-            name="country"
-            render={({ field }) => (
+            name="countryCode"
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
                   <span className="inline-flex items-center gap-1">
                     {t('memberProfile.country.label')} <span className="text-primary">*</span>
                   </span>
                 </FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    autoComplete="country-name"
-                    placeholder={t('memberProfile.country.placeholder')}
-                    {...field}
-                  />
-                </FormControl>
+                <Combobox
+                  value={field.value}
+                  onChange={(next) => {
+                    field.onChange(next);
+                    // Clearing the city belongs in this handler, not in an effect inside
+                    // `CityCombobox`: the country changing is an EVENT, and the city it
+                    // invalidates is owned here. `CityCombobox` is additionally keyed on the
+                    // country below so its own query/result cache resets with it.
+                    if (next !== field.value) {
+                      setSelectedCity(null);
+                      form.setValue('cityGeonameId', '', { shouldValidate: false });
+                    }
+                  }}
+                  options={countryOptions}
+                  placeholder={t('memberProfile.country.placeholder')}
+                  searchPlaceholder={t('memberProfile.country.searchPlaceholder')}
+                  emptyLabel={t('memberProfile.country.empty')}
+                  invalid={!!fieldState.error}
+                  searchable
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -211,22 +265,32 @@ export function MemberProfileForm({
 
           <FormField
             control={form.control}
-            name="city"
-            render={({ field }) => (
+            name="cityGeonameId"
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
                   <span className="inline-flex items-center gap-1">
                     {t('memberProfile.city.label')} <span className="text-primary">*</span>
                   </span>
                 </FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    autoComplete="address-level2"
-                    placeholder={t('memberProfile.city.placeholder')}
-                    {...field}
-                  />
-                </FormControl>
+                <CityCombobox
+                  key={countryCodeValue}
+                  countryCode={countryCodeValue}
+                  value={selectedCity}
+                  onChange={(city) => {
+                    setSelectedCity(city);
+                    // RHF only ever holds the id — the display object lives in local state,
+                    // so the validated form value stays a plain scalar (see the schema note
+                    // on why `z.coerce` is avoided here).
+                    field.onChange(city ? String(city.geonameId) : '');
+                  }}
+                  placeholder={t('memberProfile.city.placeholder')}
+                  searchPlaceholder={t('memberProfile.city.searchPlaceholder')}
+                  emptyLabel={t('memberProfile.city.empty')}
+                  loadingLabel={t('memberProfile.city.loading')}
+                  disabledLabel={t('memberProfile.city.pickCountryFirst')}
+                  invalid={!!fieldState.error}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -245,12 +309,13 @@ export function MemberProfileForm({
                 <LanguagesMultiSelect
                   value={field.value}
                   onChange={field.onChange}
-                  options={SUPPORTED_LANGUAGES}
+                  options={languageOptions}
                   placeholder={t('memberProfile.languages.placeholder')}
                   searchPlaceholder={t('memberProfile.languages.searchPlaceholder')}
                   emptyLabel={t('memberProfile.languages.empty')}
                   removeLabel={(label) => t('memberProfile.languages.remove', { label })}
                   invalid={!!fieldState.error}
+                  searchable
                 />
                 <FieldHint>{t('memberProfile.languages.hint')}</FieldHint>
                 <FormMessage />
@@ -320,25 +385,23 @@ export function MemberProfileForm({
           <FormField
             control={form.control}
             name="avatar"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel variant="boldSpacing">
-                  <span className="inline-flex items-center gap-1">
-                    {t('memberProfile.photo.label')}
-                    {!hasExistingAvatar && <span className="text-primary">*</span>}
-                  </span>
-                </FormLabel>
+                {/* Same dropzone as the cabinet's Hero section (2026-08-11) — the label, the
+                    separate hint line and the error message are gone because the box now carries
+                    all three itself. Its POSITION in this step is unchanged: the wizard's own
+                    frame keeps the photo below the text fields, only the cabinet's mock moves it
+                    to the top. */}
                 <AvatarUpload
                   file={field.value ?? null}
                   onFileChange={(file) => field.onChange(file)}
-                  triggerLabel={t('memberProfile.photo.upload')}
+                  triggerLabel={t('memberProfile.photo.uploadTitle')}
                   replaceLabel={t('memberProfile.photo.replace')}
+                  hint={t('memberProfile.photo.requirements')}
+                  uploadedLabel={t('memberProfile.photo.uploaded')}
+                  error={fieldState.error?.message}
                   initialAvatarUrl={initialAvatarUrl}
                 />
-                <FieldHint centerIcon className="text-[12px] md:text-[14px]">
-                  {t('memberProfile.photo.hint')}
-                </FieldHint>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -364,12 +427,12 @@ export function MemberProfileForm({
 
           <FormField
             control={form.control}
-            name="linkedin"
+            name="website"
             render={({ field }) => (
               <FormItem>
                 <FormLabel variant="boldSpacing">
                   <span className="inline-flex items-center gap-1">
-                    {t('memberProfile.socials.linkedin')} <span className="text-primary">*</span>
+                    {t('memberProfile.socials.website')} <span className="text-primary">*</span>
                   </span>
                 </FormLabel>
                 <FormControl>

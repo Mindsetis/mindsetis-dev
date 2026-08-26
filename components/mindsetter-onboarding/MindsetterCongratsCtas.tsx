@@ -1,8 +1,18 @@
 import { getTranslations } from 'next-intl/server';
 
 import { ProfilePageIcon } from '@/components/icons/profile-page-icon';
+import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
 import { Button } from '@/components/ui/button';
+import { ComingSoon } from '@/components/ui/coming-soon';
 import { Link } from '@/i18n/navigation';
+
+/**
+ * PLACEHOLDER — swap for the real congrats video once that asset exists (the same test clip the
+ * home hero embeds, `HeroSection.tsx`). A YouTube/Vimeo watch or share link should be run through
+ * `toEmbedUrl` (`lib/video-embed.ts`) rather than pasted here directly; this constant is already
+ * in `/embed/` form, which is what an `<iframe src>` needs.
+ */
+const CONGRATS_VIDEO_EMBED_URL = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 
 /** "Find Mindsetis event" icon (16×16, white) — provided verbatim by the designer, replacing
  * `lucide-react`'s `Search`. */
@@ -32,59 +42,87 @@ function InviteEventIcon() {
 
 /**
  * Mindsetter Congrats-screen CTAs (`docs/mindsetter-extended-onboarding.md` section 8) — the
- * simpler sibling of the Member congrats screen's `WelcomeCtas`: same button/icon conventions
- * (`primaryOutline` person+ icon, `outline` bordered search icon, and the large gradient
- * `primary` bottom CTA with the shared `ProfilePageIcon`), but with NO "Who is Mindsetter?"
- * popup and NO dismiss/swap-after-confirm logic — there's nothing left to explain to someone who
- * just became a Mindsetter. No client state is needed here, so this stays a plain async Server
- * Component (no `"use client"`, `getTranslations` instead of the client `useTranslations` hook),
- * unlike `WelcomeCtas`.
+ * simpler sibling of the Member congrats screen's `WelcomeCtas`: no "Who is Mindsetter?" popup,
+ * no dismiss/swap-after-confirm logic. Stays a plain async Server Component (`getTranslations`,
+ * not the client `useTranslations` hook) — no client state is needed here.
  *
- * "Find event"/"Invite" row (2026-07-19 follow-up): side by side on desktop, evenly split
- * (`md:flex-1` on both — Find first, Invite second) but stacked full-width on mobile with the
- * OPPOSITE visual order (Invite first, Find second). DOM order stays Invite-then-Find — matching
- * the mobile order needs no override — and `md:order-*` swaps them visually at desktop only,
- * same "keep DOM order fixed, swap via CSS order" precedent `WhoIsMindsetterDialog`'s footer
- * buttons already use.
+ * Figma: `400:5587` (desktop) / `261:4319` (mobile) — order corrected 2026-08-18 after a fresh
+ * selection-driven re-check found the actual layout is "See how looks my profile page" → video
+ * placeholder → the Find/Invite row, NOT the reverse this component had before (that build read
+ * a different frame). Root uses the same `gap-6 md:gap-8` rhythm as the page's own `<h1>`→body
+ * gap (`page.tsx`), since all three blocks here (button, video, row) sit that same 24px mobile /
+ * 32px desktop apart per the Figma layer tree.
  *
- * The two event CTAs stay explicit placeholders (`/`) — no event-invite/event-catalog route
- * exists yet (onboarding doc section D). The bottom "See how looks my profile page" CTA now
- * links to the caller's own public Mindsetter profile (`/mindsetters/{username}`, stage 1.10);
- * `username` is resolved server-side by the congrats page and passed in (locale prefix is added
- * automatically by the next-intl `Link`).
+ * Video block: reuses `PromoVideoPlayer`, so this behaves exactly like the profile's promo video
+ * — a dark `rounded-2xl`/`bg-card` panel with a centered play triangle and a "Click for watching"
+ * caption, which swaps for the real embed (muted autoplay) on click. Figma draws only the
+ * pre-play state and names no source, so the embed URL is a placeholder constant above, to be
+ * replaced when the real clip lands. Reusing the player rather than re-implementing it also means
+ * a future switch to a direct-upload file needs no work here — that component already handles
+ * both `embedUrl` and `videoUrl`.
+ *
+ * "Find event"/"Invite" row: side by side on desktop, evenly split, stacked full-width on
+ * mobile with the OPPOSITE visual order (Invite first, Find second) — unchanged from before.
+ * `md:grid md:grid-cols-2` (not `md:flex-1`) even though both items are wrapped in `ComingSoon`
+ * here: `flex-basis: 0%` ignores a wrapper's own padding, and a `flex-1` pair can end up
+ * different rendered widths depending on each child's content — grid columns don't have that
+ * failure mode, so it's the safer default regardless of whether this particular pair would have
+ * hit it (confirmed the hard way on `/welcome`'s equivalent row).
+ *
+ * The two event CTAs stay explicit placeholders — no event-invite/event-catalog route exists yet
+ * (onboarding doc section D). The "See how looks my profile page" CTA links to the caller's own
+ * public Mindsetter profile (`/mindsetters/{username}`, stage 1.10); `username` is resolved
+ * server-side by the congrats page and passed in (locale prefix added automatically by the
+ * next-intl `Link`).
  */
 export async function MindsetterCongratsCtas({ username }: { username: string }) {
   const t = await getTranslations('mindsetterOnboarding.congrats');
 
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-        <Button asChild variant="primaryOutline" size="lg" className="w-full md:order-2 md:flex-1">
-          {/* TODO: no event-invite route exists yet — placeholder destination. */}
-          <Link href="/">
-            <InviteEventIcon />
-            {t('ctas.inviteEvent')}
-          </Link>
-        </Button>
+    <div className="flex flex-col gap-6 md:gap-8">
+      <Button asChild variant="primary" size="lg" className="w-full cta-hover-lift">
+        {/* Own public Mindsetter profile (stage 1.10 `/mindsetters/[username]`). `Link`
+            prefixes the active locale itself. */}
+        <Link href={`/mindsetters/${username}`}>
+          <ProfilePageIcon />
+          {t('ctas.seeProfile')}
+        </Link>
+      </Button>
 
-        <Button asChild variant="outline" size="lg" className="w-full md:order-1 md:flex-1">
-          {/* TODO: no event-catalog route exists yet — placeholder destination. */}
-          <Link href="/">
-            <FindEventIcon />
-            {t('ctas.findEvent')}
-          </Link>
-        </Button>
+      {/* `aspect-video`, not Figma's literal 350px height: the frame is 640×350 (1.83:1) but the
+          embed inside is a 16:9 player, so a fixed 350 letterboxed it with ~5px bars top and
+          bottom. 640×360 costs 10px against the mockup and removes them; the ratio also keeps
+          mobile correct for free, where the mockup's 343×200 had the same problem. */}
+      <div className="aspect-video w-full">
+        {/* `size-full` is NOT optional: `PromoVideoPlayer`'s post-click branch is a bare
+            `overflow-hidden rounded-2xl bg-card` div and takes its dimensions from `className`
+            alone. Without it the iframe's own `height: 100%` resolves against an auto-height
+            parent and collapses to the ~150px `<iframe>` default — the pre-play button looked
+            right regardless, since `size-full` is baked into that branch's own classes. */}
+        <PromoVideoPlayer
+          embedUrl={CONGRATS_VIDEO_EMBED_URL}
+          title={t('video.caption')}
+          clickToWatchLabel={t('video.caption')}
+          className="size-full"
+        />
       </div>
 
-      <div className="mt-[236px] md:mt-[116px]">
-        <Button asChild variant="primary" size="lg" className="w-full">
-          {/* Own public Mindsetter profile (stage 1.10 `/mindsetters/[username]`). `Link`
-              prefixes the active locale itself. */}
-          <Link href={`/mindsetters/${username}`}>
-            <ProfilePageIcon />
-            {t('ctas.seeProfile')}
-          </Link>
-        </Button>
+      {/* Both route nowhere — event invites and the event catalog are unbuilt. Disabled buttons
+          wrapped in `ComingSoon` (same treatment as `WelcomeCtas`). */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ComingSoon className="w-full md:order-2">
+          <Button type="button" variant="primaryOutline" size="lg" disabled className="w-full">
+            <InviteEventIcon />
+            {t('ctas.inviteEvent')}
+          </Button>
+        </ComingSoon>
+
+        <ComingSoon className="w-full md:order-1">
+          <Button type="button" variant="outline" size="lg" disabled className="w-full">
+            <FindEventIcon />
+            {t('ctas.findEvent')}
+          </Button>
+        </ComingSoon>
       </div>
     </div>
   );

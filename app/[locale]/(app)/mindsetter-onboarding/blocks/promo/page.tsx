@@ -17,11 +17,6 @@ type PromoBlockPageProps = {
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
 
-/** How long a resolved signed URL for an already-uploaded promo video stays valid on this page —
- * long enough for one edit session; a fresh one is minted on every page load (mirrors the
- * reel-life page's own TTL). */
-const PROMO_VIDEO_SIGNED_URL_TTL_SECONDS = 60 * 60;
-
 /**
  * Optional block "Promo video" (onboarding doc section 7, ROADMAP stage 1.9). Only reached if
  * picked on the "Make your profile shine" picker (`../../shine/page.tsx`) — the `?blocks=&i=`
@@ -56,25 +51,7 @@ export default async function MindsetterOnboardingPromoBlockPage({
     .eq('id', session.user.id)
     .maybeSingle();
   const initialPromoVideo = mindsetterProfile?.promo_video as
-    | { youtube?: string | null; vimeo?: string | null; videoPath?: string | null }
-    | null
-    | undefined;
-
-  // Resolve an already-uploaded video's private-bucket path to a signed URL up front, so the
-  // caller sees their previously-uploaded video on revisit — same "resolve path → displayable URL
-  // before rendering" precedent as `blocks/reel-life/page.tsx`.
-  const initialVideoPath = initialPromoVideo?.videoPath ?? '';
-  let initialVideoUrl: string | null = null;
-  if (initialVideoPath) {
-    const { data: signed, error } = await supabase.storage
-      .from('promo-video')
-      .createSignedUrl(initialVideoPath, PROMO_VIDEO_SIGNED_URL_TTL_SECONDS);
-    if (error) {
-      console.error('[mindsetter-onboarding] promo-video signed URL failed:', error);
-    } else {
-      initialVideoUrl = signed?.signedUrl ?? null;
-    }
-  }
+    { youtube?: string | null; vimeo?: string | null } | null | undefined;
 
   return (
     <BlockShell backHref={backHref} index={index} total={blocks.length}>
@@ -84,13 +61,7 @@ export default async function MindsetterOnboardingPromoBlockPage({
           {t('blocks.promo.title')}
         </h1>
       </div>
-      <PromoForm
-        initialPromoVideo={initialPromoVideo}
-        initialVideoPath={initialVideoPath}
-        initialVideoUrl={initialVideoUrl}
-        userId={session.user.id}
-        nextHref={nextHref}
-      />
+      <PromoForm initialPromoVideo={initialPromoVideo} nextHref={nextHref} />
     </BlockShell>
   );
 }

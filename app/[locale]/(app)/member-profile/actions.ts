@@ -68,14 +68,62 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
     avatarUrl = existingProfile.avatar_url;
   }
 
+  // Resolve the location from the two submitted identifiers. The client sends ONLY ids; every
+  // stored label (country name, city name, region, timezone) is read back from the reference
+  // tables here. This is what makes the picker actually worth having — otherwise a caller
+  // could post `cityGeonameId` of a real city alongside any display string they wanted, and
+  // the catalog would be filtering on attacker-chosen text again.
+  const geonameId = Number(input.cityGeonameId);
+  const countryCode = input.countryCode.toUpperCase();
+
+  const { data: cityRow } = await supabase
+    .from('geo_cities')
+    .select('geoname_id, name, country_code, admin1_code, timezone')
+    .eq('geoname_id', geonameId)
+    .maybeSingle();
+
+  // Also rejects a city that doesn't belong to the submitted country — the two fields are
+  // independent inputs, so "Lviv" + "Spain" is reachable by a crafted request even though
+  // the UI clears the city whenever the country changes.
+  if (!cityRow || cityRow.country_code !== countryCode) {
+    throw new ActionError('validation_error', 'Please pick your city from the list.', {
+      cityGeonameId: ['Select your city from the list.'],
+    });
+  }
+
+  const { data: countryRow } = await supabase
+    .from('geo_countries')
+    .select('name')
+    .eq('iso2', countryCode)
+    .maybeSingle();
+
+  if (!countryRow) {
+    throw new ActionError('validation_error', 'Please pick your country from the list.', {
+      countryCode: ['Select your country from the list.'],
+    });
+  }
+
+  // Region is looked up only where the city actually has one — most countries don't, and a
+  // missing subdivision is a normal state, not an error (Singapore, Monaco, Hong Kong).
+  let regionName: string | null = null;
+  if (cityRow.admin1_code) {
+    const { data: regionRow } = await supabase
+      .from('geo_admin1')
+      .select('name')
+      .eq('country_code', countryCode)
+      .eq('admin1_code', cityRow.admin1_code)
+      .maybeSingle();
+    regionName = regionRow?.name ?? null;
+  }
+
   const socials = {
-    linkedin: input.linkedin,
+    website: input.website,
     ...(input.instagram ? { instagram: input.instagram } : {}),
     ...(input.facebook ? { facebook: input.facebook } : {}),
     ...(input.tiktok ? { tiktok: input.tiktok } : {}),
     ...(input.threads ? { threads: input.threads } : {}),
     ...(input.youtube ? { youtube: input.youtube } : {}),
-    ...(input.website ? { website: input.website } : {}),
+    ...(input.linkedin ? { linkedin: input.linkedin } : {}),
   };
 
   // 2. Upsert the profile fields. `profiles_update_own` RLS (see
@@ -87,8 +135,15 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
     .from('profiles')
     .update({
       username: input.username,
-      country: input.country,
-      city: input.city,
+      // `country` / `city` are denormalized display snapshots; the *_code / geoname_id
+      // columns beside them are the filterable source of truth.
+      country: countryRow.name,
+      city: cityRow.name,
+      country_code: countryCode,
+      city_geoname_id: cityRow.geoname_id,
+      region_code: cityRow.admin1_code,
+      region_name: regionName,
+      timezone: cityRow.timezone,
       languages: input.languages,
       interests: input.interestIds,
       bio: input.bio,

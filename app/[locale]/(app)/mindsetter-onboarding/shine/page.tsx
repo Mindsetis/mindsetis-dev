@@ -4,7 +4,7 @@ import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
 import { redirect } from '@/i18n/navigation';
 import { getSessionContext } from '@/lib/auth/guards';
-import { computeProfileCompleteness } from '@/lib/mindsetter-onboarding/completeness';
+import { computeProfileCompleteness } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type ShinePageProps = {
@@ -42,7 +42,14 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   // Two independent reads (different tables), fetched in parallel rather than sequentially —
   // same convention as `../session/page.tsx`. Only the columns the completeness calc needs.
-  const [{ data: mindsetterProfile }, { data: sessionSettings }] = await Promise.all([
+  const [{ data: profile }, { data: mindsetterProfile }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(
+        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industry, socials',
+      )
+      .eq('id', session.user.id)
+      .maybeSingle(),
     supabase
       .from('mindsetter_profiles')
       .select(
@@ -50,14 +57,28 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
       )
       .eq('id', session.user.id)
       .maybeSingle(),
-    supabase
-      .from('session_settings')
-      .select('mindsetter_id')
-      .eq('mindsetter_id', session.user.id)
-      .maybeSingle(),
   ]);
 
+  // `'mindsetter'` is passed explicitly rather than read from `profiles.account_type`: the caller
+  // is standing inside the Mindsetter wizard, but `account_type` only flips to `'mindsetter'` at
+  // `finalizeMindsetterOnboarding` (after the LAST core step), so reading it here would score this
+  // screen against the two-section Member set. The argument selects the section SET, not rights.
   const completeness = computeProfileCompleteness(
+    'mindsetter',
+    {
+      fullName: profile?.full_name ?? null,
+      lastName: profile?.last_name ?? null,
+      username: profile?.username ?? null,
+      avatarUrl: profile?.avatar_url ?? null,
+      countryCode: profile?.country_code ?? null,
+      cityGeonameId: profile?.city_geoname_id ?? null,
+      languages: profile?.languages ?? null,
+      bio: profile?.bio ?? null,
+      company: profile?.company ?? null,
+      role: profile?.role ?? null,
+      industry: profile?.industry ?? null,
+      socials: profile?.socials ?? null,
+    },
     {
       roles: mindsetterProfile?.roles ?? null,
       superpowers: mindsetterProfile?.superpowers ?? null,
@@ -71,7 +92,6 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
       philosophy: mindsetterProfile?.philosophy ?? null,
       videoBlog: mindsetterProfile?.video_blog ?? null,
     },
-    { configured: sessionSettings != null },
   );
 
   return (

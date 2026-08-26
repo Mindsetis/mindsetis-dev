@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -306,6 +306,118 @@ export type Database = {
           },
         ]
       }
+      geo_admin1: {
+        Row: {
+          admin1_code: string
+          country_code: string
+          created_at: string
+          geoname_id: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin1_code: string
+          country_code: string
+          created_at?: string
+          geoname_id?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin1_code?: string
+          country_code?: string
+          created_at?: string
+          geoname_id?: number | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_admin1_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      geo_cities: {
+        Row: {
+          admin1_code: string | null
+          ascii_name: string
+          country_code: string
+          created_at: string
+          geoname_id: number
+          name: string
+          population: number
+          search_names: string[]
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin1_code?: string | null
+          ascii_name: string
+          country_code: string
+          created_at?: string
+          geoname_id: number
+          name: string
+          population?: number
+          search_names?: string[]
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin1_code?: string | null
+          ascii_name?: string
+          country_code?: string
+          created_at?: string
+          geoname_id?: number
+          name?: string
+          population?: number
+          search_names?: string[]
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_cities_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      geo_countries: {
+        Row: {
+          continent: string | null
+          created_at: string
+          iso2: string
+          iso3: string | null
+          name: string
+          phone_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          continent?: string | null
+          created_at?: string
+          iso2: string
+          iso3?: string | null
+          name: string
+          phone_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          continent?: string | null
+          created_at?: string
+          iso2?: string
+          iso3?: string | null
+          name?: string
+          phone_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       homepage_waitlist: {
         Row: {
           created_at: string
@@ -368,6 +480,7 @@ export type Database = {
           numbers: Json | null
           onboarding_step: number | null
           philosophy: string | null
+          philosophy_author: string | null
           promo_video: Json | null
           reel_life: Json | null
           roles: Json | null
@@ -386,6 +499,7 @@ export type Database = {
           numbers?: Json | null
           onboarding_step?: number | null
           philosophy?: string | null
+          philosophy_author?: string | null
           promo_video?: Json | null
           reel_life?: Json | null
           roles?: Json | null
@@ -404,6 +518,7 @@ export type Database = {
           numbers?: Json | null
           onboarding_step?: number | null
           philosophy?: string | null
+          philosophy_author?: string | null
           promo_video?: Json | null
           reel_life?: Json | null
           roles?: Json | null
@@ -454,9 +569,11 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           city: string | null
+          city_geoname_id: number | null
           company: string | null
           content_locale: string | null
           country: string | null
+          country_code: string | null
           cover_url: string | null
           created_at: string | null
           full_name: string | null
@@ -468,9 +585,12 @@ export type Database = {
           languages: string[] | null
           last_name: string | null
           onboarding_step: number | null
+          region_code: string | null
+          region_name: string | null
           role: string | null
           socials: Json | null
           tagline: string | null
+          timezone: string | null
           updated_at: string | null
           username: string
           verification_deadline: string | null
@@ -483,9 +603,11 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          city_geoname_id?: number | null
           company?: string | null
           content_locale?: string | null
           country?: string | null
+          country_code?: string | null
           cover_url?: string | null
           created_at?: string | null
           full_name?: string | null
@@ -497,9 +619,12 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          region_code?: string | null
+          region_name?: string | null
           role?: string | null
           socials?: Json | null
           tagline?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username: string
           verification_deadline?: string | null
@@ -512,9 +637,11 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          city_geoname_id?: number | null
           company?: string | null
           content_locale?: string | null
           country?: string | null
+          country_code?: string | null
           cover_url?: string | null
           created_at?: string | null
           full_name?: string | null
@@ -526,25 +653,40 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          region_code?: string | null
+          region_name?: string | null
           role?: string | null
           socials?: Json | null
           tagline?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string
           verification_deadline?: string | null
           verification_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_city_geoname_id_fkey"
+            columns: ["city_geoname_id"]
+            isOneToOne: false
+            referencedRelation: "geo_cities"
+            referencedColumns: ["geoname_id"]
+          },
+          {
+            foreignKeyName: "profiles_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
       }
       session_settings: {
         Row: {
           accepts_bookings: boolean
-          available_days: string[]
-          available_from: string | null
-          available_to: string | null
           created_at: string | null
           currency: string | null
-          duration_min: number | null
+          durations: number[]
           fee_consent_accepted: boolean
           mindsetter_id: string
           price_cents: number | null
@@ -552,15 +694,13 @@ export type Database = {
           timezone: string | null
           topics: string[] | null
           updated_at: string | null
+          weekly_availability: Json
         }
         Insert: {
           accepts_bookings?: boolean
-          available_days?: string[]
-          available_from?: string | null
-          available_to?: string | null
           created_at?: string | null
           currency?: string | null
-          duration_min?: number | null
+          durations?: number[]
           fee_consent_accepted?: boolean
           mindsetter_id: string
           price_cents?: number | null
@@ -568,15 +708,13 @@ export type Database = {
           timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
+          weekly_availability?: Json
         }
         Update: {
           accepts_bookings?: boolean
-          available_days?: string[]
-          available_from?: string | null
-          available_to?: string | null
           created_at?: string | null
           currency?: string | null
-          duration_min?: number | null
+          durations?: number[]
           fee_consent_accepted?: boolean
           mindsetter_id?: string
           price_cents?: number | null
@@ -584,6 +722,7 @@ export type Database = {
           timezone?: string | null
           topics?: string[] | null
           updated_at?: string | null
+          weekly_availability?: Json
         }
         Relationships: [
           {
@@ -726,7 +865,21 @@ export type Database = {
       is_mindsetter: { Args: { uid: string }; Returns: boolean }
       is_public_mindsetter: { Args: { profile_id: string }; Returns: boolean }
       is_staff: { Args: { uid: string }; Returns: boolean }
+      is_valid_weekly_availability: { Args: { data: Json }; Returns: boolean }
       is_verified_member: { Args: { uid: string }; Returns: boolean }
+      search_cities: {
+        Args: { p_country?: string; p_limit?: number; p_query: string }
+        Returns: {
+          country_code: string
+          country_name: string
+          geoname_id: number
+          name: string
+          population: number
+          region_code: string
+          region_name: string
+          timezone: string
+        }[]
+      }
       trigger_email_queue_processing: { Args: never; Returns: undefined }
     }
     Enums: {

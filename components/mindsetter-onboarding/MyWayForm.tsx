@@ -14,8 +14,10 @@ import {
 
 import { saveMyWay } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +43,9 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type MyWayFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved stages, when the caller revisits this block. */
   initialMyWay?: MyWayStage[];
   /** Where "Save and continue" navigates once saved (`nextBlockHref`). */
@@ -265,9 +270,10 @@ function MyWayCard({ control, index, onRemove, id, draggable }: MyWayCardProps) 
 
 /** Optional block "My Way" (onboarding doc section 7). Mirrors `HelpForm.tsx`'s `useFieldArray`
  * structure, plus the Years-range sub-row. */
-export function MyWayForm({ initialMyWay, nextHref }: MyWayFormProps) {
+export function MyWayForm({ initialMyWay, nextHref, editMode }: MyWayFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<MyWayStepInput> = useForm<MyWayStepInput>({
@@ -287,6 +293,14 @@ export function MyWayForm({ initialMyWay, nextHref }: MyWayFormProps) {
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
+      return;
+    }
+
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
       return;
     }
 
@@ -324,18 +338,17 @@ export function MyWayForm({ initialMyWay, nextHref }: MyWayFormProps) {
           </Button>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-          // The parent's `gap-4 md:gap-6` (16px/24px) already spaces every sibling — this
-          // negative margin narrows JUST this gap (Add stage → Save and continue) down to the
-          // requested 12px mobile / 16px desktop, without touching spacing elsewhere in the form.
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
           className={fields.length < MAX_MY_WAY ? 'mt-[-4px] md:mt-[-8px]' : undefined}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        />
       </form>
     </Form>
   );

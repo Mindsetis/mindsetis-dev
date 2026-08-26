@@ -8,13 +8,10 @@
  * Unlike the staff-only fields flagged in the onboarding doc (section B: `account_type`,
  * `mindsetter_profiles.is_public`), `roles` is a plain column the caller owns outright —
  * `mindsetter_profiles_insert_own`/`_update_own` RLS (`auth.uid() = id`) already allow this
- * via the normal server client, no service-role needed here. There are two deliberate
- * exceptions, each scoped to a single row keyed by the caller's own `requireUser()` id:
- *   - `finalizeMindsetterOnboarding` below (section 8/B's resolved decision D1) — it flips
- *     `account_type` once the core wizard is done, one of the staff-only columns.
- *   - `saveSession` below — `session_settings` RLS requires `is_mindsetter(auth.uid())`
- *     (verified Mindsetter), which the caller never is yet during onboarding.
- * See each action's own doc comment for the narrow scope this is held to.
+ * via the normal server client, no service-role needed here. One deliberate exception, scoped to a
+ * single row keyed by the caller's own `requireUser()` id: `finalizeMindsetterOnboarding` below
+ * (section 8/B's resolved decision D1), which flips `account_type` — a staff-only column — once
+ * the core wizard is done. See that action's own doc comment for the narrow scope it is held to.
  */
 import { z } from 'zod';
 
@@ -37,12 +34,12 @@ import {
   reelLifeStepSchema,
   roleLinkPreviewRequestSchema,
   rolesStepSchema,
-  sessionStepSchema,
   shineStepSchema,
   superpowersStepSchema,
   videoBlogStepSchema,
   winsStepSchema,
 } from '@/lib/validation/mindsetter';
+import { resolveVideoOrientation } from '@/lib/video-embed';
 
 /**
  * `mindsetter_profiles.onboarding_step` (added by the stage-1.9 review-loop follow-up migration
@@ -54,17 +51,16 @@ import {
  * `mindsetter_profiles` column. Each step must only ever raise it, never lower it back down for
  * a caller who's already further along, same "only advance" contract the Member wizard follows.
  *
- * Reordered per product decision D9 (ROADMAP stage 1.9 follow-up) — "Personal session" is now
- * the LAST core step instead of running right after Help: roles(1) → superpowers(2) → help(3) →
- * shine(4) → [optional blocks] → session(5) → congrats. `SESSION_STEP_ONBOARDING_STEP` (5) is
- * therefore the "core wizard done" threshold `finalizeMindsetterOnboarding` checks against below,
- * not `SHINE_STEP_ONBOARDING_STEP` (4) anymore.
+ * "Personal session" left the wizard on 2026-08-13 — 1:1 settings moved to the cabinet
+ * (`/dashboard/sessions`), where a Mindsetter can set them up whenever, instead of being a gate on
+ * finishing signup. The flow is now roles(1) → superpowers(2) → help(3) → shine(4) → [optional
+ * blocks] → congrats, so `SHINE_STEP_ONBOARDING_STEP` (4) is the "core wizard done" threshold
+ * `finalizeMindsetterOnboarding` checks below — it used to be the session step's 5.
  */
 const ROLES_STEP_ONBOARDING_STEP = 1;
 const SUPERPOWERS_STEP_ONBOARDING_STEP = 2;
 const HELP_STEP_ONBOARDING_STEP = 3;
 const SHINE_STEP_ONBOARDING_STEP = 4;
-const SESSION_STEP_ONBOARDING_STEP = 5;
 
 /**
  * Shared "only advance `mindsetter_profiles.onboarding_step`" tail, factored out once three
@@ -195,71 +191,6 @@ export const saveHelp = createAction(helpStepSchema, async (input) => {
 });
 
 /**
- * Step 5/5 "Personal session" — now the LAST core step (product decision D9: it used to run
- * right after Help, before Shine). Unlike the three steps above, this writes `session_settings`
- * (mindsetter_id primary key), not `mindsetter_profiles`. `price_cents` here is the Mindsetter's
- * *configured rate*, not a money-ledger write (that's `transactions`/`payouts`, still
- * service-role-only per CLAUDE.md) — but the WRITE itself still needs the service-role client:
- * `session_settings_insert_own`/`_update_own` RLS requires `is_mindsetter(auth.uid())`, which is
- * `account_type = 'mindsetter' AND verification_status = 'verified'` — and the caller here is
- * NEITHER yet (`account_type` only flips at `finalizeMindsetterOnboarding`, verification is a
- * separate later staff step), so a plain owner-client upsert would always fail RLS. Mirrors the
- * same narrow, justified service-role precedent as `finalizeMindsetterOnboarding`'s
- * `account_type` flip — scoped to exactly one row, keyed by `user.id` resolved from the caller's
- * own authenticated session (`requireUser()` — never client input), never a client-supplied id.
- * The stage-1.9 review-loop follow-up migration (`20260718172922_..._review_fixes.sql`) gated
- * `session_settings_read_public` on the same verified+mindsetter condition specifically so this
- * pre-verification draft write is never publicly exposed — only the owner (or staff) can read it
- * back before that.
- *
- * The prefill READ on `session/page.tsx` stays on the normal (RLS-respecting) server client —
- * the owner can already `SELECT` their own row under the updated policy; only this WRITE needs
- * service-role.
- *
- * The UI collects price in whole dollars; `sessionStepSchema`'s `priceCents` is already the
- * converted cents value by the time it reaches this action (conversion happens in
- * `SessionForm.tsx`'s price `Input` `onChange`), so this action just writes it through.
- * `price_cents` is stored `null` for a Free session even if the caller previously had a Paid
- * price typed in, so a stale price never lingers once they switch back to Free.
- */
-export const saveSession = createAction(sessionStepSchema, async (input) => {
-  const user = await requireUser();
-  const supabase = await createClient();
-  const service = createServiceClient();
-
-  const { error: sessionError } = await service.from('session_settings').upsert(
-    {
-      mindsetter_id: user.id,
-      accepts_bookings: input.acceptsBookings,
-      session_type: input.sessionType,
-      price_cents: input.sessionType === 'paid' ? input.priceCents : null,
-      duration_min: input.durationMin,
-      topics: input.topics,
-      timezone: input.timezone,
-      available_days: input.availableDays,
-      available_from: input.availableFrom,
-      available_to: input.availableTo,
-      fee_consent_accepted: input.feeConsentAccepted,
-    },
-    { onConflict: 'mindsetter_id' },
-  );
-
-  if (sessionError) {
-    console.error('[mindsetter-onboarding] session_settings upsert failed:', sessionError);
-    throw new ActionError(
-      'internal_error',
-      'Could not save your session settings. Please try again.',
-    );
-  }
-
-  // `mindsetter_profiles.onboarding_step` is a plain owner-writable column (unlike
-  // `session_settings` above) — stays on the normal server client.
-  await advanceOnboardingStep(supabase, user.id, SESSION_STEP_ONBOARDING_STEP);
-
-  return { ...input };
-});
-
-/**
  * Step 4/5 "Make your profile shine" — the optional-block picker, now reached right after Help
  * instead of after Personal session (product decision D9). Unlike every step above, the picker's
  * own selection is never written anywhere: it's handed to the first picked block screen via a
@@ -292,7 +223,7 @@ export type FinalizeMindsetterOnboardingResult = {
  * Onboarding doc section 8 / section B's resolved decision (D1, flagged for security review):
  * completing the 5-step CORE wizard (Roles → Superpowers → Help → Shine picker → [optional
  * blocks] → Personal session, reordered per decision D9, i.e.
- * `mindsetter_profiles.onboarding_step >= SESSION_STEP_ONBOARDING_STEP`) flips
+ * `mindsetter_profiles.onboarding_step >= SHINE_STEP_ONBOARDING_STEP`) flips
  * `profiles.account_type` from `'member'` to `'mindsetter'`. This does NOT verify the account
  * and does NOT publish the profile — `mindsetter_profiles.is_public` is never touched here;
  * that stays `false` until staff verification (spec §5.7, a separate later stage). Also never
@@ -343,7 +274,7 @@ export const finalizeMindsetterOnboarding = createAction(
     }
 
     const onboardingStep = mindsetterProfile?.onboarding_step ?? 0;
-    if (onboardingStep < SESSION_STEP_ONBOARDING_STEP) {
+    if (onboardingStep < SHINE_STEP_ONBOARDING_STEP) {
       return { finalized: false, onboardingStep };
     }
 
@@ -382,14 +313,14 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
   const user = await requireUser();
   const supabase = await createClient();
 
-  // The video file itself is uploaded client-side straight to the `promo-video` bucket (see
-  // `PromoForm.tsx`); this only persists the resulting object path. Re-check it's inside the
-  // caller's own `<uid>/` folder (never trust a client-supplied path), same defense-in-depth as
-  // `saveReelLife`, even though Storage RLS already blocks writing/reading another user's object.
-  const videoPath = input.videoPath.trim();
-  if (videoPath && !videoPath.startsWith(`${user.id}/`)) {
-    throw new ActionError('validation_error', 'Invalid video.');
-  }
+  // Link-only since 2026-08-05 — direct upload was removed, so there is no longer a Storage
+  // object path to validate or persist. Writing the object WITHOUT a `videoPath` key also
+  // clears it for anyone whose row still carries one from the old flow.
+  // Orientation decides which promo layout the public profile uses (16:9 landscape vs a
+  // Shorts-style portrait). Resolved once here, at write time, rather than on every page render:
+  // YouTube answers from the URL alone, Vimeo needs an oEmbed round trip we don't want in the
+  // render path. Stored inside the existing `promo_video` jsonb, so no migration.
+  const orientation = await resolveVideoOrientation(input.youtube, input.vimeo);
 
   const { error } = await supabase.from('mindsetter_profiles').upsert(
     {
@@ -397,7 +328,7 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
       promo_video: {
         youtube: input.youtube || null,
         vimeo: input.vimeo || null,
-        videoPath: videoPath || null,
+        orientation,
       },
     },
     { onConflict: 'id' },
@@ -418,7 +349,11 @@ export const saveVideoBlog = createAction(videoBlogStepSchema, async (input) => 
   const { error } = await supabase.from('mindsetter_profiles').upsert(
     {
       id: user.id,
-      video_blog: { youtube: input.youtube || null, vimeo: input.vimeo || null },
+      video_blog: {
+        youtube: input.youtube || null,
+        vimeo: input.vimeo || null,
+        orientation: await resolveVideoOrientation(input.youtube, input.vimeo),
+      },
     },
     { onConflict: 'id' },
   );
@@ -499,9 +434,16 @@ export const savePhilosophy = createAction(philosophyStepSchema, async (input) =
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from('mindsetter_profiles')
-    .upsert({ id: user.id, philosophy: input.philosophy }, { onConflict: 'id' });
+  const { error } = await supabase.from('mindsetter_profiles').upsert(
+    {
+      id: user.id,
+      philosophy: input.philosophy,
+      // Empty stays NULL rather than an empty string, so "no author" is one value in the column
+      // and the profile's own `?.trim()` checks don't have to special-case both.
+      philosophy_author: input.philosophyAuthor?.trim() || null,
+    },
+    { onConflict: 'id' },
+  );
 
   if (error) {
     console.error('[mindsetter-onboarding] philosophy upsert failed:', error);

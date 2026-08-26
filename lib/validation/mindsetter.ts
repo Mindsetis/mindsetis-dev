@@ -10,6 +10,11 @@
  */
 import { z } from 'zod';
 
+import { isSupportedVideoUrl } from '@/lib/video-embed';
+
+import { isLatinOnly, LATIN_ONLY_MESSAGE } from './common';
+import { vmsg } from './messages';
+
 // -----------------------------------------------------------------------------------------
 // Step "Your roles" — stored as `mindsetter_profiles.roles` jsonb (migrated text[] -> jsonb
 // in `20260718160224_mindsetter_onboarding_schema_alignment.sql`).
@@ -55,14 +60,34 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+/** Upper bound for a link's display title — the scraper's own og:title is capped at the same
+ * value, so a hand-edited label can never be longer than a scraped one. */
+export const MAX_ROLE_LINK_TITLE_LENGTH = 200;
+
 export const roleLinkSchema = z.object({
   url: z
     .string()
     .trim()
-    .min(1, 'Enter a valid URL.')
-    .url('Enter a valid URL.')
+    .min(1, vmsg('urlInvalid'))
+    .url(vmsg('urlInvalid'))
     .refine(isHttpUrl, 'must be http(s)'),
-  ogTitle: z.string().trim().max(200).optional(),
+  /**
+   * The link's display label — seeded by the scraper, then EDITABLE by the member (pencil on
+   * the preview row, `RolesForm.tsx`). It is what the public profile renders instead of a
+   * bare "Learn more", so the two sources deliberately share one field: whatever the member
+   * sees in the picker is what visitors see.
+   *
+   * Unlike the other preview fields below it is therefore genuine client input. Safe as such:
+   * it is rendered as text content, never as an `href`/`src`, and bounded here.
+   */
+  // Latin-only, unlike its sibling preview fields: those are scraper output, this one is typed
+  // by the member and rendered on the public profile in the brand font.
+  ogTitle: z
+    .string()
+    .trim()
+    .max(MAX_ROLE_LINK_TITLE_LENGTH)
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE)
+    .optional(),
   ogImage: z.string().trim().url().refine(isHttpUrl, 'must be http(s)').optional(),
   mediaType: z.enum(ROLE_LINK_MEDIA_TYPES).optional(),
   siteName: z.string().trim().max(200).optional(),
@@ -75,7 +100,7 @@ export type RoleLink = z.infer<typeof roleLinkSchema>;
  * (`RolesForm.tsx`); the preview fields above are never client input, only ever the action's
  * OUTPUT. */
 export const roleLinkPreviewRequestSchema = z.object({
-  url: z.string().trim().min(1, 'Enter a valid URL.').url('Enter a valid URL.'),
+  url: z.string().trim().min(1, vmsg('urlInvalid')).url(vmsg('urlInvalid')),
 });
 
 export type RoleLinkPreviewRequest = z.infer<typeof roleLinkPreviewRequestSchema>;
@@ -84,17 +109,16 @@ export const roleSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, 'Title is required.')
-    .max(MAX_ROLE_TITLE_LENGTH, `Title must be at most ${MAX_ROLE_TITLE_LENGTH} characters.`),
+    .min(1, vmsg('titleRequired'))
+    .max(MAX_ROLE_TITLE_LENGTH, vmsg('titleMax', { max: MAX_ROLE_TITLE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   description: z
     .string()
     .trim()
-    .min(1, 'Description is required.')
-    .max(
-      MAX_ROLE_DESCRIPTION_LENGTH,
-      `Description must be at most ${MAX_ROLE_DESCRIPTION_LENGTH} characters.`,
-    ),
-  links: z.array(roleLinkSchema).max(MAX_ROLE_LINKS, `You can add up to ${MAX_ROLE_LINKS} links.`),
+    .min(1, vmsg('descriptionRequired'))
+    .max(MAX_ROLE_DESCRIPTION_LENGTH, vmsg('descriptionMax', { max: MAX_ROLE_DESCRIPTION_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+  links: z.array(roleLinkSchema).max(MAX_ROLE_LINKS, vmsg('linksMax', { max: MAX_ROLE_LINKS })),
 });
 
 export type Role = z.infer<typeof roleSchema>;
@@ -102,8 +126,8 @@ export type Role = z.infer<typeof roleSchema>;
 export const rolesStepSchema = z.object({
   roles: z
     .array(roleSchema)
-    .min(MIN_ROLES, 'Add at least one role.')
-    .max(MAX_ROLES, `You can add up to ${MAX_ROLES} roles.`),
+    .min(MIN_ROLES, vmsg('rolesRequired'))
+    .max(MAX_ROLES, vmsg('rolesMax', { max: MAX_ROLES })),
 });
 
 export type RolesStepInput = z.infer<typeof rolesStepSchema>;
@@ -154,17 +178,16 @@ export const superpowerSchema = z
     title: z
       .string()
       .trim()
-      .max(
-        MAX_SUPERPOWER_TITLE_LENGTH,
-        `Title must be at most ${MAX_SUPERPOWER_TITLE_LENGTH} characters.`,
-      ),
+      .max(MAX_SUPERPOWER_TITLE_LENGTH, vmsg('titleMax', { max: MAX_SUPERPOWER_TITLE_LENGTH }))
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
     description: z
       .string()
       .trim()
       .max(
         MAX_SUPERPOWER_DESCRIPTION_LENGTH,
-        `Description must be at most ${MAX_SUPERPOWER_DESCRIPTION_LENGTH} characters.`,
-      ),
+        vmsg('descriptionMax', { max: MAX_SUPERPOWER_DESCRIPTION_LENGTH }),
+      )
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   })
   .superRefine((slot, ctx) => {
     if (!isSuperpowerFilled(slot)) return;
@@ -172,14 +195,14 @@ export const superpowerSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['title'],
-        message: 'Title is required.',
+        message: vmsg('titleRequired'),
       });
     }
     if (slot.description.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['description'],
-        message: 'Description is required.',
+        message: vmsg('descriptionRequired'),
       });
     }
   });
@@ -190,7 +213,7 @@ export const superpowersStepSchema = z
   .object({
     superpowers: z
       .array(superpowerSchema)
-      .max(MAX_SUPERPOWERS, `You can add up to ${MAX_SUPERPOWERS} superpowers.`),
+      .max(MAX_SUPERPOWERS, vmsg('superpowersMax', { max: MAX_SUPERPOWERS })),
   })
   .superRefine((data, ctx) => {
     // Count of ACTUALLY filled cards, not raw array length — `SuperpowersForm.tsx` always
@@ -200,7 +223,7 @@ export const superpowersStepSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['superpowers'],
-        message: 'Add at least one superpower.',
+        message: vmsg('superpowersRequired'),
       });
     }
   });
@@ -219,25 +242,27 @@ export type SuperpowersStepInput = z.infer<typeof superpowersStepSchema>;
 export const MAX_EXPERTISE_TITLE_LENGTH = 40;
 export const MAX_EXPERTISE_DESCRIPTION_LENGTH = 200;
 export const MIN_EXPERTISE = 1;
-export const MAX_EXPERTISE = 10;
+/** Capped at 5 (2026-08-05 product decision, down from 10): these titles are also what the
+ * public profile renders as its "Topics I'm expert" pills, and that row stops reading as a
+ * summary past about five. */
+export const MAX_EXPERTISE = 5;
 
 export const expertiseSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, 'Title is required.')
-    .max(
-      MAX_EXPERTISE_TITLE_LENGTH,
-      `Title must be at most ${MAX_EXPERTISE_TITLE_LENGTH} characters.`,
-    ),
+    .min(1, vmsg('titleRequired'))
+    .max(MAX_EXPERTISE_TITLE_LENGTH, vmsg('titleMax', { max: MAX_EXPERTISE_TITLE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   description: z
     .string()
     .trim()
-    .min(1, 'Description is required.')
+    .min(1, vmsg('descriptionRequired'))
     .max(
       MAX_EXPERTISE_DESCRIPTION_LENGTH,
-      `Description must be at most ${MAX_EXPERTISE_DESCRIPTION_LENGTH} characters.`,
-    ),
+      vmsg('descriptionMax', { max: MAX_EXPERTISE_DESCRIPTION_LENGTH }),
+    )
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
 });
 
 export type Expertise = z.infer<typeof expertiseSchema>;
@@ -245,20 +270,21 @@ export type Expertise = z.infer<typeof expertiseSchema>;
 export const helpStepSchema = z.object({
   expertise: z
     .array(expertiseSchema)
-    .min(MIN_EXPERTISE, 'Add at least one expertise.')
-    .max(MAX_EXPERTISE, `You can add up to ${MAX_EXPERTISE} expertise entries.`),
+    .min(MIN_EXPERTISE, vmsg('expertiseRequired'))
+    .max(MAX_EXPERTISE, vmsg('expertiseMax', { max: MAX_EXPERTISE })),
 });
 
 export type HelpStepInput = z.infer<typeof helpStepSchema>;
 
 // -----------------------------------------------------------------------------------------
-// Step "Personal session" — maps to the `session_settings` row (mindsetter_id primary key),
-// migrated in `20260718160224_mindsetter_onboarding_schema_alignment.sql` to add
-// `accepts_bookings`/`timezone`/`available_days`/`available_from`/`available_to` on top of the
-// pre-existing `session_type`/`duration_min`/`topics`/`price_cents`/`currency` columns
-// (onboarding doc section 5/A). The UI collects price in whole dollars; this schema's
+// "Sessions Setup" — maps to the `session_settings` row (mindsetter_id primary key). This was the
+// wizard's last onboarding step until 2026-08-13; it now lives only in the cabinet
+// (`/dashboard/sessions`), and migration `20260813113351` reshaped the columns it writes:
+// `duration_min int` → `durations int[]` (several enabled lengths) and
+// `available_days`/`available_from`/`available_to` → `weekly_availability jsonb` (per-day windows).
+// The UI collects price in whole dollars; this schema's
 // `priceCents` is already the converted integer-cents value the Server Action writes straight
-// to `price_cents` — the dollars->cents math lives in `SessionForm.tsx`'s price `Input`
+// to `price_cents` — the dollars->cents math lives in `SessionsSetupForm.tsx`'s price `Input`
 // `onChange`, not here, so this boundary schema only ever sees the final stored shape.
 //
 // `topics` options are the `mindsetter_profiles.help_with` card titles from the previous step
@@ -268,22 +294,110 @@ export type HelpStepInput = z.infer<typeof helpStepSchema>;
 // `help_with`.
 // -----------------------------------------------------------------------------------------
 
-export const MAX_SESSION_TOPICS = 5;
+/**
+ * Total topics selectable on the session step — 10 (2026-08-05 product decision, up from 5).
+ *
+ * The budget is deliberately split: up to 5 come from the Help step's card titles (which are
+ * themselves capped at `MAX_EXPERTISE`), leaving room for up to
+ * `MAX_CUSTOM_SESSION_TOPICS` ad-hoc ones. A Mindsetter who wants ten custom topics cannot
+ * have them — the cap below is enforced separately, on the custom subset only.
+ */
+export const MAX_SESSION_TOPICS = 10;
+
+/**
+ * How many of the selected topics may be ad-hoc "+ Add custom" entries.
+ *
+ * "Custom" is not a stored flag — a topic is custom precisely when it is not one of this
+ * Mindsetter's `help_with` titles. The form knows those titles, and so does the Server Action
+ * (it reads the row), so both sides can classify without a schema change. The schema itself
+ * cannot: by the time it runs, every topic is an indistinguishable string.
+ */
+export const MAX_CUSTOM_SESSION_TOPICS = 5;
 export const MAX_TOPIC_LENGTH = 40;
 
-/** Fixed pill choices (doc section 5: "pills 30/45/60/90 min (single-select)") — no custom
- * duration input. */
+/**
+ * Fixed pill choices. MULTI-select since 2026-08-13 (`session_settings.durations int[]`, migration
+ * `20260813113351`): the Mindsetter enables a SET of lengths and the member picks one of them when
+ * booking — "Members can pick any duration you enable below", per the Sessions Setup frame
+ * `1094:23946`. Previously a single `duration_min`.
+ */
 export const SESSION_DURATIONS = [30, 45, 60, 90] as const;
 export type SessionDuration = (typeof SESSION_DURATIONS)[number];
 
-/** Recurring weekly-schedule days, matching `session_settings.available_days`'s stored
- * shorthand (e.g. `{mon,tue}`, per that column's migration comment) — not full weekday names. */
+/** Recurring weekly-schedule days — the keys of `session_settings.weekly_availability`, and the
+ * shorthand that column's own migration comment documents. Not full weekday names. */
 export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-const timeStringSchema = z.string().regex(TIME_PATTERN, 'Enter a valid time (HH:mm).');
+const timeStringSchema = z.string().regex(TIME_PATTERN, vmsg('timeInvalid'));
+
+/** How many separate windows one weekday may carry (e.g. a morning and an afternoon block). */
+export const MAX_RANGES_PER_DAY = 4;
+
+/**
+ * One bookable window. Both ends are fixed-width zero-padded 24h strings, so the ordering check
+ * is a plain lexicographic comparison rather than any date maths.
+ */
+export const timeRangeSchema = z
+  .object({ from: timeStringSchema, to: timeStringSchema })
+  .refine((range) => range.to > range.from, {
+    message: vmsg('timeRangeReversed'),
+    path: ['to'],
+  });
+export type TimeRange = z.infer<typeof timeRangeSchema>;
+
+/**
+ * `session_settings.weekly_availability` — a day → windows map, where a missing key or an empty
+ * array means "unavailable that day" (Sessions Setup shows those days with the toggle off and an
+ * "Unavailable" label).
+ *
+ * Every weekday key is required here even though the column tolerates absent ones: the form always
+ * renders all seven rows, so a partial object could only come from a hand-crafted request.
+ * Overlapping windows within a day are rejected — two overlapping ranges would generate duplicate
+ * bookable slots for the same minutes.
+ */
+export const weeklyAvailabilitySchema = z
+  .object(
+    Object.fromEntries(
+      WEEKDAYS.map((day) => [
+        day,
+        z
+          .array(timeRangeSchema)
+          .max(MAX_RANGES_PER_DAY, vmsg('timeRangesMax', { max: MAX_RANGES_PER_DAY })),
+      ]),
+    ) as Record<Weekday, z.ZodArray<typeof timeRangeSchema>>,
+  )
+  .superRefine((availability, ctx) => {
+    for (const day of WEEKDAYS) {
+      const ranges = [...availability[day]]
+        .map((range, index) => ({ ...range, index }))
+        .sort((a, b) => a.from.localeCompare(b.from));
+
+      for (let i = 1; i < ranges.length; i += 1) {
+        if (ranges[i]!.from < ranges[i - 1]!.to) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [day, ranges[i]!.index, 'from'],
+            message: vmsg('timeRangesOverlap'),
+          });
+        }
+      }
+    }
+  });
+export type WeeklyAvailability = z.infer<typeof weeklyAvailabilitySchema>;
+
+/** Every day off — the starting point for a Mindsetter who has never saved a schedule. */
+export function emptyWeeklyAvailability(): WeeklyAvailability {
+  // `Object.fromEntries` widens to `{ [k: string]: never[] }`, which TypeScript won't narrow to
+  // the seven-key record directly — hence the explicit build rather than a cast through `unknown`.
+  const empty = {} as WeeklyAvailability;
+  for (const day of WEEKDAYS) {
+    empty[day] = [];
+  }
+  return empty;
+}
 
 export const sessionStepSchema = z
   .object({
@@ -302,19 +416,21 @@ export const sessionStepSchema = z
     // `SessionStepInput` generic (verified via `npm run typecheck` — that combination doesn't
     // compile). A union of literals keeps input and output identical, sidestepping the
     // mismatch entirely.
-    durationMin: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90)]),
+    durations: z
+      .array(z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(90)]))
+      .max(SESSION_DURATIONS.length),
+    // Latin-only applies to the CUSTOM topics a Mindsetter types; the catalog ones are already
+    // English, so the rule costs them nothing.
     topics: z
-      .array(z.string().trim().min(1).max(MAX_TOPIC_LENGTH))
-      .max(MAX_SESSION_TOPICS, `You can select up to ${MAX_SESSION_TOPICS} topics.`),
-    /** IANA timezone string, auto-detected client-side (`Intl.DateTimeFormat().resolvedOptions().timeZone`) — see `TimezoneField` in `SessionForm.tsx`. A full timezone picker is out of MVP scope (product decision, this stage's build prompt). */
-    timezone: z.string().trim().min(1, 'Timezone is required.'),
-    availableDays: z.array(z.enum(WEEKDAYS)),
-    availableFrom: timeStringSchema,
-    availableTo: timeStringSchema,
-    /** Whether the caller accepted the platform-fee / Session-Terms policy in `PlatformFeeModal`.
-     * Not a rendered form input — driven by that modal and persisted to
-     * `session_settings.fee_consent_accepted` so a returning Mindsetter isn't re-prompted by the
-     * "Save and continue" consent gate. */
+      .array(z.string().trim().min(1).max(MAX_TOPIC_LENGTH).refine(isLatinOnly, LATIN_ONLY_MESSAGE))
+      .max(MAX_SESSION_TOPICS, vmsg('topicsMax', { max: MAX_SESSION_TOPICS })),
+    /** IANA timezone string, auto-detected client-side (`Intl.DateTimeFormat().resolvedOptions().timeZone`) — see `TimezoneField` in `SessionsSetupForm.tsx`. */
+    timezone: z.string().trim().min(1, vmsg('timezoneRequired')),
+    weeklyAvailability: weeklyAvailabilitySchema,
+    /** Whether the caller accepted the platform-fee / Session-Terms policy. Persisted to
+     * `session_settings.fee_consent_accepted`. Not a rendered input; the Sessions Setup page
+     * carries it through unchanged, since the wizard's consent gate (`PlatformFeeModal`) left with
+     * the onboarding step on 2026-08-13. */
     feeConsentAccepted: z.boolean(),
   })
   .superRefine((data, ctx) => {
@@ -328,7 +444,7 @@ export const sessionStepSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['priceCents'],
-        message: 'Enter a price greater than $0.',
+        message: vmsg('priceRequired'),
       });
     }
 
@@ -336,28 +452,28 @@ export const sessionStepSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['topics'],
-        message: 'Select at least one topic.',
+        message: vmsg('topicsRequired'),
       });
     }
 
-    if (data.availableDays.length === 0) {
+    if (data.durations.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['availableDays'],
-        message: 'Select at least one available day.',
+        path: ['durations'],
+        message: vmsg('durationsRequired'),
       });
     }
 
-    // Reversed-range guard (product fix, stage 1.9 follow-up), mirroring `myWayStageSchema`'s own
-    // superRefine above. Both fields are always non-empty by the time this runs (`timeStringSchema`
-    // already rejects a blank/malformed value), so this only ever needs to compare two valid
-    // "HH:mm" strings — a plain lexicographic string comparison is equivalent to comparing the
-    // times numerically since both are fixed-width, zero-padded 24h clock strings.
-    if (data.availableFrom && data.availableTo && data.availableTo <= data.availableFrom) {
+    // A profile that accepts bookings but has every day switched off can never be booked, which
+    // is the same dead end as accepting bookings with no topics — caught here rather than left
+    // to produce an empty calendar. Per-range validity and overlaps are already handled by
+    // `weeklyAvailabilitySchema` itself.
+    const hasAnyRange = WEEKDAYS.some((day) => data.weeklyAvailability[day].length > 0);
+    if (!hasAnyRange) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['availableTo'],
-        message: '"To" time must be later than the "From" time.',
+        path: ['weeklyAvailability'],
+        message: vmsg('availabilityRequired'),
       });
     }
   });
@@ -419,37 +535,49 @@ function urlHostMatches(value: string, hosts: readonly string[]): boolean {
   }
 }
 
-/** Optional "Youtube URL" field — empty, or a valid URL on a YouTube host. */
+/**
+ * Optional "Youtube URL" field — empty, or a link that resolves to ONE concrete video.
+ *
+ * The host check alone (2026-07-19) let through anything on the domain: a channel page, a
+ * playlist, a search URL, `youtube.com` itself. Those saved fine and then rendered as an empty
+ * iframe on the public profile. `parseVideoUrl` additionally requires a well-formed video id in a
+ * recognised path shape (`/watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, `/live/`).
+ */
 const youtubeUrlField = z.union([
   z.literal(''),
   z
     .string()
     .trim()
-    .url('Enter a valid URL.')
-    .refine(
-      (value) => urlHostMatches(value, YOUTUBE_HOSTS),
-      'Enter a YouTube link (youtube.com or youtu.be).',
-    ),
+    .url(vmsg('urlInvalid'))
+    .refine((value) => urlHostMatches(value, YOUTUBE_HOSTS), vmsg('youtubeHost'))
+    .refine((value) => isSupportedVideoUrl(value), vmsg('youtubeVideo')),
 ]);
 
-/** Optional "Vimeo URL" field — empty, or a valid URL on a Vimeo host. */
+/** Optional "Vimeo URL" field — empty, or a link to a single Vimeo video. Same reasoning. */
 const vimeoUrlField = z.union([
   z.literal(''),
   z
     .string()
     .trim()
-    .url('Enter a valid URL.')
-    .refine((value) => urlHostMatches(value, VIMEO_HOSTS), 'Enter a Vimeo link (vimeo.com).'),
+    .url(vmsg('urlInvalid'))
+    .refine((value) => urlHostMatches(value, VIMEO_HOSTS), vmsg('vimeoHost'))
+    .refine((value) => isSupportedVideoUrl(value), vmsg('vimeoVideo')),
 ]);
 
+/**
+ * Promo video — LINK ONLY (YouTube / Vimeo).
+ *
+ * Direct file upload was removed on 2026-08-05 (product decision): hosting members' raw MP4/MOV
+ * files meant a 200 MB private bucket, signed-URL plumbing on every render, and orphan cleanup,
+ * to serve video that a platform streams better anyway. The `videoPath` field that carried the
+ * uploaded object's Storage path is therefore gone from this schema.
+ *
+ * Now structurally identical to `videoBlogStepSchema` below — kept separate because the two map
+ * to different columns and are likely to diverge again.
+ */
 export const promoStepSchema = z.object({
   youtube: youtubeUrlField,
   vimeo: vimeoUrlField,
-  // A `promo-video` Storage object path (`<uid>/promo-...`) for an uploaded file, or '' when the
-  // caller uses a link / uploaded nothing. Ownership (the `<uid>/` prefix) is enforced server-side
-  // in `savePromo`, not here — same "never trust a client-supplied path outright" precedent as
-  // `reelLifeStepSchema`.
-  videoPath: z.union([z.literal(''), z.string().trim().min(1)]),
 });
 
 export type PromoStepInput = z.infer<typeof promoStepSchema>;
@@ -473,19 +601,24 @@ export type VideoBlogStepInput = z.infer<typeof videoBlogStepSchema>;
 export const MAX_NUMBER_VALUE_LENGTH = 40;
 export const MAX_NUMBER_LABEL_LENGTH = 40;
 export const MIN_NUMBERS = 1;
-export const MAX_NUMBERS = 10;
+/** Capped at 4 (2026-08-05 product decision, down from 10) — the profile renders these as a
+ * single row of stat cards, and the design only ever had four. Fewer than four now stretch to
+ * fill the row rather than leaving a gap (see `MindsetterProfileView.tsx`). */
+export const MAX_NUMBERS = 4;
 
 export const numberItemSchema = z.object({
   value: z
     .string()
     .trim()
-    .min(1, 'Value is required.')
-    .max(MAX_NUMBER_VALUE_LENGTH, `Value must be at most ${MAX_NUMBER_VALUE_LENGTH} characters.`),
+    .min(1, vmsg('valueRequired'))
+    .max(MAX_NUMBER_VALUE_LENGTH, vmsg('valueMax', { max: MAX_NUMBER_VALUE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   label: z
     .string()
     .trim()
-    .min(1, 'Label is required.')
-    .max(MAX_NUMBER_LABEL_LENGTH, `Label must be at most ${MAX_NUMBER_LABEL_LENGTH} characters.`),
+    .min(1, vmsg('labelRequired'))
+    .max(MAX_NUMBER_LABEL_LENGTH, vmsg('labelMax', { max: MAX_NUMBER_LABEL_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
 });
 
 export type NumberItem = z.infer<typeof numberItemSchema>;
@@ -493,8 +626,23 @@ export type NumberItem = z.infer<typeof numberItemSchema>;
 export const numbersStepSchema = z.object({
   numbers: z
     .array(numberItemSchema)
-    .min(MIN_NUMBERS, 'Add at least one number.')
-    .max(MAX_NUMBERS, `You can add up to ${MAX_NUMBERS} numbers.`),
+    .min(MIN_NUMBERS, vmsg('numbersRequired'))
+    .max(MAX_NUMBERS, vmsg('numbersMax', { max: MAX_NUMBERS })),
+});
+
+/**
+ * Cabinet-only variant: same items, same cap, but NO minimum — an empty array is a valid save,
+ * which is how the cabinet CLEARS this section (2026-08-11).
+ *
+ * Why this exists rather than relaxing `numbersStepSchema` itself: in the wizard, "optional"
+ * means the caller never picks this block at the Shine step and so never lands on its page at
+ * all — once they are on it, it must be filled (`BlockShell` deliberately dropped its "Skip"
+ * link for exactly that reason). The cabinet has no such picker: every section is a permanent
+ * card, so "Optional · not added" has to be a state the form can actually save and return to.
+ * Two different rules for two different flows, so two schemas.
+ */
+export const numbersCabinetSchema = z.object({
+  numbers: z.array(numberItemSchema).max(MAX_NUMBERS, vmsg('numbersMax', { max: MAX_NUMBERS })),
 });
 
 export type NumbersStepInput = z.infer<typeof numbersStepSchema>;
@@ -520,27 +668,28 @@ export const MAX_WIN_YEAR_LENGTH = 40;
 export const MAX_WIN_TITLE_LENGTH = 40;
 export const MAX_WIN_DESCRIPTION_LENGTH = 200;
 export const MIN_WINS = 1;
-export const MAX_WINS = 10;
+/** Capped at 7 (2026-08-06 product decision, down from 10). */
+export const MAX_WINS = 7;
 
 export const winSchema = z.object({
   year: z
     .string()
     .trim()
-    .min(1, 'Year is required.')
-    .max(MAX_WIN_YEAR_LENGTH, `Year must be at most ${MAX_WIN_YEAR_LENGTH} characters.`),
+    .min(1, vmsg('yearRequired'))
+    .max(MAX_WIN_YEAR_LENGTH, vmsg('yearMax', { max: MAX_WIN_YEAR_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   win: z
     .string()
     .trim()
-    .min(1, 'Win is required.')
-    .max(MAX_WIN_TITLE_LENGTH, `Win must be at most ${MAX_WIN_TITLE_LENGTH} characters.`),
+    .min(1, vmsg('winRequired'))
+    .max(MAX_WIN_TITLE_LENGTH, vmsg('winMax', { max: MAX_WIN_TITLE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   description: z
     .string()
     .trim()
-    .min(1, 'Description is required.')
-    .max(
-      MAX_WIN_DESCRIPTION_LENGTH,
-      `Description must be at most ${MAX_WIN_DESCRIPTION_LENGTH} characters.`,
-    ),
+    .min(1, vmsg('descriptionRequired'))
+    .max(MAX_WIN_DESCRIPTION_LENGTH, vmsg('descriptionMax', { max: MAX_WIN_DESCRIPTION_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   color: z.enum(WIN_COLORS),
 });
 
@@ -549,8 +698,14 @@ export type Win = z.infer<typeof winSchema>;
 export const winsStepSchema = z.object({
   wins: z
     .array(winSchema)
-    .min(MIN_WINS, 'Add at least one win.')
-    .max(MAX_WINS, `You can add up to ${MAX_WINS} wins.`),
+    .min(MIN_WINS, vmsg('winsRequired'))
+    .max(MAX_WINS, vmsg('winsMax', { max: MAX_WINS })),
+});
+
+/** Cabinet-only variant — no minimum, so the section can be saved empty (cleared). See
+ * {@link numbersCabinetSchema} for why this isn't just a relaxed `winsStepSchema`. */
+export const winsCabinetSchema = z.object({
+  wins: z.array(winSchema).max(MAX_WINS, vmsg('winsMax', { max: MAX_WINS })),
 });
 
 export type WinsStepInput = z.infer<typeof winsStepSchema>;
@@ -572,35 +727,30 @@ export const myWayStageSchema = z
     project: z
       .string()
       .trim()
-      .min(1, 'Project name is required.')
-      .max(
-        MAX_MY_WAY_PROJECT_LENGTH,
-        `Project name must be at most ${MAX_MY_WAY_PROJECT_LENGTH} characters.`,
-      ),
+      .min(1, vmsg('projectRequired'))
+      .max(MAX_MY_WAY_PROJECT_LENGTH, vmsg('projectMax', { max: MAX_MY_WAY_PROJECT_LENGTH }))
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
     description: z
       .string()
       .trim()
-      .min(1, 'Description is required.')
+      .min(1, vmsg('descriptionRequired'))
       .max(
         MAX_MY_WAY_DESCRIPTION_LENGTH,
-        `Description must be at most ${MAX_MY_WAY_DESCRIPTION_LENGTH} characters.`,
-      ),
+        vmsg('descriptionMax', { max: MAX_MY_WAY_DESCRIPTION_LENGTH }),
+      )
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
     yearFrom: z
       .string()
       .trim()
-      .min(1, 'Start year is required.')
-      .max(
-        MAX_MY_WAY_YEAR_LENGTH,
-        `Start year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`,
-      ),
+      .min(1, vmsg('yearFromRequired'))
+      .max(MAX_MY_WAY_YEAR_LENGTH, vmsg('yearFromMax', { max: MAX_MY_WAY_YEAR_LENGTH }))
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
     yearTo: z
       .string()
       .trim()
-      .min(1, 'End year is required.')
-      .max(
-        MAX_MY_WAY_YEAR_LENGTH,
-        `End year must be at most ${MAX_MY_WAY_YEAR_LENGTH} characters.`,
-      ),
+      .min(1, vmsg('yearToRequired'))
+      .max(MAX_MY_WAY_YEAR_LENGTH, vmsg('yearToMax', { max: MAX_MY_WAY_YEAR_LENGTH }))
+      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   })
   .superRefine((stage, ctx) => {
     // Reversed-range guard (product fix, stage 1.9 follow-up): only fires once BOTH years are
@@ -616,7 +766,7 @@ export const myWayStageSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['yearTo'],
-        message: '"To" year cannot be earlier than the "From" year.',
+        message: vmsg('yearRangeReversed'),
       });
     }
   });
@@ -626,8 +776,8 @@ export type MyWayStage = z.infer<typeof myWayStageSchema>;
 export const myWayStepSchema = z.object({
   myWay: z
     .array(myWayStageSchema)
-    .min(MIN_MY_WAY, 'Add at least one stage.')
-    .max(MAX_MY_WAY, `You can add up to ${MAX_MY_WAY} stages.`),
+    .min(MIN_MY_WAY, vmsg('stagesRequired'))
+    .max(MAX_MY_WAY, vmsg('stagesMax', { max: MAX_MY_WAY })),
 });
 
 export type MyWayStepInput = z.infer<typeof myWayStepSchema>;
@@ -636,7 +786,9 @@ export type MyWayStepInput = z.infer<typeof myWayStepSchema>;
 // Design mockup wrongly labels the add-button "Add stage" here — fixed to "Add f*ckup" per the
 // onboarding doc's E.4 silent-fix list; `FckupsForm.tsx` uses the corrected copy key.
 
-export const MAX_FCKUP_STORY_LENGTH = 200;
+/** Raised to 3000 (2026-08-05 product decision, up from 200): a f*ckup story is a narrative,
+ * and 200 characters is barely two sentences — Mindsetters were being cut off mid-thought. */
+export const MAX_FCKUP_STORY_LENGTH = 3000;
 export const MIN_FCKUPS = 1;
 export const MAX_FCKUPS = 10;
 
@@ -644,8 +796,9 @@ export const fckupSchema = z.object({
   story: z
     .string()
     .trim()
-    .min(1, 'Story is required.')
-    .max(MAX_FCKUP_STORY_LENGTH, `Story must be at most ${MAX_FCKUP_STORY_LENGTH} characters.`),
+    .min(1, vmsg('storyRequired'))
+    .max(MAX_FCKUP_STORY_LENGTH, vmsg('storyMax', { max: MAX_FCKUP_STORY_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
 });
 
 export type Fckup = z.infer<typeof fckupSchema>;
@@ -653,8 +806,14 @@ export type Fckup = z.infer<typeof fckupSchema>;
 export const fckupsStepSchema = z.object({
   fckups: z
     .array(fckupSchema)
-    .min(MIN_FCKUPS, 'Add at least one f*ckup.')
-    .max(MAX_FCKUPS, `You can add up to ${MAX_FCKUPS} f*ckups.`),
+    .min(MIN_FCKUPS, vmsg('fckupsRequired'))
+    .max(MAX_FCKUPS, vmsg('fckupsMax', { max: MAX_FCKUPS })),
+});
+
+/** Cabinet-only variant — no minimum, so the section can be saved empty (cleared). See
+ * {@link numbersCabinetSchema} for why this isn't just a relaxed `fckupsStepSchema`. */
+export const fckupsCabinetSchema = z.object({
+  fckups: z.array(fckupSchema).max(MAX_FCKUPS, vmsg('fckupsMax', { max: MAX_FCKUPS })),
 });
 
 export type FckupsStepInput = z.infer<typeof fckupsStepSchema>;
@@ -664,15 +823,44 @@ export type FckupsStepInput = z.infer<typeof fckupsStepSchema>;
 
 export const MAX_PHILOSOPHY_LENGTH = 200;
 
+/** Attribution line under the quote. Short by design — it holds a name, not a bio. */
+export const MAX_PHILOSOPHY_AUTHOR_LENGTH = 80;
+
 export const philosophyStepSchema = z.object({
   philosophy: z
     .string()
     .trim()
-    .min(1, 'Quote is required.')
-    .max(MAX_PHILOSOPHY_LENGTH, `Quote must be at most ${MAX_PHILOSOPHY_LENGTH} characters.`),
+    .min(1, vmsg('quoteRequired'))
+    .max(MAX_PHILOSOPHY_LENGTH, vmsg('quoteMax', { max: MAX_PHILOSOPHY_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+  /**
+   * Who said it (2026-08-14). Optional: an empty author means the quote is the Mindsetter's own,
+   * which is the common case — the public profile then shows the line unattributed rather than
+   * inventing a name.
+   */
+  philosophyAuthor: z
+    .string()
+    .trim()
+    .max(MAX_PHILOSOPHY_AUTHOR_LENGTH, vmsg('authorMax', { max: MAX_PHILOSOPHY_AUTHOR_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE)
+    .optional(),
 });
 
 export type PhilosophyStepInput = z.infer<typeof philosophyStepSchema>;
+
+/**
+ * Cabinet variant — the quote may be BLANK. "Optional" in the wizard meant "you can skip picking
+ * this block at the Shine step"; once inside the block the quote was required. In the cabinet that
+ * distinction is gone, and saving an empty quote is how the section gets cleared again. Same
+ * relaxation `numbersCabinetSchema`/`winsCabinetSchema` make for their own lists.
+ */
+export const philosophyCabinetSchema = philosophyStepSchema.extend({
+  philosophy: z
+    .string()
+    .trim()
+    .max(MAX_PHILOSOPHY_LENGTH, vmsg('quoteMax', { max: MAX_PHILOSOPHY_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+});
 
 // --- Reel Life -> mindsetter_profiles.reel_life jsonb, ORDERED array of Storage object paths ---
 // Storage bucket `reel-life` (private, signed URLs only — see the schema-alignment migration's
@@ -693,23 +881,40 @@ export type PhilosophyStepInput = z.infer<typeof philosophyStepSchema>;
 // ordering (see `ReelLifeForm.tsx`'s doc comment), so each photo instead uploads immediately on
 // pick and this schema only ever validates the final ordered list of paths.
 
-export const MAX_REEL_LIFE_PHOTOS = 20; // no cap specified in the onboarding doc — a sane bound.
-/** Design's own hint copy: "Add at least 3 photos to activate this section" — informational
- * only for MVP; `saveReelLife` does NOT hard-block saving fewer than 3 (or zero) photos.
- * // TODO confirm min-3 enforcement with product before this ships past MVP. */
-export const MIN_REEL_LIFE_TO_ACTIVATE = 3;
-export const MAX_REEL_LIFE_PHOTO_SIZE_BYTES = 10 * 1024 * 1024; // matches the bucket's 10 MB file_size_limit
+/** Upper bound (2026-08-14 product decision, down from an arbitrary 20) — two full rows of seven. */
+export const MAX_REEL_LIFE_PHOTOS = 14;
+
+/**
+ * How many photos the section needs before it appears on the public profile.
+ *
+ * A THRESHOLD FOR DISPLAY, NOT A REQUIRED FIELD (2026-08-14). Fewer than this — including none —
+ * saves perfectly well and blocks nothing: the wizard step stays skippable and the cabinet section
+ * stays optional. It only means the grid isn't shown to visitors yet, because a half-empty row
+ * reads as a broken layout rather than a gallery. Seven is what fills two rows.
+ *
+ * `reelLifeStepSchema` deliberately does NOT enforce it — the only place it is applied is the
+ * public profile's own render gate (`MindsetterProfileView`), and the copy that tells the member
+ * what to expect.
+ */
+export const MIN_REEL_LIFE_PHOTOS_TO_DISPLAY = 7;
+
+/** @deprecated Kept as the old name for the same number — prefer `MIN_REEL_LIFE_PHOTOS_TO_DISPLAY`. */
+export const RECOMMENDED_REEL_LIFE_PHOTOS = MIN_REEL_LIFE_PHOTOS_TO_DISPLAY;
+/** Mirrors the `reel-life` bucket's own 5 MB `file_size_limit` — see
+ * 20260805220600_reel_life_photo_size_limit_5mb.sql. The bucket is the real enforcement; this
+ * only buys a readable error before the upload round-trip. */
+export const MAX_REEL_LIFE_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 /** Design's hint copy says "PNG or JPEG" even though the `reel-life` bucket's own
  * `allowed_mime_types` also lists webp/avif — client-side validation intentionally follows the
  * design copy, not the (slightly wider) bucket allow-list. */
 export const ACCEPTED_REEL_LIFE_MIME_TYPES = ['image/png', 'image/jpeg'] as const;
 
-const reelLifePathSchema = z.string().trim().min(1, 'Invalid photo.');
+const reelLifePathSchema = z.string().trim().min(1, vmsg('photoInvalid'));
 
 export const reelLifeStepSchema = z.object({
   reelLife: z
     .array(reelLifePathSchema)
-    .max(MAX_REEL_LIFE_PHOTOS, `You can add up to ${MAX_REEL_LIFE_PHOTOS} photos.`),
+    .max(MAX_REEL_LIFE_PHOTOS, vmsg('photosMax', { max: MAX_REEL_LIFE_PHOTOS })),
 });
 
 export type ReelLifeStepInput = z.infer<typeof reelLifeStepSchema>;
@@ -719,13 +924,16 @@ export type ReelLifeStepInput = z.infer<typeof reelLifeStepSchema>;
  * (`lib/validation/member-profile.ts`), just required (no existing-photo fallback: every call to
  * `uploadReelLifePhoto` is a brand-new file the caller just picked, never a resubmission). */
 export const reelLifePhotoFileSchema = z
-  .instanceof(File, { message: 'Select a photo.' })
-  .refine((file) => file.size > 0, 'Select a photo.')
+  .instanceof(File, { message: vmsg('photoRequired') })
+  .refine((file) => file.size > 0, vmsg('photoRequired'))
   .refine(
     (file) => (ACCEPTED_REEL_LIFE_MIME_TYPES as readonly string[]).includes(file.type),
-    'Only PNG or JPEG images are allowed.',
+    vmsg('imageType'),
   )
-  .refine((file) => file.size <= MAX_REEL_LIFE_PHOTO_SIZE_BYTES, 'Image must be at most 10 MB.');
+  .refine(
+    (file) => file.size <= MAX_REEL_LIFE_PHOTO_SIZE_BYTES,
+    vmsg('imageMax', { max: MAX_REEL_LIFE_PHOTO_SIZE_BYTES / (1024 * 1024) }),
+  );
 
 export const reelLifePhotoUploadSchema = z.object({ photo: reelLifePhotoFileSchema });
 

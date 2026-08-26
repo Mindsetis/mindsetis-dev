@@ -16,7 +16,7 @@ type RolesPageProps = {
 /**
  * Extended Mindsetter onboarding — step 1/5 "Your roles" (ROADMAP stage 1.9 foundation slice,
  * `docs/mindsetter-extended-onboarding.md` section 2). Entered from the "Cool, I want to
- * become a Mindsetter" button on `WhoIsMindsetterDialog` (a signed-in Member). No step/progress
+ * become a Mindsetter" button in `WhoIsMindsetterDialog` (a signed-in Member). No step/progress
  * indicator anywhere in this flow (product decision D5 — Figma has none) — just a plain Back
  * link (`RegistrationBackLink`), unlike the Member wizard's `RegistrationStepHeader`.
  *

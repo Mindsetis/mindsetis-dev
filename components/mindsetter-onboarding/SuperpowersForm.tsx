@@ -8,10 +8,11 @@ import { type Control, useForm, type UseFormReturn, useWatch } from 'react-hook-
 
 import { saveSuperpowers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -34,6 +35,9 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type SuperpowersFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved superpowers, when the caller revisits this step. */
   initialSuperpowers?: Superpower[];
 };
@@ -183,9 +187,9 @@ function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCa
  * 3 filled" rule doesn't block submission — this form still filters empty slots out of what's
  * actually sent to `saveSuperpowers` below, just AFTER validation, not before.
  */
-export function SuperpowersForm({ initialSuperpowers }: SuperpowersFormProps) {
-  const t = useTranslations('mindsetterOnboarding');
+export function SuperpowersForm({ initialSuperpowers, editMode }: SuperpowersFormProps) {
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const paddedInitial: Superpower[] = Array.from({ length: MAX_SUPERPOWERS }, (_, i) => ({
@@ -212,6 +216,15 @@ export function SuperpowersForm({ initialSuperpowers }: SuperpowersFormProps) {
       }
 
       // Step 3/5 — "You can help with".
+      // Cabinet mode returns to the section list; the wizard continues to step 3/5.
+      if (editMode) {
+        // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+        // reverts to what was just saved, not to what the page originally loaded.
+        form.reset(values);
+        notifySaved();
+        return;
+      }
+
       router.push('/mindsetter-onboarding/help');
     },
     // A fully-empty form (all 3 slots blank) fails `superpowersStepSchema`'s top-level
@@ -268,14 +281,16 @@ export function SuperpowersForm({ initialSuperpowers }: SuperpowersFormProps) {
           </div>
         </SortableList>
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );

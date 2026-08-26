@@ -41,6 +41,14 @@ type FooterProps = {
  * real sitemap/social presence yet to link to. They render as real navigation (pointing at
  * `/` for internal placeholders) so the layout/spacing is correct; swap in the actual
  * pages/URLs once they exist.
+ *
+ * The `legal.*` row (2026-08-18) is NOT a placeholder — it points at the three real legal
+ * pages (`/privacy-policy`, `/terms-of-use`, `/cookies-policy`, `LegalPage`/`legal/page.tsx`
+ * files). Labels are unchanged from Figma ("Privacy Policy" / "Terms of Service" / "Cookies
+ * Settings") even though the pages themselves are titled "Privacy Policy" / "Terms of Use" /
+ * "Cookies Policy" — the footer's own Figma frame literally still says "Terms of Service" and
+ * "Cookies Settings", not the page titles, so left as-is rather than "fixing" a mismatch that's
+ * in the design itself.
  */
 export default async function Footer({ variant = 'full', className }: FooterProps) {
   const tNav = await getTranslations('nav');
@@ -124,13 +132,17 @@ export default async function Footer({ variant = 'full', className }: FooterProp
             &copy; {year} {tNav('brand')}. {t('rights')}
           </span>
           <div className="flex flex-wrap gap-x-4 gap-y-2 sm:gap-x-6">
-            <Link href="/" className="transition-colors hover:text-primary">
+            <Link href="/privacy-policy" className="transition-colors hover:text-primary">
               {t('legal.privacy')}
             </Link>
-            <Link href="/" className="transition-colors hover:text-primary">
+            <Link href="/terms-of-use" className="transition-colors hover:text-primary">
               {t('legal.terms')}
             </Link>
-            <Link href="/" className="transition-colors hover:text-primary">
+            {/* "Cookies Settings" (Figma label, unchanged) points at the static Cookies Policy
+                document — there's no interactive cookie-preference manager built yet (Figma has
+                a separate "Manage Cookie Preferences" frame that isn't part of this task's
+                scope), so this is the closest real destination rather than a dead `/`. */}
+            <Link href="/cookies-policy" className="transition-colors hover:text-primary">
               {t('legal.cookies')}
             </Link>
           </div>

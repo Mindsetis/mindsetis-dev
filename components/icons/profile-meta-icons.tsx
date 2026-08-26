@@ -97,6 +97,23 @@ export function CashFillIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/**
+ * The eye beside "Public view" in the owner-preview banner — supplied by the designer
+ * (2026-08-12), replacing `lucide-react`'s outline `Eye`, which is a different glyph (thin
+ * strokes, no filled iris).
+ *
+ * The source hardcodes `fill="#79B9E3"`; that hex IS `--color-primary`, and the banner already
+ * sets exactly that color on this slot via `.bannerHighlight`, so it renders `currentColor` and
+ * inherits instead of stating the value twice.
+ */
+export function PublicViewEyeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M0.984375 10C1.76813 5.73313 5.50644 2.5 9.99993 2.5C14.4933 2.5 18.2317 5.73313 19.0154 10C18.2317 14.2668 14.4933 17.5 9.99993 17.5C5.50644 17.5 1.76813 14.2668 0.984375 10ZM9.99993 14.1667C12.3011 14.1667 14.1666 12.3012 14.1666 10C14.1666 7.69882 12.3011 5.83333 9.99993 5.83333C7.69871 5.83333 5.83322 7.69882 5.83322 10C5.83322 12.3012 7.69871 14.1667 9.99993 14.1667ZM9.99993 12.5C8.61918 12.5 7.49989 11.3807 7.49989 10C7.49989 8.61925 8.61918 7.5 9.99993 7.5C11.3806 7.5 12.4999 8.61925 12.4999 10C12.4999 11.3807 11.3806 12.5 9.99993 12.5Z" />
+    </svg>
+  );
+}
+
 export function UserAddFillIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" {...props}>

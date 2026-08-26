@@ -1051,3 +1051,58 @@ the correct not-found UI but returns HTTP 200 instead of 404 — root-caused to 
 change (confirmed by temporarily removing it and observing the status correctly flip to 404).
 Fixing this properly requires restructuring that ambient loading boundary across the whole app
 (broad blast radius), deferred as a follow-up rather than blocking this stage.
+
+### 1.12 — Figma alignment pass: welcome/congrats/hero/404 + legal pages
+**Status:** 🔄 In progress
+**Started:** 2026-08-18
+
+Pixel-alignment pass against Figma across several existing screens plus three brand-new legal
+pages, done alongside the ongoing 1.9 mindsetter-onboarding work.
+
+- [x] Section-preview tooltip in profile settings (`components/dashboard/SectionPreviewHint.tsx`)
+  — white panel, black label, borders per Figma `985:13168`; black backdrop behind the mockup
+  (PNG exports are transparent, so light text was getting lost on a white background)
+- [x] `/welcome` — two-phase congrats screen per Figma. Phase 1 — frame `387:3000` ("Your Member
+  application has been received"): white pill "What's the difference…" (opens
+  `WhoIsMindsetterDialog`), `WelcomeMindsetterPitchCard` card, Apply for Mindsetter / Continue
+  as Member / Learn more buttons. Phase 2 — frame `421:3798` ("You are now a member of the
+  community"): three Member CTAs + "See how looks my profile page". Switched via the "Continue
+  as Member" button (`WelcomeScreen.tsx`, local state, not persisted). Restored
+  `WhoIsMindsetterDialog` from git, removed `WhoIsMindsetterPanel`. Gradient added on
+  "Congratulations!"
+- [x] `/mindsetter-onboarding/congrats` — rebuilt per frame `400:5587` (mobile `261:4319`): block
+  order fixed to "See how looks my profile page" → video → Find/Invite. Added a working video
+  block by reusing `PromoVideoPlayer` (test YouTube embed, `CONGRATS_VIDEO_EMBED_URL` constant —
+  to be swapped for the real one), `aspect-video`
+- [x] Homepage (hero) — rebuilt per frame `1112:17898` (mobile `1112:19307`): new heading/
+  subheading, 580px column, legal row with two links. Removed the video block and tour button
+  from the hero (hidden on the frame). `OnboardingCta` is left without an entry point (the tour
+  itself is still reachable from `/mindsetter-onboarding/roles`)
+- [x] Three legal pages (NEW): `/privacy-policy`, `/terms-of-use`, `/cookies-policy` on a shared
+  `components/legal/LegalPage.tsx`, frames `1112:26877` / `1112:27066` / `1112:27271`. Light
+  theme (white content panel on a black banner), 1300px column, auto `mailto` links, centered
+  list markers. Wired into the footer and into the homepage legal row
+- [x] 404 — rebuilt per frame `1112:27458` (mobile `1154:16573`): gradient digits, card
+  overlapping the digits, two buttons. Added a catch-all `app/[locale]/[...rest]/page.tsx` so
+  404 gets the header/footer. Fixed a bug where `globals.css` wasn't loading on the root 404
+  (import moved into `app/layout.tsx`)
+- [x] Scroll-to-top button (NEW) — `components/layout/ScrollToTopButton.tsx` per frame
+  `1133:31269`, appears after 800px of scroll, respects `prefers-reduced-motion`
+- [x] Header — "Join" → "Apply to Join" (links to `/`), added "Log in", 32px gap, element
+  alignment
+
+**Known limitations / follow-ups:**
+- Legal copy is **not translated into Spanish** — `messages/es.json` still has the English
+  strings (machine-translating Terms/Privacy is legally risky; needs a legal translator)
+- The mobile Privacy Policy frame in Figma has shorter wording than the desktop frame — the
+  desktop (fuller) version is what's rendered; needs legal confirmation
+- "Cookies Settings" in the footer links to a static document page; Figma has a separate "Manage
+  Cookie Preferences" frame (an interactive consent manager) — not built
+- `Learn more`, `See example`, the three Member CTAs on `/welcome`, and the event CTA on congrats
+  are `ComingSoon` stubs — no routes behind them yet
+- The intended behavior of the "Continue as Member", "Log in / Sign up" (404), and Back buttons
+  on `/welcome` is not confirmed by the Figma prototype
+- `MAX_PROMO_VIDEO_SIZE_BYTES` / `ACCEPTED_PROMO_VIDEO_MIME_TYPES` in
+  `lib/validation/mindsetter.ts` became dead code after video upload was removed (2026-08-05)
+- Legal pages are under `noindex` (product-owner decision: keep it that way until launch, change
+  before release)

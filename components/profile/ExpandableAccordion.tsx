@@ -14,6 +14,17 @@ import type { RoleLink } from '@/lib/validation/mindsetter';
 import { isSafeHttpUrl } from './MemberProfileView';
 import styles from './MindsetterProfileView.module.css';
 
+/** Hostname fallback for a link whose scrape never produced a title — a readable "example.com"
+ * beats printing the full URL. `null` when the value isn't parseable (already filtered out by
+ * `isSafeHttpUrl` above, so this is belt-and-braces). */
+function getHostname(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
 /** Structural shape both `Role` (with `links`) and `Expertise` (without) satisfy — `links` is
  * optional so a caller with no such field (Help) can simply omit it. */
 export interface ExpandableAccordionItem {
@@ -167,6 +178,12 @@ export function ExpandableAccordion({
                     <div className="grid grid-cols-1 gap-x-5 gap-y-2 md:grid-cols-2">
                       {safeLinks.map((link, linkIndex) => {
                         const previewImage = isSafeHttpUrl(link.ogImage) ? link.ogImage : null;
+                        // The link's own title — scraped from the page, or whatever the
+                        // Mindsetter typed over it in the picker (both live in `ogTitle`).
+                        // Falls back to the bare hostname, then to the generic label, so a
+                        // link whose scrape failed still reads as something.
+                        const linkLabel =
+                          link.ogTitle?.trim() || getHostname(link.url) || learnMoreLabel;
                         return (
                           <div key={`${link.url}-${linkIndex}`} className="flex flex-col gap-2">
                             <a
@@ -179,7 +196,7 @@ export function ExpandableAccordion({
                               )}
                             >
                               <RoleLinkIcon className="size-4 shrink-0" />
-                              {learnMoreLabel}
+                              <span className="truncate">{linkLabel}</span>
                             </a>
                             {previewImage && (
                               // Hotlinked third-party og:image, not a local/optimizable asset.

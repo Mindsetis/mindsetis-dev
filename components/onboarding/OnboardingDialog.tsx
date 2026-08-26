@@ -46,7 +46,7 @@ type OnboardingDialogProps = {
  * otherwise) and `RolesPreviewCta` (see its own doc comment).
  *
  * The `DialogContent` container (positioning, radius, border, close button) reuses the same
- * shape as `WhoIsMindsetterDialog` — mobile bottom sheet / desktop centered 30px-rounded modal
+ * shape as `PlatformFeeModal` — mobile bottom sheet / desktop centered 30px-rounded modal
  * — per that same product request; the step content itself (progress dots, per-step
  * title/body/screenshot placeholder, Back/Next/Finish nav) is unchanged from the old page.
  *

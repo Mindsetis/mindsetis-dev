@@ -41,18 +41,23 @@ function ChecklistCheckIcon() {
 type WhoIsMindsetterDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /**
-   * Fired by the "Understand, I want to be a Member" button — closing the popup itself is
-   * handled by the caller via `onOpenChange`/state, this only carries the extra "swap the CTA"
-   * side effect that lives in `WelcomeCtas`.
-   */
-  onConfirm: () => void;
 };
 
 /**
- * "Who is Mindsetter?" info popup — full design per Figma Frame 267 (near the `/welcome`
- * Congrats screen), stage 1.6 "Popup expansion checklist" (ROADMAP 1.6, reopened 2026-07-16),
- * restyled per a direct product spec (2026-07-17).
+ * "Who is Mindsetter?" info popup — full design per Figma Frame 267 content, reused verbatim
+ * across the file's several "Congrats screen" iterations. Opened from `/welcome`'s white
+ * "What's the difference between Member and Mindsetter?" pill (Figma "Frame 659", `1182:36162`
+ * on the confirmed-correct desktop frame `387:3000`) as of 2026-08-18's second Figma re-check —
+ * this popup's OWN content/layout is untouched by that change, only its trigger moved (from a
+ * "Find out who a Mindsetter is" `outlineArrow` pill below the CTAs, which belonged to a
+ * different, wrongly-targeted "Congrats screen" frame, `421:3798`/`387:3288`).
+ *
+ * History: built in stage 1.6, restyled per a direct product spec (2026-07-17), then DELETED on
+ * 2026-08-14 when the explainer was inlined onto the page as a mandatory first phase
+ * (`WhoIsMindsetterPanel`). Restored 2026-08-18 after a Figma re-check (since re-pointed at the
+ * correct frame the same day): the design has always shown this content behind a button rather
+ * than inline-and-mandatory, so the two-phase screen was a divergence from the design, not an
+ * implementation of it.
  *
  * Responsive shape: a centered 800px-wide, fully-rounded (30px) modal on desktop; a bottom
  * sheet on mobile (pinned to the viewport's bottom edge, full width, only the top corners
@@ -71,6 +76,10 @@ type WhoIsMindsetterDialogProps = {
  *   no local override is needed here anymore — this popup no longer diverges from the shared
  *   variant, unlike before that pass).
  *
+ * "Understand, I want to be a Member" is a plain `DialogClose`: the Member CTAs it used to
+ * reveal are already on the page behind this popup, so acknowledging the explainer has nothing
+ * left to do but dismiss it.
+ *
  * The description's line break after "sessions" is real markup (`<br/>` via `t.rich`, not a
  * manual `\n` in the translation string) so it can be hidden on mobile (`hidden md:block`) — the
  * spec explicitly asks for the forced break only at desktop widths, letting mobile wrap
@@ -80,12 +89,8 @@ type WhoIsMindsetterDialogProps = {
  * the checklist card that never renders in the design — confirmed leftover paste debris, not
  * part of this popup, intentionally not built.
  */
-export function WhoIsMindsetterDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: WhoIsMindsetterDialogProps) {
-  const t = useTranslations('auth.welcome.modal');
+export function WhoIsMindsetterDialog({ open, onOpenChange }: WhoIsMindsetterDialogProps) {
+  const t = useTranslations('auth.welcome.whoIsMindsetter');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -163,15 +168,16 @@ export function WhoIsMindsetterDialog({
                 previously a placeholder `/` link (stage 1.6). */}
             <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full md:order-1 md:flex-1"
-            onClick={onConfirm}
-          >
-            {t('confirm')}
-          </Button>
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full md:order-1 md:flex-1"
+            >
+              {t('confirm')}
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

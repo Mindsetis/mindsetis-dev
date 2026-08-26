@@ -1,4 +1,4 @@
-import { CheckCircle2, Eye, Share2, User } from 'lucide-react';
+import { CheckCircle2, Share2, User } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
@@ -7,6 +7,7 @@ import {
   ChatAiFillIcon,
   LanguageBubbleIcon,
   LocationPinIcon,
+  PublicViewEyeIcon,
   QuillPenAiFillIcon,
   UserAddFillIcon,
 } from '@/components/icons/profile-meta-icons';
@@ -19,9 +20,12 @@ import {
   YoutubeIcon,
 } from '@/components/icons/social-icons';
 import { Button } from '@/components/ui/button';
+import { ComingSoon } from '@/components/ui/coming-soon';
+import { Link } from '@/i18n/navigation';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
 import { SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
+import { regionAddsInformation } from '@/lib/geo/region-label';
 import { cn } from '@/lib/utils';
 
 import styles from './MemberProfileView.module.css';
@@ -30,8 +34,8 @@ import styles from './MemberProfileView.module.css';
  * A member's profile, as rendered by this screen. Hand-typed rather than imported from
  * `lib/supabase/types.gen.ts` — that generated file is stale (missing `role`/`industry`,
  * added by `20260714101121_profiles_step3_build_fields.sql`) and regenerating it
- * (`npm run db:types`) is out of scope for this stage. Both call sites (`/dashboard/profile`,
- * `/members/[username]`) select this exact column allow-list, never `select('*')`.
+ * (`npm run db:types`) is out of scope for this stage. The single call site
+ * (`/members/[username]`) selects this exact column allow-list, never `select('*')`.
  */
 export interface MemberProfile {
   username: string;
@@ -45,6 +49,8 @@ export interface MemberProfile {
   company: string | null;
   country: string | null;
   city: string | null;
+  /** Subdivision (US state, oblast…). Shown only when it disambiguates — see resolveLocationText. */
+  regionName: string | null;
   languages: string[] | null;
   interests: string[] | null;
   socials: SocialsJson | null;
@@ -170,15 +176,36 @@ export function resolveDisplayName(profile: {
 }
 
 /**
- * "{city}, {country}", or whichever one exists alone; `null` when neither is set. Exported
- * (stage 1.10) for reuse by `MindsetterProfileView.tsx`.
+ * "{city}, {region}, {country}" — with the region included ONLY when it disambiguates.
+ *
+ * The region is what makes a US profile readable: there are around thirty Springfields, so
+ * "Springfield, United States" says almost nothing while "Springfield, Illinois, United
+ * States" is precise. But most of the world gets no benefit, because subdivisions are named
+ * after their capital — "Lviv, Lviv, Ukraine" and "São Paulo, São Paulo, Brazil" read as a
+ * duplication bug rather than as detail. `regionAddsInformation` draws that line, and it is
+ * the SAME rule the city picker uses for its option labels, so what a member saw when they
+ * chose the city is what their profile shows.
+ *
+ * Falls back gracefully: any missing part is simply dropped, and `null` when nothing is set.
+ * A profile saved before the geo picker shipped has `regionName` null and renders exactly as
+ * it did before.
+ *
+ * Exported (stage 1.10) for reuse by `MindsetterProfileView.tsx`.
  */
 export function resolveLocationText(profile: {
   city: string | null;
   country: string | null;
+  regionName?: string | null;
 }): string | null {
-  if (profile.city && profile.country) return `${profile.city}, ${profile.country}`;
-  return profile.city ?? profile.country ?? null;
+  const parts = [
+    profile.city,
+    profile.city && regionAddsInformation(profile.city, profile.regionName ?? null)
+      ? profile.regionName
+      : null,
+    profile.country,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(', ') : null;
 }
 
 /**
@@ -197,9 +224,11 @@ export function resolveLanguageText(profile: { languages: string[] | null }): st
 }
 
 /**
- * Shared presentational component for the "Member Profile" view — the two call sites
- * (`app/[locale]/(app)/dashboard/profile/page.tsx` self-view, `app/[locale]/(app)/members/[username]/
- * page.tsx` public view) are structurally IDENTICAL below the banner (confirmed via a direct
+ * Shared presentational component for the "Member Profile" view. It used to back two routes
+ * (a `/dashboard/profile` self-view + this public one), which the 2026-08-10 "one profile page
+ * per account" pass collapsed into `app/[locale]/members/[username]/page.tsx` alone — that route
+ * now resolves `variant` from the viewer (owner → `preview`, anyone else → `public`) instead of
+ * the URL. The two Figma frames are structurally IDENTICAL below the banner (confirmed via a direct
  * Figma node-diff of `401:6375` vs `383:4667`), so this stays a single Server Component
  * (no client interactivity needed — Edit Profile / Share Profile / Invite to event are all
  * static per this stage's scope) taking a `variant` flag rather than being duplicated twice.
@@ -235,7 +264,7 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
             )}
           >
             <div className="flex items-center gap-2">
-              <Eye className={cn('size-5 shrink-0', styles.bannerHighlight)} aria-hidden="true" />
+              <PublicViewEyeIcon className={cn('size-5 shrink-0', styles.bannerHighlight)} />
               <p className={cn('text-tiny', styles.bannerText)}>
                 <span className={cn('font-bold', styles.bannerHighlight)}>
                   {labels.bannerHighlight}
@@ -267,14 +296,15 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                   was actively fighting a value that didn't need overriding. Mobile's hug-width
                   chip bounds solve cleanly to a 4px gap (`gap-1`, unchanged, already correct). */}
               <Button
-                type="button"
+                asChild
                 variant="ghost"
                 className={cn(
                   'h-8 gap-1 rounded-[8px] px-2 py-2 text-tiny font-normal md:h-14 md:w-[171px] md:gap-3 md:rounded-lg md:px-5 md:py-[15px] md:text-base md:font-bold',
                   styles.editButton,
                 )}
               >
-                {/* Figma: `lucide-react`'s outline `Pen` doesn't match this instance's actual
+                <Link href="/dashboard/profile">
+                  {/* Figma: `lucide-react`'s outline `Pen` doesn't match this instance's actual
                     "ball-pen-fill" vector (a solid pen glyph with a separate ink-flick mark) —
                     see `components/icons/profile-meta-icons.tsx` for the path-diff confirming
                     the mobile/desktop instances are the same shape, just scaled. Rendered size
@@ -283,23 +313,27 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                     of the icon's own `className`, at a CSS specificity a same-breakpoint
                     Tailwind utility on the icon itself can never outrank — `.editButton`'s
                     `!important` `svg` rule below is what actually wins. */}
-                <BallPenFillIcon className="size-4" aria-hidden="true" />
-                {labels.editProfile}
+                  <BallPenFillIcon className="size-4" aria-hidden="true" />
+                  {labels.editProfile}
+                </Link>
               </Button>
               {/* Figma: zero "Share" nodes exist anywhere on the mobile preview frame
                   (401:8282) — Share Profile only exists on the desktop frame (401:6375,
                   node I401:6359;261:3412), so this is hidden below `md`. */}
-              <Button
-                type="button"
-                variant="ghost"
-                className={cn(
-                  'hidden h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold md:inline-flex',
-                  styles.shareButton,
-                )}
-              >
-                <Share2 className="size-4" aria-hidden="true" />
-                {labels.shareProfile}
-              </Button>
+              <ComingSoon className="hidden md:inline-flex">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled
+                  className={cn(
+                    'h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold disabled:opacity-50',
+                    styles.shareButton,
+                  )}
+                >
+                  <Share2 className="size-4" aria-hidden="true" />
+                  {labels.shareProfile}
+                </Button>
+              </ComingSoon>
             </div>
           </div>
         </div>
@@ -387,17 +421,24 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                 (`rounded-lg`/`gap-3`) rather than matching Figma's real cornerRadius 12 / 12px
                 icon-to-text gap — same inverted-radius mistake as the Edit button, so both
                 overrides are dropped here rather than corrected to an explicit value. */}
-            <Button
-              type="button"
-              variant="ghost"
-              className={cn(
-                'hidden h-14 w-[188px] px-5 py-[15px] text-base font-bold md:inline-flex',
-                styles.inviteButton,
-              )}
-            >
-              <UserAddFillIcon className="size-4" aria-hidden="true" />
-              {labels.inviteToEvent}
-            </Button>
+            {/* Event invites are unbuilt — same treatment as every other unbuilt control across
+                the app (see `components/ui/coming-soon.tsx`), including Share Profile in the
+                banner above. Edit Profile is the one banner action that is NOT marked: it now
+                links to the cabinet (2026-08-12). */}
+            <ComingSoon className="hidden md:inline-flex">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled
+                className={cn(
+                  'h-14 w-[188px] px-5 py-[15px] text-base font-bold disabled:opacity-50',
+                  styles.inviteButton,
+                )}
+              >
+                <UserAddFillIcon className="size-4" aria-hidden="true" />
+                {labels.inviteToEvent}
+              </Button>
+            </ComingSoon>
 
             {(locationText || languageText) && (
               // Figma: "Tulum, Mexico" / "EN / UA" render at 14px desktop / 12px mobile

@@ -14,8 +14,10 @@ import {
 
 import { saveHelp } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +41,9 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type HelpFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved expertise entries, when the caller revisits this step. */
   initialExpertise?: Expertise[];
 };
@@ -183,9 +188,10 @@ function ExpertiseCard({ control, index, onRemove, id, draggable }: ExpertiseCar
  * `RolesForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`, `useFieldArray`), minus
  * the per-card nested `links` array Roles has.
  */
-export function HelpForm({ initialExpertise }: HelpFormProps) {
+export function HelpForm({ initialExpertise, editMode }: HelpFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form: UseFormReturn<HelpStepInput> = useForm<HelpStepInput>({
@@ -213,6 +219,15 @@ export function HelpForm({ initialExpertise }: HelpFormProps) {
 
     // Step 4/5 — "Make your profile shine." (Personal session moved to the last core step,
     // product decision D9 — no longer directly after Help.)
+    // Cabinet mode returns to the section list; the wizard continues to step 4/5.
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
+      return;
+    }
+
     router.push('/mindsetter-onboarding/shine');
   });
 
@@ -253,14 +268,16 @@ export function HelpForm({ initialExpertise }: HelpFormProps) {
             </Button>
           ) : null}
 
-          <Button
-            type="submit"
-            variant="primaryOutline"
-            size="lg"
-            loading={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-          </Button>
+          <StepActions
+            onCancel={() => {
+              // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+              // the section rather than navigating, so this is an undo, not an exit.
+              form.reset();
+              setFormError(null);
+            }}
+            editMode={editMode}
+            isSubmitting={form.formState.isSubmitting}
+          />
         </div>
       </form>
     </Form>

@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  keywordAwareFilter,
   SelectChevronIcon,
 } from '@/components/ui/command';
 import {
@@ -20,7 +21,17 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-type Option = { value: string; label: string };
+type Option = {
+  value: string;
+  label: string;
+  /**
+   * Extra strings this option should match while typing, but never display — the language
+   * list ships English labels only, so without these a Spanish speaker typing "alemán" or a
+   * Ukrainian one typing "українська" finds nothing in a 77-row list. Built by
+   * `buildLanguageAliases` (`lib/constants/languages.ts`).
+   */
+  keywords?: string[];
+};
 
 type LanguagesMultiSelectProps = {
   value: string[];
@@ -164,7 +175,12 @@ export function LanguagesMultiSelect({
             }
           }}
           className={cn(
-            'flex min-h-14 w-full flex-wrap items-center gap-1.5 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
+            // NOT `flex-wrap` on this outer row. The chips wrap inside their own container
+            // below, so this row always has exactly two children on one line — which is what
+            // keeps `items-center` centering the chevron against the trigger's FULL height.
+            // Wrapping here instead put the chevron on the last chip line, so once the chips
+            // spilled onto a second row it sat at the bottom edge rather than centered.
+            'flex min-h-14 w-full items-center gap-1.5 rounded-lg border bg-transparent py-2 pr-4 pl-4 text-base font-medium text-foreground outline-none transition-colors',
             borderColorClass,
             // Merge with the popover content into one continuous shape — same technique as
             // `components/ui/combobox.tsx`: square off whichever edge actually touches the
@@ -178,30 +194,32 @@ export function LanguagesMultiSelect({
             'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
           )}
         >
-          {selectedOptions.length === 0 ? (
-            <span className="py-2 text-muted-foreground">{placeholder}</span>
-          ) : (
-            selectedOptions.map((option) => (
-              <span
-                key={option.value}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm text-foreground"
-              >
-                {option.label}
-                <button
-                  type="button"
-                  aria-label={removeLabel(option.label)}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    remove(option.value);
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            {selectedOptions.length === 0 ? (
+              <span className="py-2 text-muted-foreground">{placeholder}</span>
+            ) : (
+              selectedOptions.map((option) => (
+                <span
+                  key={option.value}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm text-foreground"
                 >
-                  <X className="size-3.5" aria-hidden="true" />
-                </button>
-              </span>
-            ))
-          )}
-          <SelectChevronIcon className={cn('ml-auto size-4 shrink-0', chevronColorClass)} />
+                  {option.label}
+                  <button
+                    type="button"
+                    aria-label={removeLabel(option.label)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      remove(option.value);
+                    }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-3.5" aria-hidden="true" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+          <SelectChevronIcon className={cn('size-4 shrink-0', chevronColorClass)} />
         </div>
       </PopoverTrigger>
       <PopoverContent
@@ -215,7 +233,12 @@ export function LanguagesMultiSelect({
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <Command className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}>
+        <Command
+          filter={
+            options.some((option) => option.keywords?.length) ? keywordAwareFilter : undefined
+          }
+          className={cn('bg-background', isTop ? 'rounded-b-none' : 'rounded-t-none')}
+        >
           {searchable ? <CommandInput placeholder={searchPlaceholder} /> : null}
           <CommandList>
             <CommandEmpty>{emptyLabel}</CommandEmpty>
@@ -226,6 +249,7 @@ export function LanguagesMultiSelect({
                   <CommandItem
                     key={option.value}
                     value={option.label}
+                    keywords={option.keywords}
                     onSelect={() => toggle(option.value)}
                     className={cn(isSelected && 'text-foreground')}
                   >

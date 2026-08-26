@@ -1,4 +1,4 @@
-import { CheckCircle2, Eye, Heart, Link2, Play, Share2, User } from 'lucide-react';
+import { CheckCircle2, Link2, Play, Share2, User } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -15,6 +15,7 @@ import {
   CashFillIcon,
   LanguageBubbleIcon,
   LocationPinIcon,
+  PublicViewEyeIcon,
   QuillPenAiFillIcon,
   UserAddFillIcon,
 } from '@/components/icons/profile-meta-icons';
@@ -29,7 +30,6 @@ import {
 } from '@/components/icons/shine-block-icons';
 import { WinCardGlow, WinTrophyIcon } from '@/components/icons/win-card-glow';
 import { CardSlider } from '@/components/profile/CardSlider';
-import { EmblaCarousel } from '@/components/profile/EmblaCarousel';
 import { ExpandableAccordion } from '@/components/profile/ExpandableAccordion';
 import { HelpWithAccordion } from '@/components/profile/HelpWithAccordion';
 import {
@@ -46,6 +46,8 @@ import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
 import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ComingSoon } from '@/components/ui/coming-soon';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type {
   Expertise,
@@ -57,7 +59,8 @@ import type {
   Win,
   WinColor,
 } from '@/lib/validation/mindsetter';
-import { toEmbedUrl } from '@/lib/video-embed';
+import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
+import { toEmbedUrl, type VideoOrientation } from '@/lib/video-embed';
 
 import memberStyles from './MemberProfileView.module.css';
 import styles from './MindsetterProfileView.module.css';
@@ -69,6 +72,8 @@ type VideoJson = {
   youtube?: string | null;
   vimeo?: string | null;
   videoPath?: string | null;
+  /** Written by the save action, not by the user — see `resolveVideoOrientation`. */
+  orientation?: VideoOrientation | null;
 } | null;
 
 /** Trophy icon fill per win color (Figma `552:5078` "Frame 274", re-verified via literal SVG
@@ -178,6 +183,25 @@ function topicItemStyle(index: number): TopicItemStyle {
  * `profile.numbers` allows up to `MAX_NUMBERS` (10, see `lib/validation/mindsetter.ts`) while
  * Figma's own mockup only shows 4, so the 4-color palette cycles by index the same way. See
  * `.numberStat*` in `MindsetterProfileView.module.css` for the actual gradient/glow values. */
+/**
+ * "Book a Session" calendar icon (16×16) — provided verbatim by the designer.
+ *
+ * The one edit to the supplied markup: `fill="#79B9E3"` became `currentColor`, so the glyph
+ * tracks the button's own text color through hover/active/disabled instead of staying brand-blue
+ * on a dimmed button. Same reason `AddLinkIcon` in `RolesForm.tsx` was switched off a hardcoded
+ * fill. The resting color is unchanged — `primaryOutline`'s text is that exact blue.
+ */
+function BookSessionIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M1.33325 12.6666C1.33325 13.8 2.19992 14.6666 3.33325 14.6666H12.6666C13.7999 14.6666 14.6666 13.8 14.6666 12.6666V7.33331H1.33325V12.6666ZM12.6666 2.66665H11.3333V1.99998C11.3333 1.59998 11.0666 1.33331 10.6666 1.33331C10.2666 1.33331 9.99992 1.59998 9.99992 1.99998V2.66665H5.99992V1.99998C5.99992 1.59998 5.73325 1.33331 5.33325 1.33331C4.93325 1.33331 4.66658 1.59998 4.66658 1.99998V2.66665H3.33325C2.19992 2.66665 1.33325 3.53331 1.33325 4.66665V5.99998H14.6666V4.66665C14.6666 3.53331 13.7999 2.66665 12.6666 2.66665Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 const NUMBER_STAT_COLOR_CLASSES = [
   'numberStatPink',
   'numberStatBlue',
@@ -192,11 +216,30 @@ function numberStatColorClass(index: number): (typeof NUMBER_STAT_COLOR_CLASSES)
   );
 }
 
-/** Shared base classes for every `CardSlider` item (My F*ckUp(s) / REEL LIFE — Reviews and, as of
- * this pass, My WINS both moved to `EmblaCarousel.tsx`'s `embla-carousel-react` track and keep
- * their own base classes without `snap-start`, see those sections below) — same mobile width +
- * scroll-snap participation across the remaining two, kept in one place so a future
- * `CardSlider`-based section can't forget `snap-start` and silently break scroll-snap. */
+/**
+ * Grid columns for the "Numbers" row, keyed by how many cards there actually are.
+ *
+ * The row used to be a hard `grid-cols-2 md:grid-cols-4`, so a Mindsetter who filled two stats
+ * got two cards and half a row of dead space. Now the track count follows the card count and
+ * they stretch to fill the width (2026-08-05 product decision). Capped at 4 because
+ * `MAX_NUMBERS` is 4.
+ *
+ * Spelled out as whole class strings rather than built with a template literal: Tailwind scans
+ * source text for complete class names, and an interpolated `md:grid-cols-${n}` would simply
+ * never be generated.
+ */
+const NUMBER_GRID_COLUMN_CLASSES: Record<number, string> = {
+  1: 'grid-cols-1 md:grid-cols-1',
+  2: 'grid-cols-2 md:grid-cols-2',
+  3: 'grid-cols-2 md:grid-cols-3',
+  4: 'grid-cols-2 md:grid-cols-4',
+};
+
+/** Shared base classes for the `CardSlider` items that want the standard 280px mobile card — My
+ * F*ckUp(s) / REEL LIFE. Reviews and My WINS are also `CardSlider`-based (2026-08-06) but size
+ * their cards per-breakpoint from the CSS module and spell out their own snap behavior, so they
+ * deliberately don't use this. Kept in one place so a future section can't forget `snap-start`
+ * and silently break scroll-snap. */
 const SLIDER_ITEM_BASE = 'w-[280px] shrink-0 snap-start';
 
 interface SuperpowerCardStyle {
@@ -283,6 +326,8 @@ export interface MindsetterProfile {
   industry: string | null;
   country: string | null;
   city: string | null;
+  /** Subdivision (US state, oblast…). Shown only when it disambiguates — see resolveLocationText. */
+  regionName: string | null;
   languages: string[] | null;
   interests: string[] | null;
   socials: SocialsJson | null;
@@ -296,6 +341,8 @@ export interface MindsetterProfile {
   myWay: MyWayStage[];
   fckups: Fckup[];
   philosophy: string | null;
+  /** Optional attribution for `philosophy` (2026-08-14). */
+  philosophyAuthor: string | null;
   videoBlog: VideoJson;
   sessionType: 'free' | 'paid' | null;
   priceCents: number | null;
@@ -446,6 +493,28 @@ function VideoBlogArrowIcon() {
   );
 }
 
+/**
+ * Decorative quotation mark around the Reel Life philosophy quote (Figma `911:11550`/`911:11556`
+ * — the same vector used twice, not a mirrored open/close pair).
+ *
+ * Native 38×29. Rendered in `--color-card` (#1a1a1a) per the frame: on the page's black
+ * background that is a deliberately faint watermark, not a legible glyph.
+ */
+function QuoteMarkIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="38"
+      height="29"
+      viewBox="0 0 38 29"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M9.69388 29C6.78571 29 4.42687 27.9595 2.61735 25.8785C0.872449 23.7975 0 20.9444 0 17.3194C0 13.4259 1.09864 10.0694 3.29592 7.25C5.55782 4.36343 8.46599 2.28241 12.0204 1.00694L14.7347 0L17.352 6.74653L14.6378 7.75347C12.6344 8.4919 11.1156 9.26389 10.0816 10.0694C9.04762 10.875 8.30442 11.9491 7.85204 13.2917C8.62755 13.0903 9.37075 12.9896 10.0816 12.9896C12.0204 12.9896 13.7653 13.7951 15.3163 15.4062C16.8673 16.9502 17.6429 18.8299 17.6429 21.0451C17.6429 23.1933 16.835 25.0729 15.2194 26.684C13.6684 28.228 11.8265 29 9.69388 29ZM30.051 29C27.1429 29 24.784 27.9595 22.9745 25.8785C21.2296 23.7975 20.3571 20.9444 20.3571 17.3194C20.3571 13.4259 21.4558 10.0694 23.6531 7.25C25.915 4.36343 28.8231 2.28241 32.3776 1.00694L35.0918 0L37.7092 6.74653L34.9949 7.75347C32.9915 8.4919 31.4728 9.26389 30.4388 10.0694C29.4048 10.875 28.6616 11.9491 28.2092 13.2917C28.9847 13.0903 29.7279 12.9896 30.4388 12.9896C32.3776 12.9896 34.1224 13.7951 35.6735 15.4062C37.2245 16.9502 38 18.8299 38 21.0451C38 23.1933 37.1922 25.0729 35.5765 26.684C34.0255 28.228 32.1837 29 30.051 29Z" />
+    </svg>
+  );
+}
+
 /** A section eyebrow row (icon + bold black uppercase label) reused by every content section
  * on this page — the "ABOUT"/"BEYOND BUSINESS" eyebrow pattern from `MemberProfileView`,
  * generalized here since this page has many more of them. */
@@ -519,26 +588,34 @@ function CtaBanner({
           {price}
         </p>
       )}
+      {/* Same unbuilt features as the hero's own pair — event invites and session booking.
+          Disabled + `ComingSoon` rather than left clickable-but-inert. */}
       <div className="relative flex flex-col gap-3 sm:flex-row">
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            'h-14 px-6 text-base font-bold max-[600px]:w-full md:min-w-[188px]',
-            memberStyles.inviteButton,
-          )}
-        >
-          <UserAddFillIcon className="size-4" aria-hidden="true" />
-          {inviteLabel}
-        </Button>
-        <Button
-          type="button"
-          variant="primaryOutline"
-          size="lg"
-          className="shadow-none max-[600px]:w-full md:min-w-[188px]"
-        >
-          {bookLabel}
-        </Button>
+        <ComingSoon className="max-[600px]:w-full">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled
+            className={cn(
+              'h-14 px-6 text-base font-bold disabled:opacity-50 max-[600px]:w-full md:min-w-[188px]',
+              memberStyles.inviteButton,
+            )}
+          >
+            <UserAddFillIcon className="size-4" aria-hidden="true" />
+            {inviteLabel}
+          </Button>
+        </ComingSoon>
+        <ComingSoon className="max-[600px]:w-full">
+          <Button
+            type="button"
+            variant="primaryOutline"
+            size="lg"
+            disabled
+            className="shadow-none max-[600px]:w-full md:min-w-[188px]"
+          >
+            {bookLabel}
+          </Button>
+        </ComingSoon>
       </div>
     </div>
   );
@@ -601,8 +678,35 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
   }));
   const websiteHref = isSafeHttpUrl(socials?.website) ? socials?.website : null;
 
-  const heroText = profile.philosophy?.trim() || profile.bio?.trim() || null;
+  // Philosophy no longer feeds the hero (2026-08-05 product decision) — it heads the REEL LIFE
+  // section instead, see `reelLifeHeading` below. The hero falls back to the bio alone.
+  const heroText = profile.bio?.trim() || null;
+
+  /**
+   * REEL LIFE's heading: the Mindsetter's own philosophy quote when they wrote one, otherwise
+   * the generic copy. Capped at `MAX_PHILOSOPHY_LENGTH` (200) upstream, so it stays within what
+   * a display-size heading can carry.
+   */
+  /**
+   * The Mindsetter's own quote, rendered as its own block UNDER Reel Life's static heading
+   * (Figma `911:11550`–`911:11556`).
+   *
+   * It used to REPLACE that heading — a misreading of the frame, corrected 2026-08-14 after
+   * re-checking it: the heading and the quote are separate, simultaneous layers there, so a
+   * Mindsetter who wrote a philosophy was silently losing "My business, my life — in pictures".
+   */
+  const philosophyQuote = profile.philosophy?.trim() || null;
+  /** Attribution line — only when there IS a quote and someone else is credited for it. */
+  const philosophyAuthor = philosophyQuote ? profile.philosophyAuthor?.trim() || null : null;
   const price = formatSessionPrice(profile, t);
+  /**
+   * Which promo layout to use. Stored at write time (`resolveVideoOrientation`, `lib/video-embed`)
+   * because only the URL can say it for YouTube (`/shorts/` = portrait) and only an oEmbed call
+   * can say it for Vimeo — neither belongs in a render path. Rows saved before this existed carry
+   * no value, so they fall back to landscape, which is what they were being drawn as anyway.
+   */
+  const promoOrientation: VideoOrientation =
+    profile.promoVideo?.orientation === 'vertical' ? 'vertical' : 'horizontal';
   const hasPromoVideo = Boolean(
     profile.promoVideoUrl || profile.promoVideo?.youtube || profile.promoVideo?.vimeo,
   );
@@ -641,10 +745,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         <div className={cn(memberStyles.banner, 'flex items-center')}>
           <div className="mx-auto flex w-full max-w-[1440px] flex-row items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:gap-4 md:py-0 lg:px-[70px]">
             <div className="flex items-center gap-2">
-              <Eye
-                className={cn('size-5 shrink-0', memberStyles.bannerHighlight)}
-                aria-hidden="true"
-              />
+              <PublicViewEyeIcon className={cn('size-5 shrink-0', memberStyles.bannerHighlight)} />
               <p className={cn('text-tiny', memberStyles.bannerText)}>
                 <span className={cn('font-bold', memberStyles.bannerHighlight)}>
                   {t('banner.highlight')}
@@ -653,28 +754,36 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-5">
+              {/* Edit Profile goes to the cabinet's My Profile tab — the one place every section
+                  of this page is editable (2026-08-12). Share Profile has nothing behind it yet,
+                  so it gets the app's standard `ComingSoon` treatment instead of looking live. */}
               <Button
-                type="button"
+                asChild
                 variant="ghost"
                 className={cn(
                   'h-8 gap-1 rounded-[8px] px-2 py-2 text-tiny font-normal md:h-14 md:w-[171px] md:gap-3 md:rounded-lg md:px-5 md:py-[15px] md:text-base md:font-bold',
                   memberStyles.editButton,
                 )}
               >
-                <BallPenFillIcon className="size-4" aria-hidden="true" />
-                {t('editProfile')}
+                <Link href="/dashboard/profile">
+                  <BallPenFillIcon className="size-4" aria-hidden="true" />
+                  {t('editProfile')}
+                </Link>
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className={cn(
-                  'hidden h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold md:inline-flex',
-                  memberStyles.shareButton,
-                )}
-              >
-                <Share2 className="size-4" aria-hidden="true" />
-                {t('shareProfile')}
-              </Button>
+              <ComingSoon className="hidden md:inline-flex">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled
+                  className={cn(
+                    'h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold disabled:opacity-50',
+                    memberStyles.shareButton,
+                  )}
+                >
+                  <Share2 className="size-4" aria-hidden="true" />
+                  {t('shareProfile')}
+                </Button>
+              </ComingSoon>
             </div>
           </div>
         </div>
@@ -711,14 +820,24 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           (the row scrolls past the frame's own bounds), which throws off a naive end-of-frame
           measurement; not evidence of a genuinely different intended gap. Net: 80/150 stands as
           the correct uniform value, matching both the user's explicit instruction AND the
-          overwhelming majority of clean Figma measurements. The Hero section itself keeps its
-          pre-existing `lg:pt-16` (page-top → hero-content spacing, unrelated to inter-section
-          rhythm) but drops the old `pb-10 md:pb-16` bottom padding it used to carry — that was
-          this file's old mechanism for "gap to Roles"; Roles' own new `mt-20 lg:mt-[150px]` now
-          owns that gap instead, so keeping Hero's bottom padding too would double it. */}
-      <div className="mx-auto w-full max-w-[1440px] px-4 pt-0 sm:px-6 lg:px-[70px] lg:pt-16">
+          overwhelming majority of clean Figma measurements. The Hero section itself drops the
+          old `pb-10 md:pb-16` bottom padding it used to carry — that was this file's old
+          mechanism for "gap to Roles"; Roles' own new `mt-20 lg:mt-[150px]` now owns that gap
+          instead, so keeping Hero's bottom padding too would double it.
+
+          TOP-PADDING FIX (client-reported "excess top padding above the banner", re-verified
+          against `327:1084`/`383:2040`/`401:7569` this pass): the row used to carry one shared
+          `lg:pt-16` (64px) on this OUTER wrapper, applied equally to both the text column AND
+          the portrait photo. Figma has NO such shared gap — the photo (`327:1084` "Rectangle 2"
+          desktop, `401:7569` "Rectangle 2" mobile) sits flush against the header's own bottom
+          edge at every breakpoint (`y=88` desktop / `y=115` mobile, exactly the header's own
+          height, i.e. 0px extra gap), while only the TEXT column starts lower (`383:2040`
+          "Frame 430" `y=175` desktop, i.e. 175-88=87px below the header — measured directly, not
+          a round Tailwind step). `lg:pt-16` is removed from here; the 87px offset moves to the
+          text column alone, below. */}
+      <div className="mx-auto w-full max-w-[1440px] px-4 pt-0 sm:px-6 lg:px-[70px]">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
-          <div className="flex w-full flex-col gap-6 lg:max-w-[464px]">
+          <div className="flex w-full flex-col gap-6 lg:max-w-[464px] lg:pt-[87px]">
             <div className="flex flex-wrap items-center gap-2">
               {/* TEMPORARY DEMO OVERRIDE (claude.txt 2026-07-23 follow-up: "Verified для демо
                   виведи просто в коді, не з бази, щоб показати бізнесу, потім приберемо його") —
@@ -781,7 +900,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             )}
 
             {(locationText || languageText) && (
-              <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-tiny">
+              <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-tiny lg:order-3">
                 {locationText && (
                   <div className="flex items-center gap-2">
                     <LocationPinIcon
@@ -804,7 +923,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             )}
 
             {(socialEntries.length > 0 || websiteHref) && (
-              <div className="flex flex-wrap items-center gap-3">
+              // `lg:mt-auto` pushes the socials to the bottom of the hero's text column on
+              // desktop, absorbing whatever slack the column has.
+              <div className="flex flex-wrap items-center gap-3 lg:order-4 lg:mt-auto">
                 {socialEntries.map(({ key, Icon, href }) => (
                   <a
                     key={key}
@@ -836,52 +957,95 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               </div>
             )}
 
-            {hasPromoVideo && (
-              // Static, decorative: scrolls to the Promo video section (`#promo-video`) rather
-              // than opening a lightbox — no dedicated hero-intro video field exists in the data
-              // model (Figma's "Intro about me" button re-triggers the same asset).
-              <a
-                href="#promo-video"
-                className="inline-flex w-fit items-center gap-2 text-tiny font-bold text-foreground/70 hover:text-foreground"
-              >
-                {/* Was `bg-black` — now that the page itself is `--color-background` (#000000),
-                    a pure-black circle would have no visible edge; `bg-card` (--color-card,
-                    #1a1a1a) is this app's standard "elevated surface on black" step, giving the
-                    circle a visible boundary again (decorative element, no Figma frame). */}
-                <span className="flex size-8 items-center justify-center rounded-full bg-card text-white">
-                  <Play className="size-3.5" aria-hidden="true" />
-                </span>
-                {t('introVideo')}
-              </a>
-            )}
-
-            {variant === 'public' && (
-              <div className="flex flex-wrap items-center gap-3 lg:mt-auto">
+            {/*
+             * CTA row (Invite to event / Book a Session / favorite) — Figma's DEDICATED preview
+             * mockup (`383:4089` "Mindsetter's profile when he views a preview") re-checked this
+             * pass shows this exact same row (same 3 controls, same styling) underneath the
+             * owner's own "Public view — this is how others see your profile" banner — i.e. the
+             * design does NOT hide these for the profile owner, unlike the old `variant ===
+             * 'public'` gate here (which left the owner's `preview` variant with nothing, even
+             * though it also shows the "this is how others see your profile" banner promising
+             * exactly this). Rendered for both variants now; a Mindsetter obviously can't book
+             * themselves or invite themselves to their own event, so all three controls are
+             * `disabled` (+ `aria-disabled`, redundant with `disabled` on a real `<button>` but
+             * kept explicit per this stage's own ask) in `preview` — Figma has no distinct
+             * "disabled" visual for this state, so this reuses each control's own already-built
+             * `disabled:` treatment (`Button`'s `ghost`/`primaryOutline` variants both ship one)
+             * rather than inventing a new one, plus a shared `disabled:opacity-50` fallback for
+             * `.inviteButton`'s `!important` color overrides, which don't have a `disabled:`
+             * step of their own. */}
+            {/* Placement differs by breakpoint, so the row keeps ONE DOM position and moves via
+                CSS `order` — the same "keep DOM order fixed, swap via CSS order" approach
+                `WhoIsMindsetterDialog`'s choice row and `MindsetterCongratsCtas` already use, and the
+                only way to avoid rendering the buttons twice.
+                  · mobile — DOM order, i.e. directly under the socials row (no `order-*` applies)
+                  · desktop — `lg:order-*` lifts it ABOVE the location/languages block
+                The location and socials blocks carry the matching `lg:order-3`/`lg:order-4`;
+                everything above them keeps the default `order-0` and so stays first. */}
+            <div className="flex flex-wrap items-center gap-3 lg:order-2 lg:mt-0">
+              {/* Disabled unconditionally, for two independent reasons that will NOT expire
+                  together: neither event invites nor session booking exists yet (hence
+                  `ComingSoon`), and separately a Mindsetter can never invite or book
+                  themselves, so `preview` must keep these inert even once the features ship.
+                  Whoever removes the `ComingSoon` wrapper must restore
+                  `disabled={variant === 'preview'}` rather than dropping `disabled` entirely. */}
+              <ComingSoon className="w-full lg:w-auto">
                 <Button
                   type="button"
                   variant="ghost"
-                  className={cn('h-14 px-5 text-base font-bold', memberStyles.inviteButton)}
+                  disabled
+                  className={cn(
+                    // Full-width on phones (each CTA gets its own line), auto-width from `lg` up
+                    // where they sit side by side.
+                    'h-14 w-full px-5 text-base font-bold disabled:opacity-50 lg:w-auto',
+                    memberStyles.inviteButton,
+                  )}
                 >
                   <UserAddFillIcon className="size-4" aria-hidden="true" />
                   {t('inviteToEvent')}
                 </Button>
-                <Button type="button" variant="primaryOutline" size="lg">
+              </ComingSoon>
+              <ComingSoon className="w-full lg:w-auto">
+                <Button
+                  type="button"
+                  variant="primaryOutline"
+                  size="lg"
+                  disabled
+                  className="w-full lg:w-auto"
+                >
+                  <BookSessionIcon />
                   {t('bookSession')}
                 </Button>
-                <button
-                  type="button"
-                  aria-label={t('favorite')}
-                  className="flex size-14 items-center justify-center rounded-lg border border-border text-white transition-colors hover:bg-card"
+              </ComingSoon>
+
+              {/* Mobile-only twin of the "Intro about me" pill that sits on the photo from `lg`
+                  up. Figma puts no such control on the mobile hero photo, so on phones it lives
+                  here instead, directly under "Book a Session" — `basis-full` forces it onto its
+                  own line rather than letting flex-wrap decide. Borderless and background-free
+                  per the request, so it reads as a tertiary action next to the two real CTAs.
+                  Not disabled in `preview`: unlike Invite/Book this only scrolls to the promo
+                  video, which the owner can do on their own profile. */}
+              {hasPromoVideo && (
+                <a
+                  href="#promo-video"
+                  className="inline-flex h-14 w-full basis-full items-center justify-center gap-2 border-0 bg-transparent text-base font-bold text-foreground transition-colors hover:text-primary lg:hidden"
                 >
-                  <Heart className="size-5" aria-hidden="true" />
-                </button>
-              </div>
-            )}
+                  <Play className="size-4 fill-current" aria-hidden="true" />
+                  {t('introVideo')}
+                </a>
+              )}
+            </div>
           </div>
 
           <div
             className={cn(
-              'order-first -mx-4 w-[calc(100%_+_2rem)] sm:-mx-6 sm:w-[calc(100%_+_3rem)] lg:order-none lg:mx-0 lg:w-auto lg:max-w-[608px] lg:flex-1',
+              // `lg:self-start` matters more than it looks: as a flex row item this column
+              // otherwise stretches to the TALLER sibling (the text column), so its box ran well
+              // past the bottom of the photo — measured 612px of container under a 394px image
+              // at a 1100px viewport. The "Intro about me" pill is absolutely positioned against
+              // this box, so it hung ~200px below the picture and appeared frozen in place while
+              // the image shrank away from it. Hugging the content pins the pill to the photo.
+              'relative order-first -mx-4 w-[calc(100%_+_2rem)] sm:-mx-6 sm:w-[calc(100%_+_3rem)] lg:order-none lg:mx-0 lg:w-auto lg:max-w-[710px] lg:flex-1 lg:self-start',
             )}
           >
             {profile.avatar_url ? (
@@ -890,19 +1054,51 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 src={profile.avatar_url}
                 alt={displayName}
                 className={cn(
-                  'aspect-[375/440] w-full object-cover lg:aspect-[640/624]',
+                  'aspect-[375/440] w-full object-cover lg:aspect-[710/670]',
                   styles.portraitFrame,
                 )}
               />
             ) : (
               <div
                 className={cn(
-                  'flex aspect-[375/440] w-full items-center justify-center lg:aspect-[640/624]',
+                  'flex aspect-[375/440] w-full items-center justify-center lg:aspect-[710/670]',
                   styles.portraitPlaceholder,
                 )}
               >
                 <User className="size-16 text-foreground/30" aria-hidden="true" />
               </div>
+            )}
+
+            {hasPromoVideo && (
+              // "Intro about me" — Figma `337:1292` "Frame 424" (re-verified this pass against
+              // the dedicated preview mockup `383:4089`, same button, same position): a small
+              // pill OVERLAID on the portrait's bottom-left corner (NOT a plain inline link
+              // below the social icons, as this used to be built — no Figma frame ever placed
+              // it there), 16px from both the image's left and bottom edges (`x=746,y=705` vs
+              // the image's own `x=730,y=88,w=710,h=670` → left offset 16px, bottom offset
+              // 670-(705-88)-35=18px, rounded to Tailwind's 16px/`-4` step). `cornerRadius: 8`,
+              // 8px/12px padding, a `gradient / brand` 1px border (same 3-stop gradient as this
+              // app's own `--gradient-primary` token — see `get_styles`' `"gradient / brand"`
+              // paint, pixel-identical stops) around a fully transparent interior (Figma's own
+              // node carries no `fills` at all, just the border) — implemented via the same
+              // masked-pseudo-element ring technique as `.winCard::before` below, since a solid
+              // backdrop would incorrectly paint over the photo Figma leaves showing through.
+              // `text-tiny`/14px brand-blue text, matching `.roleLinkText`'s color precedent.
+              // Absent from BOTH mobile Figma frames (`401:7567`/`187:4294` — no matching text
+              // node anywhere), so this is `lg:`-only, same as `.topicsCard` above.
+              <a
+                href="#promo-video"
+                className={cn(
+                  // Brand blue (#79b9e3 = `--color-primary`) at rest, matching Figma. The MOBILE
+                  // twin further up is deliberately white instead — it sits on the page rather
+                  // than over the photo, where blue-on-black reads as a plain link.
+                  'absolute bottom-4 left-4 z-10 hidden items-center gap-2 rounded-[8px] px-3 py-2 text-tiny font-normal text-primary transition-colors hover:text-primary-hover lg:inline-flex',
+                  styles.introButton,
+                )}
+              >
+                <Play className="size-4 shrink-0 fill-current text-current" aria-hidden="true" />
+                {t('introVideo')}
+              </a>
             )}
           </div>
         </div>
@@ -931,7 +1127,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               </SectionEyebrow>
               {/* Hidden on mobile per item 11 ("На телефоні тайтл приховуємо") — ROLES stays as
                   the lone header above the accordion there. */}
-              <h2 className={cn('hidden font-display lg:block', styles.accordionSectionHeading)}>
+              <h2 className={cn('font-display max-[600px]:hidden', styles.accordionSectionHeading)}>
                 {t('roles.heading')}
               </h2>
             </div>
@@ -1022,7 +1218,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             </SectionEyebrow>
           </div>
           <h2
-            className={cn('hidden font-display lg:mb-[50px] lg:block', styles.superpowersHeading)}
+            className={cn(
+              'font-display lg:mb-[50px] max-[600px]:hidden',
+              styles.superpowersHeading,
+            )}
           >
             {t('superpowers.heading')}
           </h2>
@@ -1141,7 +1340,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               >
                 {t('promo.eyebrow')}
               </SectionEyebrow>
-              <h2 className={cn('hidden font-display text-h2 md:block', styles.gradientHeading)}>
+              <h2 className={cn('font-display text-h2 max-[600px]:hidden', styles.gradientHeading)}>
                 {t('promo.heading')}
               </h2>
             </div>
@@ -1160,7 +1359,20 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                  the section's full padded width (not edge-to-edge past it — same inset every
                  other section on this page uses), while desktop keeps its bounded side-by-side
                  thumbnail width. */
-              className="relative aspect-[345/450] w-full shrink-0 md:aspect-[372/524] md:max-w-[372px]"
+              /* ORIENTATION (2026-08-14): the two profile frames — `327:1080` "video vertical"
+                 and `383:2070` "video horizontal" — differ ONLY in this box's aspect and width;
+                 the eyebrow, heading, card background and play button are identical in both. So
+                 there is one layout here and a swapped ratio, not two layouts.
+                 Portrait: 372×524 desktop / 345×450 mobile (the frames' own two ratios).
+                 Landscape: ~523×371 desktop, and 16:9 on mobile where the design has no
+                 horizontal variant at all — extrapolated, since a portrait box would letterbox a
+                 landscape video with black bars down both sides. */
+              className={cn(
+                'relative w-full shrink-0',
+                promoOrientation === 'vertical'
+                  ? 'aspect-[345/450] md:aspect-[372/524] md:max-w-[372px]'
+                  : 'aspect-video md:aspect-[523/371] md:max-w-[523px]',
+              )}
             />
           </div>
         </div>
@@ -1187,15 +1399,32 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <SectionEyebrow icon={<NumbersBlockIcon className="size-4" />}>
               {t('numbers.eyebrow')}
             </SectionEyebrow>
-            <h2 className={cn('hidden font-display text-h2 md:block', styles.gradientHeading)}>
+            <h2 className={cn('font-display text-h2 max-[600px]:hidden', styles.gradientHeading)}>
               {t('numbers.heading')}
             </h2>
-            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-5">
+            <div
+              className={cn(
+                'grid gap-2.5 md:gap-5',
+                NUMBER_GRID_COLUMN_CLASSES[Math.min(profile.numbers.length, 4)] ??
+                  'grid-cols-2 md:grid-cols-4',
+              )}
+            >
               {profile.numbers.map((item, index) => (
                 <div
                   key={`${item.label}-${index}`}
                   className={cn(
-                    'flex flex-col gap-2 p-4 md:aspect-[151/129] md:justify-between md:gap-0 md:p-8',
+                    'flex flex-col gap-2 p-4 md:justify-between md:gap-0 md:p-8',
+                    // A full row of four keeps the design's exact card proportion. Anything
+                    // fewer swaps it for a plain min-height, because a stretched card is much
+                    // wider and `aspect-[151/129]` would scale its height to match — two cards
+                    // across a 1300px row would stand ~550px tall. Capping that with
+                    // `max-height` does NOT work either: with an aspect ratio set, the browser
+                    // shrinks the WIDTH to preserve the ratio, so the card stops filling its
+                    // track (measured: 421px inside a 537px column). Dropping the ratio is the
+                    // only way to actually stretch.
+                    profile.numbers.length === 4
+                      ? 'md:aspect-[151/129]'
+                      : 'md:min-h-[220px] md:justify-between',
                     styles.numberStat,
                     styles[numberStatColorClass(index)],
                   )}
@@ -1245,7 +1474,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               <SectionEyebrow icon={<BagIcon className="size-3 shrink-0" />}>
                 {t('help.eyebrow')}
               </SectionEyebrow>
-              <h2 className={cn('hidden font-display text-h2 md:block', styles.gradientHeading)}>
+              <h2 className={cn('font-display text-h2 max-[600px]:hidden', styles.gradientHeading)}>
                 {t('help.heading')}
               </h2>
             </div>
@@ -1258,8 +1487,12 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         </div>
       )}
 
-      {/* ============================== REEL LIFE ============================== */}
-      {profile.reelLifePhotoUrls.length > 0 && (
+      {/* ============================== REEL LIFE ==============================
+          Shown only once there are `MIN_REEL_LIFE_PHOTOS_TO_DISPLAY` (7) photos — enough to fill
+          the grid's two rows (2026-08-14 product rule). Below that the section is hidden rather
+          than rendered half-empty. Uploading fewer is still allowed and still saves; the cabinet
+          card and the wizard step both say so. */}
+      {profile.reelLifePhotoUrls.length >= MIN_REEL_LIFE_PHOTOS_TO_DISPLAY && (
         <div id="reel-life" className="mt-20 scroll-mt-24 lg:mt-[150px]">
           {/* Eyebrow/heading stay in the normal constrained content column (STAGE 1.12: own
               top-level section wrapper like every other section, see HERO's doc comment) — only
@@ -1275,9 +1508,41 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               <SectionEyebrow icon={<ReelLifeBlockIcon className="size-4" />}>
                 {t('reelLife.eyebrow')}
               </SectionEyebrow>
-              <h2 className={cn('font-display text-h3 md:text-h2', styles.gradientHeading)}>
-                {t('reelLife.heading')}
+              {/* Heading and quote are DESKTOP ONLY (2026-08-14 request): the mobile frames show
+                  the photo strip under the eyebrow alone, with no heading and no quote. */}
+              <h2
+                className={cn(
+                  'font-display text-h3 max-[600px]:hidden md:text-h2',
+                  styles.gradientHeading,
+                )}
+              >
+                {/* The break after the em dash is the frame's own two-line split, so it's real
+                    markup rather than trusting the column width to wrap in the same place. */}
+                {t.rich('reelLife.heading', { br: () => <br /> })}
               </h2>
+
+              {philosophyQuote ? (
+                // 583px block in the frame, centred on the same axis as the heading. The two
+                // decorative marks hang OUTSIDE it — top-left of the quote and bottom-right of the
+                // attribution — so they sit in the margin rather than pushing the text around.
+                <figure className="relative mx-auto w-full max-w-[583px] px-10 max-[600px]:hidden lg:px-0">
+                  <QuoteMarkIcon className="absolute -top-4 left-0 text-card lg:-left-14" />
+                  <blockquote className="font-display text-[24px] leading-[1.31] text-foreground md:text-[32px]">
+                    {philosophyQuote}
+                  </blockquote>
+                  {philosophyAuthor ? (
+                    <figcaption
+                      className={cn(
+                        'mt-2 text-right text-tiny font-bold tracking-[0.3em] uppercase',
+                        styles.quoteAuthor,
+                      )}
+                    >
+                      —{philosophyAuthor}
+                    </figcaption>
+                  ) : null}
+                  <QuoteMarkIcon className="absolute -bottom-4 right-0 text-card lg:-right-14" />
+                </figure>
+              ) : null}
             </div>
           </div>
 
@@ -1330,7 +1595,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               mechanism that stays correct regardless of viewport width or how many photos a real
               profile has (`reelLifePhotoRows`' `ceil(total/2)` split isn't breakpoint-conditional,
               so there's no single "correct" fixed margin to hardcode here). */}
-          <div className="relative left-1/2 right-1/2 mt-8 w-screen -mx-[50vw]">
+          {/* 48px from the quote's attribution down to the photo grid — the frame's own gap
+              (2026-08-14 request). Applies to the eyebrow-only mobile case too, where this is the
+              space under the eyebrow. */}
+          <div className="relative left-1/2 right-1/2 mt-12 w-screen -mx-[50vw]">
             <CardSlider
               prevLabel={t('carousel.prev')}
               nextLabel={t('carousel.next')}
@@ -1397,10 +1665,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
       {/* ============================== REVIEWS (static, carousel) ==============================
           Figma `552:4496` "Frame 448": the card row (`552:4512` "Frame 273") is 1740px wide across
           4×420px cards — wider than the ~1300px content column — with a dedicated prev/next
-          control (`552:4605`) centered below it, i.e. a real carousel (see `EmblaCarousel.tsx`, the
-          shared `embla-carousel-react`-backed track used by this section and My WINS — see that
-          file's doc comment for why it isn't `CardSlider.tsx`), not the static `md:grid-cols-3`
-          this section rendered before. */}
+          control (`552:4605`) centered below it, i.e. a real carousel (`CardSlider.tsx` — see the
+          note at the call site below for why it is that and not `EmblaCarousel.tsx`), not the
+          static `md:grid-cols-3` this section rendered before. */}
       {/* Top/bottom padding is intentionally asymmetric: 86px (not 150px) on top because "My
           Events" directly above already contributes its own 64px bottom padding (`py-16`) — 64 +
           86 = the requested 150px visible gap. The bottom side has no such neighbor contribution
@@ -1429,23 +1696,74 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 {t('reviews.heading')}
               </h2>
             </div>
-            <Button type="button" variant="primaryOutline" className="min-w-[250px] shadow-none">
-              <ReviewLeaveIcon className="size-4" />
-              {t('reviews.leaveReview')}
-            </Button>
+            {/* Leaving a review has no backend yet (post-session review flow is a later stage). */}
+            {/* Full-width on phones (the heading row stacks there, so a 250px button floating
+                on its own line reads as unfinished), natural width from `sm` up where it sits
+                beside the heading. The wrapper has to stretch too — it is the flex item. */}
+            <ComingSoon className="w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="primaryOutline"
+                disabled
+                className="w-full shadow-none disabled:opacity-50 sm:w-auto sm:min-w-[250px]"
+              >
+                <ReviewLeaveIcon className="size-4" />
+                {t('reviews.leaveReview')}
+              </Button>
+            </ComingSoon>
           </div>
         </div>
-        {/* Full-bleed wrapper for the card row only — breaks out of the max-w-[1440px] grid above
-            so the slider reaches the true viewport edges on screens wider than 1440px, instead of
-            being letterboxed inside the centered column. The `w-screen` + `-translate-x-1/2`
-            full-bleed technique can make this box wider than its ancestors on browsers with a
-            real (non-overlay) scrollbar, which would otherwise introduce a page-wide horizontal
-            scrollbar — the actual guard for that lives on `<body>` in `app/[locale]/layout.tsx`
-            (`overflow-x-hidden`), NOT on this element (an `overflow-x-hidden` here would only
-            clip this element's own overflowing children, not stop this box itself from widening
-            `body`). */}
-        <div className="relative left-1/2 mt-8 w-screen -translate-x-1/2 md:mt-[50px]">
-          <EmblaCarousel prevLabel={t('carousel.prev')} nextLabel={t('carousel.next')}>
+        {/* Cards live INSIDE the content grid, not full-bleed to the viewport (2026-08-06
+            request: "slides should start at the left edge of the content grid").
+            This mirrors My WINS above exactly, which already had the requested behaviour:
+              · the same `max-w-[1440px]` + `px-4 sm:px-6 lg:px-[70px]` column, so the first card
+                lines up with the eyebrow/heading rather than with the window edge;
+              · `max-[600px]:px-0 max-[600px]:pl-4` — below 600px only the LEFT gutter survives,
+                so cards still start on the grid but run off the right edge, which is what makes
+                a phone carousel read as swipeable;
+              · `align="start"` so embla parks a slide's left edge on that gutter instead of
+                centring the row.
+            The previous `w-screen -translate-x-1/2` full-bleed wrapper is gone — that is what
+            pushed the first card out to the raw viewport edge.
+            NOTE on the Superpowers comparison: its zero-width `snap-start` spacers can't be
+            reused here. That slider is native CSS scroll-snap, where a spacer is just a snap
+            target; embla positions slides by transform and would count a spacer as a real slide,
+            throwing off both the slide count and the arrow-visibility test. Column padding
+            achieves the same visual gutter without fighting the library. */}
+        {/* No `max-w-[1440px]` and no padding here, unlike every other section wrapper on this
+            page — deliberately, and this is the whole fix for "the container clips slides above
+            1440px" (2026-08-06). The track used to live inside the capped column and bleed back
+            out of it with `-mx-[70px]`, which reaches the COLUMN's edge — 1440px wide, centred,
+            with dead space either side on a wider monitor. Cards were therefore cut at 1440
+            rather than at the window. This wrapper is now full-width so the track is too, and the
+            content-grid gutter is handed back by the two spacers below (which grow past 1440 to
+            follow the centred column) instead of by padding-plus-negative-margin. */}
+        <div className="mt-8 w-full md:mt-[50px]">
+          {/* `CardSlider`, not `EmblaCarousel` — deliberately switched on 2026-08-06.
+              Removing the infinite loop exposed that embla was the wrong tool for THIS row:
+              embla sizes slides as a fraction of its track, but these review cards are a fixed
+              420px and `shrink-0`, so they overflow a track that stays at viewport width
+              (measured: 1425px of track holding 2234px of cards). Looping hid it — that code
+              path never consults the scroll limit — but with `loop: false` embla derived a
+              ~14px travel and disabled the next arrow with four cards still off-screen. That
+              is exactly the "next stays live, one more press nudges it slightly" report.
+              `CardSlider` is native CSS scroll-snap over real overflow, which is what a row of
+              fixed-width cards actually is; it has no loop, and its arrows already track true
+              scroll position. It is also the very component Superpowers uses, so the
+              bleed-plus-spacer gutter below is now the identical technique rather than an
+              approximation of it. */}
+          <CardSlider
+            prevLabel={t('carousel.prev')}
+            nextLabel={t('carousel.next')}
+            // One card per press at every width, desktop included (2026-08-06 request).
+            scrollStep="item"
+            // Gap only. The track already spans the window because its wrapper does (see the
+            // comment above it) — the previous negative-margin bleed is gone, since bleeding out
+            // of a `max-w-[1440px]` column only ever reached that column's edge, not the screen's.
+            // The gutter now comes from `scroll-padding` plus edge-card margins (`.reviewsTrack`),
+            // which is what the other three full-bleed sections use.
+            trackClassName={cn('gap-4', styles.reviewsTrack)}
+          >
             {reviews.map((review, index) => (
               <div
                 key={`${review.name}-${index}`}
@@ -1453,13 +1771,30 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   'shrink-0',
                   'flex min-h-[330px] flex-col gap-4 p-6',
                   styles.reviewCard,
-                  // embla's own docs: CSS `gap` (this track's `gap-4`) never applies between the
-                  // LAST slide and the first when `loop: true` — the seam simply has no gap,
-                  // since `gap` only ever renders *between* items and looping wraps straight back
-                  // to item 0 with no "next" item after the last one for the gap to sit against.
-                  // Official fix: a matching margin on the last slide only (see
-                  // https://www.embla-carousel.com/docs/guides/slide-gaps/).
-                  index === reviews.length - 1 && 'mr-4',
+                  // EVERY card is a snap target, and always start-aligned. This replaced a
+                  // spacer-based setup (two `snap-start` gutter spacers, `snap-center` on phones,
+                  // both edge cards excluded from snapping) on 2026-08-06, because that left the
+                  // snap positions UNEVENLY spaced: the spacers' own points sat one gutter away
+                  // from the card grid, so a one-card press travelled 506px against a 436px card
+                  // pitch and parked middle cards flush against the window edge. Uniform
+                  // `snap-start` + the track's `scroll-padding` puts every stop exactly one pitch
+                  // apart AND every card on the content grid.
+                  // Resting positions are unchanged on phones: the card is `100% - 32px` there, so
+                  // start-aligning it behind a 16px scroll-padding lands it exactly where
+                  // centring used to.
+                  'snap-start',
+                  // The row's inset to the grid rides on the edge cards themselves — see
+                  // `.winsFirstCard` for why not spacer elements.
+                  index === 0 && styles.reviewsFirstCard,
+                  index === reviews.length - 1 && styles.reviewsLastCard,
+                  // NOTE: the last slide used to carry `mr-4` here. That was a `loop: true`-only
+                  // workaround (CSS `gap` never renders at the loop seam, because looping wraps
+                  // from the last item straight back to the first with no "next" item for the
+                  // gap to sit against). Looping is off as of 2026-08-06, so the margin no
+                  // longer patches anything — it just added 16px of empty scrollable space past
+                  // the final card, which is what left the "next" arrow live at the end and made
+                  // one more press nudge the row a little further. Removed deliberately; do not
+                  // reinstate it without turning `loop` back on.
                 )}
               >
                 <span
@@ -1474,7 +1809,9 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 <ReviewQuoteText
                   quote={review.quote}
                   readMoreLabel={t('reviews.readMore')}
-                  readLessLabel={t('reviews.readLess')}
+                  // The reviewer's own name is the most useful heading for the full quote.
+                  dialogTitle={review.name}
+                  closeLabel={t('closeDialog')}
                 />
                 <div className="mt-auto flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1492,7 +1829,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 </div>
               </div>
             ))}
-          </EmblaCarousel>
+          </CardSlider>
         </div>
       </div>
 
@@ -1555,41 +1892,57 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           that they stay at the existing 280px width (no width was ever defined for the
           1024–1449px range, so nothing is being removed — only delayed until it's safe). */}
       {profile.wins.length > 0 && (
-        <div
-          id="wins"
-          className="mx-auto mt-16 w-full max-w-[1440px] scroll-mt-24 px-4 max-[600px]:px-0 max-[600px]:pl-4 sm:px-6 lg:px-[70px]"
-        >
-          <div className="flex flex-col gap-8 max-[768px]:gap-6 max-[768px]:mb-6 md:mb-[50px]">
-            {/* Heading(or, ≤600px, just the eyebrow since the H2 is hidden there)→cards gap:
+        <div id="wins" className="mt-16 w-full scroll-mt-24">
+          {/* Heading keeps the standard capped content column; the carousel below deliberately
+              does NOT (see its own comment). They used to share one wrapper, whose
+              `max-[600px]:px-0 max-[600px]:pl-4` was how the OLD carousel got its mobile
+              right-edge bleed — that trick is obsolete now the track is genuinely full-width, so
+              this half goes back to the plain column padding every other section uses. */}
+          <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
+            <div className="flex flex-col gap-8 max-[768px]:gap-6 max-[768px]:mb-6 md:mb-[50px]">
+              {/* Heading(or, ≤600px, just the eyebrow since the H2 is hidden there)→cards gap:
                 50px on desktop (`md:mb-[50px]`, restored — the section's own carousel wrapper
                 below carries no margin of its own precisely so THIS is the single source of
                 truth for that gap), 24px at ≤768px (`max-[768px]:mb-6`) regardless of whether
                 the H2 itself is visible (601–768px) or hidden (≤600px, `max-[600px]:hidden`) —
                 margin-bottom on this wrapper always lands right after its own last VISIBLE
                 child, so one rule covers both mobile states without extra conditions. */}
-            <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
-              {t('wins.eyebrow')}
-            </SectionEyebrow>
-            <h2
-              className={cn(
-                'font-display text-h3 max-[600px]:hidden md:text-h2',
-                styles.gradientHeading,
-              )}
-            >
-              {t('wins.heading')}
-            </h2>
+              <SectionEyebrow icon={<MyWinsBlockIcon className="size-4" />}>
+                {t('wins.eyebrow')}
+              </SectionEyebrow>
+              <h2
+                className={cn(
+                  'font-display text-h3 max-[600px]:hidden md:text-h2',
+                  styles.gradientHeading,
+                )}
+              >
+                {t('wins.heading')}
+              </h2>
+            </div>
           </div>
           {/* No top margin/gap here on purpose (explicit request, both desktop and mobile) — this
               is a SIBLING of the eyebrow+heading `gap-8` wrapper above, not a child of it, so the
               carousel sits flush against the heading instead of stacking a flex `gap-8` on top of
               its own former `mt-8 md:mt-[50px]` (a double-gap bug, same shape as this page's
               other padding+margin doubling fixes). */}
+          {/* Full-width, no `max-w`/padding — the same fix Reviews got (2026-08-06): a track that
+              bleeds out of a `max-w-[1440px]` column only ever reaches that COLUMN's edge, so on a
+              wider monitor cards were cut at 1440 with dead space either side. The content-grid
+              gutter is handed back by the spacers below instead.
+              `CardSlider`, not `EmblaCarousel`, for the same reason Reviews switched: embla
+              positions slides by transform and would count a gutter spacer as a real slide,
+              throwing off both its slide count and its arrow-visibility test, while padding on its
+              viewport breaks its own measurement. Native scroll-snap over real overflow is what a
+              row of fixed-width cards actually is. NOTE this drops the infinite wrap-around embla
+              gave this section (Reviews dropped it too, by explicit request) — the arrows now
+              disable at the two ends instead of cycling. */}
           <div>
-            <EmblaCarousel
+            <CardSlider
               prevLabel={t('carousel.prev')}
               nextLabel={t('carousel.next')}
-              align="start"
-              trackClassName="gap-5"
+              // One card per press at every width, desktop included (2026-08-06 request).
+              scrollStep="item"
+              trackClassName={cn('gap-5', styles.winsTrack)}
             >
               {profile.wins.map((win, index) => (
                 <div
@@ -1602,11 +1955,19 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   className={cn(
                     'shrink-0 flex min-h-[250px] flex-col gap-3 p-6',
                     styles.winCard,
-                    // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between
-                    // the LAST slide and the first when `loop: true` — see the identical fix +
-                    // comment on the Reviews cards above (Reviews stays `gap-4`/`mr-4`; Wins is
-                    // `gap-5`/`mr-5` per the 20px gap measured above).
-                    index === profile.wins.length - 1 && 'mr-5',
+                    // Every card is a snap target, including both edge ones — unlike Reviews,
+                    // which has to exclude its ends. The difference is `scroll-padding-inline-
+                    // start` on this track (`.winsTrack`): it offsets the snap position by the
+                    // gutter, so a card parks AT the content grid rather than flush against the
+                    // bled screen edge, and the first card's snap lands at `scrollLeft: 0`
+                    // exactly. Reviews solves the same problem with spacer-only snap points at
+                    // the ends, which is why it needs the exclusions and this doesn't.
+                    'snap-start',
+                    // The row's inset to the content grid lives on the edge cards themselves
+                    // here, not on spacer elements — see `.winsFirstCard` for why spacers can't
+                    // work against this track's 20px gap.
+                    index === 0 && styles.winsFirstCard,
+                    index === profile.wins.length - 1 && styles.winsLastCard,
                   )}
                 >
                   <WinCardGlow
@@ -1630,18 +1991,26 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   </div>
                 </div>
               ))}
-            </EmblaCarousel>
+            </CardSlider>
           </div>
         </div>
       )}
 
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
+      {/* This used to be the shared `max-w-[1440px]` + `px-4 sm:px-6 lg:px-[70px]` column for all
+          three sections inside it. My Way needed to bleed to the window (2026-08-06), which is
+          impossible from INSIDE a capped column — the negative margin that would escape it depends
+          on the window width, and `100%` in here means the column, not the window. Rather than
+          reindent the whole block, the column moved down onto the two children that still want it
+          (My F*ckUp(s) and the interview section); My Way now carries its own, on its heading
+          only. */}
+      <div className="w-full">
         {/* ============================== MY WAY (carousel) ==============================
             STAGE re-architecture (2026-07-23): the previous pass built this as a static CSS Grid
             (3 separate `.map()` passes + a dynamic `gridTemplateColumns` sized to
             `profile.myWay.length`) — wrong. Fresh re-verification against `327:1080` (1440px
-            frame) shows this is a genuine horizontally-scrolling CAROUSEL, the exact same "peek"
-            pattern already built for My WINS below (`EmblaCarousel.tsx`, `align="start"`): on the
+            frame) shows this is a genuine horizontally-scrolling CAROUSEL, the same "peek" pattern
+            My WINS had (it has since moved off `EmblaCarousel.tsx`; this is now that component's
+            only caller — see its doc comment for why the others left): on the
             1440px frame only 3 of the 4 stages are fully visible, the 4th is cropped to a ~24px
             sliver at the frame's right edge (its year text spans x=1416–1578, starting inside the
             frame but extending 138px past the 1440px boundary). Stage pitch (start-to-start
@@ -1677,55 +2046,45 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         {profile.myWay.length > 0 && (
           <div
             id="my-way"
-            className={cn(
-              // At ≤600px: cancel the shared parent wrapper's own `px-4` (16px each side) via
-              // a matching negative margin, then re-add ONLY the left 16px — so this section's
-              // right edge bleeds to the true viewport edge (paddings: 0, except pl-4) without
-              // touching that parent wrapper (also shared by fckups/video-blog, not all of which
-              // were asked to bleed this way).
-              'flex flex-col gap-6 scroll-mt-24 max-[600px]:-mx-4 max-[600px]:pl-4',
-              styles.spacing150,
-            )}
+            className={cn('flex w-full flex-col gap-6 scroll-mt-24', styles.spacing150)}
           >
-            <div className="flex flex-col gap-8">
-              <SectionEyebrow icon={<MyWayBlockIcon className="size-4" />}>
-                {t('myWay.eyebrow')}
-              </SectionEyebrow>
-              <h2
-                className={cn(
-                  'font-display text-h3 max-[600px]:hidden md:max-w-[635px] md:text-h2',
-                  styles.gradientHeading,
-                )}
-              >
-                {t('myWay.heading')}
-              </h2>
+            {/* Heading keeps the standard capped column; the carousel below is full-width so its
+                slides are clipped by the WINDOW rather than by a 1440px column (2026-08-06, same
+                change Reviews and My WINS got). The old `max-[600px]:-mx-4 max-[600px]:pl-4` on
+                this section — which cancelled the shared parent's padding to fake a mobile
+                right-edge bleed — is gone: the track genuinely bleeds now, at every width. */}
+            <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
+              <div className="flex flex-col gap-8">
+                <SectionEyebrow icon={<MyWayBlockIcon className="size-4" />}>
+                  {t('myWay.eyebrow')}
+                </SectionEyebrow>
+                <h2
+                  className={cn(
+                    'font-display text-h3 max-[600px]:hidden md:max-w-[635px] md:text-h2',
+                    styles.gradientHeading,
+                  )}
+                >
+                  {t('myWay.heading')}
+                </h2>
+              </div>
             </div>
-            <div className="relative">
-              {/* ONE shared dashed rule for the whole carousel (not per-slide) — Figma's own
-                  `Line 9` really is a single element spanning every stage at once, which doesn't
-                  work as a per-slide copy in a real horizontally-scrolling carousel (the earlier
-                  `.wayLongLine`-per-slide approach). Fixed here as an absolutely-positioned
-                  overlay OUTSIDE the scrolling track, anchored to this `relative` wrapper, so it
-                  stays visually still while slides scroll underneath it — same trick used to make
-                  a "shared" element coexist with an independently-draggable carousel.
-                  Desktop: 18px above the step-badge/number row (`top-[161px]`, corrected from an
-                  earlier 36px-above estimate). Mobile/tablet (≤768px) gets its own smaller
-                  estimate (`top-[99px]`) since both the year's fluid font-size and
-                  `.wayConnector`'s own shorter mobile height change how tall everything above the
-                  badge row is at these widths — still an estimate pending live visual check, same
-                  as before. Its `left` lives on `.wayLongLine` itself (`left: -7px`). */}
-              <div
-                className={cn(
-                  'pointer-events-none absolute top-[99px] right-0 md:top-[161px]',
-                  styles.wayLongLine,
-                )}
-                aria-hidden="true"
-              />
-              <EmblaCarousel
+            <div className={cn('relative', styles.wayCarousel)}>
+              {/* The dashed rule used to be ONE overlay pinned OUTSIDE the track, so it stayed
+                  visually still while the stages scrolled underneath it. Reverted to a per-slide
+                  segment on 2026-08-06 by explicit request ("щоб вона теж слайдилась") — see
+                  `.wayLongLine` for how consecutive segments still read as one continuous line
+                  and why only the first one carries the start-marker dot. */}
+              {/* `CardSlider`, not `EmblaCarousel` — the last section to move across, for the same
+                  reason Reviews and My WINS did: embla positions slides by transform and can't be
+                  inset to the content grid once its track bleeds to the window (see
+                  `EmblaCarousel.tsx`'s doc comment). NOTE this drops the infinite wrap-around;
+                  the arrows now disable at the two ends instead of cycling. */}
+              <CardSlider
                 prevLabel={t('carousel.prev')}
                 nextLabel={t('carousel.next')}
-                align="start"
-                trackClassName="gap-5"
+                // One stage per press at every width, desktop included (2026-08-06 request).
+                scrollStep="item"
+                trackClassName={cn('gap-5', styles.wayTrack)}
               >
                 {profile.myWay.map((stage, index) => (
                   <div
@@ -1733,9 +2092,15 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     className={cn(
                       'flex shrink-0 flex-col',
                       styles.waySlide,
-                      // embla's own docs: CSS `gap` (this track's `gap-5`) never applies between the
-                      // LAST slide and the first when `loop: true` — same fix as Reviews/My WINS.
-                      index === profile.myWay.length - 1 && 'mr-5',
+                      // `scroll-padding-inline-start` on the track parks a snapped slide ON the
+                      // content grid rather than flush against the bled window edge, so every
+                      // slide can carry a plain `snap-start` — same setup as My WINS.
+                      'snap-start',
+                      // The row's inset to the grid rides on the edge slides themselves (this
+                      // track's 20px gap is wider than the 16px mobile gutter, which rules out
+                      // spacer elements — see `.winsFirstCard` for the full reasoning).
+                      index === 0 && styles.wayFirstSlide,
+                      index === profile.myWay.length - 1 && styles.wayLastSlide,
                     )}
                   >
                     <div className={cn('relative', styles.wayYearBlock)}>
@@ -1744,7 +2109,26 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                       </span>
                       <div className={styles.wayConnector} aria-hidden="true" />
                     </div>
-                    <div className="flex items-start gap-6 max-[768px]:flex-col max-[768px]:gap-4">
+                    <div
+                      className={cn(
+                        'relative flex items-start gap-6 max-[768px]:flex-col max-[768px]:gap-4',
+                        styles.wayStepRow,
+                      )}
+                    >
+                      {/* This slide's piece of the dashed timeline. Anchored to THIS row rather
+                          than to a magic offset from the carousel's top, so "32px above the
+                          slide's text" holds at every breakpoint on its own — the year's fluid
+                          font-size and the connector's shorter mobile height used to make that a
+                          per-breakpoint guess. */}
+                      <div
+                        className={cn(
+                          'pointer-events-none',
+                          styles.wayLongLine,
+                          index === 0 && styles.wayLongLineStart,
+                          index === profile.myWay.length - 1 && styles.wayLongLineEnd,
+                        )}
+                        aria-hidden="true"
+                      />
                       <span
                         className={cn(
                           'flex size-8 shrink-0 items-center justify-center rounded-full text-tiny font-bold',
@@ -1762,7 +2146,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                     </div>
                   </div>
                 ))}
-              </EmblaCarousel>
+              </CardSlider>
             </div>
           </div>
         )}
@@ -1785,39 +2169,57 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           <div
             id="fckups"
             className={cn(
-              // Same shared-parent-padding-bleed trick as My Way above — see that section's own
-              // comment.
-              'flex flex-col gap-8 scroll-mt-24 md:gap-[50px] max-[600px]:-mx-4 max-[600px]:pl-4',
+              // Carries the standard content column itself now that the shared parent wrapper no
+              // longer does (see its comment above). The ≤600px right-edge bleed is unchanged in
+              // effect, just expressed directly (`px-0` + `pl-4`) instead of as a negative margin
+              // cancelling a parent's padding.
+              'flex w-full flex-col gap-8 scroll-mt-24 md:gap-[50px]',
               styles.spacing150,
             )}
           >
-            <div className="flex flex-col gap-8">
-              <SectionEyebrow icon={<FckupsBlockIcon className="size-4 text-[#FF4C58]" />}>
-                {t('fckups.eyebrow')}
-              </SectionEyebrow>
-              <h2
-                className={cn(
-                  'font-display text-h3 max-[600px]:hidden md:max-w-[770px] md:text-h2',
-                  styles.gradientHeading,
-                  styles.fckupsHeading,
-                )}
-              >
-                {t('fckups.heading')}
-              </h2>
+            {/* Heading keeps the standard capped column; the carousel below is full-width so its
+                cards are clipped by the WINDOW rather than by a 1440px column (2026-08-06, the
+                same change Reviews / My WINS / My Way got). The section's old
+                `max-[600px]:px-0 max-[600px]:pl-4` mobile-bleed trick is gone with it — the track
+                genuinely bleeds now, at every width. */}
+            <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[70px]">
+              <div className="flex flex-col gap-8">
+                <SectionEyebrow icon={<FckupsBlockIcon className="size-4 text-[#FF4C58]" />}>
+                  {t('fckups.eyebrow')}
+                </SectionEyebrow>
+                <h2
+                  className={cn(
+                    'font-display text-h3 max-[600px]:hidden md:max-w-[770px] md:text-h2',
+                    styles.gradientHeading,
+                    styles.fckupsHeading,
+                  )}
+                >
+                  {t('fckups.heading')}
+                </h2>
+              </div>
             </div>
             <CardSlider
               prevLabel={t('carousel.prev')}
               nextLabel={t('carousel.next')}
-              trackClassName="gap-4"
+              // One card per press at every width, desktop included (2026-08-06 request).
+              scrollStep="item"
+              trackClassName={cn('gap-4', styles.fckupsTrack)}
             >
               {profile.fckups.map((fckup, index) => (
                 <div
                   key={index}
                   className={cn(
+                    // `SLIDER_ITEM_BASE` already supplies the `snap-start` these cards need; the
+                    // track's `scroll-padding-inline-start` is what parks a snapped card ON the
+                    // content grid instead of flush against the bled window edge.
                     SLIDER_ITEM_BASE,
                     'flex flex-col gap-4 p-6 md:p-8',
                     styles.sectionCard,
                     styles.fckupsCard,
+                    // The row's inset to the grid rides on the edge cards themselves — see
+                    // `.winsFirstCard` for why not spacer elements.
+                    index === 0 && styles.fckupsFirstCard,
+                    index === profile.fckups.length - 1 && styles.fckupsLastCard,
                   )}
                 >
                   <div className="inline-flex items-center gap-1.5">
@@ -1831,7 +2233,17 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   <ReviewQuoteText
                     quote={fckup.story}
                     readMoreLabel={t('reviews.readMore')}
-                    readLessLabel={t('reviews.readLess')}
+                    // A f*ckup card has no name of its own, so the dialog is titled by the
+                    // section plus the card's position — carrying over the card's own red
+                    // marker icon so the modal reads as that card's continuation.
+                    dialogTitle={
+                      <>
+                        {t('fckups.dialogTitle')}
+                        <FckupsBlockIcon className="size-3.5 shrink-0 text-[#FF4C58]" />
+                        {index + 1}
+                      </>
+                    }
+                    closeLabel={t('closeDialog')}
                     gapClassName="gap-8"
                     preserveNewlines
                   />
@@ -1846,7 +2258,8 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
           <div
             id="video-blog"
             className={cn(
-              'flex flex-col gap-6 scroll-mt-24 md:flex-row md:items-center md:justify-between md:gap-8',
+              // Carries the standard content column itself — see the `#fckups` note above.
+              'mx-auto flex w-full max-w-[1440px] flex-col gap-6 scroll-mt-24 px-4 sm:px-6 md:flex-row md:items-center md:justify-between md:gap-8 lg:px-[70px]',
               styles.spacing150,
             )}
           >
@@ -1868,10 +2281,18 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   the button to be a sibling of the video (not nested in this text column) to
                   reorder via plain DOM order rather than fighting `flex` with `order` across two
                   different containers. */}
-              <Button type="button" variant="outline" className="hidden w-fit gap-2 md:inline-flex">
-                {t('videoBlog.allInterviews')}
-                <VideoBlogArrowIcon />
-              </Button>
+              {/* No interview archive route exists yet. */}
+              <ComingSoon className="hidden md:inline-flex">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  className="w-fit gap-2 disabled:opacity-50"
+                >
+                  {t('videoBlog.allInterviews')}
+                  <VideoBlogArrowIcon />
+                </Button>
+              </ComingSoon>
             </div>
             {(profile.videoBlogUrl || videoBlogEmbedUrl) && (
               <div
@@ -1897,10 +2318,18 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 )}
               </div>
             )}
-            <Button type="button" variant="outline" className="w-full gap-2 md:hidden">
-              {t('videoBlog.allInterviews')}
-              <VideoBlogArrowIcon />
-            </Button>
+            {/* Mobile twin of the desktop "All interviews" button above. */}
+            <ComingSoon className="w-full md:hidden">
+              <Button
+                type="button"
+                variant="outline"
+                disabled
+                className="w-full gap-2 disabled:opacity-50"
+              >
+                {t('videoBlog.allInterviews')}
+                <VideoBlogArrowIcon />
+              </Button>
+            </ComingSoon>
           </div>
         )}
       </div>

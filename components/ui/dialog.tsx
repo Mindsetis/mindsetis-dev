@@ -22,6 +22,37 @@ function DialogClose({ ...props }: ComponentProps<typeof DialogPrimitive.Close>)
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
+/**
+ * The round ✕ that dismisses a dialog/sheet — brand-blue disc, black glyph (2026-08-14 request,
+ * replacing the previous outlined dark circle).
+ *
+ * Exported as one component because four surfaces had each hand-rolled the same button
+ * (`PlatformFeeModal`, `OnboardingDialog`, `AccountSheet`, and `DialogContent`'s own built-in
+ * one), so a restyle meant editing four files and hoping none drifted.
+ *
+ * Positioning is NOT baked in — the built-in one pins itself to the corner, the sheet's sits in a
+ * flex row — so each call site passes its own `className`.
+ */
+function DialogCloseButton({
+  className,
+  label,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Close> & { label: string }) {
+  return (
+    <DialogPrimitive.Close
+      data-slot="dialog-close-button"
+      className={cn(
+        'flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground outline-none transition-colors hover:bg-primary-hover disabled:pointer-events-none',
+        className,
+      )}
+      {...props}
+    >
+      <X className="size-4" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </DialogPrimitive.Close>
+  );
+}
+
 function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
@@ -56,10 +87,7 @@ function DialogContent({
       >
         {children}
         {showCloseButton ? (
-          <DialogPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 outline-none transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none">
-            <X className="size-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          <DialogCloseButton label="Close" className="absolute top-4 right-4" />
         ) : null}
       </DialogPrimitive.Content>
     </DialogPortal>
@@ -112,6 +140,7 @@ function DialogDescription({
 export {
   Dialog,
   DialogClose,
+  DialogCloseButton,
   DialogContent,
   DialogDescription,
   DialogFooter,

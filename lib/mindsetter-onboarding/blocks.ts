@@ -51,14 +51,6 @@ export function blockRoute(slug: BlockSlug): string {
  */
 export const CONGRATS_ROUTE = '/mindsetter-onboarding/congrats';
 
-/**
- * "Personal session" is the LAST core step (product decision D9, ROADMAP stage 1.9 follow-up):
- * roles → superpowers → help → shine → [optional blocks] → session → congrats. So once every
- * picked block is done, the flow lands on the mandatory Personal-session step next, not congrats
- * directly — `nextBlockHref` below returns this rather than `CONGRATS_ROUTE`.
- */
-export const SESSION_ROUTE = '/mindsetter-onboarding/session';
-
 /** Builds `/mindsetter-onboarding/blocks/<slug>?blocks=<...>&i=<index>` for `blocks[index]`. */
 export function buildBlockHref(blocks: readonly BlockSlug[], index: number): string {
   const slug = blocks[index];
@@ -103,12 +95,15 @@ export function parseBlocksParam(searchParams: BlocksSearchParams): {
 }
 
 /**
- * The href a block screen's "Save and continue" navigates to: the next picked block, or the
- * (now-last) Personal-session step once `index` was the last picked block (decision D9 — see
- * `SESSION_ROUTE`'s doc comment).
+ * The href a block screen's "Save and continue" navigates to: the next picked block, or congrats
+ * once `index` was the last picked block.
+ *
+ * Went back to congrats on 2026-08-13, when "Personal session" was removed from the wizard
+ * entirely — 1:1 settings now live in the cabinet (`/dashboard/sessions`), where they can be
+ * revisited, rather than being a gate a new Mindsetter has to clear before finishing signup.
  */
 export function nextBlockHref(blocks: readonly BlockSlug[], index: number): string {
   const nextIndex = index + 1;
-  if (nextIndex >= blocks.length) return SESSION_ROUTE;
+  if (nextIndex >= blocks.length) return CONGRATS_ROUTE;
   return buildBlockHref(blocks, nextIndex);
 }

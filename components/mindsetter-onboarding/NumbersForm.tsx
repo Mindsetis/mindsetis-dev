@@ -12,10 +12,13 @@ import {
   useWatch,
 } from 'react-hook-form';
 
+import { saveNumbersSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { saveNumbers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,11 +36,15 @@ import {
   MAX_NUMBER_VALUE_LENGTH,
   MAX_NUMBERS,
   type NumberItem,
+  numbersCabinetSchema,
   type NumbersStepInput,
   numbersStepSchema,
 } from '@/lib/validation/mindsetter';
 
 type NumbersFormProps = {
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+   * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
+  editMode?: boolean;
   /** Already-saved numbers, when the caller revisits this block. */
   initialNumbers?: NumberItem[];
   /** Where "Save and continue" navigates once saved (`nextBlockHref`). */
@@ -170,16 +177,21 @@ function NumberCard({ control, index, onRemove, id, draggable }: NumberCardProps
 /** Optional block "Numbers" (onboarding doc section 7 / decision E.2 — no dedicated desktop
  * Figma frame, built in the same card-list style as the other blocks). Mirrors `HelpForm.tsx`'s
  * `useFieldArray` structure. */
-export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
+export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Cabinet mode relaxes the wizard's "at least one" rule so this optional section can be saved
+  // EMPTY — that empty save is how it gets cleared again. It also starts with zero rows when
+  // nothing is saved yet (the wizard seeds one blank row, which here would force the caller to
+  // fill something just to close the section). See `numbersCabinetSchema`'s doc comment.
   const form: UseFormReturn<NumbersStepInput> = useForm<NumbersStepInput>({
-    resolver: zodResolver(numbersStepSchema),
+    resolver: zodResolver(editMode ? numbersCabinetSchema : numbersStepSchema),
     mode: 'onChange',
     defaultValues: {
-      numbers: initialNumbers?.length ? initialNumbers : [EMPTY_NUMBER],
+      numbers: initialNumbers?.length ? initialNumbers : editMode ? [] : [EMPTY_NUMBER],
     },
   });
 
@@ -191,10 +203,18 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
-    const result = await saveNumbers(values);
+    const result = editMode ? await saveNumbersSection(values) : await saveNumbers(values);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
       setFormError(result.error.message);
+      return;
+    }
+
+    if (editMode) {
+      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
+      // reverts to what was just saved, not to what the page originally loaded.
+      form.reset(values);
+      notifySaved();
       return;
     }
 
@@ -218,7 +238,9 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
                 id={field.id}
                 control={form.control}
                 index={index}
-                onRemove={fields.length > 1 ? () => remove(index) : undefined}
+                // Cabinet mode can delete down to zero rows (that's how the section is
+                // cleared); the wizard keeps its last row undeletable, since it requires one.
+                onRemove={editMode || fields.length > 1 ? () => remove(index) : undefined}
                 draggable={fields.length > 1}
               />
             ))}
@@ -232,18 +254,17 @@ export function NumbersForm({ initialNumbers, nextHref }: NumbersFormProps) {
           </Button>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-          // The parent's `gap-4 md:gap-6` (16px/24px) already spaces every sibling — this
-          // negative margin narrows JUST this gap (Add number → Save and continue) down to the
-          // requested 12px mobile / 16px desktop, without touching spacing elsewhere in the form.
+        <StepActions
+          onCancel={() => {
+            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
+            // the section rather than navigating, so this is an undo, not an exit.
+            form.reset();
+            setFormError(null);
+          }}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
           className={fields.length < MAX_NUMBERS ? 'mt-[-4px] md:mt-[-8px]' : undefined}
-        >
-          {form.formState.isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-        </Button>
+        />
       </form>
     </Form>
   );

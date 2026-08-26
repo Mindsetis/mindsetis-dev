@@ -5,7 +5,7 @@ import {
   DndContext,
   type DragEndEvent,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -40,20 +40,32 @@ type SortableListProps = {
  * `@dnd-kit` supports mouse, touch AND keyboard, so all three now work.
  *
  * Sensors:
- * - `PointerSensor` (mouse/pen) with a 6px activation distance so a plain click on an inner
- *   button (edit/delete, a link input) isn't hijacked as a drag start.
+ * - `MouseSensor` with a 6px activation distance so a plain click on an inner button (edit/delete,
+ *   a link input) isn't hijacked as a drag start.
  * - `TouchSensor` with a 200ms press-and-hold before a drag begins, so a normal finger swipe
- *   still SCROLLS the page instead of grabbing a card. The drag listeners are also attached only
- *   to the small grip handle (not the whole card), so scrolling elsewhere is never affected.
+ *   still SCROLLS the page instead of grabbing a card.
  * - `KeyboardSensor` for accessible reorder (Space/Enter to pick up, arrows to move) — the a11y
  *   gap the old native DnD had (see `CollapsibleCard`'s former `// TODO keyboard a11y`).
+ *
+ * MOUSE, NOT POINTER (2026-08-11). `PointerSensor` also receives TOUCH input, and on a touch
+ * device the browser claims the gesture for scrolling and fires `pointercancel` before the 6px
+ * distance is reached — so the drag aborts unless the draggable carries `touch-action: none`.
+ * That was fine while the only draggable was a tiny grip handle (`CollapsibleCard` still sets it),
+ * but `ReelLifeForm` now makes the WHOLE photo tile draggable, and `touch-action: none` there
+ * would kill page scrolling across the entire grid. Restricting this sensor to mouse leaves touch
+ * exclusively to `TouchSensor`, whose hold delay distinguishes "scroll" from "drag" without
+ * needing that CSS at all.
+ *
+ * Known gap: pen/stylus input is handled by neither (it is a `pointer` type). Nobody drags these
+ * lists with a stylus today; if that changes, the fix is a second `PointerSensor` filtered to
+ * `pointerType === 'pen'`.
  *
  * `restrictToParentElement` keeps the dragged item within the list bounds so it can't be flung
  * across the page.
  */
 export function SortableList({ ids, onReorder, layout = 'vertical', children }: SortableListProps) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
