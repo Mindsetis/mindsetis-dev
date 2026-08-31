@@ -70,6 +70,141 @@
       "tourLabel": "Haz un recorrido de 2 minutos por la plataforma",
       "watchLabel": "Míralo para entender por qué"
     },
+    "main": {
+      "hero": {
+        "badge": "Business owners, founders & CEOs",
+        "badgeTag": "ONLY",
+        "title": "High-tier networking\n& collaborative learning",
+        "subtitle": "High-tier networking & collaborative learning",
+        "howItWorksCta": "How it works",
+        "avatarMapAlt": "Mindsetters and members from around the world"
+      },
+      "whatIsMindsetis": {
+        "eyebrow": "WHAT IS MINDSETIS",
+        "title": "What you actually get here",
+        "subtitle": "Real access to founders who’ve been there — 1:1 or peer-to-peer, whenever you need it.",
+        "watchLabel": "Click for watching"
+      },
+      "threeWays": {
+        "title": "Three ways to start",
+        "cards": [
+          {
+            "title": "Become a Mindsetter",
+            "description": "Share your experience through free or paid 1:1 sessions and peer-to-peer events"
+          },
+          {
+            "title": "Find a Mindsetter",
+            "description": "Book a 1:1 with someone whose experience fits your business and personal goals"
+          },
+          {
+            "title": "Join Mindsetis Events",
+            "description": "Peer-to-peer formats for meaningful conversations about what’s on your mind"
+          }
+        ]
+      },
+      "aiSearch": {
+        "eyebrow": "AI search",
+        "title": "What expertise is useful for you right now?",
+        "subtitle": "Find people with real experience in what you need\nand book a 1:1 — or find a peer-to-peer Mindsetis Event to talk it through.",
+        "placeholder": "Describe your request in one sentence...",
+        "searchCta": "Search",
+        "popularLabel": "POPULAR SEARCHES",
+        "popularSearches": [
+          "Finding my first paying customers",
+          "Raising a seed round",
+          "Raising a seed round",
+          "Raising a seed round"
+        ]
+      },
+      "topMindsetters": {
+        "eyebrow": "TOP MINDSETTERS",
+        "title": "The people you’ll actually talk to",
+        "viewAllCta": "Find your mindsetter",
+        "verifiedBadge": "Verified",
+        "prevCta": "Previous mindsetter",
+        "nextCta": "Next mindsetter",
+        "sample": {
+          "name": "Anastasia Kondratska",
+          "title": "CEO, TechFlow Agency, Event Industry",
+          "location": "Tulum, Mexico",
+          "languages": "EN / UA"
+        }
+      },
+      "events": {
+        "eyebrow": "MINDSETIS EVENTS",
+        "title": "Networking formats we offer",
+        "viewAllCta": "All events",
+        "joinWaitlistCta": "Join Waitlist",
+        "prevCta": "Previous event format",
+        "nextCta": "Next event format",
+        "cards": [
+          {
+            "name": "Mastermind",
+            "description": "Deep peer-to-peer case solving in closed, moderated groups of 4–8 pax. Experience sharing, not advice"
+          },
+          {
+            "name": "Anakondra Tank",
+            "description": "Moderated conversations on life, business, and relationships. Guided inquiry and deep perspective sharing."
+          },
+          {
+            "name": "Brain Lab",
+            "description": "Strategic peer review, business teardowns, and moderated brainstorming in a tight-knit founder circle."
+          },
+          {
+            "name": "Chew & Chat",
+            "description": "Low-pressure online speed networking over lunch, coffee, or drinks. Casual group conversations with zero pitch stress."
+          },
+          {
+            "name": "Sensession",
+            "description": "Moderated conversations on life, business, and relationships. Guided inquiry and deep perspective sharing."
+          }
+        ]
+      },
+      "ambassadors": {
+        "title": "Mindsetis Ambassadors",
+        "subtitle": "Our Ambassadors are active community leaders and the face of Mindsetis in their cities. They grow the local network, host meetups, and connect members in person.",
+        "applyCta": "Apply for Ambassadorship",
+        "flagBadge": "🇺🇲 Ambassador",
+        "prevCta": "Previous ambassador",
+        "nextCta": "Next ambassador",
+        "tabs": ["All", "USA", "Europe", "LATAM", "North America", "Asia"],
+        "sample": {
+          "name": "Tatiana Pichota",
+          "title": "CEO, TechFlow Agency, Event Industry",
+          "location": "USA, Miami",
+          "languages": "EN / ES / FR / IT / UKR"
+        }
+      },
+      "faq": {
+        "title": "FAQ",
+        "items": [
+          {
+            "question": "Who can join Mindsetis?",
+            "answer": "Mindsetis is an exclusive network for business owners, founders, and C-level executives. We review every application to maintain a high-caliber community and ensure relevant exchange of experience"
+          },
+          {
+            "question": "How do 1-on-1 sessions with Mindsetters work?",
+            "answer": "Answer coming soon."
+          },
+          {
+            "question": "How does the application and vetting process work?",
+            "answer": "Answer coming soon."
+          },
+          {
+            "question": "Can I become a Mindsetter (mentor) on the platform?",
+            "answer": "Answer coming soon."
+          },
+          {
+            "question": "What are the membership conditions and pricing?",
+            "answer": "Answer coming soon."
+          },
+          {
+            "question": "What types of events does Mindsetis host?",
+            "answer": "Answer coming soon."
+          }
+        ]
+      }
+    },
     "placeholder": {
       "hero": {
         "title": "Espacio para dueños de negocio, fundadores y CEOs",

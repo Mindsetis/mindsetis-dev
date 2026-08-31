@@ -3,8 +3,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import Footer from '@/components/layout/Footer';
 import Header from '@/components/layout/Header';
-import { HeroSection } from '@/components/marketing/HeroSection';
 import { HomepagePlaceholder } from '@/components/marketing/HomepagePlaceholder';
+import { MainPageSection } from '@/components/marketing/MainPageSection';
 import { localePath, routing } from '@/i18n/routing';
 import { COMING_SOON_MODE } from '@/lib/config/coming-soon';
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const { locale } = await params;
   const t = await getTranslations({
     locale,
-    namespace: COMING_SOON_MODE ? 'home.placeholder.hero' : 'home.hero',
+    namespace: COMING_SOON_MODE ? 'home.placeholder.hero' : 'home.main.hero',
   });
 
   return {
@@ -64,8 +64,12 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
  * Figma "Заглушка" (`866:4823` desktop / `866:4885` mobile) + "Thank you" success state
  * (`870:4928` / `870:4977`), ROADMAP stage 1.11.
  *
- * OPEN (anything else, what you want locally) — the full landing page, Figma "Welcome Screen
- * - 1440 px" / "Welcome Screen".
+ * OPEN (anything else, what you want locally) — the full landing page, Figma "Main Page"
+ * (`572:5427` desktop / `1249:18262` mobile) — see `MainPageSection`'s own doc comment for scope
+ * notes. The PREVIOUS open-mode homepage (`HeroSection`, Figma "Welcome Screen - 1440 px" /
+ * "Welcome Screen") moved to `/join` (`app/[locale]/(app)/join/page.tsx`) rather than being
+ * deleted — it's still the destination the header's "Apply to Join" CTA and this page's own
+ * "Apply to Join"/"How it works" CTAs point to.
  *
  * WHY THE CHROME IS RENDERED HERE AND NOT IN A LAYOUT
  *   This page sits OUTSIDE the `(app)` route group, whose layout carries the full site chrome
@@ -95,7 +99,7 @@ export default async function HomePage({ params }: HomePageProps) {
     <>
       <Header />
       <main className="flex-1">
-        <HeroSection />
+        <MainPageSection />
       </main>
       <Footer />
     </>
