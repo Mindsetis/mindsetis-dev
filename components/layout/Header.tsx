@@ -120,16 +120,18 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                   199px width (not hug-content, unlike every other Button usage) — set
                   explicitly at `lg` since Tailwind can't express "hug on mobile, fixed on
                   desktop" via the size prop alone.
-                  Destination is the home hero (`/`), not `/sign-up`: signing up starts by
-                  submitting an email in the hero form, which then carries it into the wizard
-                  (`HeroEmailCta` → `/sign-up?email=…`), so sending people straight to
-                  `/sign-up` skipped the step this CTA is named after. */}
+                  Destination is `/join` (`app/[locale]/(app)/join/page.tsx`), not `/sign-up`:
+                  signing up starts by submitting an email in the hero form there, which then
+                  carries it into the wizard (`HeroEmailCta` → `/sign-up?email=…`), so sending
+                  people straight to `/sign-up` skips the step this CTA is named after. `/join`
+                  used to just be the home hero itself (`/`) before the real "Main Page" homepage
+                  (`MainPageSection`) took that slot over and the old hero moved to its own route. */}
               <Button
                 asChild
                 size="sm"
                 className="rounded-[8px] lg:h-14 lg:w-[199px] lg:rounded-lg lg:px-5"
               >
-                <Link href="/">
+                <Link href="/join">
                   <JoinIcon className="hidden lg:inline" />
                   {t('join')}
                 </Link>
