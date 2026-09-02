@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Mindsetis">
+  <!--
+    Site favicon, served by Next's file convention (`app/icon.svg` → a global <link rel="icon">).
+    Its only job today is to answer the request every browser makes for an icon: without one, each
+    page load logged a 404 for /favicon.ico, which was the single console error left on the site.
+
+    PLACEHOLDER, not a brand mark. There is no logo asset in this repo — the header wordmark is
+    live text (Cal Sans, `text-primary`) — and inventing a real mark is the designer's call, not
+    a side effect of clearing a console error. So this reuses the project's own token pairing
+    verbatim: `--color-primary` (#79b9e3) as the tile, `--color-primary-foreground` (#000000) as
+    the glyph, the same combination every primary surface in the app already uses. Values are
+    literal because an SVG served as a static file cannot read CSS custom properties.
+
+    Swap in the real icon when it exists; a same-named replacement needs no code change.
+  -->
+  <rect width="32" height="32" rx="7" fill="#79b9e3" />
+  <text
+    x="16"
+    y="17"
+    fill="#000000"
+    font-family="Verdana, DejaVu Sans, sans-serif"
+    font-size="19"
+    font-weight="700"
+    text-anchor="middle"
+    dominant-baseline="central"
+  >M</text>
+</svg>

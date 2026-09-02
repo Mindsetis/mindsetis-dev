@@ -33,6 +33,38 @@ main:has([data-cabinet-shell]) + footer {
 }
 
 /**
+ * Cabinet full-height shell — the other half of the same seam.
+ *
+ * `<main>` is `flex-1` inside `body`'s `min-h-screen` flex column (`app/[locale]/(app)/
+ * layout.tsx`), so on a tall window with short content it stretches past its own child to keep
+ * the Footer at the bottom. The cabinet shell is a plain block inside it and does NOT stretch, so
+ * that leftover strip stays page-black — and since the sidebar's full-bleed #1a1a1a panel is
+ * anchored to the shell, the panel stops short too, leaving a black band between it and the
+ * Footer. Measured 2026-09-02: 51px of stretch on a 1920×1200 window with a short page.
+ *
+ * Making the shell grow into that leftover space closes the band: the shell's own bottom then
+ * meets the Footer's top edge, the flex ROW inside it stretches with it (`items-stretch` +
+ * `lg:self-stretch` on the `aside`), and the panel's `-bottom-[100px]` lands exactly on the
+ * Footer again, matching the shell's own `lg:pb-[100px]` 1:1 as that layout's comment describes.
+ *
+ * `flex-grow`, NOT the `flex: 1` shorthand: the shorthand also sets `flex-basis: 0`, which would
+ * make the shell's base height zero and let a cabinet page TALLER than the viewport be measured
+ * from nothing. `flex-grow` alone keeps `flex-basis: auto` — natural content height as the
+ * floor, growing only into space that is actually free.
+ *
+ * Scoped through the same `data-cabinet-shell` hook and `:has()` relationship as the corner fix
+ * above, so `<main>` keeps its plain block layout on every other route.
+ */
+main:has([data-cabinet-shell]) {
+  display: flex;
+  flex-direction: column;
+}
+
+main:has([data-cabinet-shell]) > [data-cabinet-shell] {
+  flex-grow: 1;
+}
+
+/**
  * Gradient-border helper — `Button`'s `primaryOutline` variant needs a gradient edge, which
  * plain Tailwind `border-*` utilities can't render. Drawn via TWO masked pseudo-elements
  * instead of the double-`background-clip` trick, since the mask approach doesn't need to know

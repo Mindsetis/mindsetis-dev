@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
  */
 export function SectionEyebrow({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {icon}
       <span className="text-tiny font-bold tracking-[0.3em] text-muted-foreground uppercase">
         {label}

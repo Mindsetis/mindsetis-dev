@@ -42,13 +42,18 @@ type FooterProps = {
  * `/` for internal placeholders) so the layout/spacing is correct; swap in the actual
  * pages/URLs once they exist.
  *
- * The `legal.*` row (2026-08-18) is NOT a placeholder — it points at the three real legal
- * pages (`/privacy-policy`, `/terms-of-use`, `/cookies-policy`, `LegalPage`/`legal/page.tsx`
- * files). Labels are unchanged from Figma ("Privacy Policy" / "Terms of Service" / "Cookies
- * Settings") even though the pages themselves are titled "Privacy Policy" / "Terms of Use" /
- * "Cookies Policy" — the footer's own Figma frame literally still says "Terms of Service" and
- * "Cookies Settings", not the page titles, so left as-is rather than "fixing" a mismatch that's
- * in the design itself.
+ * The `legal.*` row (2026-08-18) is NOT a placeholder — "Privacy Policy" and "Terms of Service"
+ * point at the two real legal pages (`/privacy-policy`, `/terms-of-use`, `LegalPage`/
+ * `legal/page.tsx` files). Labels are unchanged from Figma ("Privacy Policy" / "Terms of
+ * Service") even though the pages themselves are titled "Privacy Policy" / "Terms of Use" — the
+ * footer's own Figma frame literally still says "Terms of Service", not the page title, so left
+ * as-is rather than "fixing" a mismatch that's in the design itself.
+ *
+ * "Cookies Settings" points at `/cookies-policy`, the same as the two links beside it. For one
+ * day (2026-09-01) it opened the consent-preferences dialog directly instead; the customer asked
+ * for the document back on 2026-09-02. The dialog moved onto that page rather than disappearing —
+ * withdrawing consent has to stay as easy as giving it, and this row was the only entry point
+ * either of them had.
  */
 export default async function Footer({ variant = 'full', className }: FooterProps) {
   const tNav = await getTranslations('nav');
@@ -138,10 +143,10 @@ export default async function Footer({ variant = 'full', className }: FooterProp
             <Link href="/terms-of-use" className="transition-colors hover:text-primary">
               {t('legal.terms')}
             </Link>
-            {/* "Cookies Settings" (Figma label, unchanged) points at the static Cookies Policy
-                document — there's no interactive cookie-preference manager built yet (Figma has
-                a separate "Manage Cookie Preferences" frame that isn't part of this task's
-                scope), so this is the closest real destination rather than a dead `/`. */}
+            {/* "Cookies Settings" (Figma label, unchanged) navigates to the Cookies Policy
+                document, like the two links beside it. It briefly opened the preferences dialog
+                instead (2026-09-01) and was changed back on 2026-09-02 at the customer's request.
+                The dialog is still reachable — `CookieSettingsTrigger` now lives on that page. */}
             <Link href="/cookies-policy" className="transition-colors hover:text-primary">
               {t('legal.cookies')}
             </Link>

@@ -1096,8 +1096,10 @@ pages, done alongside the ongoing 1.9 mindsetter-onboarding work.
   strings (machine-translating Terms/Privacy is legally risky; needs a legal translator)
 - The mobile Privacy Policy frame in Figma has shorter wording than the desktop frame — the
   desktop (fuller) version is what's rendered; needs legal confirmation
-- "Cookies Settings" in the footer links to a static document page; Figma has a separate "Manage
-  Cookie Preferences" frame (an interactive consent manager) — not built
+- "Cookies Settings" in the footer links to a static document page (`/cookies-policy`); the
+  interactive "Manage Cookie Preferences" consent manager frame from Figma was built in stage
+  1.13 (`components/cookies/`), but no entry point is mounted for it yet — see 1.13's known
+  limitations
 - `Learn more`, `See example`, the three Member CTAs on `/welcome`, and the event CTA on congrats
   are `ComingSoon` stubs — no routes behind them yet
 - The intended behavior of the "Continue as Member", "Log in / Sign up" (404), and Back buttons
@@ -1106,3 +1108,70 @@ pages, done alongside the ongoing 1.9 mindsetter-onboarding work.
   `lib/validation/mindsetter.ts` became dead code after video upload was removed (2026-08-05)
 - Legal pages are under `noindex` (product-owner decision: keep it that way until launch, change
   before release)
+
+### 1.13 — Main page Figma alignment (full section pass) + cookie consent
+**Status:** ✅ Done
+**Started:** 2026-08-31
+**Completed:** 2026-09-02
+
+Section-by-section pixel-alignment pass across the entire homepage against Figma, plus a
+brand-new cookie-consent feature (banner + settings manager), done alongside several
+cross-cutting fixes surfaced along the way. Branch:
+`feature/stage-1.13-main-page-polish-cookie-consent`.
+
+- [x] Banner section — gradient H1, "ONLY" pill (gradient fill + border), full-width map
+- [x] Video block — click-to-load facade backed by `youtube-nocookie`
+- [x] "Three ways to start" section
+- [x] "The people you'll actually talk to" (Top Mindsetters) section
+- [x] "Networking formats we offer" (Events) section
+- [x] "Mindsetis Ambassadors" section — working tab filtering + horizontal tab scroll on mobile
+- [x] FAQ section — new `FaqAccordion` client component replacing the non-animating `<details>`
+  element; two independent columns so expanding an item on the left doesn't shift the right
+  column
+- [x] "MINDSETIS ORIGINALS" section (NEW)
+- [x] AI-search block
+- [x] Cross-section background-glow layer (`MainPageSection`) + exported PNG masks
+- [x] New components: `FaqAccordion`, `MindsetisOriginalsSection`, `AmbassadorsRegionCarousel`,
+  `AmbassadorApplicationDialog` (visual-only ambassador-application flow, no persistence),
+  `WhatIsMindsetisVideo`, `faq-chevron-icon`
+- [x] New assets: 8 country-flag SVGs vendored from the `flag-icons` package (MIT, no new
+  dependency added) into `public/images/flags/` — Windows has no colored-emoji country flags;
+  background glows; Originals/Events photos
+- [x] Cookie consent (NEW): `lib/cookies/consent.ts` (types, versioned cookie, Zod-validated
+  parser), `lib/cookies/server.ts` (SSR read so the banner doesn't flash), `components/cookies/`
+  (provider, banner, settings modal, `ConsentGate`, `CookieSettingsTrigger`) — 4 categories,
+  "Strictly Necessary" genuinely `disabled`; wired into `app/[locale]/layout.tsx`
+- [x] Fixed descender clipping ("y"/"g"/"p") on all 9 homepage gradient headings —
+  `background-clip: text` only paints within the padding-box
+- [x] Fixed a black gap between the cabinet side-nav background and the footer on tall screens
+  (`app/styles/base.css`, new rule via `:has([data-cabinet-shell])`)
+- [x] Cabinet header: `Become a Mindsetter` / `View public profile` placement matched to the
+  design (one action per role); responsive rework so the Member row starts at `xl` (previously
+  didn't fit)
+- [x] Scroll-to-top button moved into the root layout — it was missing entirely on the homepage
+  because that page sits outside the `(app)` route group
+- [x] Added `app/icon.svg` — clears the one remaining console error (404 on `favicon.ico`)
+- [x] Gates clean: `build`, `tsc`, `eslint`, `prettier` all pass
+- [x] `browser-tester` live checks passed
+
+**Known limitations / follow-ups:**
+- No entry point exists yet to reopen consent settings once a choice has been made —
+  `CookieSettingsTrigger` exists but isn't mounted anywhere (hidden per product-owner request).
+  The banner's "Manage" button only shows while a decision is still pending; the footer's
+  "Cookies Settings" link goes to the static `/cookies-policy` document. Consent currently
+  cannot be revoked — needs a home before launch.
+- `ConsentGate` is unused so far — the project has no optional/non-essential cookies yet. Built
+  ahead of time for the first analytics script.
+- No server-side consent log — only a timestamped browser cookie, which is insufficient as legal
+  proof of consent.
+- No Google Consent Mode — will be needed if GA/Ads are added later.
+- The `NEXT_LOCALE` cookie is set but never read (`localeDetection: false`, see `docs/I18N.md`);
+  under our own category mapping it's "Functional," which was never consented to — should be
+  turned off.
+- The "Strictly Necessary" category description mentions "your cart" — the product has no cart;
+  this is verbatim Figma copy, kept as designed but the wording should be revisited.
+- Cabinet header for the Mindsetter role still doesn't fit at 1024px by calculation (~629px
+  needed vs. 516px available) — left as-is per an explicit product-owner instruction not to
+  touch it.
+- Cabinet header adaptive states between `md` and `xl` aren't drawn in Figma at all — this is our
+  own degradation, not a reproduction of the design.

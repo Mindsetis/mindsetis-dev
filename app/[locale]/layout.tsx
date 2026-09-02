@@ -7,9 +7,14 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
+import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
+import { CookieConsentProvider } from '@/components/cookies/CookieConsentProvider';
+import { CookiePreferencesDialog } from '@/components/cookies/CookiePreferencesDialog';
+import { ScrollToTopButton } from '@/components/layout/ScrollToTopButton';
 import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
 import { siteUrl } from '@/lib/auth/site-url';
+import { getCookieConsent } from '@/lib/cookies/server';
 import { cn } from '@/lib/utils';
 
 // Body/UI font (400/500/700) — feeds the `--font-sans` token in app/globals.css.
@@ -79,11 +84,21 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   // Enables static rendering for this locale's subtree (next-intl requirement).
   setRequestLocale(locale);
 
+  // Read on the server so the very first painted HTML already knows whether the cookie banner
+  // belongs on screen — see `lib/cookies/consent.ts` / `CookieConsentProvider`'s own doc
+  // comments for why this can't be deferred to the client.
+  const initialConsent = await getCookieConsent();
+
   return (
     <html lang={locale} className={cn('dark', manrope.variable, calSans.variable)}>
       <body className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale}>
-          {children}
+          <CookieConsentProvider initialConsent={initialConsent}>
+            {children}
+            <CookieConsentBanner />
+            <CookiePreferencesDialog />
+            <ScrollToTopButton />
+          </CookieConsentProvider>
           <Toaster />
         </NextIntlClientProvider>
       </body>

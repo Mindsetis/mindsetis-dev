@@ -59,3 +59,33 @@ export function GroupFillIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+/** "MINDSETIS ORIGINALS" eyebrow (`forward-end-fill`, stage 1.13). Real Figma fill is the same
+ * hardcoded brand blue as the icons above. */
+export function ForwardEndFillIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" {...props}>
+      <path
+        d="M14.665 2.6665C14.2968 2.6665 13.9984 2.96498 13.9984 3.33317V7.11084L7.84997 3.01188C7.79517 2.97537 7.73084 2.95589 7.66504 2.95589C7.48097 2.95589 7.33171 3.10513 7.33171 3.28922V7.11084L1.18327 3.01188C1.12852 2.97537 1.06418 2.95589 0.998372 2.95589C0.814279 2.95589 0.665039 3.10513 0.665039 3.28922V12.7102C0.665039 12.776 0.684519 12.8404 0.721019 12.8951C0.823139 13.0483 1.0301 13.0897 1.18327 12.9876L7.33171 8.88864V12.7102C7.33171 12.776 7.35117 12.8404 7.3877 12.8951C7.48984 13.0483 7.69677 13.0897 7.84997 12.9876L13.9984 8.88864V12.6665C13.9984 13.0347 14.2968 13.3332 14.665 13.3332C15.0332 13.3332 15.3317 13.0347 15.3317 12.6665V3.33317C15.3317 2.96498 15.0332 2.6665 14.665 2.6665Z"
+        fill="#79B9E3"
+      />
+    </svg>
+  );
+}
+
+/** "MINDSETIS ORIGINALS" per-card duration badge play glyph (`mingcute:play-fill`, stage 1.13,
+ * `Frame 424`). Figma hardcodes this one white regardless of context (drawn on top of a photo),
+ * unlike the eyebrow icons above — same "not `currentColor`" precedent, just a different fixed
+ * color. */
+export function PlayFillIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M3.77963 3.17334C3.79763 3.02196 3.8507 2.87688 3.93461 2.74961C4.01853 2.62235 4.13097 2.51642 4.26301 2.44023C4.39505 2.36405 4.54304 2.31972 4.69522 2.31077C4.8474 2.30182 4.99957 2.32849 5.13963 2.38867C5.84763 2.69134 7.43429 3.41067 9.44763 4.57267C11.4616 5.73534 12.8783 6.75067 13.4936 7.21134C14.019 7.60534 14.0203 8.38667 13.4943 8.782C12.885 9.24001 11.4856 10.242 9.44763 11.4193C7.40762 12.5967 5.83963 13.3073 5.13829 13.606C4.53429 13.864 3.85829 13.4727 3.77963 12.8213C3.68763 12.06 3.51562 10.3313 3.51562 7.99667C3.51562 5.66334 3.68696 3.93534 3.77963 3.17334Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
