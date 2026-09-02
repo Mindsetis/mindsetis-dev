@@ -51,6 +51,44 @@
       "youtube": "Youtube"
     }
   },
+  "cookies": {
+    "banner": {
+      "ariaLabel": "Aviso de consentimiento de cookies",
+      "title": "Valoramos tu privacidad",
+      "body": "Usamos cookies para mejorar tu \nexperiencia de navegación.",
+      "bodyMobile": "Usamos cookies para mejorar tu experiencia de navegación.",
+      "acceptAll": "Aceptar todo",
+      "manage": "Gestionar",
+      "rejectAll": "Rechazar todo"
+    },
+    "dialog": {
+      "title": "Gestionar preferencias de cookies",
+      "description": "Elige con qué cookies estás de acuerdo. Las cookies estrictamente necesarias mantienen la cuenta, la seguridad y el proceso de reserva funcionando y no se pueden desactivar. Puedes cambiar esto en cualquier momento en la Configuración de cookies.",
+      "descriptionMobile": "Elige con qué cookies estás de acuerdo. Puedes cambiar esto en cualquier momento en la Configuración de cookies.",
+      "close": "Cerrar",
+      "rejectAll": "Rechazar todo",
+      "savePreferences": "Guardar preferencias",
+      "categories": {
+        "necessary": {
+          "title": "Cookies estrictamente necesarias",
+          "description": "Necesarias para el inicio de sesión, la seguridad y tu carrito.",
+          "alwaysActive": "Siempre activas"
+        },
+        "analytics": {
+          "title": "Cookies analíticas y de rendimiento",
+          "description": "Nos ayudan a entender cómo se usa la Plataforma (p. ej. Google Analytics, Mixpanel)."
+        },
+        "marketing": {
+          "title": "Cookies de marketing y publicidad",
+          "description": "Se usan para mostrar anuncios relevantes y medir campañas (p. ej. Meta Pixel, Google Ads)."
+        },
+        "functional": {
+          "title": "Cookies funcionales",
+          "description": "Recuerdan elecciones como tu idioma y región."
+        }
+      }
+    }
+  },
   "localeSwitcher": {
     "en": "Inglés",
     "es": "Español",
@@ -107,6 +145,7 @@
         "title": "What expertise is useful for you right now?",
         "subtitle": "Find people with real experience in what you need\nand book a 1:1 — or find a peer-to-peer Mindsetis Event to talk it through.",
         "placeholder": "Describe your request in one sentence...",
+        "placeholderMobile": "Describe your request...",
         "searchCta": "Search",
         "popularLabel": "POPULAR SEARCHES",
         "popularSearches": [
@@ -132,7 +171,7 @@
       },
       "events": {
         "eyebrow": "MINDSETIS EVENTS",
-        "title": "Networking formats we offer",
+        "title": "Networking\nformats we offer",
         "viewAllCta": "All events",
         "joinWaitlistCta": "Join Waitlist",
         "prevCta": "Previous event format",
@@ -160,19 +199,185 @@
           }
         ]
       },
+      "originals": {
+        "eyebrow": "MINDSETIS ORIGINALS",
+        "title": "The people you’ll actually talk to",
+        "viewAllCta": "All videos",
+        "prevCta": "Previous original video",
+        "nextCta": "Next original video",
+        "durationLabel": "32 min",
+        "watchCta": "Watch",
+        "personName": "Anastasia \nKondratska",
+        "topics": ["#Finding my first paying customers", "#Raising a seed round"],
+        "cards": [
+          {
+            "eyebrow": "REALITY SHOW",
+            "title": "MINDSETTERS - Building Reality \nfrom Within",
+            "description": "Mindsetters don't wait for the world to change. Watch the unscripted journey of transforming fears, expertise, and connections into a new business reality."
+          },
+          {
+            "eyebrow": "INTERVIEW",
+            "title": "WTF: \nWho is The Founder",
+            "description": "No rehearsed pitches or corporate PR. We catch tech founders off-guard at WWEBSUMMIT to reveal who they actually are and what the hell they're building."
+          },
+          {
+            "eyebrow": "BREAKDOWN",
+            "title": "BUILT NOT BORN | MasterClass — The De-Risking Playbook",
+            "description": "How a zero-idea startup signed Hollywood legends, hit a unit economics wall, and pivoted to B2B to survive."
+          }
+        ]
+      },
       "ambassadors": {
         "title": "Mindsetis Ambassadors",
         "subtitle": "Our Ambassadors are active community leaders and the face of Mindsetis in their cities. They grow the local network, host meetups, and connect members in person.",
         "applyCta": "Apply for Ambassadorship",
-        "flagBadge": "🇺🇲 Ambassador",
         "prevCta": "Previous ambassador",
         "nextCta": "Next ambassador",
-        "tabs": ["All", "USA", "Europe", "LATAM", "North America", "Asia"],
-        "sample": {
-          "name": "Tatiana Pichota",
-          "title": "CEO, TechFlow Agency, Event Industry",
-          "location": "USA, Miami",
-          "languages": "EN / ES / FR / IT / UKR"
+        "tabs": [
+          {
+            "id": "all",
+            "label": "All"
+          },
+          {
+            "id": "usa",
+            "label": "USA"
+          },
+          {
+            "id": "europe",
+            "label": "Europe"
+          },
+          {
+            "id": "latam",
+            "label": "LATAM"
+          },
+          {
+            "id": "northAmerica",
+            "label": "North America"
+          },
+          {
+            "id": "asia",
+            "label": "Asia"
+          }
+        ],
+        "cards": [
+          {
+            "name": "Tatiana Pichota",
+            "title": "CEO, TechFlow Agency, Event Industry",
+            "location": "USA, Miami",
+            "languages": "EN / ES / FR / IT / UKR",
+            "regions": ["usa", "northAmerica"],
+            "countryCode": "us"
+          },
+          {
+            "name": "Elena Voss",
+            "title": "Founder, Nordic Growth Collective",
+            "location": "Berlin, Germany",
+            "languages": "EN / DE / FR",
+            "regions": ["europe"],
+            "countryCode": "de"
+          },
+          {
+            "name": "Diego Alvarez",
+            "title": "Co-Founder, LatAm Ventures Hub",
+            "location": "São Paulo, Brazil",
+            "languages": "EN / ES / PT",
+            "regions": ["latam"],
+            "countryCode": "br"
+          },
+          {
+            "name": "Mei Tanaka",
+            "title": "Head of Partnerships, Asia Founders Circle",
+            "location": "Singapore",
+            "languages": "EN / JA / ZH",
+            "regions": ["asia"],
+            "countryCode": "sg"
+          },
+          {
+            "name": "Jordan Blake",
+            "title": "Founder, Northline Studio, SaaS",
+            "location": "USA, Austin",
+            "languages": "EN / ES",
+            "regions": ["usa", "northAmerica"],
+            "countryCode": "us"
+          },
+          {
+            "name": "Marcus Reed",
+            "title": "Managing Partner, Harbourline, Fintech",
+            "location": "Canada, Toronto",
+            "languages": "EN / FR",
+            "regions": ["northAmerica"],
+            "countryCode": "ca"
+          },
+          {
+            "name": "Sofia Almeida",
+            "title": "Co-founder, Atlas Collective, Design",
+            "location": "Portugal, Lisbon",
+            "languages": "EN / PT / ES",
+            "regions": ["europe"],
+            "countryCode": "pt"
+          },
+          {
+            "name": "Camila Rojas",
+            "title": "CEO, Ruta Verde, Sustainability",
+            "location": "Colombia, Bogotá",
+            "languages": "ES / EN",
+            "regions": ["latam"],
+            "countryCode": "co"
+          },
+          {
+            "name": "Arjun Mehta",
+            "title": "Founder, Kite Labs, Deep Tech",
+            "location": "India, Mumbai",
+            "languages": "EN / HI",
+            "regions": ["asia"],
+            "countryCode": "in"
+          }
+        ],
+        "badgeLabel": "Ambassador",
+        "application": {
+          "close": "Close",
+          "intro": {
+            "eyebrow": "MINDSETIS AMBASSADORS",
+            "title": "Apply to moderate events and represent Mindsetis in your city or worldwide.",
+            "subtitle": "Three quick questions — about 5 minutes. We'll follow up by email once we've reviewed your application.",
+            "cta": "Get started"
+          },
+          "steps": [
+            {
+              "stepLabel": "Step 2 of 5",
+              "eyebrow": "MODERATION & EVENT EXPERIENCE",
+              "question": "What experience do you have with organizing, hosting, or moderating events and group discussions?",
+              "placeholder": "Share any relevant details, from small meetups to large formats..."
+            },
+            {
+              "stepLabel": "Step 3 of 5",
+              "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
+              "question": "Which business clubs or communities have you been a member of?",
+              "placeholder": "Tell us what you loved and what you'd improve..."
+            },
+            {
+              "stepLabel": "Step 4 of 5",
+              "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
+              "question": "What worked well there, and what would you do differently?",
+              "placeholder": "Tell us what you loved and what you'd improve..."
+            },
+            {
+              "stepLabel": "Step 5 of 5",
+              "eyebrow": "MOTIVATION & FORMATS",
+              "question": "Why do you want to become a Mindsetis Ambassador, and which formats (Brain Lab, Sensession, Chew & Chat, Mastermind) are you most excited to host?",
+              "placeholder": "Share your motivation and vision..."
+            }
+          ],
+          "back": "Back",
+          "next": "Next",
+          "submit": "Submit application",
+          "thanks": {
+            "stepLabel": "Step 5 of 5",
+            "eyebrow": "APPLICATION RECEIVED",
+            "title": "Thanks — we've got your application.",
+            "body": "We review every Ambassador application by hand and usually follow up within a few business days. We'll email you either way.",
+            "cta": "Back to homepage"
+          }
         }
       },
       "faq": {
@@ -183,24 +388,24 @@
             "answer": "Mindsetis is an exclusive network for business owners, founders, and C-level executives. We review every application to maintain a high-caliber community and ensure relevant exchange of experience"
           },
           {
-            "question": "How do 1-on-1 sessions with Mindsetters work?",
-            "answer": "Answer coming soon."
-          },
-          {
             "question": "How does the application and vetting process work?",
-            "answer": "Answer coming soon."
-          },
-          {
-            "question": "Can I become a Mindsetter (mentor) on the platform?",
-            "answer": "Answer coming soon."
+            "answer": "After you click Apply to Join, our team reviews your professional background (LinkedIn, company profile) and schedules a brief intro call to confirm your eligibility."
           },
           {
             "question": "What are the membership conditions and pricing?",
-            "answer": "Answer coming soon."
+            "answer": "Joining Mindsetis is completely free for the first year, including registration, profile creation, and using your personal page. Sessions and events can be either free or paid, as set individually by the hosts. Additionally, Mindsetis hosts a free weekly P2P networking event open to all community members."
+          },
+          {
+            "question": "How do 1-on-1 sessions with Mindsetters work?",
+            "answer": "Use our AI search bar or category filters to find a mentor with the exact experience you need, pick an available slot in their calendar, and book your session directly."
+          },
+          {
+            "question": "Can I become a Mindsetter (mentor) on the platform?",
+            "answer": "Yes. If you are a proven founder or executive willing to share actionable insights, you can apply to become a Mindsetter through your profile settings."
           },
           {
             "question": "What types of events does Mindsetis host?",
-            "answer": "Answer coming soon."
+            "answer": "Our formats include focused Masterminds, interactive P2P sessions, informal Never Eat Alone & SENSESSION meetups, and we are planning much more activities with a platform growth."
           }
         ]
       }

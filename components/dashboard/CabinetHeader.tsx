@@ -45,6 +45,14 @@ const LINK_STATE_CLASSES =
  *     a plain link, not a special preview mode.
  *   - "Become a Mindsetter" shows for Members only, and starts the extended wizard at its first
  *     step. A Mindsetter has nothing to become, so the slot is empty for them.
+ *
+ * WHERE those last two actually sit changed on 2026-09-02, after re-reading the cabinet frames:
+ * the card holds ONE action per role on the right, and the completeness row's trailing cell holds
+ * the other. A Member: "Become a Mindsetter" on the right, "View public profile" in that cell once
+ * the profile is complete. A Mindsetter: "View public profile" on the right, in a visibly heavier
+ * treatment (16px Bold + external-link glyph vs 14px Regular + pencil). The two inline comments
+ * at those call sites carry the frame IDs and the reasoning; both are unreachable below `md`,
+ * where the design moves this navigation into the account sheet instead.
  */
 export type CabinetHeaderProps = {
   accountType: 'member' | 'mindsetter';
@@ -73,6 +81,15 @@ export async function CabinetHeader({
   const publicProfileHref =
     accountType === 'mindsetter' ? `/mindsetters/${username}` : `/members/${username}`;
 
+  // The two roles do NOT share a width budget, so they no longer share a layout either.
+  //
+  // A Member's right-hand action is the 204px "Become a Mindsetter" button, and once the profile
+  // is complete their completeness row also carries the long "View public profile" link — that
+  // combination is what overflowed on narrow desktops. A Mindsetter's right-hand action is a
+  // ~167px text link and their completeness row only ever holds the short "Edit", so the row fits
+  // where the Member's does not, and the Mindsetter card is left exactly as it was.
+  const isMember = accountType === 'member';
+
   return (
     // `rounded-[20px]` is arbitrary — this project's redefined radius scale (`--radius-*` in
     // `radius.css`) tops out at `xl` (16px); 20px falls between that and the untouched stock
@@ -81,8 +98,27 @@ export async function CabinetHeader({
     // Mobile (Figma `1001:8333`): 16px radius, 18/16 padding, and the row never splits — the two
     // right-hand CTAs below are hidden entirely on a phone, so there is nothing to wrap to a
     // second line. Desktop keeps its 20px radius and 24px padding.
-    <div className="flex flex-col gap-4 rounded-xl bg-card px-4 py-[18px] md:flex-row md:items-center md:justify-between md:gap-6 md:rounded-[20px] md:p-6">
-      <div className="flex items-center gap-3 md:gap-5">
+    //
+    // A MEMBER'S ROW ONLY STARTS AT `xl` (2026-09-02); a Mindsetter's still starts at `md`, as it
+    // always did. Figma draws this card at one width only — 970px, inside the 1440 frame — and
+    // for a Member the row genuinely does not fit below roughly 1280. Measured budget there: the
+    // left half needs ~538px (64px avatar + 20px gap + the 260px bar, percentage and link) and
+    // the button on the right is 204px, ~766px with the gap. Available width inside the card is
+    // 672 at 768, 516 at 1024, 772 at 1280, 932 at 1440 — and the WORST case is not the narrowest
+    // window but 1024, where the 300px cabinet sidebar first appears and takes the space back.
+    // Forcing the row at `md` is what pushed the button into the identity block and past the
+    // card's edge. Between `md` and `xl` a Member's card keeps the stacked layout and the button
+    // sits under the identity block instead; the design has no frame at those widths, so this is
+    // a graceful degradation rather than a drawn state.
+    <div
+      className={cn(
+        'flex flex-col gap-4 rounded-xl bg-card px-4 py-[18px] md:rounded-[20px] md:p-6',
+        isMember
+          ? 'xl:flex-row xl:items-center xl:justify-between xl:gap-6'
+          : 'md:flex-row md:items-center md:justify-between md:gap-6',
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-3 md:gap-5">
         {/* `relative` wrapper for the online-style badge below — flush to the avatar's own
             bottom-right corner, not the row's. */}
         <div className="relative shrink-0">
@@ -106,11 +142,18 @@ export async function CabinetHeader({
           />
         </div>
 
-        {/* `flex-1` on mobile: the progress bar inside is fluid, but it can only fill space this
-            column actually has — without it the column shrinks to its widest line (the name) and
-            the bar collapses to ~60px. Desktop keeps the default sizing, where the bar is a fixed
-            260px and growing this column would just push the right-hand CTAs around. */}
-        <div className="flex min-w-0 flex-1 flex-col gap-0 md:flex-initial">
+        {/* `flex-1` while the card is stacked: the progress bar inside is fluid, but it can only
+            fill space this column actually has — without it the column shrinks to its widest line
+            (the name) and the bar collapses to ~60px. It hands that back once the card becomes a
+            row and growing this column would push the action on the right around — which is `md`
+            for a Mindsetter and `xl` for a Member, matching each role's own row breakpoint above.
+            While the card is still stacked the column still needs to grow. */}
+        <div
+          className={cn(
+            'flex min-w-0 flex-1 flex-col gap-0',
+            isMember ? 'xl:flex-initial' : 'md:flex-initial',
+          )}
+        >
           {/* Mobile stacks name over badge (the frame draws them on separate lines); desktop keeps
               them side by side. */}
           <div className="flex flex-col items-start gap-[3px] md:flex-row md:flex-wrap md:items-center md:gap-3">
@@ -145,7 +188,25 @@ export async function CabinetHeader({
               aria-label={t('completenessLabel')}
               // Fluid on a phone (the frame stretches it across the card) — a fixed 260px would
               // push the percentage and "Edit" off a 375px screen.
-              className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[#2a2a2a] md:w-[260px] md:flex-none"
+              //
+              // `min-w-[120px]` is a FLOOR, and it is load-bearing (2026-09-02). `flex-1` resolves
+              // to `flex-basis: 0`, so this bar starts at zero width and only grows into space
+              // left over by its row-mates. On a Member at 100% that row also holds "View public
+              // profile" — long enough to leave nothing over, at which point the bar rendered at
+              // 0px and simply vanished. The floor guarantees it stays a visible bar no matter
+              // what shares the row.
+              //
+              // Cap vs fixed width differs BY ROLE. A Member gets `max-w-[260px]`: 260px stays the
+              // width Figma draws, but as a hard width it was the biggest single reason their row
+              // overflowed at narrow desktops (an unshrinkable 260px block inside a 516px card at
+              // 1024), and the bar is the right thing to lose width first — it stays readable at
+              // any size, while the button and link cannot shrink without clipping their text. A
+              // Mindsetter keeps the original fixed 260px: their row was never the one that
+              // overflowed, so there is nothing to trade away.
+              className={cn(
+                'h-2 min-w-[120px] flex-1 overflow-hidden rounded-full bg-[#2a2a2a]',
+                isMember ? 'md:max-w-[260px]' : 'md:w-[260px] md:flex-none',
+              )}
             >
               <div
                 className="h-full rounded-full bg-primary transition-[width]"
@@ -154,7 +215,21 @@ export async function CabinetHeader({
             </div>
             <span className="text-tiny text-muted-foreground">{completeness.percent}%</span>
 
-            {completeness.nextUnfilled && (
+            {/* ONE SLOT, TWO LINKS (2026-09-02, re-read off Figma). This trailing cell holds
+                "Edit" while the profile is incomplete and, for a Member, becomes "View public
+                profile" once it hits 100% — the two mocks show exactly that and never contradict
+                each other: the Mindsetter frame (`610:4255`) sits at 64% and draws "Edit" here,
+                the Member frames (`754:11872` and the three sibling cabinet screens) sit at 100%
+                and draw "View public profile" here, same cell, same 14px Regular type, same
+                `ball-pen-fill` pencil — not the external-link glyph the right-hand version uses.
+                So the slot follows COMPLETENESS, and the difference the customer noticed between
+                the two roles' styling is real and deliberate, not a copy artifact.
+
+                Gated to Members because a Mindsetter already has this link in the actions block
+                on the right; without the gate a 100% Mindsetter would render it twice. Figma has
+                no Mindsetter-at-100% frame to confirm that directly, so this is the reading that
+                keeps both drawn frames exact and adds no duplicate. */}
+            {completeness.nextUnfilled ? (
               <Link
                 href={completeness.nextUnfilled.href}
                 className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
@@ -162,30 +237,48 @@ export async function CabinetHeader({
                 <EditPencilIcon />
                 {t('edit')}
               </Link>
-            )}
+            ) : accountType === 'member' ? (
+              <Link
+                href={publicProfileHref}
+                className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
+              >
+                <EditPencilIcon />
+                {t('viewPublicProfile')}
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
 
       {/* Hidden below `md`: the mobile frame's header card carries only the identity block and the
-          progress row. "View public profile" moves into the account sheet there, and no mobile
-          frame draws "Become a Mindsetter" at all. */}
-      <div className="hidden flex-wrap items-center gap-4 md:flex">
-        <Link
-          href={publicProfileHref}
-          className={cn(
-            'inline-flex items-center gap-2 text-tiny font-bold md:text-base',
-            LINK_STATE_CLASSES,
-          )}
-        >
-          <ViewProfileIcon />
-          {t('viewPublicProfile')}
-        </Link>
+          progress row. Re-confirmed 2026-09-02 against `1110:16696` (Member) and `1001:8333`
+          (Mindsetter) — neither draws either action — and against the only other place they could
+          have moved to, the account sheet (`1110:17043` / `1004:8011`), which carries "View public
+          profile" and still no "Become a Mindsetter" in either role.
 
-        {accountType === 'member' && (
-          <Button asChild variant="primary" size="lg">
+          ONE ACTION PER ROLE, not both. Figma gives this block a different single occupant per
+          role, which is the placement the customer asked about: a Member gets only "Become a
+          Mindsetter" (their view-profile link lives in the completeness slot on the left, see
+          above), a Mindsetter gets only "View public profile" — 16px Bold with the external-link
+          glyph, i.e. a genuinely different treatment from the 14px Regular pencil version on the
+          left. Rendering both side by side, as this did before, matched neither frame. */}
+      <div className="hidden shrink-0 flex-wrap items-center gap-4 md:flex">
+        {accountType === 'member' ? (
+          // `size="default"` (h-14 px-5), not `lg` (h-14 px-8): Figma's own instance
+          // (`754:11880`) is 204×52 with 20px horizontal padding — `default`'s padding and 12px
+          // radius already match it exactly, `lg`'s 32px never did. `h-[52px]` trims the
+          // remaining 4px, the one dimension no shared size lands on.
+          <Button asChild variant="primary" size="default" className="h-[52px]">
             <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
           </Button>
+        ) : (
+          <Link
+            href={publicProfileHref}
+            className={cn('inline-flex items-center gap-2 text-base font-bold', LINK_STATE_CLASSES)}
+          >
+            <ViewProfileIcon />
+            {t('viewPublicProfile')}
+          </Link>
         )}
       </div>
     </div>

@@ -1,8 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 
+import { useCookieConsent } from '@/components/cookies/CookieConsentProvider';
 import { ScrollTopArrowIcon } from '@/components/icons/scroll-top-arrow-icon';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +41,14 @@ const SCROLL_THRESHOLD_PX = 800;
  * The visible "TO TOP" text is the button's accessible name — no separate `aria-label` (would
  * just duplicate it); the icon carries its own `aria-hidden` inside `ScrollTopArrowIcon`.
  *
+ * CLEARS THE COOKIE BANNER ON A PHONE (2026-09-02). Below `md:` that banner is a full-width
+ * bar along the bottom edge at `z-40` — exactly where this button sits, and above it in the
+ * stacking order, so the button was simply buried until the visitor answered it. The offset
+ * below lifts this button by the banner's own MEASURED height (published on the consent context
+ * by `CookieConsentBanner`, and 0 whenever no banner is up) rather than by a guessed constant
+ * that would drift with translated copy or the visitor's font size. No offset is needed from
+ * `md:` up, where the banner is a 380px card pinned bottom-LEFT and this button is bottom-right.
+ *
  * `fixed`, bottom-right, `z-30` — below the sticky header's `z-40` (`Header.tsx`) and any
  * modal/dropdown/tooltip (`z-50` throughout `components/ui/`), so it never floats over an open
  * dialog. Figma has no reactions on this component (checked via `get_reactions`) and no
@@ -46,12 +56,13 @@ const SCROLL_THRESHOLD_PX = 800;
  * bottom-4 sm:right-6 sm:bottom-6` matches this codebase's usual `px-4 sm:px-6` edge-padding
  * scale rather than inventing new spacing values.
  *
- * Rendered globally in `app/[locale]/layout.tsx` next to `Footer` (NOT in the locale-less
+ * Rendered globally from `app/[locale]/layout.tsx` (NOT in the locale-less
  * `app/not-found.tsx` root fallback — that file has no `NextIntlClientProvider`, so a
  * `useTranslations` client component would throw there).
  */
 export function ScrollToTopButton() {
   const t = useTranslations('common');
+  const { bannerHeight } = useCookieConsent();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -85,10 +96,19 @@ export function ScrollToTopButton() {
     <button
       type="button"
       onClick={handleClick}
+      // Only the phone layout needs the offset; `md:bottom-6` above wins from `md:` up, so the
+      // variable is harmless there even while a banner is on screen.
+      // Cast: a CSS custom property is a legal inline style but is not in React's typed
+      // `CSSProperties` surface, so this is the standard escape hatch rather than a type hole.
+      style={
+        {
+          '--cookie-banner-offset': bannerHeight ? `${bannerHeight + 16}px` : '0px',
+        } as CSSProperties
+      }
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
       className={cn(
-        'fixed right-4 bottom-4 z-30 flex shrink-0 cursor-pointer items-center gap-3 rounded-full border border-[#2a2a2a] bg-card py-0.5 pr-4 pl-0.5 transition-all duration-200 motion-reduce:transition-none sm:right-6 sm:bottom-6',
+        'fixed right-4 bottom-[calc(1rem+var(--cookie-banner-offset,0px))] z-30 flex shrink-0 cursor-pointer items-center gap-3 rounded-full border border-[#2a2a2a] bg-card py-0.5 pr-4 pl-0.5 transition-all duration-200 motion-reduce:transition-none sm:right-6 md:bottom-6',
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0',
       )}
     >
