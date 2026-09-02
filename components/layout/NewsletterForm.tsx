@@ -8,6 +8,7 @@ import { subscribeNewsletter } from '@/app/[locale]/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/sonner';
+import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/marketing';
 
 /**
@@ -16,6 +17,9 @@ import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/mar
  */
 export function NewsletterForm() {
   const t = useTranslations('footer.newsletter');
+  // Zod messages travel as encoded key references (see lib/validation/messages.ts); this form
+  // renders its own error instead of going through components/ui/form.tsx, so it has to decode.
+  const tValidation = useValidationMessage();
 
   const {
     register,
@@ -65,7 +69,7 @@ export function NewsletterForm() {
       </div>
       {errors.email ? (
         <p role="alert" className="text-tiny font-medium text-destructive">
-          {errors.email.message}
+          {tValidation(errors.email.message)}
         </p>
       ) : null}
       <p className="text-tiny text-foreground">{t('consent')}</p>

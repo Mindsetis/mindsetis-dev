@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { cn } from '@/lib/utils';
 import {
   MAX_RANGES_PER_DAY,
@@ -76,6 +77,9 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
   const t = useTranslations('dashboard.sessions.availability');
   const tSession = useTranslations('mindsetterOnboarding.session');
   const { field, fieldState } = useController({ control, name: 'weeklyAvailability' });
+  // `availabilityRequired` arrives as an encoded key reference, not a sentence — this field
+  // renders its own error rather than going through components/ui/form.tsx, so it decodes here.
+  const tValidation = useValidationMessage();
 
   const availability = field.value;
 
@@ -177,7 +181,7 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
       </div>
 
       {fieldState.error?.message ? (
-        <p className="text-tiny text-destructive">{fieldState.error.message}</p>
+        <p className="text-tiny text-destructive">{tValidation(fieldState.error.message)}</p>
       ) : null}
     </div>
   );

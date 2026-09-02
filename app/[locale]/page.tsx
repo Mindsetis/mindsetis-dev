@@ -7,6 +7,7 @@ import { HomepagePlaceholder } from '@/components/marketing/HomepagePlaceholder'
 import { MainPageSection } from '@/components/marketing/MainPageSection';
 import { localePath, routing } from '@/i18n/routing';
 import { COMING_SOON_MODE } from '@/lib/config/coming-soon';
+import { INDEXING_ALLOWED } from '@/lib/config/indexing';
 
 type HomePageProps = {
   params: Promise<{ locale: string }>;
@@ -50,7 +51,10 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
         'x-default': localePath(routing.defaultLocale, '/'),
       },
     },
-    robots: { index: true, follow: true },
+    // The site-wide default is `index: false` (layout); this is the one page that opts back
+    // in — but only on the production origin. On the dev project and every preview URL
+    // `INDEXING_ALLOWED` is false and this opt-in collapses back to that default.
+    robots: { index: INDEXING_ALLOWED, follow: INDEXING_ALLOWED },
   };
 }
 

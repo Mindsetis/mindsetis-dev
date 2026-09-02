@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { localePath, routing } from '@/i18n/routing';
 import { siteUrl } from '@/lib/auth/site-url';
+import { INDEXING_ALLOWED } from '@/lib/config/indexing';
 
 /**
  * `/robots.txt` — crawler policy for the pre-launch site.
@@ -30,8 +31,20 @@ import { siteUrl } from '@/lib/auth/site-url';
  *   While `SITE_AUTH_PASSWORD` is set, `middleware.ts` answers EVERY request (this file
  *   included) with a 401, so no crawler gets this far and nothing is indexed at all. This
  *   policy takes effect the moment that variable is removed.
+ *
+ * NOTE — NON-PRODUCTION DEPLOYMENTS SKIP ALL OF THIS
+ *   The `Allow` list below describes the PRODUCTION site. The dev Vercel project and every
+ *   preview URL build the same homepage from the same repo, so they return a blanket
+ *   `Disallow: /` instead and advertise no sitemap — see `lib/config/indexing.ts`.
  */
 export default function robots(): MetadataRoute.Robots {
+  // Non-production origins (the dev project, every preview URL) are closed outright — no
+  // `Allow` list and no `Sitemap:` line. `lib/config/indexing.ts` defines what counts as
+  // production; this branch is what keeps the dev deployment out of search results.
+  if (!INDEXING_ALLOWED) {
+    return { rules: [{ userAgent: '*', disallow: '/' }] };
+  }
+
   return {
     rules: [
       {

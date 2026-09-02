@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { localePath, routing } from '@/i18n/routing';
 import { siteUrl } from '@/lib/auth/site-url';
+import { INDEXING_ALLOWED } from '@/lib/config/indexing';
 
 /**
  * `/sitemap.xml` — the homepage placeholder, and nothing else.
@@ -16,6 +17,10 @@ import { siteUrl } from '@/lib/auth/site-url';
  * to visitors whose language we don't cover, i.e. English.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  // Nothing to advertise on a non-production origin — `app/robots.ts` drops its `Sitemap:`
+  // line there too, so this only ever answers a crawler that guessed the URL.
+  if (!INDEXING_ALLOWED) return [];
+
   const languages = {
     ...Object.fromEntries(
       routing.locales.map((locale) => [locale, siteUrl(localePath(locale, '/'))]),
