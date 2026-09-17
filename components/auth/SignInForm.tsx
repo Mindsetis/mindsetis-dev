@@ -24,7 +24,15 @@ import { applyFieldErrors } from './applyFieldErrors';
 import { PasswordToggle } from './password-field';
 
 type SignInFormProps = {
-  /** Safe relative path to return to after signing in (already validated by the page). */
+  /**
+   * Safe relative path to return to after signing in (already validated by the page), or
+   * `undefined` when the visitor just came to `/login` on their own.
+   *
+   * It must stay genuinely absent in that second case — no `'/'` placeholder. The submit
+   * handler treats "no explicit destination" as "ask the server where this user belongs", and
+   * a truthy default silently wins that check, which is exactly the dead end Release-1 A1 is
+   * about: everyone landed on the homepage no matter how far their registration had got.
+   */
   redirectTo?: string;
 };
 
@@ -41,7 +49,7 @@ type SignInFormProps = {
  *    left-aligned, the mobile one below, centered. That is done with flex `order` rather than
  *    rendering the link twice.
  */
-export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
+export function SignInForm({ redirectTo }: SignInFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
@@ -49,20 +57,32 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
 
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '', redirectTo },
+    defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    setFormError(null);
-    const result = await signIn(values);
-    if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
-      return;
-    }
-    router.push(redirectTo || '/');
-    router.refresh();
-  });
+  const onSubmit = form.handleSubmit(
+    async (values) => {
+      setFormError(null);
+      const result = await signIn(values);
+      if (!result.ok) {
+        applyFieldErrors(form.setError, result.error.fieldErrors);
+        setFormError(result.error.message);
+        return;
+      }
+      // An explicit `redirectTo` (set by the middleware when it intercepted a deep link) wins —
+      // that visitor was going somewhere specific. Otherwise follow the server's answer, which
+      // is this caller's unfinished wizard step or the cabinet, never a blanket `/`.
+      router.push(redirectTo || result.data.next);
+      router.refresh();
+    },
+    // A form that silently does nothing is the worst possible failure, and this form managed
+    // it once already: a hidden field failed validation with no `FormMessage` to render the
+    // complaint, so clicking "Log in" produced no request and no message. Whatever fails from
+    // here on, the visitor is told something happened.
+    () => {
+      setFormError(t('errors.formInvalid'));
+    },
+  );
 
   return (
     <Form {...form}>
@@ -72,8 +92,6 @@ export function SignInForm({ redirectTo = '/' }: SignInFormProps) {
             <AlertDescription>{formError}</AlertDescription>
           </Alert>
         ) : null}
-
-        <input type="hidden" {...form.register('redirectTo')} />
 
         <FormField
           control={form.control}

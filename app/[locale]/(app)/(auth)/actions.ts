@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
+import { resolveOnboardingRedirect } from '@/lib/auth/onboarding-redirect';
 import { siteUrl } from '@/lib/auth/site-url';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -149,7 +150,16 @@ export const signUp = createAction(
   { rateLimit: { key: 'auth:sign-up', limit: 5, window: '10 m' } },
 );
 
-/** Sign in with email + password. On success the session cookie is set; client redirects. */
+/**
+ * Sign in with email + password. On success the session cookie is set and the action returns
+ * `next` — where this particular caller belongs, read from their stored onboarding progress.
+ *
+ * The client used to fall back to `/` when there was no explicit `redirectTo`, which is how
+ * someone with a half-finished registration ended up on the homepage with no way back into the
+ * wizard (Release-1 items 1-2: the same complaint applies after a password change, since that
+ * flow deliberately ends in a fresh sign-in). Deciding here rather than in the form keeps the
+ * DB read on the server and gives every caller of `signIn` the same answer.
+ */
 export const signIn = createAction(
   signInSchema,
   async ({ email, password }) => {
@@ -166,7 +176,10 @@ export const signIn = createAction(
       // Don't distinguish "wrong password" from "no such user" (enumeration).
       throw new ActionError('unauthenticated', 'Invalid email or password.');
     }
-    return null;
+    // The session cookie is set on `supabase` above, so this resolver — which calls
+    // `getUser()` on a fresh server client reading the same cookie jar — sees the user that
+    // just signed in.
+    return { next: await resolveOnboardingRedirect() };
   },
   { rateLimit: { key: 'auth:sign-in', limit: 10, window: '5 m' } },
 );

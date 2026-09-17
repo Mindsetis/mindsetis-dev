@@ -30,6 +30,11 @@ const PROTECTED_PREFIXES = [
   '/member-profile',
   '/build-profile',
   '/mindsetter-onboarding',
+  // `/continue` resolves "where did I leave off?" from the caller's own stored progress and
+  // forwards — meaningless without a session, and gating it here is what keeps
+  // `resolveOnboardingRedirect()`'s `/login` branch from ping-ponging against the AUTH_ONLY
+  // bounce below (an anonymous caller never reaches the resolver at all).
+  '/continue',
   // `/members/[username]` (Member profile view, stage 1.6 — renamed from `/profile/[username]`,
   // then from `/member/[username]`): visible to any REGISTERED member, not anonymous visitors —
   // product decision, deliberately not restricted to the profile's own owner (the owner just
@@ -44,8 +49,32 @@ const PROTECTED_PREFIXES = [
 /**
  * Auth-only paths a signed-in user shouldn't see (already authenticated). Note: NOT
  * `/reset-password` — that needs the recovery session, so signed-in users must reach it.
+ *
+ * These used to bounce to `/`, which is the dead end the client reported: someone who started
+ * the registration and didn't finish clicked "Apply to Join", landed on the homepage, and got
+ * no hint that their application was half-done. They now bounce to `/continue`, which reads
+ * their actual progress and forwards (Release-1 A1).
+ *
+ * `/join` is in this list because it is where every "Apply to Join" CTA actually points — the
+ * header's, the hero band's and the "What is Mindsetis" one. It is an email-capture page for
+ * people who don't have an account yet, so showing it to someone who is already signed in is
+ * the dead end itself, not a step towards fixing it.
+ *
+ * Gating it HERE rather than inside `join/page.tsx` keeps that page prerendered for the
+ * anonymous visitors it exists for: the middleware already knows whether there is a session,
+ * so no database read and no per-request rendering is added to a marketing page.
+ *
+ * NOTE for Release-1 A5: the client wants a modal ("You've already applied and logged in
+ * as…") for a visitor whose profile is already COMPLETE, and a silent redirect for everyone
+ * else. That does not conflict with this bounce — the place to branch is `/continue` (pass
+ * the origin, e.g. `?from=join`, and send a completed profile back to `/join` with a flag
+ * the page reads). Do not solve it by dropping `/join` from this list, or the half-finished
+ * visitor lands back in the funnel this fixes.
  */
-const AUTH_ONLY_PREFIXES = ['/login', '/sign-up', '/forgot-password'];
+const AUTH_ONLY_PREFIXES = ['/login', '/sign-up', '/forgot-password', '/join'];
+
+/** Where a signed-in visitor to an AUTH_ONLY path is sent instead. */
+const CONTINUE_PATH = '/continue';
 
 /**
  * Staff-only paths (back-office). Gated on a `staff_roles` row, not just being signed in.
@@ -284,7 +313,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
   if (user && matchesPrefix(rest, AUTH_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = localePath(locale, '/');
+    url.pathname = localePath(locale, CONTINUE_PATH);
     url.search = '';
     return NextResponse.redirect(url);
   }
