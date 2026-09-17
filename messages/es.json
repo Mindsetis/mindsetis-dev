@@ -481,6 +481,13 @@
     "retry": "Intentar de nuevo"
   },
   "auth": {
+    "alreadyApplied": {
+      "body": "Ya enviaste tu solicitud y has iniciado sesión como {email}. Ve a tu panel para continuar donde lo dejaste.",
+      "primaryCta": "Ir a mi panel",
+      "signOutCta": "Cerrar sesión",
+      "signingOut": "Cerrando sesión…",
+      "title": "Ya has enviado tu solicitud"
+    },
     "buildProfile": {
       "company": {
         "label": "Empresa",

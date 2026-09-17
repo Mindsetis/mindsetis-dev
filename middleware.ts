@@ -35,6 +35,15 @@ const PROTECTED_PREFIXES = [
   // `resolveOnboardingRedirect()`'s `/login` branch from ping-ponging against the AUTH_ONLY
   // bounce below (an anonymous caller never reaches the resolver at all).
   '/continue',
+  // `/join-applied` — the Release-1 A5 "you've already applied" modal, reached only via
+  // `/continue`'s `from=join` branch (see that page's doc comment). Deliberately named with a
+  // HYPHEN rather than nested at `/join/applied`: `/join` sits in `AUTH_ONLY_PREFIXES` below
+  // with prefix matching (`matchesPrefix`), so a `/join/applied` child would itself match
+  // `/join` and bounce straight back to `/continue` — the exact redirect loop this feature has
+  // to avoid. `/join-applied` does not start with `/join/`, so it never matches that prefix.
+  // Listed here too (not just checked inside the page) so an anonymous caller who guesses the
+  // URL is bounced to `/login` before rendering, same defense-in-depth as every other entry.
+  '/join-applied',
   // `/members/[username]` (Member profile view, stage 1.6 — renamed from `/profile/[username]`,
   // then from `/member/[username]`): visible to any REGISTERED member, not anonymous visitors —
   // product decision, deliberately not restricted to the profile's own owner (the owner just
@@ -64,12 +73,14 @@ const PROTECTED_PREFIXES = [
  * anonymous visitors it exists for: the middleware already knows whether there is a session,
  * so no database read and no per-request rendering is added to a marketing page.
  *
- * NOTE for Release-1 A5: the client wants a modal ("You've already applied and logged in
+ * RESOLVED for Release-1 A5: the client wants a modal ("You've already applied and logged in
  * as…") for a visitor whose profile is already COMPLETE, and a silent redirect for everyone
- * else. That does not conflict with this bounce — the place to branch is `/continue` (pass
- * the origin, e.g. `?from=join`, and send a completed profile back to `/join` with a flag
- * the page reads). Do not solve it by dropping `/join` from this list, or the half-finished
- * visitor lands back in the funnel this fixes.
+ * else. Solved by passing the origin to `/continue` (`?from=join`, set only when the matched
+ * prefix is `/join` — see the bounce below) and letting `/continue` branch: a completed
+ * profile arriving `from=join` is sent to `/join-applied` (a separate protected route, see
+ * `PROTECTED_PREFIXES` above) instead of the cabinet; everyone else is unaffected. `/join`
+ * itself was deliberately NOT dropped from this list — that would reopen the dead end A1
+ * closed (a half-finished visitor landing back in the funnel).
  */
 const AUTH_ONLY_PREFIXES = ['/login', '/sign-up', '/forgot-password', '/join'];
 
@@ -315,6 +326,13 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     const url = request.nextUrl.clone();
     url.pathname = localePath(locale, CONTINUE_PATH);
     url.search = '';
+    // Tag the origin so `/continue` can special-case A5's "already applied" modal for a
+    // completed profile without affecting the other three AUTH_ONLY paths (`/login`,
+    // `/sign-up`, `/forgot-password`), which have no equivalent modal and must keep landing in
+    // the cabinet like before.
+    if (matchesPrefix(rest, ['/join'])) {
+      url.searchParams.set('from', 'join');
+    }
     return NextResponse.redirect(url);
   }
 

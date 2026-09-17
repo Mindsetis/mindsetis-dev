@@ -481,6 +481,13 @@
     "retry": "Try again"
   },
   "auth": {
+    "alreadyApplied": {
+      "body": "You already submitted your application and you're signed in as {email}. Head to your dashboard to pick up where you left off.",
+      "primaryCta": "Go to my dashboard",
+      "signOutCta": "Sign out",
+      "signingOut": "Signing out…",
+      "title": "You've already applied"
+    },
     "buildProfile": {
       "company": {
         "label": "Company",
