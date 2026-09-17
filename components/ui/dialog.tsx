@@ -81,6 +81,13 @@ function DialogContent({
         className={cn(
           'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg duration-200',
           'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          // Keep the header clear of the built-in close button, which is absolutely positioned
+          // (`top-4 right-4`, `size-8`) and so overlaps the last ~24px of a title that runs the
+          // full content width: `p-6` leaves 24px, the button claims 16-48px. Caught in manual
+          // testing (17.09.2026) on the "not yet available" popup. It lives here rather than in
+          // `DialogHeader` because only THIS branch renders the button — dialogs passing
+          // `showCloseButton={false}` build their own and already pad themselves.
+          showCloseButton && '[&_[data-slot=dialog-header]]:pr-10',
           className,
         )}
         {...props}
@@ -98,7 +105,11 @@ function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      // shadcn ships this header centred below `sm` (`text-center sm:text-left`). In this app the
+      // body copy that follows a header sits OUTSIDE it — e.g. the `emailPromise` line in
+      // `NotYetAvailable` — and stays left-aligned, so on a phone the title centred while the last
+      // line did not (caught in manual testing, 17.09.2026). One alignment everywhere instead.
+      className={cn('flex flex-col gap-2 text-left', className)}
       {...props}
     />
   );

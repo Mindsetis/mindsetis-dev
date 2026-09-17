@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { ProfilePageIcon } from '@/components/icons/profile-page-icon';
 import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 
 /**
@@ -63,7 +63,7 @@ function InviteEventIcon() {
  *
  * "Find event"/"Invite" row: side by side on desktop, evenly split, stacked full-width on
  * mobile with the OPPOSITE visual order (Invite first, Find second) — unchanged from before.
- * `md:grid md:grid-cols-2` (not `md:flex-1`) even though both items are wrapped in `ComingSoon`
+ * `md:grid md:grid-cols-2` (not `md:flex-1`) even though both items are wrapped in `NotYetAvailable`
  * here: `flex-basis: 0%` ignores a wrapper's own padding, and a `flex-1` pair can end up
  * different rendered widths depending on each child's content — grid columns don't have that
  * failure mode, so it's the safer default regardless of whether this particular pair would have
@@ -108,21 +108,21 @@ export async function MindsetterCongratsCtas({ username }: { username: string })
       </div>
 
       {/* Both route nowhere — event invites and the event catalog are unbuilt. Disabled buttons
-          wrapped in `ComingSoon` (same treatment as `WelcomeCtas`). */}
+          wrapped in `NotYetAvailable` (same treatment as `WelcomeCtas`). */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ComingSoon className="w-full md:order-2">
+        <NotYetAvailable feature="inviteToEvent" className="w-full md:order-2">
           <Button type="button" variant="primaryOutline" size="lg" disabled className="w-full">
             <InviteEventIcon />
             {t('ctas.inviteEvent')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
 
-        <ComingSoon className="w-full md:order-1">
+        <NotYetAvailable feature="findEvent" className="w-full md:order-1">
           <Button type="button" variant="outline" size="lg" disabled className="w-full">
             <FindEventIcon />
             {t('ctas.findEvent')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +54,7 @@ function SheetRow({
   href,
   onClick,
   disabled,
+  feature,
   destructive,
 }: {
   icon: ReactNode;
@@ -60,10 +62,10 @@ function SheetRow({
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
+  /** Set together with `disabled`: which unbuilt feature this row leads to. */
+  feature?: NotYetAvailableFeature;
   destructive?: boolean;
 }) {
-  const t = useTranslations('common');
-
   const className = cn(
     'flex h-[54px] w-full items-center gap-3 px-4 text-base font-medium transition-colors',
     destructive ? 'text-destructive' : 'text-foreground',
@@ -74,20 +76,25 @@ function SheetRow({
     <>
       <span className={cn('flex shrink-0 items-center', disabled && 'opacity-45')}>{icon}</span>
       <span className="flex-1 text-left">{label}</span>
-      {/* On the desktop sidebar an unbuilt item explains itself through a hover tooltip
-          (`ComingSoon`). Hover doesn't exist here, and a tooltip that needs a long-press is a
-          label nobody finds — so the same message is spelled out inline instead. */}
-      {disabled ? (
-        <span className="shrink-0 text-tiny text-muted-foreground">{t('comingSoon')}</span>
-      ) : null}
+      {/* The inline "Coming soon" label is gone: tapping the row now opens the same explanation
+          the desktop sidebar shows (Release-1 B1). That also retires the reason this label
+          existed — the old desktop affordance was a hover tooltip, which a touch screen never
+          reveals; a dialog opens on tap like anything else. */}
     </>
   );
 
   if (disabled) {
-    return (
+    const row = (
       <span aria-disabled="true" className={className}>
         {content}
       </span>
+    );
+    return feature ? (
+      <NotYetAvailable feature={feature} className="w-full">
+        {row}
+      </NotYetAvailable>
+    ) : (
+      row
     );
   }
 
@@ -122,10 +129,10 @@ const NAV_ICON = 'size-[21px] shrink-0';
  * header avatar opens this sheet, and it is the only way to move between cabinet sections on a
  * phone, which is why it lists all six of them rather than the three the desktop dropdown shows.
  *
- * Four of those six have no page yet (Overview, Bookings, Sessions Setup, Earnings); they render
- * inert with a "Coming soon" label, mirroring the desktop sidebar's treatment. The design also
- * draws a "5" count badge on Bookings — that is mock data with nothing behind it, so it is left
- * out rather than hardcoded.
+ * Three of those six have no page yet (Overview, Bookings, Earnings); they render inert, and
+ * tapping one explains what that section will do (`NotYetAvailable`), mirroring the desktop
+ * sidebar's treatment. The design also draws a "5" count badge on Bookings — that is mock data
+ * with nothing behind it, so it is left out rather than hardcoded.
  *
  * Built on `Dialog` (not `DropdownMenu`): this is a modal surface with a scrim and its own close
  * button, and it needs the focus trap Dialog gives.
@@ -183,6 +190,7 @@ export function AccountSheet({
             icon={<OverviewIcon active className={NAV_ICON} />}
             label={tNav('items.overview')}
             disabled
+            feature="overview"
           />
           <SheetRow
             icon={<MyProfileIcon active className={NAV_ICON} />}
@@ -193,6 +201,7 @@ export function AccountSheet({
             icon={<BookingsIcon active className={NAV_ICON} />}
             label={tNav('items.bookings')}
             disabled
+            feature="bookings"
           />
           {accountType === 'mindsetter' ? (
             <>
@@ -205,6 +214,7 @@ export function AccountSheet({
                 icon={<EarningsIcon active className={NAV_ICON} />}
                 label={tNav('items.earnings')}
                 disabled
+                feature="earnings"
               />
             </>
           ) : null}

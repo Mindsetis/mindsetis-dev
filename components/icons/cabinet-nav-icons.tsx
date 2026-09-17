@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * All native 24×24 — the sidebar renders them at `size-6` (24px), no scaling.
  *
  * THREE of the six (`OverviewIcon`/`BookingsIcon`/`EarningsIcon`) sit permanently inside
- * `ComingSoonItem` — genuinely inert, never clickable, never "active". Those keep their paths'
+ * `NotYetAvailableItem` — genuinely inert, never clickable, never "active". Those keep their paths'
  * hardcoded `fill="white"` and the designer's own per-icon REST opacity (0.55 for `OverviewIcon`,
  * 0.45 for the rest) baked in via an inline `<g opacity>`, unaffected by anything the surrounding
  * row does.

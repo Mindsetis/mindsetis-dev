@@ -12,7 +12,7 @@ import {
   OverviewIcon,
   SessionsSetupIcon,
 } from '@/components/icons/cabinet-nav-icons';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
 import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
@@ -21,10 +21,10 @@ import { cn } from '@/lib/utils';
  * shared by every cabinet screen.
  *
  * "My Profile" and "Settings" are real destinations; every other item is rendered but inert,
- * wrapped in `ComingSoon` (dimmed + "Coming soon" tooltip) rather than hidden. That's deliberate:
+ * wrapped in `NotYetAvailable` (dimmed, and tapping it explains the feature) rather than hidden. That's deliberate:
  * the sidebar is the map of the cabinet, and a map with most of its entries missing reads as a
  * broken build rather than an unfinished one. Same precedent as `WelcomeCtas`, which switched
- * dead `<Link href="/">` CTAs to disabled + `ComingSoon` for exactly this reason.
+ * dead `<Link href="/">` CTAs to disabled + `NotYetAvailable` for exactly this reason.
  *
  * The MINDSETTER group (Sessions Setup, Earnings) is hidden entirely for a Member — it isn't
  * "coming soon" for them, it will never apply. Matches the Member frame, which has no such group.
@@ -41,15 +41,18 @@ export type CabinetSidebarProps = {
  * outer opacity on top would double-dim it below the designed value. The label's own
  * `text-muted-foreground` color already reads as secondary/disabled without needing that.
  */
-function ComingSoonItem({
+function NotYetAvailableItem({
   icon: Icon,
   label,
+  feature,
 }: {
   icon: ComponentType<NavIconProps>;
   label: string;
+  /** Which section this row leads to once it exists — picks the explanation in the dialog. */
+  feature: NotYetAvailableFeature;
 }) {
   return (
-    <ComingSoon className="w-full">
+    <NotYetAvailable feature={feature} className="w-full">
       <span
         aria-disabled="true"
         className="flex w-full items-center gap-3 rounded-[10px] px-4 py-[14px] text-base font-normal text-muted-foreground"
@@ -57,7 +60,7 @@ function ComingSoonItem({
         <Icon className="size-6 shrink-0" />
         {label}
       </span>
-    </ComingSoon>
+    </NotYetAvailable>
   );
 }
 
@@ -131,7 +134,7 @@ export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
     <nav aria-label={t('ariaLabel')} className="flex w-full flex-col gap-5 py-6 pr-5">
       <div className="flex flex-col gap-0.5">
         <GroupLabel>{t('groups.cabinet')}</GroupLabel>
-        <ComingSoonItem icon={OverviewIcon} label={t('items.overview')} />
+        <NotYetAvailableItem icon={OverviewIcon} label={t('items.overview')} feature="overview" />
 
         <NavItem
           href="/dashboard/profile"
@@ -140,7 +143,7 @@ export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
           active={isProfileActive}
         />
 
-        <ComingSoonItem icon={BookingsIcon} label={t('items.bookings')} />
+        <NotYetAvailableItem icon={BookingsIcon} label={t('items.bookings')} feature="bookings" />
       </div>
 
       {accountType === 'mindsetter' && (
@@ -152,7 +155,7 @@ export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
             label={t('items.sessionsSetup')}
             active={pathname === '/dashboard/sessions'}
           />
-          <ComingSoonItem icon={EarningsIcon} label={t('items.earnings')} />
+          <NotYetAvailableItem icon={EarningsIcon} label={t('items.earnings')} feature="earnings" />
         </div>
       )}
 

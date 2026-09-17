@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { ProfilePageIcon } from '@/components/icons/profile-page-icon';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 
 /**
@@ -15,7 +15,7 @@ import { Link } from '@/i18n/navigation';
  * one is where someone who declined it lands.
  *
  * The three Member CTAs route nowhere: Mindsetter-matching, event invites and the event catalog
- * are unbuilt. They are disabled buttons wrapped in `ComingSoon`, which dims them and explains
+ * are unbuilt. They are disabled buttons wrapped in `NotYetAvailable`, which dims them and explains
  * why on hover/focus — deliberately not `<Link href="/">`, which used to bounce the caller to
  * the homepage and read as a broken destination rather than an unfinished feature.
  *
@@ -32,26 +32,26 @@ export function WelcomeMemberCtas({ username }: { username: string | null }) {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-3">
-        <ComingSoon className="w-full">
+        <NotYetAvailable feature="findMindsetter" className="w-full">
           <Button type="button" variant="primaryOutline" size="lg" disabled className="w-full">
             <Search aria-hidden="true" />
             {t('findMindsetter')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
 
-        <ComingSoon className="w-full">
+        <NotYetAvailable feature="inviteToEvent" className="w-full">
           <Button type="button" variant="outline" size="lg" disabled className="w-full">
             <UserPlus aria-hidden="true" />
             {t('inviteEvent')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
 
-        <ComingSoon className="w-full">
+        <NotYetAvailable feature="findEvent" className="w-full">
           <Button type="button" variant="ghost" size="lg" disabled className="w-full">
             <Search aria-hidden="true" />
             {t('findEvent')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
 
       {/* Deliberately large, asymmetric gap to the profile-preview button below — 80px desktop

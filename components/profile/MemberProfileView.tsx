@@ -20,7 +20,7 @@ import {
   YoutubeIcon,
 } from '@/components/icons/social-icons';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
@@ -320,7 +320,7 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
               {/* Figma: zero "Share" nodes exist anywhere on the mobile preview frame
                   (401:8282) — Share Profile only exists on the desktop frame (401:6375,
                   node I401:6359;261:3412), so this is hidden below `md`. */}
-              <ComingSoon className="hidden md:inline-flex">
+              <NotYetAvailable feature="shareProfile" className="hidden md:inline-flex">
                 <Button
                   type="button"
                   variant="ghost"
@@ -333,7 +333,7 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                   <Share2 className="size-4" aria-hidden="true" />
                   {labels.shareProfile}
                 </Button>
-              </ComingSoon>
+              </NotYetAvailable>
             </div>
           </div>
         </div>
@@ -422,10 +422,10 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                 icon-to-text gap — same inverted-radius mistake as the Edit button, so both
                 overrides are dropped here rather than corrected to an explicit value. */}
             {/* Event invites are unbuilt — same treatment as every other unbuilt control across
-                the app (see `components/ui/coming-soon.tsx`), including Share Profile in the
+                the app (see `components/ui/not-yet-available.tsx`), including Share Profile in the
                 banner above. Edit Profile is the one banner action that is NOT marked: it now
                 links to the cabinet (2026-08-12). */}
-            <ComingSoon className="hidden md:inline-flex">
+            <NotYetAvailable feature="inviteToEvent" className="hidden md:inline-flex">
               <Button
                 type="button"
                 variant="ghost"
@@ -438,7 +438,7 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
                 <UserAddFillIcon className="size-4" aria-hidden="true" />
                 {labels.inviteToEvent}
               </Button>
-            </ComingSoon>
+            </NotYetAvailable>
 
             {(locationText || languageText) && (
               // Figma: "Tulum, Mexico" / "EN / UA" render at 14px desktop / 12px mobile

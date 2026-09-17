@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 
 import { MindsetterArrowIcon } from '@/components/icons/mindsetter-arrow-icon';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 
 const FEATURE_KEYS = ['website', 'sessions', 'growth'] as const;
 
@@ -26,7 +26,7 @@ const FEATURE_KEYS = ['website', 'sessions', 'growth'] as const;
  * precedent as the orphan sub-form noted in `WhoIsMindsetterDialog`'s doc comment.
  *
  * "See example" has no real destination anywhere in the codebase (no example-site route) — wrapped
- * in `ComingSoon` rather than a dead `<Link href="/">`, same pattern as the other unbuilt CTAs on
+ * in `NotYetAvailable` rather than a dead `<Link href="/">`, same pattern as the other unbuilt CTAs on
  * this screen.
  */
 export function WelcomeMindsetterPitchCard() {
@@ -51,7 +51,7 @@ export function WelcomeMindsetterPitchCard() {
             </div>
 
             {key === 'website' && (
-              <ComingSoon className="w-fit">
+              <NotYetAvailable feature="exampleProfile" className="w-fit">
                 <Button
                   type="button"
                   variant="outline"
@@ -62,7 +62,7 @@ export function WelcomeMindsetterPitchCard() {
                   {t('features.website.cta')}
                   <MindsetterArrowIcon disabled />
                 </Button>
-              </ComingSoon>
+              </NotYetAvailable>
             )}
           </div>
         ))}

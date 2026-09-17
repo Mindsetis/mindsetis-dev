@@ -502,7 +502,7 @@
       "title": "Revisa tu correo"
     },
     "errors": {
-      "invalidLink": "Tu enlace no es válido o ha expirado."
+      "formInvalid": "Revisa el formulario e inténtalo de nuevo."
     },
     "fields": {
       "confirmPassword": "Confirmar contraseña",
@@ -515,6 +515,17 @@
       "submitting": "Enviando…",
       "subtitle": "Introduce el correo con el que te registraste y te enviaremos un enlace para establecer una nueva contraseña.",
       "title": "Restablece tu contraseña"
+    },
+    "linkExpired": {
+      "body": "Este enlace de confirmación ya no es válido: puede haber caducado o haberse usado antes. Introduce tu email para recibir uno nuevo, o inicia sesión si tu cuenta ya está activa.",
+      "bodyInvalid": "Este enlace de confirmación no es válido. Introduce tu email para recibir uno nuevo, o inicia sesión si tu cuenta ya está activa.",
+      "loginCta": "Iniciar sesión",
+      "loginPrompt": "¿Ya has creado tu contraseña?",
+      "submit": "Reenviar email de confirmación",
+      "submitting": "Enviando…",
+      "success": "Si esa dirección aún necesita confirmarse, un nuevo enlace está en camino.",
+      "title": "Enlace caducado",
+      "titleInvalid": "Enlace de confirmación no válido"
     },
     "memberProfile": {
       "about": {
@@ -1159,12 +1170,85 @@
     }
   },
   "common": {
-    "comingSoon": "Próximamente",
     "imageOptimize": {
       "intro": "¿Demasiado pesada? Pega esto en tu IA favorita y adjunta la foto:",
       "prompt": "Comprime esta imagen para que el archivo pese menos de {maxSizeMb} MB. Mantenla en PNG o JPEG, conserva las proporciones originales y la mayor nitidez posible — reduce el tamaño del archivo, no la calidad visible. Devuélveme el resultado como archivo descargable.",
       "copy": "Copiar prompt",
       "copied": "Copiado"
+    },
+    "notYetAvailable": {
+      "close": "Entendido",
+      "emailPromise": "Te enviaremos un email en cuanto esté disponible.",
+      "features": {
+        "aiSearch": {
+          "body": "Describe a quién buscas con tus propias palabras — «un fundador que escaló un marketplace en Europa» — y la búsqueda encontrará a quienes encajan, en vez de obligarte a adivinar filtros.",
+          "title": "La búsqueda inteligente está en camino"
+        },
+        "bookSession": {
+          "body": "Podrás elegir un hueco en el calendario de este Mindsetter y reservar una conversación 1:1, gratuita o de pago, según decida. El enlace de la reunión se crea automáticamente.",
+          "title": "Las reservas están en camino"
+        },
+        "bookings": {
+          "body": "Todas las sesiones que has reservado o que te han reservado, en un solo lugar: próximas, pasadas y los enlaces para unirte.",
+          "title": "Las reservas están en camino"
+        },
+        "createEvent": {
+          "body": "Organiza tu propio evento para la comunidad — una masterclass, una mesa redonda, una sesión cerrada — e invita a quien quieras tener en la sala.",
+          "title": "Los eventos están en camino"
+        },
+        "earnings": {
+          "body": "Lo que has ganado con sesiones y eventos, lo que está retenido y cuándo llega a tu cuenta.",
+          "title": "Los ingresos están en camino"
+        },
+        "events": {
+          "body": "Eventos de la comunidad a los que puedes unirte: algunos abiertos a todos los miembros, otros solo por invitación.",
+          "title": "Los eventos están en camino"
+        },
+        "exampleProfile": {
+          "title": "Las páginas de ejemplo están en camino",
+          "body": "Aquí te mostraremos una página de Mindsetter ya terminada, para que veas cómo podría quedar la tuya antes de rellenar nada."
+        },
+        "exploreCommunity": {
+          "body": "Explora toda la comunidad y fíltrala por sector, experiencia y ubicación, para encontrar a las personas que te interesan sin recorrer al resto.",
+          "title": "El catálogo de la comunidad está en camino"
+        },
+        "findEvent": {
+          "body": "Eventos de la comunidad a los que puedes unirte: algunos abiertos a todos los miembros, otros solo por invitación.",
+          "title": "Los eventos están en camino"
+        },
+        "findMindsetter": {
+          "body": "Cuéntanos en qué estás trabajando y te indicaremos los Mindsetters que ya han pasado por ello.",
+          "title": "Las recomendaciones están en camino"
+        },
+        "interviews": {
+          "title": "Las entrevistas están en camino",
+          "body": "El archivo completo de entrevistas con Mindsetters, en un solo lugar."
+        },
+        "inviteToEvent": {
+          "body": "Invita a alguien de la comunidad a un evento que organices y comprueba quién ha aceptado.",
+          "title": "Las invitaciones están en camino"
+        },
+        "learnMore": {
+          "title": "Más sobre Mindsetter está en camino",
+          "body": "Todo lo que puede hacer un Mindsetter: organizar eventos, dar sesiones 1:1 y la página de experto que lo acompaña."
+        },
+        "originals": {
+          "body": "Entrevistas y conversaciones en profundidad con las personas de esta comunidad, producidas por Mindsetis.",
+          "title": "Mindsetis Originals está en camino"
+        },
+        "overview": {
+          "body": "Tu panel de un vistazo: próximas sesiones, visitas a tu perfil y lo que requiere tu atención.",
+          "title": "El resumen está en camino"
+        },
+        "reviews": {
+          "title": "Las reseñas están en camino",
+          "body": "Tras una sesión podrás dejar una reseña, y leer las de otros antes de reservar."
+        },
+        "shareProfile": {
+          "body": "Comparte este perfil como un enlace, igual que compartirías una web personal.",
+          "title": "Compartir está en camino"
+        }
+      }
     },
     "scrollToTop": "ARRIBA"
   },

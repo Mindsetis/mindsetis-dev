@@ -46,7 +46,7 @@ import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
 import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type {
@@ -589,9 +589,9 @@ function CtaBanner({
         </p>
       )}
       {/* Same unbuilt features as the hero's own pair — event invites and session booking.
-          Disabled + `ComingSoon` rather than left clickable-but-inert. */}
+          Disabled + `NotYetAvailable` rather than left clickable-but-inert. */}
       <div className="relative flex flex-col gap-3 sm:flex-row">
-        <ComingSoon className="max-[600px]:w-full">
+        <NotYetAvailable feature="inviteToEvent" className="max-[600px]:w-full">
           <Button
             type="button"
             variant="ghost"
@@ -604,8 +604,8 @@ function CtaBanner({
             <UserAddFillIcon className="size-4" aria-hidden="true" />
             {inviteLabel}
           </Button>
-        </ComingSoon>
-        <ComingSoon className="max-[600px]:w-full">
+        </NotYetAvailable>
+        <NotYetAvailable feature="bookSession" className="max-[600px]:w-full">
           <Button
             type="button"
             variant="primaryOutline"
@@ -615,7 +615,7 @@ function CtaBanner({
           >
             {bookLabel}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
     </div>
   );
@@ -756,7 +756,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <div className="flex flex-wrap items-center gap-5">
               {/* Edit Profile goes to the cabinet's My Profile tab — the one place every section
                   of this page is editable (2026-08-12). Share Profile has nothing behind it yet,
-                  so it gets the app's standard `ComingSoon` treatment instead of looking live. */}
+                  so it gets the app's standard `NotYetAvailable` treatment instead of looking live. */}
               <Button
                 asChild
                 variant="ghost"
@@ -770,7 +770,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   {t('editProfile')}
                 </Link>
               </Button>
-              <ComingSoon className="hidden md:inline-flex">
+              <NotYetAvailable feature="shareProfile" className="hidden md:inline-flex">
                 <Button
                   type="button"
                   variant="ghost"
@@ -783,7 +783,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   <Share2 className="size-4" aria-hidden="true" />
                   {t('shareProfile')}
                 </Button>
-              </ComingSoon>
+              </NotYetAvailable>
             </div>
           </div>
         </div>
@@ -985,11 +985,11 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             <div className="flex flex-wrap items-center gap-3 lg:order-2 lg:mt-0">
               {/* Disabled unconditionally, for two independent reasons that will NOT expire
                   together: neither event invites nor session booking exists yet (hence
-                  `ComingSoon`), and separately a Mindsetter can never invite or book
+                  `NotYetAvailable`), and separately a Mindsetter can never invite or book
                   themselves, so `preview` must keep these inert even once the features ship.
-                  Whoever removes the `ComingSoon` wrapper must restore
+                  Whoever removes the `NotYetAvailable` wrapper must restore
                   `disabled={variant === 'preview'}` rather than dropping `disabled` entirely. */}
-              <ComingSoon className="w-full lg:w-auto">
+              <NotYetAvailable feature="inviteToEvent" className="w-full lg:w-auto">
                 <Button
                   type="button"
                   variant="ghost"
@@ -1004,8 +1004,8 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   <UserAddFillIcon className="size-4" aria-hidden="true" />
                   {t('inviteToEvent')}
                 </Button>
-              </ComingSoon>
-              <ComingSoon className="w-full lg:w-auto">
+              </NotYetAvailable>
+              <NotYetAvailable feature="bookSession" className="w-full lg:w-auto">
                 <Button
                   type="button"
                   variant="primaryOutline"
@@ -1016,7 +1016,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   <BookSessionIcon />
                   {t('bookSession')}
                 </Button>
-              </ComingSoon>
+              </NotYetAvailable>
 
               {/* Mobile-only twin of the "Intro about me" pill that sits on the photo from `lg`
                   up. Figma puts no such control on the mobile hero photo, so on phones it lives
@@ -1700,7 +1700,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
             {/* Full-width on phones (the heading row stacks there, so a 250px button floating
                 on its own line reads as unfinished), natural width from `sm` up where it sits
                 beside the heading. The wrapper has to stretch too — it is the flex item. */}
-            <ComingSoon className="w-full sm:w-auto">
+            <NotYetAvailable feature="reviews" className="w-full sm:w-auto">
               <Button
                 type="button"
                 variant="primaryOutline"
@@ -1710,7 +1710,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 <ReviewLeaveIcon className="size-4" />
                 {t('reviews.leaveReview')}
               </Button>
-            </ComingSoon>
+            </NotYetAvailable>
           </div>
         </div>
         {/* Cards live INSIDE the content grid, not full-bleed to the viewport (2026-08-06
@@ -2282,7 +2282,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   reorder via plain DOM order rather than fighting `flex` with `order` across two
                   different containers. */}
               {/* No interview archive route exists yet. */}
-              <ComingSoon className="hidden md:inline-flex">
+              <NotYetAvailable feature="interviews" className="hidden md:inline-flex">
                 <Button
                   type="button"
                   variant="outline"
@@ -2292,7 +2292,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   {t('videoBlog.allInterviews')}
                   <VideoBlogArrowIcon />
                 </Button>
-              </ComingSoon>
+              </NotYetAvailable>
             </div>
             {(profile.videoBlogUrl || videoBlogEmbedUrl) && (
               <div
@@ -2319,7 +2319,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               </div>
             )}
             {/* Mobile twin of the desktop "All interviews" button above. */}
-            <ComingSoon className="w-full md:hidden">
+            <NotYetAvailable feature="interviews" className="w-full md:hidden">
               <Button
                 type="button"
                 variant="outline"
@@ -2329,7 +2329,7 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                 {t('videoBlog.allInterviews')}
                 <VideoBlogArrowIcon />
               </Button>
-            </ComingSoon>
+            </NotYetAvailable>
           </div>
         )}
       </div>

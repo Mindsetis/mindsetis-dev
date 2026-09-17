@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { WelcomeMindsetterPitchCard } from '@/components/auth/WelcomeMindsetterPitchCard';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 
 import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
@@ -40,7 +40,7 @@ import { WhoIsMindsetterDialog } from './WhoIsMindsetterDialog';
  *   declines the Mindsetter upgrade is meant to land on. The swap is owned by `WelcomeScreen`,
  *   since the heading changes with it too.
  * - "Learn more" (Figma "Secondary - 2b", grey border → `outline`) and the card's "See example"
- *   have no destination anywhere either and no obvious existing-route stand-in — `ComingSoon`
+ *   have no destination anywhere either and no obvious existing-route stand-in — `NotYetAvailable`
  *   disabled, per the same precedent as every other dead-end CTA on this screen.
  */
 export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => void }) {
@@ -82,7 +82,7 @@ export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => 
 
         {/* `md:grid-cols-2`, NOT `md:flex-row` + `flex-1` on each: the two are structurally
             asymmetric — "Continue as Member" is the button itself (so `size="lg"`'s `px-8` sits
-            ON the flex item), while "Learn more" is wrapped by `ComingSoon`, whose padding-less
+            ON the flex item), while "Learn more" is wrapped by `NotYetAvailable`, whose padding-less
             span is the flex item instead. `flex-1` resolves to `flex-basis: 0%`, which excludes
             padding, so the free space split evenly (280px each) and only the first one then
             added its own 64px — measured 344 vs 280 at 1440px. Grid columns are sized before
@@ -98,11 +98,11 @@ export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => 
             {t('ctas.continueAsMember')}
           </Button>
 
-          <ComingSoon className="w-full">
+          <NotYetAvailable feature="learnMore" className="w-full">
             <Button type="button" variant="outline" size="lg" disabled className="w-full">
               {t('ctas.learnMore')}
             </Button>
-          </ComingSoon>
+          </NotYetAvailable>
         </div>
       </div>
 

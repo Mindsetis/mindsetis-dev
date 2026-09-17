@@ -502,7 +502,7 @@
       "title": "Check your email"
     },
     "errors": {
-      "invalidLink": "Your link is invalid or expired."
+      "formInvalid": "Please check the form and try again."
     },
     "fields": {
       "confirmPassword": "Confirm password",
@@ -515,6 +515,17 @@
       "submitting": "Sending…",
       "subtitle": "Enter the email you signed up with and we will send you a link to set a new password.",
       "title": "Reset your password"
+    },
+    "linkExpired": {
+      "body": "This confirmation link is no longer valid — it may have expired or already been used. Enter your email to get a new link, or log in if your account is already active.",
+      "bodyInvalid": "This confirmation link is not valid. Enter your email to get a new link, or log in if your account is already active.",
+      "loginCta": "Log in",
+      "loginPrompt": "Already set up your password?",
+      "submit": "Resend confirmation email",
+      "submitting": "Sending…",
+      "success": "If that address still needs confirming, a new link is on its way.",
+      "title": "Link expired",
+      "titleInvalid": "Confirmation link invalid"
     },
     "memberProfile": {
       "about": {
@@ -1159,12 +1170,85 @@
     }
   },
   "common": {
-    "comingSoon": "Coming soon",
     "imageOptimize": {
       "intro": "Too heavy? Paste this into your favourite AI and attach the photo:",
       "prompt": "Compress this image so the file is under {maxSizeMb} MB. Keep it a PNG or JPEG, keep the original proportions, and keep it as sharp as you can — reduce the file size, not the visible quality. Send the result back as a downloadable file.",
       "copy": "Copy prompt",
       "copied": "Copied"
+    },
+    "notYetAvailable": {
+      "close": "Got it",
+      "emailPromise": "We'll email you as soon as it's live.",
+      "features": {
+        "aiSearch": {
+          "body": "Describe who you're looking for in plain words — \"a founder who scaled a marketplace in Europe\" — and the search will find the people who match, instead of making you guess at filters.",
+          "title": "Smart search is on the way"
+        },
+        "bookSession": {
+          "body": "You'll be able to pick a slot in this Mindsetter's calendar and book a 1:1 conversation — free or paid, their choice. The meeting link is created for you automatically.",
+          "title": "Booking is on the way"
+        },
+        "bookings": {
+          "body": "Every session you've booked or been booked for, in one place: upcoming, past, and the links to join them.",
+          "title": "Bookings are on the way"
+        },
+        "createEvent": {
+          "body": "Host your own event for the community — a masterclass, a roundtable, a closed session — and invite the people you want in the room.",
+          "title": "Events are on the way"
+        },
+        "earnings": {
+          "body": "What you've earned from sessions and events, what's on hold, and when it reaches your account.",
+          "title": "Earnings are on the way"
+        },
+        "events": {
+          "body": "Community events you can join — some open to every member, some invite-only.",
+          "title": "Events are on the way"
+        },
+        "exampleProfile": {
+          "title": "Example pages are on the way",
+          "body": "We'll show you a finished Mindsetter page here, so you can see what yours could look like before you fill anything in."
+        },
+        "exploreCommunity": {
+          "body": "Browse the whole community and filter it by industry, expertise and location, so you can find the people worth talking to rather than scrolling past everyone else.",
+          "title": "The community catalog is on the way"
+        },
+        "findEvent": {
+          "body": "Community events you can join — some open to every member, some invite-only.",
+          "title": "Events are on the way"
+        },
+        "findMindsetter": {
+          "body": "Tell us what you're working through, and we'll point you at the Mindsetters who've been there.",
+          "title": "Matching is on the way"
+        },
+        "interviews": {
+          "title": "Interviews are on the way",
+          "body": "The full archive of interviews with Mindsetters, in one place."
+        },
+        "inviteToEvent": {
+          "body": "Invite someone from the community to an event you're hosting — and see who accepted.",
+          "title": "Invites are on the way"
+        },
+        "learnMore": {
+          "title": "More about Mindsetter is on the way",
+          "body": "A full breakdown of what a Mindsetter can do — hosting events, running 1:1 sessions, and the expert page that comes with it."
+        },
+        "originals": {
+          "body": "Interviews and long-form conversations with the people in this community, made by Mindsetis.",
+          "title": "Mindsetis Originals is on the way"
+        },
+        "overview": {
+          "body": "Your dashboard at a glance: upcoming sessions, profile views, and what needs your attention.",
+          "title": "Overview is on the way"
+        },
+        "reviews": {
+          "title": "Reviews are on the way",
+          "body": "After a session you'll be able to leave a review, and read what others said before you book."
+        },
+        "shareProfile": {
+          "body": "Share this profile as a link, the way you'd share a personal website.",
+          "title": "Sharing is on the way"
+        }
+      }
     },
     "scrollToTop": "TO TOP"
   },
