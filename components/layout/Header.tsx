@@ -191,15 +191,21 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
               {/* Borderless text link beside the CTA, per Figma's desktop header. `ghost` is the
                   only variant with no fill or border of its own; the height matches the Join CTA
                   so the right-hand controls share one baseline.
-                  Desktop-only: at 390px the brand + switcher + this + a 147px "Apply to Join"
-                  overflowed the bar (measured: the group's right edge landed at 393px, giving the
-                  whole page horizontal scroll). The CTA is the one that has to survive there, so
-                  this hides below `lg` — phone visitors reach login through `/login` itself. */}
+                  Now shown at every width (2026-09-17): a guest on a phone previously had NO
+                  visible way back into their account — this was `hidden` below `lg` and neither
+                  `/join` nor `/sign-up` link to `/login`, so the only path in was typing the URL
+                  by hand. Fitting it back onto the 375-wide guest row (see the Join CTA's own
+                  comment below for the shared-gap math that made room) meant shrinking the type
+                  to `text-sm` below `lg`; `lg:text-base` restores the original 16px at desktop,
+                  where nothing else here changes. `size="sm"`'s own `h-[46px]` (unchanged, only
+                  overridden back to `h-14` at `lg` as before) already clears the 44px WCAG
+                  tap-target minimum, so no separate height override was needed for the tap zone
+                  despite `ghost` having no visible fill to hint its bounds. */}
               <Button
                 asChild
                 variant="ghost"
                 size="sm"
-                className="hidden px-0 lg:inline-flex lg:h-14"
+                className="px-0 text-sm lg:h-14 lg:text-base"
               >
                 <Link href="/login">{t('login')}</Link>
               </Button>
@@ -216,7 +222,18 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                   carries it into the wizard (`HeroEmailCta` → `/sign-up?email=…`), so sending
                   people straight to `/sign-up` skips the step this CTA is named after. `/join`
                   used to just be the home hero itself (`/`) before the real "Main Page" homepage
-                  (`MainPageSection`) took that slot over and the old hero moved to its own route. */}
+                  (`MainPageSection`) took that slot over and the old hero moved to its own route.
+
+                  Mobile label shortened to `nav.joinShort` ("Join"/"Unirse", 2026-09-17): restoring
+                  `Log in` to the row above meant the guest row went from 2 controls sharing one
+                  gap to 3 sharing two, and "Apply to Join" (147px) plus a real "Log in" no longer
+                  both fit — this label is the one asked to give up the width, not `Log in`
+                  (that's the one guests actually need on a phone; this CTA's `/join` destination
+                  is still reachable from the hero below the fold). `lg:` is untouched — `nav.join`
+                  ("Apply to Join") plus `JoinIcon` still render at the exact Figma-verified 199px
+                  frame; only the two spans below make the label breakpoint-conditional (CSS
+                  `hidden`/`display` toggles, not a second `t()` call keyed on width — there is no
+                  server-side width to key on). */}
               <Button
                 asChild
                 size="sm"
@@ -224,7 +241,8 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
               >
                 <Link href="/join">
                   <JoinIcon className="hidden lg:inline" />
-                  {t('join')}
+                  <span className="lg:hidden">{t('joinShort')}</span>
+                  <span className="hidden lg:inline">{t('join')}</span>
                 </Link>
               </Button>
             </>

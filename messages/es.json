@@ -15,7 +15,8 @@
     "editProfile": "Editar perfil",
     "exploreCommunity": "Explorar comunidad",
     "join": "Solicitar unirse",
-    "login": "Iniciar sesión",
+    "joinShort": "Unirse",
+    "login": "Entrar",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
     "upgrade": "Mejorar cuenta"
