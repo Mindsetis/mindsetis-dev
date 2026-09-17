@@ -179,7 +179,7 @@ completed items.
 - Skills: `new-migration`, `scaffold-feature`, `add-i18n-keys`, `stripe-flow`, `todo-jobs`.
 - Subagents: `supabase-expert`, `nextjs-frontend`, `figma-designer`, `browser-tester`,
   `security-auditor`, `stripe-payments`, `code-reviewer`, `qa`, `todo-jobs`, `git-manager`,
-  `docs-writer`.
+  `docs-writer`, `task-verifier`.
 - Review loop: after a builder subagent finishes a stage, run `code-reviewer` (correctness/
   conventions) + `security-auditor` (RLS/money/auth) + `qa` (build, migrations, live RLS
   negative tests, secret-leak). They report findings and hand work back for rework; only
@@ -190,6 +190,15 @@ completed items.
 - `docs-writer` creates/updates/reads documentation (`docs/`, `README.md`, `CLAUDE.md`
   upkeep) and keeps it in sync with the code and spec — it never documents behavior the code
   lacks, and never edits `ROADMAP.md` status (that's `todo-jobs`).
+- `task-verifier` is the acceptance gate for the Release-1 client-fix list
+  (`docs/release-1-tasks.md`). Run it on every finished task there: it verifies the build
+  against the client's requirement — reading the code AND driving it live in Chromium via the
+  `playwright` MCP (every state, 375-wide mobile, console/network) — and either hands the task
+  back with a numbered rework list or accepts it, ticking the checkbox and writing the record
+  (what changed / states exercised live / problems & questions / manual test steps) into
+  `docs/release-1-log.md`. It may not accept a UI task on code reading alone. Read-only on
+  source; it owns those two tracker files and nothing else. Commit only after the owner
+  confirms by hand.
 - `figma-designer` turns Figma designs into code via the `figma-mcp-go` MCP (plugin bridge to
   the open Figma Desktop file, **read-only**). It reads screens/tokens into Next.js/Tailwind/
   shadcn code — **design → code only**, it never creates or edits designs in Figma. Use it for
