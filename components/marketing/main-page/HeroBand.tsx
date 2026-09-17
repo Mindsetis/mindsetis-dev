@@ -3,7 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
 import { Button } from '@/components/ui/button';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
+import { resolveCtaState } from '@/lib/auth/cta-state';
 
 /**
  * Main Page hero band — Figma "Main Page" (`572:5427` desktop, confirmed via the file's own
@@ -114,10 +116,22 @@ import { Link } from '@/i18n/navigation';
  * "How it works" has no prototype destination in Figma (`get_reactions` returned empty) — routed
  * to an in-page anchor at the "What you actually get here" section below (`#how-it-works`),
  * which is the natural "here's how it works" landing spot on this page.
+ *
+ * PRIMARY BUTTON STATE (Release-1 A4, added 2026-09-17)
+ *   The primary CTA (was a bare `Link href="/join"`) now depends on the visitor's account state,
+ *   resolved once by `lib/auth/cta-state.ts` and mapped to (label, action) HERE — the hero's own
+ *   mapping differs from the header/`WhatIsMindsetis`'s: both signed-in Member states collapse to
+ *   the same "Explore Community" popup here (only the header distinguishes "Edit Profile" vs.
+ *   "Upgrade", since those are real navigations there), and a signed-in Mindsetter gets
+ *   "Create Event", also a popup. No `NotYetAvailable` icon variant carries the button's own icon
+ *   — `JoinIcon` stays `guest`-only per the task brief; the two popup states render with no icon,
+ *   matching every other `NotYetAvailable`-wrapped CTA in this file's precedent
+ *   (`TopMindsettersSection`, `WelcomeCtas`).
  */
 export async function HeroBand() {
   const t = await getTranslations('home.main.hero');
   const tNav = await getTranslations('nav');
+  const ctaState = await resolveCtaState();
 
   return (
     <section className="relative overflow-hidden">
@@ -143,12 +157,31 @@ export async function HeroBand() {
         </div>
 
         <div className="flex w-full max-w-md flex-col gap-4 md:w-auto md:flex-row">
-          <Button asChild size="default" className="w-full md:w-auto">
-            <Link href="/join">
-              <JoinIcon />
-              {tNav('join')}
-            </Link>
-          </Button>
+          {ctaState === 'guest' ? (
+            <Button asChild size="default" className="w-full md:w-auto">
+              <Link href="/join">
+                <JoinIcon />
+                {tNav('join')}
+              </Link>
+            </Button>
+          ) : null}
+
+          {ctaState === 'memberIncomplete' || ctaState === 'memberComplete' ? (
+            <NotYetAvailable feature="exploreCommunity" className="w-full md:w-auto">
+              <Button type="button" disabled size="default" className="w-full md:w-auto">
+                {tNav('exploreCommunity')}
+              </Button>
+            </NotYetAvailable>
+          ) : null}
+
+          {ctaState === 'mindsetter' ? (
+            <NotYetAvailable feature="createEvent" className="w-full md:w-auto">
+              <Button type="button" disabled size="default" className="w-full md:w-auto">
+                {tNav('createEvent')}
+              </Button>
+            </NotYetAvailable>
+          ) : null}
+
           <Button asChild variant="primaryOutline" size="default" className="w-full md:w-auto">
             <a href="#how-it-works">
               <QuestionFillIcon className="size-4" />

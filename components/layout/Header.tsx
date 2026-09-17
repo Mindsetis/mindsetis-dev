@@ -4,7 +4,9 @@ import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { AccountMenu } from '@/components/layout/AccountMenu';
 import { Button } from '@/components/ui/button';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
+import { ctaStateFromProfile } from '@/lib/auth/cta-state';
 import { getCurrentUser } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 
@@ -31,9 +33,10 @@ type HeaderProps = {
  * notification icons and a "Create event" CTA. None of those are built — their destinations don't
  * exist yet — so this stays brand + locale + account.
  *
- * The profile query runs only for a signed-in visitor, and only for the three columns the menu
- * needs. `getSessionContext()` would already return username/account_type, but not `avatar_url`,
- * and it isn't request-cached — so this is one query either way.
+ * The profile query runs only for a signed-in visitor, for the columns `AccountMenu` needs plus
+ * `onboarding_step` (added for the A4 beacon CTA below, see `lib/auth/cta-state.ts`).
+ * `getSessionContext()` would already return username/account_type, but not `avatar_url`, and
+ * it isn't request-cached — so this is one query either way.
  */
 export default async function Header({ variant = 'full' }: HeaderProps) {
   const t = await getTranslations('nav');
@@ -60,17 +63,26 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
     avatar_url: string | null;
     full_name: string | null;
     verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+    // Added for the A4 beacon CTA below — same row `AccountMenu` already needs, so this piggy-
+    // backs on that existing query instead of running a second one (see `lib/auth/cta-state.ts`'s
+    // doc comment, "WHY TWO EXPORTS").
+    onboarding_step: number | null;
   } | null = null;
 
   if (user) {
     const supabase = await createClient();
     const { data } = await supabase
       .from('profiles')
-      .select('username, account_type, avatar_url, full_name, verification_status')
+      .select('username, account_type, avatar_url, full_name, verification_status, onboarding_step')
       .eq('id', user.id)
       .maybeSingle();
     profile = data;
   }
+
+  // `guest` is unreachable here (falls through to the `user ? null : …` branch below instead) —
+  // this only ever resolves to one of the three signed-in states, all reusing the same
+  // `profile` row `AccountMenu` needs.
+  const ctaState = profile ? ctaStateFromProfile(true, profile) : null;
 
   return (
     <header className="sticky top-0 z-40 bg-card">
@@ -82,17 +94,96 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
           {t('brand')}
         </Link>
 
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-3 lg:gap-8">
           <LocaleSwitcher />
 
           {profile ? (
-            <AccountMenu
-              username={profile.username}
-              accountType={profile.account_type}
-              avatarUrl={profile.avatar_url}
-              displayName={profile.full_name?.trim() || profile.username}
-              isVerified={profile.verification_status === 'verified'}
-            />
+            // Nested `gap-4` at `lg` (not the outer row's own `gap-8`): unlike the guest row,
+            // which is Figma-verified at `gap-8`, there is no design frame for "avatar + beacon
+            // CTA" yet (A4 adds this pairing new), so this pair gets its own spacing instead of
+            // reusing the switcher↔avatar gap verbatim. Below `lg` it tightens further to `gap-2`
+            // — see the beacon Button's own comment for why (live-measured mobile-width fix,
+            // 2026-09-17).
+            <div className="flex items-center gap-2 lg:gap-4">
+              <AccountMenu
+                username={profile.username}
+                accountType={profile.account_type}
+                avatarUrl={profile.avatar_url}
+                displayName={profile.full_name?.trim() || profile.username}
+                isVerified={profile.verification_status === 'verified'}
+              />
+
+              {/* A4 "beacon" CTA — state from `lib/auth/cta-state.ts`, mapped to (label,
+                  destination) right here since the header's mapping is its own (the hero/
+                  "What is Mindsetis" map the same states to different copy — see that
+                  module's doc comment).
+                  No `JoinIcon` on any of these: the task is explicit the icon is
+                  `Apply to Join`-only. No fixed `lg:w-[199px]` either (unlike the guest Join
+                  CTA below, which is a real Figma frame and stays exactly as measured) —
+                  these three labels are shorter and don't need it, and forcing them into that
+                  width would add unused padding for no visual reason; hug-content instead.
+
+                  MOBILE FIT — live-measured in headless Chrome over CDP (mobile emulation, so
+                  no phantom scrollbar-gutter width — matches a real phone), 2026-09-17, all
+                  three signed-in states at both 375×667 and 390×844:
+                    - `size="sm"`'s stock `px-6`/`text-base` clipped `Create Event` (the longest
+                      label, ~132px needed) against the container — visible overflow, no way to
+                      scroll to see the rest.
+                    - With `px-3 text-sm` here plus the row's two gaps tightened (`gap-8`→`gap-3`
+                      on the switcher↔content split above, `gap-4`→`gap-2` on avatar↔CTA), the
+                      button's right edge lands EXACTLY at the container's padding edge with no
+                      overflow at all (`document.documentElement.scrollWidth === clientWidth` at
+                      both widths, for all three states) — e.g. `Create Event` measures 111.7px
+                      wide, right edge 359px at 375 / 374px at 390 (container right 375 / 390,
+                      i.e. the full 16px `px-4` clearance, not a px less); `Edit Profile` 98.5px;
+                      `Upgrade` 81.9px. Avatar (43px, right edge 252.5–284px across states) never
+                      touches the CTA — `gap-2`'s 8px always separates them. Text renders on one
+                      line, nothing truncated (`whiteSpace: nowrap`, confirmed via computed
+                      style), and the button stays 46px tall (`size="sm"`'s own height, untouched
+                      — ≥44px WCAG tap-target minimum). The same `gap-8`→`gap-3` split also fixed
+                      the guest Join CTA below, which was independently tight on the same row
+                      (147px wide "Apply to Join" now lands at the same exact 359/374px right
+                      edge — the Join button's own classes are untouched, only the shared gap).
+                  `lg:text-base` restores the original 16px type at desktop, where none of this
+                  applies (`lg:h-14 lg:px-5` unchanged, still Figma-exact — 1440 guest Join CTA
+                  re-measured at exactly 199px wide, right edge 1355px, zero overflow). */}
+              {ctaState === 'memberIncomplete' ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                >
+                  <Link href="/continue">{t('editProfile')}</Link>
+                </Button>
+              ) : null}
+
+              {ctaState === 'memberComplete' ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                >
+                  {/* `/mindsetter-onboarding/roles` — same destination as every other "Become a
+                      Mindsetter" entry point (`CabinetHeader.tsx`, `WelcomeCtas.tsx`,
+                      `WhoIsMindsetterDialog.tsx`); a confirmation modal is planned in front of
+                      it later (Release-1 C7), out of scope here. */}
+                  <Link href="/mindsetter-onboarding/roles">{t('upgrade')}</Link>
+                </Button>
+              ) : null}
+
+              {ctaState === 'mindsetter' ? (
+                <NotYetAvailable feature="createEvent">
+                  <Button
+                    type="button"
+                    disabled
+                    size="sm"
+                    className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                  >
+                    {t('createEvent')}
+                  </Button>
+                </NotYetAvailable>
+              ) : null}
+            </div>
           ) : null}
 
           {user ? null : (

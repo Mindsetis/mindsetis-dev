@@ -35,7 +35,12 @@ import { createClient } from '@/lib/supabase/server';
  *   3 → `/build-profile` saved, Member profile done   → the cabinet
  */
 const MEMBER_DETAILS_SAVED = 2;
-const MEMBER_COMPLETE = 3;
+/**
+ * Also the threshold `lib/auth/cta-state.ts` (Release-1 A4) uses to decide "Edit Profile" vs.
+ * "Upgrade" for the header/hero/"What is Mindsetis" beacon button — exported so that decision
+ * can't drift from this module's own definition of "the Member wizard is done".
+ */
+export const MEMBER_COMPLETE = 3;
 
 /**
  * `mindsetter_profiles.onboarding_step` → where to continue. The index IS the stored value:

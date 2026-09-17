@@ -3,7 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
 import { Button } from '@/components/ui/button';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
+import { resolveCtaState } from '@/lib/auth/cta-state';
 
 import { WhatIsMindsetisVideo } from './WhatIsMindsetisVideo';
 
@@ -79,10 +81,21 @@ import { WhatIsMindsetisVideo } from './WhatIsMindsetisVideo';
  *    (2026-08-31) with a real cross-section raster layer owned by `MainPageSection`, which wraps
  *    this component together with `ThreeWaysToStart` — see that file's own doc comment for the
  *    export/measurement details. This component no longer renders its own glow.
+ *
+ * BOTTOM BUTTON STATE (Release-1 A4, added 2026-09-17)
+ *   Same `lib/auth/cta-state.ts` state as the header — this section's mapping matches the
+ *   header's exactly (`Edit Profile` → `/continue`, `Upgrade` → `/mindsetter-onboarding/roles`,
+ *   `Create Event` → the `NotYetAvailable` popup), unlike the hero's, which collapses both
+ *   signed-in Member states into one "Explore Community" popup. The fixed `lg:w-[302px]` width
+ *   (measured off the Figma "Apply to Join" instance above) is kept for every state, not just
+ *   `guest`: all four labels are short enough to fit it comfortably (this button has no icon
+ *   competing for the space at any state, unlike the header's fixed 199px CTA), so there is no
+ *   hug-content case to make here.
  */
 export async function WhatIsMindsetis() {
   const t = await getTranslations('home.main.whatIsMindsetis');
   const tNav = await getTranslations('nav');
+  const ctaState = await resolveCtaState();
 
   return (
     <section id="how-it-works" className="relative overflow-hidden">
@@ -115,12 +128,49 @@ export async function WhatIsMindsetis() {
 
         <WhatIsMindsetisVideo watchLabel={t('watchLabel')} />
 
-        <Button asChild size="default" className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center">
-          <Link href="/join">
-            <JoinIcon />
-            {tNav('join')}
-          </Link>
-        </Button>
+        {ctaState === 'guest' ? (
+          <Button
+            asChild
+            size="default"
+            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
+          >
+            <Link href="/join">
+              <JoinIcon />
+              {tNav('join')}
+            </Link>
+          </Button>
+        ) : null}
+
+        {ctaState === 'memberIncomplete' ? (
+          <Button
+            asChild
+            size="default"
+            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
+          >
+            <Link href="/continue">{tNav('editProfile')}</Link>
+          </Button>
+        ) : null}
+
+        {ctaState === 'memberComplete' ? (
+          <Button
+            asChild
+            size="default"
+            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
+          >
+            <Link href="/mindsetter-onboarding/roles">{tNav('upgrade')}</Link>
+          </Button>
+        ) : null}
+
+        {ctaState === 'mindsetter' ? (
+          <NotYetAvailable
+            feature="createEvent"
+            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
+          >
+            <Button type="button" disabled size="default" className="w-full">
+              {tNav('createEvent')}
+            </Button>
+          </NotYetAvailable>
+        ) : null}
       </div>
     </section>
   );

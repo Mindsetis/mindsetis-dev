@@ -11,10 +11,14 @@
       "viewPublicProfile": "Ver perfil público"
     },
     "brand": "Mindsetis",
+    "createEvent": "Crear evento",
+    "editProfile": "Editar perfil",
+    "exploreCommunity": "Explorar comunidad",
     "join": "Solicitar unirse",
     "login": "Iniciar sesión",
     "signOut": "Cerrar sesión",
-    "signingOut": "Cerrando sesión…"
+    "signingOut": "Cerrando sesión…",
+    "upgrade": "Mejorar cuenta"
   },
   "footer": {
     "columns": {
