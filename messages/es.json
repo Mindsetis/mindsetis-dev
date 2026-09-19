@@ -116,58 +116,58 @@
     },
     "main": {
       "hero": {
-        "badge": "Business owners, founders & CEOs",
-        "badgeTag": "ONLY",
-        "title": "High-tier networking\n& collaborative learning",
-        "subtitle": "High-tier networking & collaborative learning",
-        "howItWorksCta": "How it works",
-        "avatarMapAlt": "Mindsetters and members from around the world"
+        "badge": "Dueños de negocios, fundadores y CEOs",
+        "badgeTag": "SOLO",
+        "title": "Networking de alto nivel\ny aprendizaje colaborativo",
+        "subtitle": "Networking de alto nivel y aprendizaje colaborativo",
+        "howItWorksCta": "Cómo funciona",
+        "avatarMapAlt": "Mindsetters y miembros de todo el mundo"
       },
       "whatIsMindsetis": {
-        "eyebrow": "WHAT IS MINDSETIS",
-        "title": "What you actually get here",
-        "subtitle": "Real access to founders who’ve been there — 1:1 or peer-to-peer, whenever you need it.",
-        "watchLabel": "Click for watching"
+        "eyebrow": "QUÉ ES MINDSETIS",
+        "title": "Lo que realmente obtienes aquí",
+        "subtitle": "Acceso real a fundadores que ya pasaron por ahí: 1:1 o peer-to-peer, cuando lo necesites.",
+        "watchLabel": "Haz clic para ver"
       },
       "threeWays": {
-        "title": "Three ways to start",
+        "title": "Tres formas de empezar",
         "cards": [
           {
-            "title": "Become a Mindsetter",
-            "description": "Share your experience through free or paid 1:1 sessions and peer-to-peer events"
+            "title": "Conviértete en Mindsetter",
+            "description": "Comparte tu experiencia con sesiones 1:1 gratuitas o de pago y eventos peer-to-peer"
           },
           {
-            "title": "Find a Mindsetter",
-            "description": "Book a 1:1 with someone whose experience fits your business and personal goals"
+            "title": "Encuentra un Mindsetter",
+            "description": "Reserva un 1:1 con alguien cuya experiencia encaje con tus objetivos de negocio y personales"
           },
           {
-            "title": "Join Mindsetis Events",
-            "description": "Peer-to-peer formats for meaningful conversations about what’s on your mind"
+            "title": "Únete a los eventos de Mindsetis",
+            "description": "Formatos peer-to-peer para conversaciones con sentido sobre lo que tienes en mente"
           }
         ]
       },
       "aiSearch": {
-        "eyebrow": "AI search",
-        "title": "What expertise is useful for you right now?",
-        "subtitle": "Find people with real experience in what you need\nand book a 1:1 — or find a peer-to-peer Mindsetis Event to talk it through.",
-        "placeholder": "Describe your request in one sentence...",
-        "placeholderMobile": "Describe your request...",
+        "eyebrow": "Búsqueda con IA",
+        "title": "¿Qué experiencia te resulta útil ahora mismo?",
+        "subtitle": "Encuentra personas con experiencia real en lo que necesitas\ny reserva un 1:1 — o busca un evento peer-to-peer de Mindsetis para conversarlo.",
+        "placeholder": "Describe tu solicitud en una frase...",
+        "placeholderMobile": "Describe tu solicitud...",
         "searchCta": "Buscar",
-        "popularLabel": "POPULAR SEARCHES",
+        "popularLabel": "BÚSQUEDAS POPULARES",
         "popularSearches": [
-          "Finding my first paying customers",
-          "Raising a seed round",
-          "Raising a seed round",
-          "Raising a seed round"
+          "Conseguir mis primeros clientes de pago",
+          "Levantar una ronda seed",
+          "Levantar una ronda seed",
+          "Levantar una ronda seed"
         ]
       },
       "topMindsetters": {
-        "eyebrow": "TOP MINDSETTERS",
-        "title": "The people you’ll actually talk to",
-        "viewAllCta": "Find your mindsetter",
-        "verifiedBadge": "Verified",
-        "prevCta": "Previous mindsetter",
-        "nextCta": "Next mindsetter",
+        "eyebrow": "MINDSETTERS DESTACADOS",
+        "title": "Las personas con las que realmente vas a hablar",
+        "viewAllCta": "Encuentra tu mindsetter",
+        "verifiedBadge": "Verificado",
+        "prevCta": "Mindsetter anterior",
+        "nextCta": "Siguiente mindsetter",
         "sample": {
           "name": "Anastasia Kondratska",
           "title": "CEO, TechFlow Agency, Event Industry",
@@ -176,73 +176,73 @@
         }
       },
       "events": {
-        "eyebrow": "MINDSETIS EVENTS",
-        "title": "Networking\nformats we offer",
-        "viewAllCta": "All events",
-        "joinWaitlistCta": "Join Waitlist",
-        "prevCta": "Previous event format",
-        "nextCta": "Next event format",
+        "eyebrow": "EVENTOS DE MINDSETIS",
+        "title": "Formatos de networking\nque ofrecemos",
+        "viewAllCta": "Todos los eventos",
+        "joinWaitlistCta": "Unirme a la lista de espera",
+        "prevCta": "Formato de evento anterior",
+        "nextCta": "Siguiente formato de evento",
         "cards": [
           {
             "name": "Mastermind",
-            "description": "Deep peer-to-peer case solving in closed, moderated groups of 4–8 pax. Experience sharing, not advice"
+            "description": "Resolución profunda de casos entre pares en grupos cerrados y moderados de 4–8 personas. Compartir experiencia, no dar consejos"
           },
           {
             "name": "Anakondra Tank",
-            "description": "Moderated conversations on life, business, and relationships. Guided inquiry and deep perspective sharing."
+            "description": "Conversaciones moderadas sobre la vida, los negocios y las relaciones. Preguntas guiadas y perspectivas en profundidad."
           },
           {
             "name": "Brain Lab",
-            "description": "Strategic peer review, business teardowns, and moderated brainstorming in a tight-knit founder circle."
+            "description": "Revisión estratégica entre pares, análisis de negocios y brainstorming moderado en un círculo cercano de fundadores."
           },
           {
             "name": "Chew & Chat",
-            "description": "Low-pressure online speed networking over lunch, coffee, or drinks. Casual group conversations with zero pitch stress."
+            "description": "Speed networking online sin presión durante un almuerzo, un café o unas copas. Conversaciones grupales informales, sin estrés por presentar tu pitch."
           },
           {
             "name": "Sensession",
-            "description": "Moderated conversations on life, business, and relationships. Guided inquiry and deep perspective sharing."
+            "description": "Conversaciones moderadas sobre la vida, los negocios y las relaciones. Preguntas guiadas y perspectivas en profundidad."
           }
         ]
       },
       "originals": {
         "eyebrow": "MINDSETIS ORIGINALS",
-        "title": "The people you’ll actually talk to",
-        "viewAllCta": "All videos",
-        "prevCta": "Previous original video",
-        "nextCta": "Next original video",
+        "title": "Las personas con las que realmente vas a hablar",
+        "viewAllCta": "Todos los videos",
+        "prevCta": "Video original anterior",
+        "nextCta": "Siguiente video original",
         "durationLabel": "32 min",
-        "watchCta": "Watch",
+        "watchCta": "Ver",
         "personName": "Anastasia \nKondratska",
-        "topics": ["#Finding my first paying customers", "#Raising a seed round"],
+        "topics": ["#Conseguir mis primeros clientes de pago", "#Levantar una ronda seed"],
         "cards": [
           {
             "eyebrow": "REALITY SHOW",
             "title": "MINDSETTERS - Building Reality \nfrom Within",
-            "description": "Mindsetters don't wait for the world to change. Watch the unscripted journey of transforming fears, expertise, and connections into a new business reality."
+            "description": "Los Mindsetters no esperan a que el mundo cambie. Mira el recorrido sin guion de transformar miedos, experiencia y contactos en una nueva realidad de negocio."
           },
           {
-            "eyebrow": "INTERVIEW",
+            "eyebrow": "ENTREVISTA",
             "title": "WTF: \nWho is The Founder",
-            "description": "No rehearsed pitches or corporate PR. We catch tech founders off-guard at WWEBSUMMIT to reveal who they actually are and what the hell they're building."
+            "description": "Sin pitches ensayados ni PR corporativo. Sorprendemos a fundadores tech en el WWEBSUMMIT para descubrir quiénes son de verdad y qué diablos están construyendo."
           },
           {
-            "eyebrow": "BREAKDOWN",
+            "eyebrow": "ANÁLISIS",
             "title": "BUILT NOT BORN | MasterClass — The De-Risking Playbook",
-            "description": "How a zero-idea startup signed Hollywood legends, hit a unit economics wall, and pivoted to B2B to survive."
+            "description": "Cómo una startup sin idea fichó a leyendas de Hollywood, chocó con un muro de unit economics y pivotó a B2B para sobrevivir."
           }
         ]
       },
       "ambassadors": {
-        "title": "Mindsetis Ambassadors",
-        "subtitle": "Our Ambassadors are active community leaders and the face of Mindsetis in their cities. They grow the local network, host meetups, and connect members in person.",
-        "applyCta": "Apply for Ambassadorship",
-        "prevCta": "Previous ambassador",
-        "nextCta": "Next ambassador",
+        "title": "Embajadores de Mindsetis",
+        "subtitle": "Nuestros Embajadores son líderes activos de la comunidad y la cara de Mindsetis en sus ciudades. Hacen crecer la red local, organizan meetups y conectan a los miembros en persona.",
+        "applyCta": "Postúlate como Embajador",
+        "prevCta": "Embajador anterior",
+        "nextCta": "Siguiente embajador",
         "tabs": [
           {
             "id": "all",
-            "label": "All"
+            "label": "Todos"
           },
           {
             "id": "usa",
@@ -250,7 +250,7 @@
           },
           {
             "id": "europe",
-            "label": "Europe"
+            "label": "Europa"
           },
           {
             "id": "latam",
@@ -258,7 +258,7 @@
           },
           {
             "id": "northAmerica",
-            "label": "North America"
+            "label": "Norteamérica"
           },
           {
             "id": "asia",
@@ -339,50 +339,50 @@
             "countryCode": "in"
           }
         ],
-        "badgeLabel": "Ambassador",
+        "badgeLabel": "Embajador",
         "application": {
-          "close": "Close",
+          "close": "Cerrar",
           "intro": {
-            "eyebrow": "MINDSETIS AMBASSADORS",
-            "title": "Apply to moderate events and represent Mindsetis in your city or worldwide.",
-            "subtitle": "Three quick questions — about 5 minutes. We'll follow up by email once we've reviewed your application.",
-            "cta": "Get started"
+            "eyebrow": "EMBAJADORES DE MINDSETIS",
+            "title": "Postúlate para moderar eventos y representar a Mindsetis en tu ciudad o en todo el mundo.",
+            "subtitle": "Tres preguntas rápidas — unos 5 minutos. Te escribiremos por email en cuanto revisemos tu solicitud.",
+            "cta": "Empezar"
           },
           "steps": [
             {
-              "stepLabel": "Step 2 of 5",
-              "eyebrow": "MODERATION & EVENT EXPERIENCE",
-              "question": "What experience do you have with organizing, hosting, or moderating events and group discussions?",
-              "placeholder": "Share any relevant details, from small meetups to large formats..."
+              "stepLabel": "Paso 2 de 5",
+              "eyebrow": "EXPERIENCIA EN MODERACIÓN Y EVENTOS",
+              "question": "¿Qué experiencia tienes organizando, presentando o moderando eventos y debates en grupo?",
+              "placeholder": "Comparte cualquier detalle relevante, desde meetups pequeños hasta grandes formatos..."
             },
             {
-              "stepLabel": "Step 3 of 5",
-              "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
-              "question": "Which business clubs or communities have you been a member of?",
-              "placeholder": "Tell us what you loved and what you'd improve..."
+              "stepLabel": "Paso 3 de 5",
+              "eyebrow": "EXPERIENCIA EN COMUNIDADES Y CLUBES DE NEGOCIOS",
+              "question": "¿De qué clubes de negocios o comunidades has sido miembro?",
+              "placeholder": "Cuéntanos qué te encantó y qué mejorarías..."
             },
             {
-              "stepLabel": "Step 4 of 5",
-              "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
-              "question": "What worked well there, and what would you do differently?",
-              "placeholder": "Tell us what you loved and what you'd improve..."
+              "stepLabel": "Paso 4 de 5",
+              "eyebrow": "EXPERIENCIA EN COMUNIDADES Y CLUBES DE NEGOCIOS",
+              "question": "¿Qué funcionó bien allí y qué harías diferente?",
+              "placeholder": "Cuéntanos qué te encantó y qué mejorarías..."
             },
             {
-              "stepLabel": "Step 5 of 5",
-              "eyebrow": "MOTIVATION & FORMATS",
-              "question": "Why do you want to become a Mindsetis Ambassador, and which formats (Brain Lab, Sensession, Chew & Chat, Mastermind) are you most excited to host?",
-              "placeholder": "Share your motivation and vision..."
+              "stepLabel": "Paso 5 de 5",
+              "eyebrow": "MOTIVACIÓN Y FORMATOS",
+              "question": "¿Por qué quieres ser Embajador de Mindsetis y qué formatos (Brain Lab, Sensession, Chew & Chat, Mastermind) te entusiasma más organizar?",
+              "placeholder": "Comparte tu motivación y tu visión..."
             }
           ],
-          "back": "Back",
-          "next": "Next",
-          "submit": "Submit application",
+          "back": "Atrás",
+          "next": "Siguiente",
+          "submit": "Enviar solicitud",
           "thanks": {
-            "stepLabel": "Step 5 of 5",
-            "eyebrow": "APPLICATION RECEIVED",
-            "title": "Thanks — we've got your application.",
-            "body": "We review every Ambassador application by hand and usually follow up within a few business days. We'll email you either way.",
-            "cta": "Back to homepage"
+            "stepLabel": "Paso 5 de 5",
+            "eyebrow": "SOLICITUD RECIBIDA",
+            "title": "Gracias, ya tenemos tu solicitud.",
+            "body": "Revisamos a mano cada solicitud de Embajador y solemos responder en unos días hábiles. Te escribiremos por email en cualquier caso.",
+            "cta": "Volver al inicio"
           }
         }
       },
@@ -390,28 +390,28 @@
         "title": "FAQ",
         "items": [
           {
-            "question": "Who can join Mindsetis?",
-            "answer": "Mindsetis is an exclusive network for business owners, founders, and C-level executives. We review every application to maintain a high-caliber community and ensure relevant exchange of experience"
+            "question": "¿Quién puede unirse a Mindsetis?",
+            "answer": "Mindsetis es una red exclusiva para dueños de negocios, fundadores y directivos C-level. Revisamos cada solicitud para mantener una comunidad de alto nivel y asegurar un intercambio de experiencia relevante"
           },
           {
-            "question": "How does the application and vetting process work?",
-            "answer": "After you click Apply to Join, our team reviews your professional background (LinkedIn, company profile) and schedules a brief intro call to confirm your eligibility."
+            "question": "¿Cómo funciona el proceso de solicitud y validación?",
+            "answer": "Cuando haces clic en «Solicitar unirse», nuestro equipo revisa tu trayectoria profesional (LinkedIn, perfil de empresa) y agenda una breve llamada de presentación para confirmar que cumples los requisitos."
           },
           {
-            "question": "What are the membership conditions and pricing?",
-            "answer": "Joining Mindsetis is completely free for the first year, including registration, profile creation, and using your personal page. Sessions and events can be either free or paid, as set individually by the hosts. Additionally, Mindsetis hosts a free weekly P2P networking event open to all community members."
+            "question": "¿Cuáles son las condiciones y los precios de la membresía?",
+            "answer": "Unirse a Mindsetis es completamente gratis durante el primer año, incluidos el registro, la creación del perfil y el uso de tu página personal. Las sesiones y los eventos pueden ser gratuitos o de pago, según lo defina cada anfitrión. Además, Mindsetis organiza cada semana un evento de networking P2P gratuito, abierto a todos los miembros de la comunidad."
           },
           {
-            "question": "How do 1-on-1 sessions with Mindsetters work?",
-            "answer": "Use our AI search bar or category filters to find a mentor with the exact experience you need, pick an available slot in their calendar, and book your session directly."
+            "question": "¿Cómo funcionan las sesiones 1:1 con los Mindsetters?",
+            "answer": "Usa nuestra búsqueda con IA o los filtros por categoría para encontrar a un mentor con la experiencia exacta que necesitas, elige un hueco disponible en su calendario y reserva tu sesión directamente."
           },
           {
-            "question": "Can I become a Mindsetter (mentor) on the platform?",
-            "answer": "Yes. If you are a proven founder or executive willing to share actionable insights, you can apply to become a Mindsetter through your profile settings."
+            "question": "¿Puedo convertirme en Mindsetter (mentor) en la plataforma?",
+            "answer": "Sí. Si eres un fundador o directivo con trayectoria demostrada y quieres compartir aprendizajes accionables, puedes postularte como Mindsetter desde los ajustes de tu perfil."
           },
           {
-            "question": "What types of events does Mindsetis host?",
-            "answer": "Our formats include focused Masterminds, interactive P2P sessions, informal Never Eat Alone & SENSESSION meetups, and we are planning much more activities with a platform growth."
+            "question": "¿Qué tipos de eventos organiza Mindsetis?",
+            "answer": "Nuestros formatos incluyen Masterminds enfocados, sesiones P2P interactivas, encuentros informales Never Eat Alone y SENSESSION, y planeamos muchas más actividades a medida que la plataforma crezca."
           }
         ]
       }
