@@ -25,7 +25,7 @@ export const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // matches the `avatars` b
 export const ACCEPTED_AVATAR_MIME_TYPES = ['image/png', 'image/jpeg'] as const;
 export const MAX_INTERESTS = 10;
 export const MAX_BIO_LENGTH = 300;
-export const MAX_ABOUT_LENGTH = 300;
+export const MAX_ABOUT_LENGTH = 1000;
 
 /**
  * `z.string().url()` accepts any scheme the WHATWG `URL` constructor parses, including

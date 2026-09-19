@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { MyWayForm } from '@/components/mindsetter-onboarding/MyWayForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 import type { MyWayStage } from '@/lib/validation/mindsetter';
@@ -10,6 +11,11 @@ import type { MyWayStage } from '@/lib/validation/mindsetter';
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.myWay');
+}
 
 /**
  * Cabinet → My Profile → "myWay" section editor. Reuses the onboarding wizard's own form in

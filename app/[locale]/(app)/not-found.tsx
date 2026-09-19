@@ -3,6 +3,16 @@ import { getTranslations } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 
+// No explicit `locale` param (unlike the `pageTitle()` helper other routes use): `not-found.tsx`
+// is a special file that historically wasn't guaranteed to receive route `params`, so this
+// leans on the same implicit-locale `getTranslations('notFound')` call the component below
+// already uses successfully — next-intl resolves the request's locale from the middleware-set
+// header regardless of call site, not from this file's own (nonexistent) `setRequestLocale`.
+export async function generateMetadata() {
+  const t = await getTranslations('notFound');
+  return { title: t('title') };
+}
+
 /**
  * Locale-aware 404 — the actual body rendered for any unmatched URL inside a known locale.
  * Two ways in: (1) a page inside `/[locale]/**` calling `notFound()` directly, or (2) the

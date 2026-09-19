@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { MemberProfileForm } from '@/components/member-profile/MemberProfileForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import type { InterestValue } from '@/lib/constants/interests';
 import { INTEREST_VALUES } from '@/lib/constants/interests';
@@ -30,6 +31,11 @@ type MemberProfilePageProps = {
 };
 
 const TOTAL_STEPS = 4;
+
+export async function generateMetadata({ params }: MemberProfilePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'memberProfile.title');
+}
 
 /**
  * Registration wizard step 3/4 — "Member profile" (Figma `71:452` mobile / `387:2142`

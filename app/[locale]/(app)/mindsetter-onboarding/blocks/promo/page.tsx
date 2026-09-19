@@ -4,6 +4,7 @@ import { PromoVideoBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { PromoForm } from '@/components/mindsetter-onboarding/PromoForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -16,6 +17,11 @@ type PromoBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: PromoBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.promo.title');
+}
 
 /**
  * Optional block "Promo video" (onboarding doc section 7, ROADMAP stage 1.9). Only reached if

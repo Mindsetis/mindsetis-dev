@@ -4,6 +4,7 @@ import { NumbersBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { NumbersForm } from '@/components/mindsetter-onboarding/NumbersForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -17,6 +18,11 @@ type NumbersBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: NumbersBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.numbers.title');
+}
 
 /**
  * Optional block "Numbers" (onboarding doc section 7, ROADMAP stage 1.9). Mirrors

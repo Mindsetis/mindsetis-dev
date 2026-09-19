@@ -1,10 +1,16 @@
 import { setRequestLocale } from 'next-intl/server';
 
 import { LegalPage } from '@/components/legal/LegalPage';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type TermsOfUsePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: TermsOfUsePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'legal.termsOfUse');
+}
 
 /**
  * Terms of Use — Figma "Terms of Use" (`1112:27066`, desktop only, no mobile frame in the

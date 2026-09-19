@@ -1,12 +1,18 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SignInForm } from '@/components/auth/SignInForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { isSafeRedirectPath } from '@/lib/validation/common';
 
 type LoginPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ redirectTo?: string }>;
 };
+
+export async function generateMetadata({ params }: LoginPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'signIn.title');
+}
 
 /**
  * Log in — Figma `679:8779` (desktop 1440) / `1056:8939` (mobile 375), page "Admin Panel".

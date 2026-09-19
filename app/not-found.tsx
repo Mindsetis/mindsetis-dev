@@ -1,8 +1,18 @@
 import '@/app/globals.css';
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+
+// `app/layout.tsx` (this file's own root layout) exports no `metadata` at all — the
+// "Mindsetis — %s" template lives in `app/[locale]/layout.tsx`, a completely different route
+// tree this file sits outside of (see the doc comment below) — so it does not apply here. The
+// brand has to be spelled out in full, or this last-resort page's tab would read the bare
+// "Page not found" with no "Mindsetis —" in front of it.
+export const metadata: Metadata = {
+  title: 'Mindsetis — Page not found',
+};
 
 /**
  * Global 404 fallback.

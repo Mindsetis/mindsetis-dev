@@ -10,6 +10,7 @@ import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
+import { FieldHint } from '@/components/ui/field-hint';
 import {
   Form,
   FormControl,
@@ -162,6 +163,7 @@ export function BuildProfileForm({
                   emptyLabel={t('buildProfile.industry.empty')}
                   invalid={!!form.formState.errors.industry}
                 />
+                <FieldHint>{t('buildProfile.industry.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}

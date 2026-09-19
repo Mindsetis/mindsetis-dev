@@ -2,6 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 
 import { AlreadyAppliedModal } from '@/components/auth/AlreadyAppliedModal';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getCurrentUser } from '@/lib/auth/guards';
 import { CABINET_PATH, resolveOnboardingRedirect } from '@/lib/auth/onboarding-redirect';
 
@@ -9,12 +10,22 @@ type JoinAppliedPageProps = {
   params: Promise<{ locale: string }>;
 };
 
+// Most visits to this route redirect away before rendering (see the doc comment below) and
+// never send this title to a browser tab at all — set only for the one branch that actually
+// renders the modal below. `metaTitle` (not `title`) deliberately: `title` now interpolates
+// `{email}`, which `pageTitle()` can't supply (per its own doc comment) — this is the same
+// "plain string next to the rich one" pattern used elsewhere for a `<title>` tag.
+export async function generateMetadata({ params }: JoinAppliedPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'alreadyApplied.metaTitle');
+}
+
 /**
  * `/join-applied` — the Release-1 A5 fallback for a signed-in visitor whose Member profile is
  * already complete and who opened `/join` (the "Apply to Join" marketing/email-capture funnel)
- * directly, most likely an old bookmark or a shared link. Shows a single dialog: "you've
- * already applied, you're signed in as [email]" with a way back into the app and a way to sign
- * out and apply again with a different address.
+ * directly, most likely an old bookmark or a shared link. Shows a single dialog with the
+ * client's own copy: "you've already applied and logged in as [email]", a way back into the
+ * existing profile, and a note that duplicate accounts get removed on review.
  *
  * REACHED ONLY VIA `/continue` — never linked to directly
  *   `middleware.ts` bounces a signed-in visitor off `/join` to `/continue?from=join`, and

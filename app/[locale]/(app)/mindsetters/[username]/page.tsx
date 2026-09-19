@@ -151,7 +151,8 @@ export async function generateMetadata({ params }: MindsetterProfilePageProps) {
   const { username } = await params;
   const data = await loadMindsetterProfile(username);
   if (!data) notFound();
-  return {};
+  const { full_name: fullName, last_name: lastName } = data.profile;
+  return { title: [fullName, lastName].filter(Boolean).join(' ') || `@${username}` };
 }
 
 /**

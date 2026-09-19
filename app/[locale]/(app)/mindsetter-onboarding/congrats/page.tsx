@@ -4,11 +4,19 @@ import { finalizeMindsetterOnboarding } from '@/app/[locale]/(app)/mindsetter-on
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { MindsetterCongratsCtas } from '@/components/mindsetter-onboarding/MindsetterCongratsCtas';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 
 type MindsetterCongratsPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+// `congrats.title` carries `<accent>` rich-text markup for the page's `t.rich` heading below, so
+// this points at `metaTitle` — the same heading as plain text — instead.
+export async function generateMetadata({ params }: MindsetterCongratsPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'congrats.metaTitle');
+}
 
 /**
  * One core step's route per `mindsetter_profiles.onboarding_step` value the caller could be

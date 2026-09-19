@@ -398,10 +398,11 @@ export function HeroForm({
                   <Textarea
                     className="min-h-[130px]"
                     maxLength={MAX_BIO_LENGTH}
-                    placeholder={t('memberProfile.bio.placeholder', { max: MAX_BIO_LENGTH })}
+                    placeholder={t('memberProfile.bio.placeholder')}
                     {...field}
                   />
                 </FormControl>
+                <FieldHint>{t('memberProfile.bio.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}
@@ -425,11 +426,12 @@ export function HeroForm({
                   <Textarea
                     className="min-h-[130px]"
                     maxLength={MAX_ABOUT_LENGTH}
-                    placeholder={t('memberProfile.about.placeholder', { max: MAX_ABOUT_LENGTH })}
+                    placeholder={t('memberProfile.about.placeholder')}
                     {...field}
                     value={field.value ?? ''}
                   />
                 </FormControl>
+                <FieldHint>{t('memberProfile.about.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}
@@ -519,6 +521,7 @@ export function HeroForm({
                   emptyLabel={t('buildProfile.industry.empty')}
                   invalid={!!form.formState.errors.industry}
                 />
+                <FieldHint>{t('buildProfile.industry.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}

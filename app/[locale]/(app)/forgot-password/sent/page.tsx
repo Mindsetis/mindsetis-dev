@@ -3,12 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { ResendResetLinkButton } from '@/components/auth/ResendResetLinkButton';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { emailSchema } from '@/lib/validation/common';
 
 type CheckEmailPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ email?: string }>;
 };
+
+export async function generateMetadata({ params }: CheckEmailPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'checkEmail.title');
+}
 
 /**
  * Check your email — Figma `680:8880` (desktop) / `1057:9013` (mobile). Reached from

@@ -3,12 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { BuildProfileForm } from '@/components/build-profile/BuildProfileForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 
 type BuildProfilePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: BuildProfilePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'buildProfile.title');
+}
 
 const TOTAL_STEPS = 4;
 

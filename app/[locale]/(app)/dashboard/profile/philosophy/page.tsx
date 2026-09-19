@@ -3,12 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { PhilosophyForm } from '@/components/mindsetter-onboarding/PhilosophyForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.philosophy');
+}
 
 /**
  * Cabinet → My Profile → "My Philosophy" section editor.

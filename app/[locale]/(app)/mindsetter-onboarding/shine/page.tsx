@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { computeProfileCompleteness } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
@@ -10,6 +11,11 @@ import { createClient } from '@/lib/supabase/server';
 type ShinePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: ShinePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'shine.title');
+}
 
 /**
  * Extended Mindsetter onboarding — step 4/5 "Make your profile shine."

@@ -10,6 +10,15 @@ type LinkExpiredPageProps = {
   searchParams: Promise<{ reason?: string }>;
 };
 
+// Mirrors the page component's own `isInvalid` branch below, so the tab title always matches
+// whichever of the two headings actually renders instead of defaulting to one of them.
+export async function generateMetadata({ params, searchParams }: LinkExpiredPageProps) {
+  const { locale } = await params;
+  const { reason } = await searchParams;
+  const t = await getTranslations({ locale, namespace: 'auth' });
+  return { title: reason === 'invalid' ? t('linkExpired.titleInvalid') : t('linkExpired.title') };
+}
+
 /**
  * `/link-expired` — the screen a dead confirmation link lands on.
  *

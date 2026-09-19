@@ -1,10 +1,16 @@
 import { setRequestLocale } from 'next-intl/server';
 
 import { LegalPage } from '@/components/legal/LegalPage';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type CookiesPolicyPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: CookiesPolicyPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'legal.cookiesPolicy');
+}
 
 /**
  * Cookies Policy — Figma "Cookies Policy" (`1112:27271`, desktop only, no mobile frame in the

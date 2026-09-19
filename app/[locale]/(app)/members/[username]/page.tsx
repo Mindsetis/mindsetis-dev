@@ -85,7 +85,9 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
-  return {};
+  return {
+    title: [profile.full_name, profile.last_name].filter(Boolean).join(' ') || `@${username}`,
+  };
 }
 
 /**

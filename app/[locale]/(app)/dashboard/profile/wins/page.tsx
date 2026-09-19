@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { WinsForm } from '@/components/mindsetter-onboarding/WinsForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 import type { Win } from '@/lib/validation/mindsetter';
@@ -10,6 +11,11 @@ import type { Win } from '@/lib/validation/mindsetter';
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.wins');
+}
 
 /**
  * Cabinet → My Profile → "wins" section editor. Reuses the onboarding wizard's own form in

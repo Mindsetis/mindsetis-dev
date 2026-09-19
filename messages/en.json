@@ -106,6 +106,7 @@
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
       "legal": "By signing up, you accept our <terms>Terms</terms> & <privacy>Privacy Policy</privacy>.",
+      "metaTitle": "Apply to Join",
       "or": "or",
       "seeFeatures": "See platform features",
       "subtitle": "Build your stand-out profile, run 1:1 sessions & join P2P events for real connections",
@@ -482,11 +483,12 @@
   },
   "auth": {
     "alreadyApplied": {
-      "body": "You already submitted your application and you're signed in as {email}. Head to your dashboard to pick up where you left off.",
-      "primaryCta": "Go to my dashboard",
-      "signOutCta": "Sign out",
-      "signingOut": "Signing out…",
-      "title": "You've already applied"
+      "duplicateNotice": "Do you want to create another profile? Mindsetis.com allows only one profile per individual. Duplicate accounts will be removed during review.",
+      "editProfile": "Edit Profile",
+      "editPrompt": "Want to continue or update your details? <link>Edit your existing details.</link>",
+      "metaTitle": "You've already applied",
+      "supportLine": "Have questions? Contact <link>support@mindsetis.com</link>.",
+      "title": "You've already applied and logged in as {email}"
     },
     "buildProfile": {
       "company": {
@@ -495,6 +497,7 @@
       },
       "industry": {
         "empty": "No industry found.",
+        "hint": "Your industry is not shown on your public profile — it's used to power search filters.",
         "label": "Industry",
         "placeholder": "Select an industry",
         "searchPlaceholder": "Search industries"
@@ -541,13 +544,15 @@
     },
     "memberProfile": {
       "about": {
-        "label": "About",
-        "placeholder": "Character limit: {max} characters"
+        "hint": "Optional. Displayed below your photo.",
+        "label": "More About You",
+        "placeholder": "Share your background, business philosophy, key projects, and what drives you (up to 1,000 characters)..."
       },
       "bio": {
         "charCount": "{count}/{max}",
-        "label": "BIO",
-        "placeholder": "Character limit: {max} characters"
+        "hint": "Displayed next to your photo in the public header.",
+        "label": "Short Bio",
+        "placeholder": "Briefly state your current role, primary expertise, and key achievement (up to 300 characters)..."
       },
       "city": {
         "label": "City",
@@ -625,7 +630,7 @@
       "continueWithLinkedin": "Continue with Linkedin",
       "fullName": "First name",
       "hidePassword": "Hide password",
-      "lastName": "Second name",
+      "lastName": "Last name",
       "passwordHints": {
         "length": "At least 8 characters",
         "letter": "At least 1 uppercase letter",
@@ -660,6 +665,7 @@
         "seeProfile": "See how looks my profile page"
       },
       "memberTitle": "<accent>Congratulations!</accent><br></br>You are now a member of the community.",
+      "metaTitle": "Application received",
       "mindsetterPitch": {
         "features": {
           "growth": {
@@ -993,6 +999,7 @@
         "inviteEvent": "Invite on Mindsetis event",
         "seeProfile": "See how looks my profile page"
       },
+      "metaTitle": "Congratulations!",
       "title": "<accent>Congratulations!</accent> You are now a Mindsetter of the community.",
       "video": {
         "caption": "Click for watching"
@@ -1182,6 +1189,7 @@
     }
   },
   "common": {
+    "closeDialog": "Close",
     "imageOptimize": {
       "intro": "Too heavy? Paste this into your favourite AI and attach the photo:",
       "prompt": "Compress this image so the file is under {maxSizeMb} MB. Keep it a PNG or JPEG, keep the original proportions, and keep it as sharp as you can — reduce the file size, not the visible quality. Send the result back as a downloadable file.",
@@ -1472,12 +1480,12 @@
     }
   },
   "validation": {
-    "aboutMax": "About must be at most {max} characters.",
+    "aboutMax": "More About You must be at most {max} characters.",
     "authorMax": "Author must be at most {max} characters.",
     "availabilityRequired": "Add availability for at least one day.",
     "avatarRequired": "Profile photo is required.",
-    "bioMax": "Bio must be at most {max} characters.",
-    "bioRequired": "Bio is required.",
+    "bioMax": "Short Bio must be at most {max} characters.",
+    "bioRequired": "Short Bio is required.",
     "cityRequired": "Select your city from the list.",
     "companyMax": "Company must be at most {max} characters.",
     "companyRequired": "Company is required.",
@@ -1501,7 +1509,7 @@
     "labelMax": "Label must be at most {max} characters.",
     "labelRequired": "Label is required.",
     "languagesRequired": "Select at least one language.",
-    "lastNameRequired": "Second name is required.",
+    "lastNameRequired": "Last name is required.",
     "latinOnly": "Use Latin characters only.",
     "linksMax": "You can add up to {max} links.",
     "nameMax": "Name is too long.",

@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { HeroForm } from '@/components/dashboard/HeroForm';
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import type { IndustryValue } from '@/lib/constants/industries';
 import { INDUSTRY_VALUES } from '@/lib/constants/industries';
 import type { InterestValue } from '@/lib/constants/interests';
@@ -15,6 +16,11 @@ import { createClient } from '@/lib/supabase/server';
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.hero');
+}
 
 /**
  * Cabinet → My Profile → "Hero" section editor (Figma `613:4445`). Available to Members and

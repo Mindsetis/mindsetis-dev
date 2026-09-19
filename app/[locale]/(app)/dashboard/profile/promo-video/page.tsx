@@ -3,12 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { PromoForm } from '@/components/mindsetter-onboarding/PromoForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.promoVideo');
+}
 
 /**
  * Cabinet → My Profile → "promoVideo" section editor. Reuses the onboarding wizard's own form in

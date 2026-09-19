@@ -4,6 +4,7 @@ import { VideoBlogBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { VideoBlogForm } from '@/components/mindsetter-onboarding/VideoBlogForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -16,6 +17,11 @@ type VideoBlogBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: VideoBlogBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.videoBlog.title');
+}
 
 /**
  * Optional block "Video blog" (un-deferred from Phase 2 back into MVP scope, migration

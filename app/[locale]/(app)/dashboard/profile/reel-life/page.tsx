@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { ReelLifeForm } from '@/components/mindsetter-onboarding/ReelLifeForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 import { MAX_REEL_LIFE_PHOTOS, MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
@@ -10,6 +11,11 @@ import { MAX_REEL_LIFE_PHOTOS, MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/val
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.reelLife');
+}
 
 /** Matches the onboarding block's own TTL — a fresh batch is minted on every page load. */
 const REEL_LIFE_SIGNED_URL_TTL_SECONDS = 60 * 60;

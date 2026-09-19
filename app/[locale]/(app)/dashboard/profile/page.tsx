@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { ProfileSectionCard } from '@/components/dashboard/ProfileSectionCard';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile, type SectionSummary } from '@/lib/profile/cabinet';
 import type { ProfileSection } from '@/lib/profile/completeness';
 import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
@@ -9,6 +10,11 @@ import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
 type DashboardProfilePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: DashboardProfilePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile');
+}
 
 /**
  * Cabinet → "My Profile": the list of editable sections (Figma `610:4227` Mindsetter, twelve

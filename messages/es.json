@@ -106,6 +106,7 @@
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
       "legal": "Al registrarte, aceptas nuestros <terms>Términos</terms> y <privacy>Política de Privacidad</privacy>.",
+      "metaTitle": "Solicitar unirse",
       "or": "o",
       "seeFeatures": "Ver funciones de la plataforma",
       "subtitle": "Crea tu perfil destacado, organiza sesiones 1:1 y únete a eventos P2P para conexiones reales",
@@ -151,7 +152,7 @@
         "subtitle": "Find people with real experience in what you need\nand book a 1:1 — or find a peer-to-peer Mindsetis Event to talk it through.",
         "placeholder": "Describe your request in one sentence...",
         "placeholderMobile": "Describe your request...",
-        "searchCta": "Search",
+        "searchCta": "Buscar",
         "popularLabel": "POPULAR SEARCHES",
         "popularSearches": [
           "Finding my first paying customers",
@@ -482,11 +483,12 @@
   },
   "auth": {
     "alreadyApplied": {
-      "body": "Ya enviaste tu solicitud y has iniciado sesión como {email}. Ve a tu panel para continuar donde lo dejaste.",
-      "primaryCta": "Ir a mi panel",
-      "signOutCta": "Cerrar sesión",
-      "signingOut": "Cerrando sesión…",
-      "title": "Ya has enviado tu solicitud"
+      "duplicateNotice": "¿Quieres crear otro perfil? Mindsetis.com permite solo un perfil por persona. Las cuentas duplicadas se eliminarán durante la revisión.",
+      "editProfile": "Editar perfil",
+      "editPrompt": "¿Quieres continuar o actualizar tus datos? <link>Edita tus datos existentes.</link>",
+      "metaTitle": "Ya has enviado tu solicitud",
+      "supportLine": "¿Tienes preguntas? Contacta a <link>support@mindsetis.com</link>.",
+      "title": "Ya has enviado tu solicitud e iniciaste sesión como {email}"
     },
     "buildProfile": {
       "company": {
@@ -495,6 +497,7 @@
       },
       "industry": {
         "empty": "No se encontró ninguna industria.",
+        "hint": "Tu industria no se muestra en tu perfil público; se usa para los filtros de búsqueda.",
         "label": "Industria",
         "placeholder": "Selecciona una industria",
         "searchPlaceholder": "Buscar industrias"
@@ -541,13 +544,15 @@
     },
     "memberProfile": {
       "about": {
-        "label": "Acerca de mí",
-        "placeholder": "Límite de caracteres: {max} caracteres"
+        "hint": "Opcional. Se muestra debajo de tu foto.",
+        "label": "Más sobre ti",
+        "placeholder": "Cuéntanos tu trayectoria, tu filosofía de negocio, tus proyectos clave y qué te motiva (hasta 1000 caracteres)..."
       },
       "bio": {
         "charCount": "{count}/{max}",
-        "label": "BIO",
-        "placeholder": "Límite de caracteres: {max} caracteres"
+        "hint": "Se muestra junto a tu foto en el encabezado público.",
+        "label": "Biografía breve",
+        "placeholder": "Indica brevemente tu rol actual, tu especialidad principal y un logro destacado (hasta 300 caracteres)..."
       },
       "city": {
         "label": "Ciudad",
@@ -660,6 +665,7 @@
         "seeProfile": "Ver cómo se ve mi página de perfil"
       },
       "memberTitle": "<accent>¡Felicidades!</accent><br></br>Ya eres miembro de la comunidad.",
+      "metaTitle": "Solicitud recibida",
       "mindsetterPitch": {
         "features": {
           "growth": {
@@ -993,6 +999,7 @@
         "inviteEvent": "Invitar a un evento de Mindsetis",
         "seeProfile": "Ver cómo se ve mi página de perfil"
       },
+      "metaTitle": "¡Felicidades!",
       "title": "<accent>¡Felicidades!</accent> Ahora eres un Mindsetter de la comunidad.",
       "video": {
         "caption": "Haz clic para ver"
@@ -1182,6 +1189,7 @@
     }
   },
   "common": {
+    "closeDialog": "Cerrar",
     "imageOptimize": {
       "intro": "¿Demasiado pesada? Pega esto en tu IA favorita y adjunta la foto:",
       "prompt": "Comprime esta imagen para que el archivo pese menos de {maxSizeMb} MB. Mantenla en PNG o JPEG, conserva las proporciones originales y la mayor nitidez posible — reduce el tamaño del archivo, no la calidad visible. Devuélveme el resultado como archivo descargable.",
@@ -1472,12 +1480,12 @@
     }
   },
   "validation": {
-    "aboutMax": "La sección «Sobre mí» no puede superar los {max} caracteres.",
+    "aboutMax": "«Más sobre ti» no puede superar los {max} caracteres.",
     "authorMax": "El autor no puede superar los {max} caracteres.",
     "availabilityRequired": "Indica tu disponibilidad para al menos un día.",
     "avatarRequired": "La foto de perfil es obligatoria.",
-    "bioMax": "La biografía no puede superar los {max} caracteres.",
-    "bioRequired": "La biografía es obligatoria.",
+    "bioMax": "La biografía breve no puede superar los {max} caracteres.",
+    "bioRequired": "La biografía breve es obligatoria.",
     "cityRequired": "Selecciona tu ciudad de la lista.",
     "companyMax": "La empresa no puede superar los {max} caracteres.",
     "companyRequired": "La empresa es obligatoria.",
@@ -1571,8 +1579,8 @@
     },
     "eyebrow": "LEGAL",
     "privacyPolicy": {
-      "title": "Privacy Policy",
-      "lastUpdated": "Last updated 13 August 2026 · FOP Kondratska",
+      "title": "Política de Privacidad",
+      "lastUpdated": "Última actualización: 13 de agosto de 2026 · FOP Kondratska",
       "intro": [
         "This Privacy Policy explains how Mindsetis collects, uses, shares, and protects your personal data when you use our website, mobile applications, and related services (collectively, the \"Platform\")."
       ],
@@ -1756,8 +1764,8 @@
       }
     },
     "termsOfUse": {
-      "title": "Terms of Use",
-      "lastUpdated": "Last updated August 14, 2026 · Sole Proprietor (FOP) Kondratska",
+      "title": "Términos de Uso",
+      "lastUpdated": "Última actualización: 14 de agosto de 2026 · Empresaria individual (FOP) Kondratska",
       "intro": [
         "Welcome to Mindsetis! These Terms of Service (\"Terms\") govern your access to and use of the website, applications, and services provided by Mindsetis (collectively, the \"Platform\").",
         "Please read these Terms carefully. By clicking \"Continue\", registering, or submitting an application to join Mindsetis, you agree to be bound by these Terms. If you do not agree, you must not access or use the Platform."
@@ -1899,8 +1907,8 @@
       }
     },
     "cookiesPolicy": {
-      "title": "Cookies Policy",
-      "lastUpdated": "Last updated 12 August 2026 · Mindsetis OÜ",
+      "title": "Política de Cookies",
+      "lastUpdated": "Última actualización: 12 de agosto de 2026 · Mindsetis OÜ",
       "intro": [
         "This policy explains what cookies Mindsetis uses, what each of them does, and how you can change your choice at any time."
       ],

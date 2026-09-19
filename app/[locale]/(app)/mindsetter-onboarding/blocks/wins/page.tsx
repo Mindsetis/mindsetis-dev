@@ -4,6 +4,7 @@ import { MyWinsBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { WinsForm } from '@/components/mindsetter-onboarding/WinsForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -17,6 +18,11 @@ type WinsBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: WinsBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.wins.title');
+}
 
 /**
  * Optional block "My Wins" (onboarding doc section 7, ROADMAP stage 1.9). Mirrors
