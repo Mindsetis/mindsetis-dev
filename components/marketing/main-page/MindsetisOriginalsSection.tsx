@@ -320,7 +320,15 @@ export async function MindsetisOriginalsSection() {
                   isLast && 'mr-4 sm:mr-6 lg:mr-[max(70px,calc((100%_-_1440px)/2_+_70px))]',
                 )}
               >
-                <div className="relative h-[180px] w-full shrink-0 bg-card md:h-full md:w-[309px]">
+                {/* Mobile photo box is 260px tall, NOT the 180px Figma's mobile card specifies
+                    (owner's call, 2026-09-20). The asset is a 618×700 portrait; a 320×180 box has
+                    to hide half of it vertically — `object-top` (see the MOBILE PHOTO CROP note
+                    above) saves the faces, but everything below the collarbone still goes. At
+                    260px the same crop keeps ~72% of the frame (people read down to the waist)
+                    without turning the card into half a phone screen; 362px would show the photo
+                    whole, which was too tall to be worth it. Desktop is untouched — there the box
+                    matches the asset exactly and nothing is cropped at all. */}
+                <div className="relative h-[260px] w-full shrink-0 bg-card md:h-full md:w-[309px]">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element -- local static asset
                     <img
