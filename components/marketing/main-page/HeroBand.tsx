@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import type { CSSProperties } from 'react';
 
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
@@ -6,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 import { resolveCtaState } from '@/lib/auth/cta-state';
+import {
+  getHeroMapPulseStyle,
+  HERO_MAP_AVATARS,
+  HERO_MAP_MOBILE_AVATARS,
+} from '@/lib/marketing/hero-map-avatars';
+import { cn } from '@/lib/utils';
 
 /**
  * Main Page hero band — Figma "Main Page" (`572:5427` desktop, confirmed via the file's own
@@ -104,14 +111,100 @@ import { resolveCtaState } from '@/lib/auth/cta-state';
  * orientations) were already correct and are unchanged.
  *
  * The world map + avatar-pin illustration (Figma "map-base 1", `838:11152`, ~3,300 vector nodes)
- * is exported as a single flattened image (`public/images/main-page-avatar-map.png`) rather than
- * rebuilt node-by-node — standard practice for a complex illustration asset, not an
- * approximation of the design itself (pixel-identical to the Figma source, alpha background so
- * it sits on the page's own black background without a seam). The soft blue glow visible UNDER
- * the map on the full page screenshot is NOT part of this asset or this section — it's
- * `WhatIsMindsetis`'s own background glow (Figma `bg` frame `1189:6270`, already reproduced in
- * that component, see its own doc comment) bleeding upward from the next section; nothing to
- * add here.
+ * is exported as flattened images rather than rebuilt node-by-node — standard practice for a
+ * complex illustration asset, not an approximation of the design itself (pixel-identical to the
+ * Figma source, alpha background so it sits on the page's own black background without a seam).
+ * The soft blue glow visible UNDER the map on the full page screenshot is NOT part of this asset
+ * or this section — it's `WhatIsMindsetis`'s own background glow (Figma `bg` frame `1189:6270`,
+ * already reproduced in that component, see its own doc comment) bleeding upward from the next
+ * section; nothing to add here.
+ *
+ * MAP AS LAYERS (Release-1 H1, added 2026-09-20)
+ *   Originally one flattened `public/images/main-page-avatar-map.png` (dots + all 25 avatars +
+ *   glow baked in, 1.36MB). Re-exported from Figma as a dot-only base
+ *   (`public/images/hero-map/base.webp`, no avatars) plus 25 individual avatar files
+ *   (`avatar-01.webp` … `avatar-25.webp`, each with its OWN baked-in glow halo already applied —
+ *   only the animated pulse in `motion.css` is layered on top of that at runtime), composited
+ *   here as absolutely-positioned layers sized/placed from `lib/marketing/hero-map-avatars.ts`.
+ *   Reasons: (1) unblocks the H2 pulse demo below, which needs individually-addressable avatar
+ *   elements; (2) WebP beats the old flattened PNG on total weight (~691KB for the full 26-file
+ *   set vs. 1.36MB) despite being 26 requests instead of one — plain `<img>`, no `next/image` or
+ *   `<picture>` fallback, per this file's existing precedent and because WebP is universally
+ *   supported in current browsers.
+ *
+ *   Sizing: `left`/`top` in the data are the CENTER of each avatar as a % of the map's own
+ *   width/height (matching Figma's node position, converted from px), applied via inline
+ *   `style` + `translate(-50%, -50%)` on a wrapper `<span>` (percentage `left`/`top` need a
+ *   sized/positioned ancestor to resolve against — the map wrapper div below, not the page).
+ *   `width` is the EXPORTED FILE's width (photo + halo), not the visible photo diameter: Figma's
+ *   halo blur radius is a fixed px value that doesn't shrink with the avatar, so sizing off the
+ *   photo alone would make small avatars' halos disproportionately thick. The sizing/shift
+ *   classes that used to sit directly on the `<img>` (mobile `w-[258%] -translate-x-[37%]`,
+ *   desktop `md:w-full md:max-w-[1440px]`) now sit on this same map wrapper div instead — the
+ *   base image and every avatar are percentage-positioned inside it, so the whole layered
+ *   composition scales/shifts together exactly as the single flattened image used to.
+ *
+ *   `alt` stays a single string describing the whole map (`avatarMapAlt`), placed on the base
+ *   layer only; all 25 avatar `<img>`s are `alt=""` + `aria-hidden` — they're decorative
+ *   repetitions of content the base layer's alt text already covers, so a screen reader isn't
+ *   forced to hear 25 empty images.
+ *
+ *   `public/images/main-page-avatar-map.png` is intentionally NOT deleted yet — kept until this
+ *   is accepted, in case of a revert.
+ *
+ * MOBILE AVATAR SET (Release-1 H4, added 2026-09-20)
+ *   The 25-avatar layer above is desktop/tablet content: at 375-ish mobile widths Figma
+ *   (`1490:21781` "map-base 2") hand-places a DIFFERENT set of 9 avatars
+ *   (`HERO_MAP_MOBILE_AVATARS`), each its own export (`avatar-m-01.webp` … `avatar-m-09.webp`,
+ *   own baked-in halo, not a resize of the desktop file for the same person). Two structural
+ *   differences from the desktop layer, both explained in full in
+ *   `hero-map-avatars.ts`'s doc comment on `HERO_MAP_MOBILE_AVATARS`:
+ *
+ *   1. COORDINATE SPACE. Desktop avatars are positioned as % of the MAP element, because on
+ *      desktop they travel with it. Mobile avatars are positioned as % of the 375×314 VISIBLE
+ *      FRAME instead — Figma places them against what's on screen, not against the map, which on
+ *      mobile is scaled to 258%/-37% and mostly clipped by the outer `overflow-hidden`. Reusing
+ *      the desktop convention (% of the map element) for these 9 would drag them along with that
+ *      258%/-37% transform and land them off their Figma spot. So they render in a SEPARATE
+ *      overlay `<div>`, a sibling of the map element rather than a child of it, sized with
+ *      `aspect-[375/314]` at the outer (untransformed, viewport-width) wrapper's own width — that
+ *      reproduces the 375×314 frame's proportions at whatever the real mobile width is, so the
+ *      recorded percentages resolve correctly even when the viewport isn't exactly 375px.
+ *   2. WHICH SET LOADS. Only one of the two 9-vs-25 sets should ever hit the network for a given
+ *      visitor — nobody needs a client-side width check for this (this is a server component;
+ *      `useEffect`/`matchMedia` would mean either an added `"use client"` boundary or content that
+ *      flashes in after hydration). Both sets stay in server-rendered markup, gated purely by
+ *      CSS + a native browser behavior: `hidden` (display:none) on the layer's own wrapper for
+ *      the breakpoint it's NOT needed at, and `loading="lazy"` on every avatar `<img>` in both
+ *      sets. A `display:none` element and everything inside it generates no render-tree box, and
+ *      an image with no box is never "near the viewport" by the lazy-loading algorithm's own
+ *      geometry check — so it's deferred indefinitely rather than fetched and then hidden. This
+ *      was chosen over `<picture>`/`<source media>` because that element swaps sources for ONE
+ *      image; it has no way to express "render these 9 *different* elements instead of those 25
+ *      *different* elements". `loading="lazy"` is also applied to both sets uniformly (not just
+ *      the hidden one) rather than only the excluded set, so the same mechanism handles a resize
+ *      across the breakpoint gracefully — the previously-hidden set starts fetching normally the
+ *      moment its wrapper becomes visible, instead of never loading at all.
+ *
+ *   Both sets share the SAME pulse system as the desktop-only version below (`getHeroMapPulseStyle`,
+ *   `hero-map-avatar-pulse-scale` / `hero-map-avatar-glow`) — `HERO_MAP_PULSE_AVATAR_IDS` in
+ *   `hero-map-avatars.ts` includes all 34 ids now, mobile and desktop alike, and
+ *   `prefers-reduced-motion: reduce` disables it the same way for both (see `motion.css`).
+ *
+ * HERO MAP AVATAR PULSE (Release-1 H2 demo → H3 full rollout, 2026-09-20)
+ *   H2 shipped a 3-avatar demo for the client to sanity-check that a soft pulse reads as
+ *   intentional rather than broken. H3 takes it to all 25 avatars, per the client's explicit
+ *   ask for a chaotic, grouped effect rather than a uniform wave or an all-at-once flash — the
+ *   grouping/jitter model and its rationale live in `lib/marketing/hero-map-avatars.ts`
+ *   (`HERO_MAP_PULSE_GROUPS` doc comment); `getHeroMapPulseStyle` turns an avatar id into
+ *   `--pulse-delay`/`--pulse-duration` CSS custom properties, set once on the wrapper `<span>`
+ *   below and read by both the avatar `<img>`'s scale animation and its glow sibling's opacity
+ *   animation (`hero-map-avatar-pulse-scale` / `hero-map-avatar-glow` in `motion.css` — see
+ *   that file's doc comment for why the glow is a separate opacity-only layer rather than an
+ *   animated `filter: drop-shadow` on the photo itself: repaint cost across 25 avatars vs. a
+ *   compositor-only opacity fade). No client component needed: it's pure CSS `@keyframes`
+ *   driven by inline custom properties, and `prefers-reduced-motion: reduce` is handled inside
+ *   those same utilities (falls back to the avatar's static baked-in halo).
  *
  * "How it works" has no prototype destination in Figma (`get_reactions` returned empty) — routed
  * to an in-page anchor at the "What you actually get here" section below (`#how-it-works`),
@@ -192,12 +285,111 @@ export async function HeroBand() {
       </div>
 
       <div className="relative z-0 mt-8 w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, plain <img> matches the rest of the codebase's precedent for non-optimized local marketing art */}
-        <img
-          src="/images/main-page-avatar-map.png"
-          alt={t('avatarMapAlt')}
-          className="h-auto w-[258%] max-w-none -translate-x-[37%] md:mx-auto md:w-full md:max-w-[1440px] md:translate-x-0"
-        />
+        <div className="relative h-auto w-[258%] max-w-none -translate-x-[37%] md:mx-auto md:w-full md:max-w-[1440px] md:translate-x-0">
+          {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, plain <img> matches the rest of the codebase's precedent for non-optimized local marketing art */}
+          <img src="/images/hero-map/base.webp" alt={t('avatarMapAlt')} className="h-auto w-full" />
+
+          {/* Desktop avatar layer (25, `HERO_MAP_AVATARS`) — `hidden` below `md`, `contents` (no
+              box of its own) at `md`+ so its children keep positioning against THIS map element
+              exactly as before this wrapper existed. `display: none` removes the whole subtree
+              from the render tree, and each `<img>` below carries `loading="lazy"`: a hidden,
+              boxless image is never "near the viewport", so browsers defer its fetch indefinitely
+              — mobile visitors never download these 25 files. See the mobile overlay `<div>`
+              below for the converse (desktop-exclusion) case and the file-level "MOBILE AVATAR
+              SET" doc comment above for why this beats `<picture>`/a client-side width check. */}
+          <div className="hidden md:contents">
+            {HERO_MAP_AVATARS.map((avatar) => {
+              const pulseStyle = getHeroMapPulseStyle(avatar.id);
+
+              return (
+                <span
+                  key={avatar.id}
+                  className="absolute"
+                  // Cast: `--pulse-delay`/`--pulse-duration` are legal inline-style custom
+                  // properties but aren't part of React's typed `CSSProperties` surface — same
+                  // escape hatch as `ScrollToTopButton`'s `--cookie-banner-offset`.
+                  style={
+                    {
+                      left: `${avatar.left}%`,
+                      top: `${avatar.top}%`,
+                      width: `${avatar.width}%`,
+                      transform: 'translate(-50%, -50%)',
+                      ...pulseStyle,
+                    } as CSSProperties
+                  }
+                >
+                  {/* Decorative glow layer, BEFORE the photo in the DOM on purpose: an
+                      absolutely-positioned sibling paints above a `position: static` element
+                      regardless of DOM order, so the `<img>` below needs (and gets) its own
+                      `relative` to end up on top of this. */}
+                  {pulseStyle ? <span aria-hidden="true" className="hero-map-avatar-glow" /> : null}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, see base layer above */}
+                  <img
+                    src={`/images/hero-map/${avatar.id}.webp`}
+                    alt=""
+                    aria-hidden="true"
+                    // Decorative pins: `lazy` doubles as the mobile-exclusion mechanism (see the
+                    // wrapper comment above); `async` decoding keeps them off the main thread so
+                    // they don't compete with the base layer, this section's largest paint.
+                    loading="lazy"
+                    decoding="async"
+                    className={cn(
+                      'relative block h-auto w-full',
+                      pulseStyle && 'hero-map-avatar-pulse-scale',
+                    )}
+                  />
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mobile avatar layer (9, `HERO_MAP_MOBILE_AVATARS`) — a SEPARATE overlay, not nested
+            inside the map element above. Figma positions these 9 against the 375×314 visible
+            frame, not against the map image (which is scaled to 258% and shifted -37% on
+            mobile, see the div above) — see `hero-map-avatars.ts`'s doc comment on
+            `HERO_MAP_MOBILE_AVATARS` for the full coordinate-system explanation. `aspect-[375/314]`
+            reproduces that frame's own proportions at the wrapper's actual rendered width (the
+            untransformed outer wrapper, i.e. the viewport itself below `md`), so the recorded
+            percentages stay correct at any real mobile width, not just exactly 375px. Hidden at
+            `md`+ (desktop uses the layer above instead); each `<img>` also carries
+            `loading="lazy"` for the same defer-while-boxless reason as the desktop layer, so
+            desktop visitors never download these 9 files. */}
+        <div className="absolute inset-x-0 top-0 aspect-[375/314] md:hidden">
+          {HERO_MAP_MOBILE_AVATARS.map((avatar) => {
+            const pulseStyle = getHeroMapPulseStyle(avatar.id);
+
+            return (
+              <span
+                key={avatar.id}
+                className="absolute"
+                style={
+                  {
+                    left: `${avatar.left}%`,
+                    top: `${avatar.top}%`,
+                    width: `${avatar.width}%`,
+                    transform: 'translate(-50%, -50%)',
+                    ...pulseStyle,
+                  } as CSSProperties
+                }
+              >
+                {pulseStyle ? <span aria-hidden="true" className="hero-map-avatar-glow" /> : null}
+                {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, see base layer above */}
+                <img
+                  src={`/images/hero-map/${avatar.id}.webp`}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className={cn(
+                    'relative block h-auto w-full',
+                    pulseStyle && 'hero-map-avatar-pulse-scale',
+                  )}
+                />
+              </span>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
