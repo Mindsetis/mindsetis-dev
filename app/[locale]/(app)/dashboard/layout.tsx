@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { CabinetHeader } from '@/components/dashboard/CabinetHeader';
 import { CabinetSidebar } from '@/components/dashboard/CabinetSidebar';
+import { PhotoReminderBanner } from '@/components/dashboard/PhotoReminderBanner';
 import { redirect } from '@/i18n/navigation';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
 
@@ -85,11 +86,19 @@ export default async function DashboardLayout({ children, params }: DashboardLay
       </aside>
 
       {/* `lg:pt-10` (40px, 2026-08-10): top offset of the content column itself. `gap-8` (32px) is
-          the space below `CabinetHeader` before the page's own content — the column has only these
-          two children, so the flex `gap` alone gives that spacing precisely, and it matches the
-          mobile frame's own 32px between the header card and "Your profile". Mobile's own `pt-4`
-          is the 16px the frame leaves between the site header and the card. */}
+          the space below `CabinetHeader` before the page's own content — the flex `gap` alone
+          gives that spacing precisely, and it matches the mobile frame's own 32px between the
+          header card and "Your profile". Mobile's own `pt-4` is the 16px the frame leaves
+          between the site header and the card.
+          `PhotoReminderBanner` (Release-1 F4, 2026-09-20) sits above `CabinetHeader` — the
+          cabinet's topmost slot — and renders nothing when the profile has a photo or a staff
+          waiver, so it costs no extra gap in that (eventually common) case. */}
       <div className="flex min-w-0 flex-1 flex-col gap-8 pt-4 lg:pt-10">
+        <PhotoReminderBanner
+          hasPhoto={Boolean(cabinet.avatarUrl)}
+          photoRequirementWaived={cabinet.photoRequirementWaived}
+        />
+
         <CabinetHeader
           accountType={cabinet.accountType}
           username={cabinet.username}

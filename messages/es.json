@@ -589,10 +589,19 @@
         "searchPlaceholder": "Buscar idiomas"
       },
       "photo": {
+        "crop": {
+          "cancel": "Cancelar",
+          "confirm": "Usar foto",
+          "description": "Arrastra para reposicionar y usa el control deslizante para hacer zoom. Tu foto se recortará en forma cuadrada.",
+          "error": "No pudimos procesar esta foto. Inténtalo de nuevo o elige otro archivo.",
+          "loadError": "No pudimos abrir esta foto. Elige otro archivo.",
+          "title": "Ajusta tu foto",
+          "zoom": "Zoom"
+        },
         "hint": "Solo PNG o JPEG",
         "label": "Foto de perfil",
         "replace": "Cambiar foto",
-        "requirements": "JPG o PNG · cuadrada · mínimo 800×800",
+        "requirements": "Sube tu foto de perfil. Formatos: JPG, PNG. Los perfiles sin foto no aparecerán en el catálogo y tendrán acceso limitado a las funciones de la plataforma.",
         "upload": "Subir foto",
         "uploadTitle": "Sube tu foto de perfil",
         "uploaded": "subida"
@@ -1302,6 +1311,11 @@
         "sessionsSetup": "Configuración de sesiones",
         "settings": "Ajustes"
       }
+    },
+    "photoReminder": {
+      "body": "Sin una foto no aparecerás en el catálogo ni en la búsqueda, y no podrás enviar invitaciones ni reservar sesiones.",
+      "cta": "Añade una foto en Información básica",
+      "title": "Añade una foto de perfil"
     },
     "profile": {
       "allSections": "Todas las secciones",

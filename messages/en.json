@@ -589,10 +589,19 @@
         "searchPlaceholder": "Search languages"
       },
       "photo": {
+        "crop": {
+          "cancel": "Cancel",
+          "confirm": "Use photo",
+          "description": "Drag to reposition and use the slider to zoom. Your photo will be cropped to a square.",
+          "error": "We couldn't process this photo. Please try again or choose a different file.",
+          "loadError": "This photo couldn't be opened. Please choose a different file.",
+          "title": "Adjust your photo",
+          "zoom": "Zoom"
+        },
         "hint": "Only PNG or JPEG",
         "label": "Profile photo",
         "replace": "Replace photo",
-        "requirements": "JPG or PNG · square · at least 800×800",
+        "requirements": "Upload your profile photo. Formats: JPG, PNG. Profiles without photos will not appear in the catalog and have limited access to platform features.",
         "upload": "Upload photo",
         "uploadTitle": "Upload profile photo",
         "uploaded": "uploaded"
@@ -1302,6 +1311,11 @@
         "sessionsSetup": "Sessions Setup",
         "settings": "Settings"
       }
+    },
+    "photoReminder": {
+      "body": "Without a photo, you won't appear in the catalog or search, and you can't send invites or book sessions.",
+      "cta": "Add a photo in Basic Info",
+      "title": "Add a profile photo"
     },
     "profile": {
       "allSections": "All sections",

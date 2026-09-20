@@ -31,6 +31,16 @@ export interface ProfileContext {
   is_blocked: boolean;
   /** Hardened 14-day flag: set once the verification window has lapsed unverified. */
   access_restricted: boolean;
+  /**
+   * Release-1 F4 "photo required" rule — added alongside `photo_requirement_waived` below so
+   * `resolvePermissions` can gate `canBook`/`canSendInvite` on having a photo (or a waiver). Only
+   * this guard's own minimal select carries it; the public profile page queries stay untouched
+   * (deliberately minimal, per that file's own comment).
+   */
+  avatar_url: string | null;
+  /** Staff-only escape hatch (public figures who won't upload a photo) — see the migration
+   * `20260920101855_profiles_photo_requirement_waiver.sql`. Never written from the client. */
+  photo_requirement_waived: boolean;
 }
 
 export interface SessionContext {
@@ -58,7 +68,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, username, account_type, verification_status, verification_deadline, is_blocked, access_restricted',
+      'id, username, account_type, verification_status, verification_deadline, is_blocked, access_restricted, avatar_url, photo_requirement_waived',
     )
     .eq('id', user.id)
     .maybeSingle();
@@ -136,6 +146,17 @@ export async function requireSessionContext(): Promise<
  * NO allowance for `unverified` users still inside the 14-day window — the matrix marks
  * unverified as ❌ unconditionally. (`is_blocked` is already enforced by
  * `requireSessionContext`, checked again here for a self-contained guard.)
+ *
+ * NOTE (Release-1 F4, 2026-09-20): this one guard is documented (see `docs/RBAC.md`) as the
+ * gate for booking / event-creation / invite-sending ALIKE — it does NOT distinguish between
+ * them. `resolvePermissions` (`./permissions.ts`) now DOES distinguish: `canBook` and
+ * `canSendInvite` additionally require a photo (`avatar_url` or `photo_requirement_waived`),
+ * while `canCreateEvent` does not. No booking/invite Server Action exists yet to consume
+ * either guard (both CTAs are still `NotYetAvailable` placeholders), so nothing is wired
+ * incorrectly today — but whoever builds those actions must NOT gate booking/invite on this
+ * function alone; call `resolvePermissions(...).canBook` / `.canSendInvite` (or a future
+ * `requireCanBook`/`requireCanSendInvite` guard built the same way) instead, and keep using
+ * this function as-is for event creation.
  */
 export async function requireVerifiedMember(): Promise<
   SessionContext & { profile: ProfileContext }

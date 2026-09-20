@@ -587,6 +587,7 @@ export type Database = {
           languages: string[] | null
           last_name: string | null
           onboarding_step: number | null
+          photo_requirement_waived: boolean
           region_code: string | null
           region_name: string | null
           role: string | null
@@ -623,6 +624,7 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          photo_requirement_waived?: boolean
           region_code?: string | null
           region_name?: string | null
           role?: string | null
@@ -659,6 +661,7 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           onboarding_step?: number | null
+          photo_requirement_waived?: boolean
           region_code?: string | null
           region_name?: string | null
           role?: string | null

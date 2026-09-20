@@ -38,6 +38,10 @@ export type CabinetProfile = {
   lastName: string | null;
   avatarUrl: string | null;
   isVerified: boolean;
+  /** Release-1 F4 — staff-only waiver of the "photo required" rule; see
+   * `supabase/migrations/20260920101855_profiles_photo_requirement_waiver.sql`. Drives the
+   * cabinet's persistent no-photo reminder banner (hidden once `avatarUrl` or this is set). */
+  photoRequirementWaived: boolean;
   completeness: ProfileCompleteness;
   /** Keyed by `ProfileSectionKey`; missing keys mean "nothing to summarize" (Hero/Social links,
    * whose cards show a static field list instead — see `ProfileSectionCard`). */
@@ -93,7 +97,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     supabase
       .from('profiles')
       .select(
-        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industries, industry_custom, socials',
+        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industries, industry_custom, socials, photo_requirement_waived',
       )
       .eq('id', session.user.id)
       .maybeSingle(),
@@ -166,6 +170,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     lastName: profile.last_name,
     avatarUrl: profile.avatar_url,
     isVerified: session.profile.verification_status === 'verified',
+    photoRequirementWaived: profile.photo_requirement_waived,
     completeness,
     summaries,
   };
