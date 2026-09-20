@@ -7,6 +7,7 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { saveHeroSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CityCombobox, type CitySelection } from '@/components/geo/CityCombobox';
 import { AvatarUpload } from '@/components/member-profile/AvatarUpload';
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useRouter } from '@/i18n/navigation';
 import { INDUSTRIES, type IndustryValue } from '@/lib/constants/industries';
 import type { InterestValue } from '@/lib/constants/interests';
 import {
@@ -52,6 +54,9 @@ export type HeroFormProps = {
   initialCompany?: string;
   initialRole?: string;
   initialIndustry?: IndustryValue;
+  /** Where "Save & Next" navigates once saved — the next card in cabinet section order, computed
+   * by the page via `lib/profile/completeness.ts#nextSectionHref` (Release-1 C3). */
+  nextHref: string;
 };
 
 /**
@@ -89,9 +94,11 @@ export function HeroForm({
   initialCompany,
   initialRole,
   initialIndustry,
+  nextHref,
 }: HeroFormProps) {
   const t = useTranslations('auth');
   const tCabinet = useTranslations('dashboard.profile');
+  const router = useRouter();
   const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -115,8 +122,20 @@ export function HeroForm({
       company: initialCompany ?? '',
       role: initialRole ?? '',
       industry: initialIndustry,
+      // Declared even though it is always `undefined` here (editing never pre-fills a File — the
+      // saved photo lives in `initialAvatarUrl`). React Hook Form derives `isDirty` from
+      // `!deepEqual(values, defaultValues)`, and its `deepEqual` rejects on key COUNT before it
+      // ever compares values. The `avatar` field registers on mount and adds that key to the
+      // values object, so leaving it out here made a freshly opened, untouched form report itself
+      // dirty — `dirtyFields` empty, every value identical, `isDirty` true — which fired the
+      // "unsaved changes" guard on the way out (measured live 2026-09-19).
+      avatar: undefined,
     },
   });
+
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19) so
+  // every exit path — not just this form's own "Back" — can ask before leaving a dirty edit.
+  useSectionDirtyGuard(form.formState.isDirty);
 
   const bioValue = useWatch({ control: form.control, name: 'bio' }) ?? '';
   const aboutValue = useWatch({ control: form.control, name: 'about' }) ?? '';
@@ -124,9 +143,6 @@ export function HeroForm({
   // The city's display data lives outside RHF: the validated value is just the GeoNames id, and
   // the Server Action re-derives every label from the reference tables.
   const [selectedCity, setSelectedCity] = useState<CitySelection | null>(initialCity ?? null);
-  /** What "Cancel" restores the city picker to — moves forward on every successful save, since
-   * the page no longer remounts with fresh props after one. */
-  const [savedCity, setSavedCity] = useState<CitySelection | null>(initialCity ?? null);
   const countryCodeValue = useWatch({ control: form.control, name: 'countryCode' }) ?? '';
 
   const languageOptions = useMemo(
@@ -177,12 +193,11 @@ export function HeroForm({
       return;
     }
 
-    // Stays on the section rather than returning to the list. `reset(values)` rebases the form so
-    // a later "Cancel" reverts to what was just saved, not to what the page originally loaded;
-    // `savedCity` does the same for the one piece of state RHF doesn't hold.
+    // `reset(values)` rebases the form so `formState.isDirty` reads clean right after a save.
+    // "Save & Next" then navigates to the next section (`nextHref`) — see `useCabinetSaved`'s own
+    // doc comment for why this no longer just stays put.
     form.reset(values);
-    setSavedCity(selectedCity);
-    notifySaved();
+    notifySaved(nextHref);
   });
 
   return (
@@ -531,16 +546,7 @@ export function HeroForm({
         <StepActions
           editMode
           isSubmitting={form.formState.isSubmitting}
-          onCancel={() => {
-            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-            // the section rather than navigating, so this is an undo, not an exit.
-            form.reset();
-            // `selectedCity` is the one piece of this form's state that lives OUTSIDE RHF (the
-            // picker's display object; RHF only holds the GeoNames id), so `form.reset()` can't
-            // reach it — without this the city label would keep showing the discarded choice.
-            setSelectedCity(savedCity);
-            setFormError(null);
-          }}
+          onCancel={() => router.push('/dashboard/profile')}
         />
       </form>
     </Form>

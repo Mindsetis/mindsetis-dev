@@ -1,11 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { AccountMenu } from '@/components/layout/AccountMenu';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
-import { Link } from '@/i18n/navigation';
 import { ctaStateFromProfile } from '@/lib/auth/cta-state';
 import { getCurrentUser } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
@@ -46,12 +46,12 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
     return (
       <header className="sticky top-0 z-40 bg-card">
         <div className="mx-auto flex h-[70px] max-w-[1440px] items-center justify-center px-4 sm:px-6 lg:h-[88px] lg:px-[70px]">
-          <Link
+          <GuardedLink
             href="/"
             className="font-display text-[1.5rem] leading-none font-normal text-primary lg:text-[2rem]"
           >
             {t('brand')}
-          </Link>
+          </GuardedLink>
         </div>
       </header>
     );
@@ -87,12 +87,15 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-card">
       <div className="mx-auto flex h-[70px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:h-[88px] lg:px-[70px]">
-        <Link
+        {/* `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): the header
+            (including this logo) stays mounted on every cabinet section editor, so every link in
+            it is a real exit path an unsaved edit needs to guard. */}
+        <GuardedLink
           href="/"
           className="font-display text-[1.5rem] leading-none font-normal text-primary lg:text-[2rem]"
         >
           {t('brand')}
-        </Link>
+        </GuardedLink>
 
         <div className="flex items-center gap-3 lg:gap-8">
           <LocaleSwitcher />
@@ -153,7 +156,7 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                   size="sm"
                   className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
                 >
-                  <Link href="/continue">{t('editProfile')}</Link>
+                  <GuardedLink href="/continue">{t('editProfile')}</GuardedLink>
                 </Button>
               ) : null}
 
@@ -167,7 +170,7 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                       Mindsetter" entry point (`CabinetHeader.tsx`, `WelcomeCtas.tsx`,
                       `WhoIsMindsetterDialog.tsx`); a confirmation modal is planned in front of
                       it later (Release-1 C7), out of scope here. */}
-                  <Link href="/mindsetter-onboarding/roles">{t('upgrade')}</Link>
+                  <GuardedLink href="/mindsetter-onboarding/roles">{t('upgrade')}</GuardedLink>
                 </Button>
               ) : null}
 
@@ -207,7 +210,7 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 size="sm"
                 className="px-0 text-sm lg:h-14 lg:text-base"
               >
-                <Link href="/login">{t('login')}</Link>
+                <GuardedLink href="/login">{t('login')}</GuardedLink>
               </Button>
 
               {/* Figma: "header mobile" Join CTA (168:3071) = 46px tall, 24px horizontal
@@ -239,11 +242,11 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 size="sm"
                 className="rounded-[8px] lg:h-14 lg:w-[199px] lg:rounded-lg lg:px-5"
               >
-                <Link href="/join">
+                <GuardedLink href="/join">
                   <JoinIcon className="hidden lg:inline" />
                   <span className="lg:hidden">{t('joinShort')}</span>
                   <span className="hidden lg:inline">{t('join')}</span>
-                </Link>
+                </GuardedLink>
               </Button>
             </>
           )}

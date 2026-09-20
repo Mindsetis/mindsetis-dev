@@ -8,6 +8,7 @@ import { useForm, type UseFormReturn, useWatch } from 'react-hook-form';
 import { savePhilosophySection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { savePhilosophy } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -69,6 +70,11 @@ export function PhilosophyForm({
 
   const quoteValue = useWatch({ control: form.control, name: 'philosophy' }) ?? '';
 
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
@@ -80,12 +86,12 @@ export function PhilosophyForm({
     }
 
     if (editMode) {
-      // Stay on the section, rebased on what was ACTUALLY stored so a later "Cancel" reverts to
-      // that. Clearing the quote also clears the author server-side (an attribution with nothing
+      // Rebased on what was ACTUALLY stored, so `formState.isDirty` reads clean right after a
+      // save. Clearing the quote also clears the author server-side (an attribution with nothing
       // to attribute), so mirror that here — resetting on the raw submitted values would leave a
       // stale author sitting in a field the database has already emptied.
       form.reset(values.philosophy.trim() ? values : { philosophy: '', philosophyAuthor: '' });
-      notifySaved();
+      notifySaved(nextHref);
       return;
     }
 
@@ -164,10 +170,7 @@ export function PhilosophyForm({
         <StepActions
           editMode={editMode}
           isSubmitting={form.formState.isSubmitting}
-          onCancel={() => {
-            form.reset();
-            setFormError(null);
-          }}
+          onCancel={() => router.push('/dashboard/profile')}
         />
       </form>
     </Form>

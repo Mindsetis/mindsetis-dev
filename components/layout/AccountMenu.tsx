@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition } from 'react';
 
 import { signOut } from '@/app/[locale]/(app)/(auth)/actions';
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
+import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
 import {
   MenuExternalIcon,
   MenuLogoutIcon,
@@ -18,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 export type AccountMenuProps = {
@@ -73,6 +75,7 @@ export function AccountMenu({
 }: AccountMenuProps) {
   const t = useTranslations('nav.accountMenu');
   const router = useRouter();
+  const { guard } = useUnsavedChanges();
   const [isSigningOut, startSignOut] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [align, setAlign] = useState<'center' | 'end'>('end');
@@ -169,35 +172,48 @@ export function AccountMenu({
             // value the fits-or-not check above uses are literally the same constant.
             style={{ width: MENU_WIDTH }}
           >
+            {/* `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): this
+                menu renders on every cabinet screen, including a dirty section editor. */}
             <DropdownMenuItem asChild>
-              <Link href={publicProfileHref}>
+              <GuardedLink href={publicProfileHref}>
                 <MenuExternalIcon className="shrink-0 opacity-75" />
                 {t('viewPublicProfile')}
-              </Link>
+              </GuardedLink>
             </DropdownMenuItem>
 
             {/* The desktop dropdown otherwise has no way into the cabinet's My Profile tab — the
                 mobile sheet reaches it through its full nav list, this doesn't. */}
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile">
+              <GuardedLink href="/dashboard/profile">
                 <EditPencilIcon className="size-[19px] shrink-0 opacity-75" />
                 {t('editProfile')}
-              </Link>
+              </GuardedLink>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings">
+              <GuardedLink href="/dashboard/settings">
                 <MenuSettingsIcon className="shrink-0 opacity-75" />
                 {t('settings')}
-              </Link>
+              </GuardedLink>
             </DropdownMenuItem>
 
             <DropdownMenuItem
               variant="destructive"
               disabled={isSigningOut}
               // `onSelect` rather than `onClick`: it fires for Enter/Space as well as pointer,
-              // which `onClick` on a `role="menuitem"` div would miss.
-              onSelect={handleSignOut}
+              // which `onClick` on a `role="menuitem"` div would miss. Routed through `guard`
+              // (Release-1 C-continuation, 2026-09-19) — signing out is also a way off a dirty
+              // section editor.
+              //
+              // Deferred to the next frame (2026-09-20): calling `guard` straight from `onSelect`
+              // opened the AlertDialog in the same tick this menu began closing, and the two Radix
+              // modals then fought over `document.body`'s `pointer-events` — the menu's teardown
+              // ran last and left `pointer-events: none` welded on, so the page (after "Stay") or
+              // the whole landing page (after "Leave") stopped accepting clicks until a reload.
+              // One frame is enough for the menu to finish unmounting and restore the body before
+              // the dialog claims it. The other items don't need this — they're `GuardedLink`s,
+              // where the guard runs from a link click rather than from menu selection.
+              onSelect={() => requestAnimationFrame(() => guard(handleSignOut))}
             >
               <MenuLogoutIcon className="shrink-0" />
               {isSigningOut ? t('signingOut') : t('logOut')}

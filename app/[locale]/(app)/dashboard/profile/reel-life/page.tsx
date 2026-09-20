@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { ReelLifeForm } from '@/components/mindsetter-onboarding/ReelLifeForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import { MAX_REEL_LIFE_PHOTOS, MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
 
@@ -74,7 +75,11 @@ export default async function DashboardReelLifeSectionPage({ params }: SectionPa
         max: MAX_REEL_LIFE_PHOTOS,
       })}
     >
-      <ReelLifeForm initialPhotos={initialPhotos} nextHref="/dashboard/profile" editMode />
+      <ReelLifeForm
+        initialPhotos={initialPhotos}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'reelLife')}
+        editMode
+      />
     </SectionEditorShell>
   );
 }

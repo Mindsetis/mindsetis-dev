@@ -9,12 +9,14 @@ import { type Control, useController, useForm, useWatch } from 'react-hook-form'
 
 import { saveSessionSettings } from '@/app/[locale]/(app)/dashboard/sessions/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { WeeklyAvailabilityField } from '@/components/dashboard/WeeklyAvailabilityField';
 import {
   ShineOptionCheckedIcon,
   ShineOptionUncheckedIcon,
 } from '@/components/icons/shine-block-icons';
+import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
@@ -31,6 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useValidationMessage } from '@/components/ui/use-validation-message';
+import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { isLatinOnly, LATIN_ONLY_MESSAGE } from '@/lib/validation/common';
 import {
@@ -446,18 +449,6 @@ function TimezoneField({ control }: { control: Control<SessionStepInput> }) {
     return mapped;
   }, [field.value]);
 
-  useEffect(() => {
-    if (field.value) return;
-    try {
-      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (detected) field.onChange(detected);
-    } catch {
-      // Intl unavailable — the schema's "Timezone is required." surfaces on submit.
-    }
-    // Detection is a default, not something to re-apply over a later pick.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <div className="flex flex-col gap-2">
       {/* A plain `Label`, NOT `FormLabel`: the latter calls `useFormField()`, which throws unless
@@ -539,11 +530,21 @@ function CancellationPolicyCard() {
  *
  * Everything below the "Accepting bookings" toggle hides when it is off, same as the wizard did:
  * a profile that isn't taking bookings has nothing to price or schedule.
+ *
+ * Action row is `StepActions` in cabinet mode (Release-1 C-continuation, 2026-09-19), the same
+ * sticky "Back" + primary-button bar every one of the thirteen profile sections uses — this screen
+ * isn't one of those thirteen (`nextSectionHref` doesn't order it), but the client asked for the
+ * same sticky layout AND the same "unsaved changes" guard on every exit here too, so reusing the
+ * shared component was the straightforward way to get both instead of re-implementing them.
+ * "Cancel" is gone: it used to revert the form in place and stay on the page, which no longer
+ * matches what every other cabinet screen's leave button does — this now navigates back to
+ * `/dashboard/profile` like the rest, guarded the same way. The primary button keeps the label
+ * `saveChanges`, not `StepActions`' cabinet default `saveAndNext` — see `saveLabel` below.
  */
 export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSetupFormProps) {
   const t = useTranslations('dashboard.sessions');
   const tCabinet = useTranslations('dashboard.profile');
-  const tOnboarding = useTranslations('mindsetterOnboarding');
+  const router = useRouter();
   const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -568,6 +569,39 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
 
   const acceptsBookings = useWatch({ control: form.control, name: 'acceptsBookings' });
 
+  /**
+   * Auto-detected timezone for an account that has none saved yet. This runs `form.reset` rather
+   * than `setValue`/`field.onChange` (where it used to live, inside `TimezoneField`) because the
+   * detected zone is a DEFAULT, not an edit: `onChange` marked the form dirty the instant the page
+   * mounted, so opening Sessions Setup and immediately leaving asked to confirm changes nobody had
+   * made (owner report, 2026-09-20). `reset` writes the value AND rebases `defaultValues` to match,
+   * which is what keeps `formState.isDirty` false — RHF derives it by comparing the two.
+   *
+   * Runs once, on mount, and only when nothing is stored: a saved zone is never overwritten, and a
+   * zone the visitor picks later is a real edit that must stay dirty. Detection can't move into
+   * `defaultValues` itself — this component also renders on the server, where `Intl` resolves to
+   * the host's zone, not the visitor's.
+   */
+  useEffect(() => {
+    if (defaultValues.timezone) return;
+    let detected = '';
+    try {
+      detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      // Intl unavailable — the schema's "Timezone is required." surfaces on submit.
+    }
+    if (!detected) return;
+    form.reset({ ...defaultValues, timezone: detected });
+    // Mount-only: `defaultValues` is rebuilt on every render and `form` is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19) so
+  // every exit path — the sidebar, the header, the account menu, this form's own "Back" — can ask
+  // before leaving a dirty edit. Cabinet-only screen (no wizard step shares this form), so unlike
+  // the thirteen profile-section forms there's no `editMode` gate to apply here.
+  useSectionDirtyGuard(form.formState.isDirty);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
     const result = await saveSessionSettings(values);
@@ -576,7 +610,9 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
       setFormError(result.error.message);
       return;
     }
-    // Rebase so a later Cancel reverts to what was just saved, matching the profile editors.
+    // `reset(values)` rebases the form so `formState.isDirty` reads clean right after a save —
+    // same as every profile-section editor — which is also what clears the shared "unsaved
+    // changes" guard armed by `useSectionDirtyGuard` above.
     form.reset(values);
     notifySaved();
   });
@@ -653,31 +689,12 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
           </>
         ) : null}
 
-        {/* Save first on desktop, Cancel first on mobile — the frames swap them. */}
-        <div className="flex flex-row gap-3 pt-1">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            loading={form.formState.isSubmitting}
-            className="order-2 h-[52px] flex-1 px-4 lg:order-1 lg:h-14 lg:flex-none lg:px-8"
-          >
-            {form.formState.isSubmitting ? tOnboarding('common.saving') : tCabinet('saveChanges')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            disabled={form.formState.isSubmitting}
-            onClick={() => {
-              form.reset();
-              setFormError(null);
-            }}
-            className="order-1 h-[52px] flex-1 px-4 lg:order-2 lg:h-14 lg:flex-none lg:px-8"
-          >
-            {tCabinet('cancel')}
-          </Button>
-        </div>
+        <StepActions
+          editMode
+          isSubmitting={form.formState.isSubmitting}
+          onCancel={() => router.push('/dashboard/profile')}
+          saveLabel={tCabinet('saveChanges')}
+        />
       </form>
     </Form>
   );

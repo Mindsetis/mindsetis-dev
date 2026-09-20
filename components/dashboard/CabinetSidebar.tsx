@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import type { ComponentType } from 'react';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import {
   BookingsIcon,
   CabinetSettingsIcon,
@@ -13,7 +14,7 @@ import {
   SessionsSetupIcon,
 } from '@/components/icons/cabinet-nav-icons';
 import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
-import { Link, usePathname } from '@/i18n/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /**
@@ -94,7 +95,11 @@ function NavItem({
   active: boolean;
 }) {
   return (
-    <Link
+    // `GuardedLink`, not the plain `Link` this used before Release-1 C-continuation
+    // (2026-09-19): a section editor stays mounted underneath this sidebar (it's rendered by the
+    // shared `/dashboard` layout), so every one of these rows is a real exit path an unsaved edit
+    // needs to guard, same as the top "All sections" link.
+    <GuardedLink
       href={href}
       aria-current={active ? 'page' : undefined}
       className={cn(
@@ -112,7 +117,7 @@ function NavItem({
       )}
       <Icon active={active} className="size-6 shrink-0" />
       {label}
-    </Link>
+    </GuardedLink>
   );
 }
 

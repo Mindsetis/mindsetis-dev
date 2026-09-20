@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { SuperpowersForm } from '@/components/mindsetter-onboarding/SuperpowersForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import type { Superpower } from '@/lib/validation/mindsetter';
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: SectionPageProps) {
 
 /**
  * Cabinet → My Profile → "superpowers" section editor. Reuses the onboarding wizard's own form in
- * `editMode` (Cancel + "Save changes", returns to the section list on success) rather than a
+ * `editMode` (Back + "Save & Next", walks to the next section on success) rather than a
  * second implementation of the same fields — the Figma cabinet frames draw the identical form.
  *
  * Mindsetter-only: `requireMindsetterCabinet()` → `notFound()` for a Member, whose section list
@@ -46,6 +47,7 @@ export default async function DashboardSuperpowersSectionPage({ params }: Sectio
         initialSuperpowers={
           (mindsetterProfile?.superpowers ?? undefined) as Superpower[] | undefined
         }
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'superpowers')}
         editMode
       />
     </SectionEditorShell>

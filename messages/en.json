@@ -1298,7 +1298,12 @@
     },
     "profile": {
       "allSections": "All sections",
-      "cancel": "Cancel",
+      "back": "Back",
+      "edit": "Edit",
+      "mindsetterGroup": {
+        "subtitle": "Your expert landing page for hosting events and consultations",
+        "title": "Mindsetter details"
+      },
       "nickname": "Nickname",
       "nicknameHint": "This is your profile link. Changing it breaks links you have already shared — the old address stops working.",
       "optionalPrefix": "Optional · {text}",
@@ -1306,18 +1311,19 @@
         "label": "How it looks on your profile",
         "toggle": "Preview this section on your profile"
       },
+      "saveAndNext": "Save & Next",
       "saveChanges": "Save changes",
       "saved": "Changes saved",
       "sections": {
         "hero": {
           "editorHint": "This is the first thing people see on your public profile.",
-          "hint": "Photo, name, nickname, country, city, language, bio, company, role, industry",
-          "title": "Hero"
+          "hint": "Photo, name, location, bio, company & role",
+          "title": "Basic Info"
         },
         "socialLinks": {
           "editorHint": "Leave a field empty and that icon simply will not appear.",
-          "hint": "Company website · LinkedIn · Instagram · and more",
-          "title": "Social links"
+          "hint": "Website & social profiles",
+          "title": "Links"
         },
         "roles": {
           "editorHint": "What you build and who you are across ventures. At least one role is required.",
@@ -1385,9 +1391,14 @@
           "title": "Video block"
         }
       },
-      "subtitleMember": "a fuller profile gets more invitations",
-      "subtitleMindsetter": "each section is saved separately",
-      "title": "Your profile"
+      "subtitle": "Basic info required to attend events and book consultations",
+      "title": "Member details",
+      "unsavedChanges": {
+        "description": "If you leave now, the changes you made in this section will not be saved.",
+        "leave": "Leave",
+        "stay": "Stay",
+        "title": "You have unsaved changes"
+      }
     },
     "sessions": {
       "title": "Session Settings",

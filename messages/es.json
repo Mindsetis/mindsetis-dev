@@ -1298,7 +1298,12 @@
     },
     "profile": {
       "allSections": "Todas las secciones",
-      "cancel": "Cancelar",
+      "back": "Atrás",
+      "edit": "Editar",
+      "mindsetterGroup": {
+        "subtitle": "Tu página de experto para organizar eventos y consultas",
+        "title": "Detalles de Mindsetter"
+      },
       "nickname": "Apodo",
       "nicknameHint": "Este es el enlace de tu perfil. Si lo cambias, los enlaces que ya compartiste dejarán de funcionar.",
       "optionalPrefix": "Opcional · {text}",
@@ -1306,18 +1311,19 @@
         "label": "Así se ve en tu perfil",
         "toggle": "Previsualiza esta sección en tu perfil"
       },
+      "saveAndNext": "Guardar y siguiente",
       "saveChanges": "Guardar cambios",
       "saved": "Cambios guardados",
       "sections": {
         "hero": {
           "editorHint": "Es lo primero que la gente ve en tu perfil público.",
-          "hint": "Foto, nombre, apodo, país, ciudad, idioma, bio, empresa, rol, sector",
-          "title": "Hero"
+          "hint": "Foto, nombre, ubicación, bio, empresa y rol",
+          "title": "Información básica"
         },
         "socialLinks": {
           "editorHint": "Deja un campo vacío y ese icono simplemente no aparecerá.",
-          "hint": "Web de la empresa · LinkedIn · Instagram · y más",
-          "title": "Redes sociales"
+          "hint": "Web y perfiles sociales",
+          "title": "Enlaces"
         },
         "roles": {
           "editorHint": "Lo que construyes y quién eres en tus proyectos. Se requiere al menos un rol.",
@@ -1385,9 +1391,14 @@
           "title": "Bloque de vídeo"
         }
       },
-      "subtitleMember": "un perfil más completo recibe más invitaciones",
-      "subtitleMindsetter": "cada sección se guarda por separado",
-      "title": "Tu perfil"
+      "subtitle": "Información básica necesaria para asistir a eventos y reservar consultas",
+      "title": "Detalles de Miembro",
+      "unsavedChanges": {
+        "description": "Si sales ahora, los cambios que hiciste en esta sección no se guardarán.",
+        "leave": "Salir",
+        "stay": "Quedarme",
+        "title": "Tienes cambios sin guardar"
+      }
     },
     "sessions": {
       "title": "Configuración de sesiones",

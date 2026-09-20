@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { VideoBlogForm } from '@/components/mindsetter-onboarding/VideoBlogForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
@@ -18,8 +19,8 @@ export async function generateMetadata({ params }: SectionPageProps) {
 
 /**
  * Cabinet → My Profile → "videoBlog" section editor. Reuses the onboarding wizard's own form in
- * `editMode` (Cancel + "Save changes", returns to the section list on success) rather than a
- * second implementation of the same fields — the Figma cabinet frames draw the identical form.
+ * `editMode` (Back + "Save & Next", walks to the next section on success) rather than a second
+ * implementation of the same fields — the Figma cabinet frames draw the identical form.
  *
  * Mindsetter-only: `requireMindsetterCabinet()` → `notFound()` for a Member, whose section list
  * doesn't include this card at all.
@@ -44,7 +45,11 @@ export default async function DashboardVideoBlogSectionPage({ params }: SectionP
 
   return (
     <SectionEditorShell sectionKey="videoBlog" title={t('title')} description={t('editorHint')}>
-      <VideoBlogForm initialVideoBlog={initialVideoBlog} nextHref="/dashboard/profile" editMode />
+      <VideoBlogForm
+        initialVideoBlog={initialVideoBlog}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'videoBlog')}
+        editMode
+      />
     </SectionEditorShell>
   );
 }

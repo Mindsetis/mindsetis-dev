@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { HelpForm } from '@/components/mindsetter-onboarding/HelpForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import type { Expertise } from '@/lib/validation/mindsetter';
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: SectionPageProps) {
 
 /**
  * Cabinet → My Profile → "helpWith" section editor. Reuses the onboarding wizard's own form in
- * `editMode` (Cancel + "Save changes", returns to the section list on success) rather than a
+ * `editMode` (Back + "Save & Next", walks to the next section on success) rather than a
  * second implementation of the same fields — the Figma cabinet frames draw the identical form.
  *
  * Mindsetter-only: `requireMindsetterCabinet()` → `notFound()` for a Member, whose section list
@@ -44,6 +45,7 @@ export default async function DashboardHelpSectionPage({ params }: SectionPagePr
     <SectionEditorShell sectionKey="helpWith" title={t('title')} description={t('editorHint')}>
       <HelpForm
         initialExpertise={(mindsetterProfile?.help_with ?? undefined) as Expertise[] | undefined}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'helpWith')}
         editMode
       />
     </SectionEditorShell>

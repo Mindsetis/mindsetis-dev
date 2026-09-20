@@ -1,9 +1,9 @@
 import { BadgeCheck } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { EditPencilIcon, ViewProfileIcon } from '@/components/icons/cabinet-header-icons';
 import { Button } from '@/components/ui/button';
-import { Link } from '@/i18n/navigation';
 import type { ProfileCompleteness } from '@/lib/profile/completeness';
 import { cn } from '@/lib/utils';
 
@@ -230,21 +230,24 @@ export async function CabinetHeader({
                 no Mindsetter-at-100% frame to confirm that directly, so this is the reading that
                 keeps both drawn frames exact and adds no duplicate. */}
             {completeness.nextUnfilled ? (
-              <Link
+              // `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): this
+              // card renders on every cabinet screen, INCLUDING the section editor it can jump
+              // away from, so it's a real exit path for whatever section is currently dirty.
+              <GuardedLink
                 href={completeness.nextUnfilled.href}
                 className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
               >
                 <EditPencilIcon />
                 {t('edit')}
-              </Link>
+              </GuardedLink>
             ) : accountType === 'member' ? (
-              <Link
+              <GuardedLink
                 href={publicProfileHref}
                 className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
               >
                 <EditPencilIcon />
                 {t('viewPublicProfile')}
-              </Link>
+              </GuardedLink>
             ) : null}
           </div>
         </div>
@@ -269,16 +272,16 @@ export async function CabinetHeader({
           // radius already match it exactly, `lg`'s 32px never did. `h-[52px]` trims the
           // remaining 4px, the one dimension no shared size lands on.
           <Button asChild variant="primary" size="default" className="h-[52px]">
-            <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
+            <GuardedLink href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</GuardedLink>
           </Button>
         ) : (
-          <Link
+          <GuardedLink
             href={publicProfileHref}
             className={cn('inline-flex items-center gap-2 text-base font-bold', LINK_STATE_CLASSES)}
           >
             <ViewProfileIcon />
             {t('viewPublicProfile')}
-          </Link>
+          </GuardedLink>
         )}
       </div>
     </div>

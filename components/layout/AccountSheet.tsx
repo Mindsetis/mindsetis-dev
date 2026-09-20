@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
+import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
 import { MenuExternalIcon, MenuLogoutIcon } from '@/components/icons/account-menu-icons';
 import {
   BookingsIcon,
@@ -17,14 +19,12 @@ import {
 import { AccountAvatar } from '@/components/layout/AccountAvatar';
 import {
   Dialog,
-  DialogClose,
   DialogCloseButton,
   DialogContent,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
-import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 export type AccountSheetProps = {
@@ -48,6 +48,31 @@ export type AccountSheetProps = {
  * while the account-menu icons have no such prop, and passing one to the other would leak an
  * unknown attribute onto the DOM.
  */
+type SheetRowBaseProps = {
+  icon: ReactNode;
+  label: string;
+  disabled?: boolean;
+  /** Set together with `disabled`: which unbuilt feature this row leads to. */
+  feature?: NotYetAvailableFeature;
+  destructive?: boolean;
+};
+
+/**
+ * A navigating row and a plain-click row take different, MUTUALLY EXCLUSIVE required props — a
+ * union (not one flat object with everything optional) so forgetting `closeSheet` on an `href`
+ * row is a compile error, not a click that silently leaves the sheet open behind the "unsaved
+ * changes" dialog (Release-1 C-continuation follow-up, 2026-09-19). `closeSheet` closes the sheet
+ * on click, same as the `DialogClose` wrapper this row used before that pass — handled explicitly
+ * now instead, because that wrapper's automatic close fired unconditionally, and the row needs the
+ * click to sometimes NOT navigate (a dirty section editor opens the confirmation dialog instead,
+ * via `GuardedLink`'s own `preventDefault`), while still closing the sheet either way.
+ */
+type SheetRowProps = SheetRowBaseProps &
+  (
+    | { href: string; closeSheet: () => void; onClick?: undefined }
+    | { href?: undefined; onClick?: () => void; closeSheet?: undefined }
+  );
+
 function SheetRow({
   icon,
   label,
@@ -56,16 +81,8 @@ function SheetRow({
   disabled,
   feature,
   destructive,
-}: {
-  icon: ReactNode;
-  label: string;
-  href?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  /** Set together with `disabled`: which unbuilt feature this row leads to. */
-  feature?: NotYetAvailableFeature;
-  destructive?: boolean;
-}) {
+  closeSheet,
+}: SheetRowProps) {
   const className = cn(
     'flex h-[54px] w-full items-center gap-3 px-4 text-base font-medium transition-colors',
     destructive ? 'text-destructive' : 'text-foreground',
@@ -100,11 +117,9 @@ function SheetRow({
 
   if (href) {
     return (
-      <DialogClose asChild>
-        <Link href={href} className={className}>
-          {content}
-        </Link>
-      </DialogClose>
+      <GuardedLink href={href} className={className} onClick={closeSheet}>
+        {content}
+      </GuardedLink>
     );
   }
 
@@ -150,7 +165,9 @@ export function AccountSheet({
   const t = useTranslations('nav.accountMenu');
   const tNav = useTranslations('dashboard.nav');
   const tHeader = useTranslations('dashboard.header');
+  const { guard } = useUnsavedChanges();
   const [open, setOpen] = useState(false);
+  const closeSheet = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -196,6 +213,7 @@ export function AccountSheet({
             icon={<MyProfileIcon active className={NAV_ICON} />}
             label={tNav('items.myProfile')}
             href="/dashboard/profile"
+            closeSheet={closeSheet}
           />
           <SheetRow
             icon={<BookingsIcon active className={NAV_ICON} />}
@@ -209,6 +227,7 @@ export function AccountSheet({
                 icon={<SessionsSetupIcon active className={NAV_ICON} />}
                 label={tNav('items.sessionsSetup')}
                 href="/dashboard/sessions"
+                closeSheet={closeSheet}
               />
               <SheetRow
                 icon={<EarningsIcon active className={NAV_ICON} />}
@@ -222,6 +241,7 @@ export function AccountSheet({
             icon={<CabinetSettingsIcon active className={NAV_ICON} />}
             label={tNav('items.settings')}
             href="/dashboard/settings"
+            closeSheet={closeSheet}
           />
 
           <Divider />
@@ -230,11 +250,14 @@ export function AccountSheet({
             icon={<MenuExternalIcon className={NAV_ICON} />}
             label={t('viewPublicProfile')}
             href={publicProfileHref}
+            closeSheet={closeSheet}
           />
           <SheetRow
             icon={<MenuLogoutIcon className={NAV_ICON} />}
             label={isSigningOut ? t('signingOut') : t('logOut')}
-            onClick={onSignOut}
+            // Routed through `guard` (Release-1 C-continuation, 2026-09-19) — signing out is
+            // also a way off a dirty section editor.
+            onClick={() => guard(onSignOut)}
             destructive
           />
         </div>

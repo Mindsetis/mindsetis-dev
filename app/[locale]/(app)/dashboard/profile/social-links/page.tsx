@@ -6,6 +6,7 @@ import { SocialLinksForm } from '@/components/dashboard/SocialLinksForm';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
@@ -46,7 +47,10 @@ export default async function DashboardSocialLinksSectionPage({ params }: Sectio
 
   return (
     <SectionEditorShell sectionKey="socialLinks" title={t('title')} description={t('editorHint')}>
-      <SocialLinksForm initialSocials={socials} />
+      <SocialLinksForm
+        initialSocials={socials}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'socialLinks')}
+      />
     </SectionEditorShell>
   );
 }

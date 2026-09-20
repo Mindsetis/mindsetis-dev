@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { PhilosophyForm } from '@/components/mindsetter-onboarding/PhilosophyForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
@@ -46,7 +47,7 @@ export default async function DashboardPhilosophySectionPage({ params }: Section
       <PhilosophyForm
         initialPhilosophy={mindsetterProfile?.philosophy}
         initialPhilosophyAuthor={mindsetterProfile?.philosophy_author}
-        nextHref="/dashboard/profile"
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'philosophy')}
         editMode
       />
     </SectionEditorShell>

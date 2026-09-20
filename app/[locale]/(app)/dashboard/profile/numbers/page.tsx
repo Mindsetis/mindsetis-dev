@@ -5,6 +5,7 @@ import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { NumbersForm } from '@/components/mindsetter-onboarding/NumbersForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import type { NumberItem } from '@/lib/validation/mindsetter';
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: SectionPageProps) {
 
 /**
  * Cabinet → My Profile → "numbers" section editor. Reuses the onboarding wizard's own form in
- * `editMode` (Cancel + "Save changes", returns to the section list on success) rather than a
+ * `editMode` (Back + "Save & Next", walks to the next section on success) rather than a
  * second implementation of the same fields — the Figma cabinet frames draw the identical form.
  *
  * Mindsetter-only: `requireMindsetterCabinet()` → `notFound()` for a Member, whose section list
@@ -44,7 +45,7 @@ export default async function DashboardNumbersSectionPage({ params }: SectionPag
     <SectionEditorShell sectionKey="numbers" title={t('title')} description={t('editorHint')}>
       <NumbersForm
         initialNumbers={(mindsetterProfile?.numbers ?? undefined) as NumberItem[] | undefined}
-        nextHref="/dashboard/profile"
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'numbers')}
         editMode
       />
     </SectionEditorShell>

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/components/cookies/CookieConsentProvider';
 import { ScrollTopArrowIcon } from '@/components/icons/scroll-top-arrow-icon';
+import { usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /** Below this scroll offset the button stays hidden. A fixed pixel value rather than "one
@@ -64,6 +65,10 @@ export function ScrollToTopButton() {
   const t = useTranslations('common');
   const { bannerHeight } = useCookieConsent();
   const [visible, setVisible] = useState(false);
+  // `usePathname` from `@/i18n/navigation` returns the locale-STRIPPED path (same helper
+  // `CabinetSidebar` uses), so this matches every `/dashboard/*` route regardless of locale.
+  const pathname = usePathname();
+  const isCabinetRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
 
   useEffect(() => {
     let ticking = false;
@@ -91,6 +96,13 @@ export function ScrollToTopButton() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   }
+
+  // Removed from the cabinet entirely (Release-1 C3, 2026-09-19) — the client asked for it gone
+  // from `/dashboard/*` specifically while it stays on the marketing site. `null` after the
+  // scroll-listener effect above (not before it): the effect itself is harmless with nobody able
+  // to see the button, and keeping every hook call unconditional avoids a "rendered fewer hooks
+  // than expected" error on a route change between a cabinet and a non-cabinet page.
+  if (isCabinetRoute) return null;
 
   return (
     <button

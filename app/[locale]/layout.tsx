@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
 import { CookieConsentProvider } from '@/components/cookies/CookieConsentProvider';
 import { CookiePreferencesDialog } from '@/components/cookies/CookiePreferencesDialog';
+import { UnsavedChangesProvider } from '@/components/dashboard/unsaved-changes';
 import { ScrollToTopButton } from '@/components/layout/ScrollToTopButton';
 import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
@@ -101,7 +102,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       <body className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale}>
           <CookieConsentProvider initialConsent={initialConsent}>
-            {children}
+            <UnsavedChangesProvider>{children}</UnsavedChangesProvider>
             <CookieConsentBanner />
             <CookiePreferencesDialog />
             <ScrollToTopButton />

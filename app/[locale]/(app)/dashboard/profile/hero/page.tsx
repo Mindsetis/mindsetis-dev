@@ -11,6 +11,7 @@ import { INTEREST_VALUES } from '@/lib/constants/interests';
 import type { LanguageValue } from '@/lib/constants/languages';
 import { listCountries } from '@/lib/geo/countries';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
@@ -97,6 +98,7 @@ export default async function DashboardHeroSectionPage({ params }: SectionPagePr
         initialCompany={profile?.company ?? undefined}
         initialRole={profile?.role ?? undefined}
         initialIndustry={initialIndustry}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'hero')}
       />
     </SectionEditorShell>
   );
