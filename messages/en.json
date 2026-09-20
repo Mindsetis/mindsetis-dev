@@ -1024,23 +1024,13 @@
   },
   "profile": {
     "aboutEyebrow": "ABOUT",
-    "banner": {
-      "highlight": "Public view",
-      "rest": "— this is how others see your profile"
-    },
     "beyondBusinessEyebrow": "BEYOND BUSINESS",
     "beyondBusinessHeading": "What I care about beyond work",
-    "editProfile": "Edit Profile",
     "inviteToEvent": "Invite to event",
-    "shareProfile": "Share Profile",
     "verified": "Verified",
     "website": "Website"
   },
   "mindsetterProfile": {
-    "banner": {
-      "highlight": "Public view",
-      "rest": "— this is how others see your profile"
-    },
     "beyondBusiness": {
       "eyebrow": "BEYOND BUSINESS",
       "heading": "What I care about beyond work"
@@ -1057,7 +1047,6 @@
     "ctaBanner2": {
       "heading": "Ready to talk?"
     },
-    "editProfile": "Edit Profile",
     "favorite": "Add to favorites",
     "fckups": {
       "dialogTitle": "MY F*CKUP",
@@ -1149,7 +1138,11 @@
     },
     "sessionPriceFree": "Session price: Free",
     "sessionPricePaid": "Session price: {price}",
-    "shareProfile": "Share Profile",
+    "share": {
+      "ariaLabel": "Share this profile",
+      "copyFailed": "Could not copy the link. You can copy it from the address bar instead.",
+      "linkCopied": "Link copied to clipboard"
+    },
     "superpowers": {
       "eyebrow": "SUPERPOWER(S)",
       "heading": "What makes me different"
@@ -1279,10 +1272,6 @@
         "reviews": {
           "title": "Reviews are on the way",
           "body": "After a session you'll be able to leave a review, and read what others said before you book."
-        },
-        "shareProfile": {
-          "body": "Share this profile as a link, the way you'd share a personal website.",
-          "title": "Sharing is on the way"
         }
       }
     },

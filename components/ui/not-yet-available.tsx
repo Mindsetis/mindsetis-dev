@@ -37,8 +37,7 @@ export type NotYetAvailableFeature =
   | 'learnMore'
   | 'originals'
   | 'overview'
-  | 'reviews'
-  | 'shareProfile';
+  | 'reviews';
 
 type NotYetAvailableProps = {
   /** Which feature this control belongs to — picks the explanation shown in the dialog. */

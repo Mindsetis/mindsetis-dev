@@ -1024,23 +1024,13 @@
   },
   "profile": {
     "aboutEyebrow": "ACERCA DE",
-    "banner": {
-      "highlight": "Vista pública",
-      "rest": "— así es como otros ven tu perfil"
-    },
     "beyondBusinessEyebrow": "MÁS ALLÁ DEL TRABAJO",
     "beyondBusinessHeading": "Lo que me importa más allá del trabajo",
-    "editProfile": "Editar perfil",
     "inviteToEvent": "Invitar a un evento",
-    "shareProfile": "Compartir perfil",
     "verified": "Verificado",
     "website": "Sitio web"
   },
   "mindsetterProfile": {
-    "banner": {
-      "highlight": "Vista pública",
-      "rest": "— así es como otros ven tu perfil"
-    },
     "beyondBusiness": {
       "eyebrow": "MÁS ALLÁ DEL TRABAJO",
       "heading": "Lo que me importa más allá del trabajo"
@@ -1057,7 +1047,6 @@
     "ctaBanner2": {
       "heading": "¿Listo para hablar?"
     },
-    "editProfile": "Editar perfil",
     "favorite": "Añadir a favoritos",
     "fckups": {
       "dialogTitle": "MI ERROR",
@@ -1149,7 +1138,11 @@
     },
     "sessionPriceFree": "Precio de la sesión: Gratis",
     "sessionPricePaid": "Precio de la sesión: {price}",
-    "shareProfile": "Compartir perfil",
+    "share": {
+      "ariaLabel": "Comparte este perfil",
+      "copyFailed": "No pudimos copiar el enlace. Puedes copiarlo desde la barra de direcciones.",
+      "linkCopied": "Enlace copiado al portapapeles"
+    },
     "superpowers": {
       "eyebrow": "SUPERPODER(ES)",
       "heading": "Lo que me hace diferente"
@@ -1279,10 +1272,6 @@
         "reviews": {
           "title": "Las reseñas están en camino",
           "body": "Tras una sesión podrás dejar una reseña, y leer las de otros antes de reservar."
-        },
-        "shareProfile": {
-          "body": "Comparte este perfil como un enlace, igual que compartirías una web personal.",
-          "title": "Compartir está en camino"
         }
       }
     },

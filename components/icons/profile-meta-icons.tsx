@@ -81,6 +81,13 @@ export function QuillPenAiFillIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/**
+ * NOT CURRENTLY RENDERED (Release-1 G1, 2026-09-20): its only caller was the owner-preview
+ * banner's "Edit Profile" button, and that banner is gone. Kept rather than deleted — this file
+ * is the catalog of designer-supplied glyphs with their Figma provenance, three other icon files
+ * cite this one as the precedent for their own export decisions, and an edit affordance is likely
+ * to return. Wire it up again rather than re-exporting the same node.
+ */
 export function BallPenFillIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" {...props}>
@@ -102,9 +109,12 @@ export function CashFillIcon(props: SVGProps<SVGSVGElement>) {
  * (2026-08-12), replacing `lucide-react`'s outline `Eye`, which is a different glyph (thin
  * strokes, no filled iris).
  *
- * The source hardcodes `fill="#79B9E3"`; that hex IS `--color-primary`, and the banner already
- * sets exactly that color on this slot via `.bannerHighlight`, so it renders `currentColor` and
- * inherits instead of stating the value twice.
+ * The source hardcodes `fill="#79B9E3"`; that hex IS `--color-primary`, and the banner set exactly
+ * that color on this slot via `.bannerHighlight`, so it renders `currentColor` and inherits
+ * instead of stating the value twice.
+ *
+ * NOT CURRENTLY RENDERED (Release-1 G1, 2026-09-20): the owner-preview banner this belonged to was
+ * removed along with `.bannerHighlight`. Kept for the same reason as `BallPenFillIcon` above.
  */
 export function PublicViewEyeIcon(props: SVGProps<SVGSVGElement>) {
   return (

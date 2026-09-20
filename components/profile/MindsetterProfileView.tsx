@@ -1,4 +1,4 @@
-import { CheckCircle2, Link2, Play, Share2, User } from 'lucide-react';
+import { CheckCircle2, Link2, Play, User } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -11,11 +11,9 @@ import {
   ReviewChatIcon,
 } from '@/components/icons/mindsetter-eyebrow-icons';
 import {
-  BallPenFillIcon,
   CashFillIcon,
   LanguageBubbleIcon,
   LocationPinIcon,
-  PublicViewEyeIcon,
   QuillPenAiFillIcon,
   UserAddFillIcon,
 } from '@/components/icons/profile-meta-icons';
@@ -43,11 +41,11 @@ import {
 } from '@/components/profile/MemberProfileView';
 import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
 import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
+import { ShareProfileButton } from '@/components/profile/ShareProfileButton';
 import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
-import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type {
   Expertise,
@@ -354,10 +352,13 @@ export interface MindsetterProfile {
 
 export interface MindsetterProfileViewProps {
   profile: MindsetterProfile;
-  /** `preview` = owner previewing their own profile (adds the top banner + static Edit/Share
-   * CTAs in place of the visitor Invite/Book CTAs) — same `variant` convention as
-   * `MemberProfileView`. */
-  variant: 'preview' | 'public';
+  /**
+   * Canonical, already-locale-prefixed, already-absolute public URL for this exact profile —
+   * Release-1 G3, consumed only by the hero's `ShareProfileButton`. Computed server-side (see
+   * `mindsetters/[username]/page.tsx`) rather than derived client-side from `window.location`,
+   * so sharing still resolves to the real public route.
+   */
+  shareUrl: string;
   /**
    * The resolved `mindsetterProfile` namespace translator, passed through directly rather than
    * destructured into an individual `labels` object (the pattern `MemberProfileView` uses) —
@@ -661,7 +662,7 @@ function CtaBanner({
  * render — likewise the micro-nav's OWN items are gated per-target (an anchor only appears once
  * its target section actually renders), except the two always-rendering targets above.
  */
-export function MindsetterProfileView({ profile, variant, t }: MindsetterProfileViewProps) {
+export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfileViewProps) {
   const displayName = resolveDisplayName(profile);
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
@@ -742,55 +743,19 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
 
   return (
     <div className={styles.section}>
-      {variant === 'preview' && (
-        <div className={cn(memberStyles.banner, 'flex items-center')}>
-          <div className="mx-auto flex w-full max-w-[1440px] flex-row items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:gap-4 md:py-0 lg:px-[70px]">
-            <div className="flex items-center gap-2">
-              <PublicViewEyeIcon className={cn('size-5 shrink-0', memberStyles.bannerHighlight)} />
-              <p className={cn('text-tiny', memberStyles.bannerText)}>
-                <span className={cn('font-bold', memberStyles.bannerHighlight)}>
-                  {t('banner.highlight')}
-                </span>
-                <span className="hidden md:inline"> {t('banner.rest')}</span>
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-5">
-              {/* Edit Profile goes to the cabinet's My Profile tab — the one place every section
-                  of this page is editable (2026-08-12). Share Profile has nothing behind it yet,
-                  so it gets the app's standard `NotYetAvailable` treatment instead of looking live. */}
-              <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                  'h-8 gap-1 rounded-[8px] px-2 py-2 text-tiny font-normal md:h-14 md:w-[171px] md:gap-3 md:rounded-lg md:px-5 md:py-[15px] md:text-base md:font-bold',
-                  memberStyles.editButton,
-                )}
-              >
-                <Link href="/dashboard/profile">
-                  <BallPenFillIcon className="size-4" aria-hidden="true" />
-                  {t('editProfile')}
-                </Link>
-              </Button>
-              <NotYetAvailable feature="shareProfile" className="hidden md:inline-flex">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled
-                  className={cn(
-                    'h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold disabled:opacity-50',
-                    memberStyles.shareButton,
-                  )}
-                >
-                  <Share2 className="size-4" aria-hidden="true" />
-                  {t('shareProfile')}
-                </Button>
-              </NotYetAvailable>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Release-1 G1: the owner-only "Public view — this is how others see your profile" bar
+          (with its Edit Profile / Share Profile buttons) that used to render here for
+          `variant === 'preview'` is REMOVED, not just hidden — the client's explicit ask. Edit
+          access for the owner still exists (the account menu's own "Edit Profile" entry, always
+          available, links to `/dashboard/profile`), and Share now lives in the hero below for
+          every visitor (`ShareProfileButton`, Release-1 G3) instead of being an owner-only,
+          non-functional control here. With the banner gone, this screen no longer renders
+          anything differently for the owner vs. any other visitor, so the `variant` prop this
+          component used to take was removed too (see git history for the old version) — do not
+          reintroduce an owner/preview-only code path without a real reason, per that same
+          decision.
 
-      {/* ============================== HERO ==============================
+          ============================== HERO ==============================
           STAGE 1.12 LAYOUT PASS (2026-07-23, explicit user direction after re-reviewing Figma):
           every section on this page now owns its OWN top-level `mx-auto w-full max-w-[1440px]
           px-4 sm:px-6 lg:px-[70px]` wrapper (verified against `552:4484`/`401:7567`: every
@@ -840,34 +805,36 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
           <div className="flex w-full flex-col gap-6 lg:max-w-[464px] lg:pt-[87px]">
             <div className="flex flex-wrap items-center gap-2">
-              {/* TEMPORARY DEMO OVERRIDE (claude.txt 2026-07-23 follow-up: "Verified для демо
-                  виведи просто в коді, не з бази, щоб показати бізнесу, потім приберемо його") —
-                  unconditional instead of gated on `profile.verification_status === 'verified'`
-                  (no test account is actually verified yet), so the pill is visible for a
-                  business demo. REVERT to `{profile.verification_status === 'verified' && (...)}`
-                  once the demo is done. */}
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
-                  styles.pillVerified,
-                )}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="size-3 shrink-0"
-                  aria-hidden="true"
+              {/* Release-1 G4: gated on the real verification status again — this used to be a
+                  temporary, unconditional demo override ("Verified для демо виведи просто в
+                  коді, не з бази, щоб показати бізнесу", claude.txt 2026-07-23 follow-up, kept
+                  around because no test account was verified yet). The colour is untouched here
+                  on purpose — a brighter Verified/handle colour is pending a pick from design
+                  (Альбіна) and the pill stays borderless (no background fill), per the tracker. */}
+              {profile.verification_status === 'verified' && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
+                    styles.pillVerified,
+                  )}
                 >
-                  <path
-                    d="M6 1C3.25 1 1 3.25 1 6C1 8.75 3.25 11 6 11C8.75 11 11 8.75 11 6C11 3.25 8.75 1 6 1ZM8.1 5.15L5.7 7.55C5.5 7.75 5.2 7.75 5 7.55L3.9 6.45C3.7 6.25 3.7 5.95 3.9 5.75C4.1 5.55 4.4 5.55 4.6 5.75L5.35 6.5L7.4 4.45C7.6 4.25 7.9 4.25 8.1 4.45C8.3 4.65 8.3 4.95 8.1 5.15Z"
-                    fill="#08D6AD"
-                  />
-                </svg>
-                {t('verified')}
-              </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="size-3 shrink-0"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 1C3.25 1 1 3.25 1 6C1 8.75 3.25 11 6 11C8.75 11 11 8.75 11 6C11 3.25 8.75 1 6 1ZM8.1 5.15L5.7 7.55C5.5 7.75 5.2 7.75 5 7.55L3.9 6.45C3.7 6.25 3.7 5.95 3.9 5.75C4.1 5.55 4.4 5.55 4.6 5.75L5.35 6.5L7.4 4.45C7.6 4.25 7.9 4.25 8.1 4.45C8.3 4.65 8.3 4.95 8.1 5.15Z"
+                      fill="#08D6AD"
+                    />
+                  </svg>
+                  {t('verified')}
+                </span>
+              )}
               {profile.username && (
                 <span
                   className={cn(
@@ -878,6 +845,29 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
                   @{profile.username}
                 </span>
               )}
+              {/* Release-1 G3: Share moves here from the removed owner-only preview banner (G1)
+                  — visible to every visitor, not just the owner, and now a REAL control (Web
+                  Share API + clipboard fallback, see `ShareProfileButton`) rather than a
+                  `NotYetAvailable` placeholder. The tracker's own wording puts this "next to the
+                  heart" (a favorite/wishlist toggle) — that control has never been built in this
+                  codebase (no icon, no i18n copy wired to it anywhere, just a `favorite` i18n key
+                  and a Figma-citation comment on the CTA row further down describing what the
+                  design shows), so there is no heart to sit beside yet. This badge row is the
+                  best available stand-in: it's above the fold at every breakpoint and already
+                  the hero's "small controls" row. `ml-auto` pushes it to the row's trailing edge
+                  without adding a second wrapper; move it next to the real favorite control once
+                  that gets built. */}
+              <ShareProfileButton
+                url={shareUrl}
+                ariaLabel={t('share.ariaLabel')}
+                copiedMessage={t('share.linkCopied')}
+                errorMessage={t('share.copyFailed')}
+                shareTitle={displayName}
+                className={cn(
+                  'ml-auto flex size-8 items-center justify-center rounded-md',
+                  styles.socialIconButton,
+                )}
+              />
             </div>
 
             <h1 className={cn('font-display', styles.heroName)}>{displayName}</h1>
@@ -960,21 +950,21 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
 
             {/*
              * CTA row (Invite to event / Book a Session / favorite) — Figma's DEDICATED preview
-             * mockup (`383:4089` "Mindsetter's profile when he views a preview") re-checked this
-             * pass shows this exact same row (same 3 controls, same styling) underneath the
-             * owner's own "Public view — this is how others see your profile" banner — i.e. the
-             * design does NOT hide these for the profile owner, unlike the old `variant ===
-             * 'public'` gate here (which left the owner's `preview` variant with nothing, even
-             * though it also shows the "this is how others see your profile" banner promising
-             * exactly this). Rendered for both variants now; a Mindsetter obviously can't book
-             * themselves or invite themselves to their own event, so all three controls are
-             * `disabled` (+ `aria-disabled`, redundant with `disabled` on a real `<button>` but
-             * kept explicit per this stage's own ask) in `preview` — Figma has no distinct
-             * "disabled" visual for this state, so this reuses each control's own already-built
-             * `disabled:` treatment (`Button`'s `ghost`/`primaryOutline` variants both ship one)
-             * rather than inventing a new one, plus a shared `disabled:opacity-50` fallback for
-             * `.inviteButton`'s `!important` color overrides, which don't have a `disabled:`
-             * step of their own. */}
+             * mockup (`383:4089` "Mindsetter's profile when he views a preview") shows this exact
+             * same row for the profile owner too (same 3 controls, same styling): the design does
+             * NOT hide these from the owner. Release-1 G2 (2026-09-20) made this the actual
+             * behavior here — an EXPLICIT REVERSAL of this file's own earlier decision, which
+             * hid the whole row from the owner (`variant === 'preview'`). Do not restore that
+             * gate: the product call is to show the owner exactly what a visitor sees, popup
+             * explanation included, rather than nothing. A Mindsetter obviously still can't book
+             * or invite themselves either way, but that's handled below by leaving both controls
+             * unconditionally `disabled` (+ `aria-disabled`, redundant with `disabled` on a real
+             * `<button>` but kept explicit per this stage's own ask) for every viewer — Figma has
+             * no distinct "disabled" visual for this state, so this reuses each control's own
+             * already-built `disabled:` treatment (`Button`'s `ghost`/`primaryOutline` variants
+             * both ship one) rather than inventing a new one, plus a shared `disabled:opacity-50`
+             * fallback for `.inviteButton`'s `!important` color overrides, which don't have a
+             * `disabled:` step of their own. */}
             {/* Placement differs by breakpoint, so the row keeps ONE DOM position and moves via
                 CSS `order` — the same "keep DOM order fixed, swap via CSS order" approach
                 `WhoIsMindsetterDialog`'s choice row and `MindsetterCongratsCtas` already use, and the
@@ -987,9 +977,11 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
               {/* Disabled unconditionally, for two independent reasons that will NOT expire
                   together: neither event invites nor session booking exists yet (hence
                   `NotYetAvailable`), and separately a Mindsetter can never invite or book
-                  themselves, so `preview` must keep these inert even once the features ship.
-                  Whoever removes the `NotYetAvailable` wrapper must restore
-                  `disabled={variant === 'preview'}` rather than dropping `disabled` entirely. */}
+                  themselves — both hold for every viewer, so there is no owner/`variant` check
+                  here at all (see the CTA-row comment above, Release-1 G2). Whoever eventually
+                  wires up real booking/invites must still add a self-booking guard for the owner
+                  viewing their own page — just not via a `variant` prop, since this component no
+                  longer has one. */}
               <NotYetAvailable feature="inviteToEvent" className="w-full lg:w-auto">
                 <Button
                   type="button"

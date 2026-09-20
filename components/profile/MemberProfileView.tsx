@@ -1,13 +1,11 @@
-import { CheckCircle2, Share2, User } from 'lucide-react';
+import { CheckCircle2, User } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import {
-  BallPenFillIcon,
   ChatAiFillIcon,
   LanguageBubbleIcon,
   LocationPinIcon,
-  PublicViewEyeIcon,
   QuillPenAiFillIcon,
   UserAddFillIcon,
 } from '@/components/icons/profile-meta-icons';
@@ -21,7 +19,6 @@ import {
 } from '@/components/icons/social-icons';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
-import { Link } from '@/i18n/navigation';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
 import { SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
@@ -62,10 +59,6 @@ export interface MemberProfile {
 
 /** Translated copy, resolved server-side by each page via `getTranslations('profile')`. */
 export interface MemberProfileViewLabels {
-  bannerHighlight: string;
-  bannerRest: string;
-  editProfile: string;
-  shareProfile: string;
   verified: string;
   inviteToEvent: string;
   aboutEyebrow: string;
@@ -76,8 +69,6 @@ export interface MemberProfileViewLabels {
 
 export interface MemberProfileViewProps {
   profile: MemberProfile;
-  /** `preview` = owner previewing their own profile (adds the top banner + static CTAs). */
-  variant: 'preview' | 'public';
   labels: MemberProfileViewLabels;
 }
 
@@ -229,14 +220,24 @@ export function resolveLanguageText(profile: { languages: string[] | null }): st
 /**
  * Shared presentational component for the "Member Profile" view. It used to back two routes
  * (a `/dashboard/profile` self-view + this public one), which the 2026-08-10 "one profile page
- * per account" pass collapsed into `app/[locale]/members/[username]/page.tsx` alone — that route
- * now resolves `variant` from the viewer (owner → `preview`, anyone else → `public`) instead of
- * the URL. The two Figma frames are structurally IDENTICAL below the banner (confirmed via a direct
- * Figma node-diff of `401:6375` vs `383:4667`), so this stays a single Server Component
- * (no client interactivity needed — Edit Profile / Share Profile / Invite to event are all
- * static per this stage's scope) taking a `variant` flag rather than being duplicated twice.
+ * per account" pass collapsed into `app/[locale]/members/[username]/page.tsx` alone. The two
+ * Figma frames are structurally IDENTICAL (confirmed via a direct Figma node-diff of `401:6375`
+ * vs `383:4667` — they only ever differed by the now-removed owner-only banner below), so this
+ * stays a single Server Component either way (no client interactivity needed — everything on
+ * this screen is static/server-rendered).
+ *
+ * Release-1 G1/G3 (2026-09-20): the owner-only "Public view — this is how others see your
+ * profile" banner (with its Edit Profile / Share Profile buttons) that used to render here for
+ * the profile owner is REMOVED — the client's explicit ask, not merely hidden. Edit access for
+ * the owner still exists via the account menu's own always-available "Edit Profile" entry
+ * (`/dashboard/profile`). Share is explicitly NOT rebuilt here — per the tracker, Member profiles
+ * get no share control at all (only the Mindsetter profile's hero does, see
+ * `MindsetterProfileView`'s `ShareProfileButton`). With the banner gone this screen no longer
+ * renders anything differently for the owner vs. any other visitor, so the `variant` prop this
+ * component used to take was removed too — do not reintroduce an owner/preview-only code path
+ * here without a real reason.
  */
-export function MemberProfileView({ profile, variant, labels }: MemberProfileViewProps) {
+export function MemberProfileView({ profile, labels }: MemberProfileViewProps) {
   const displayName = resolveDisplayName(profile);
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
@@ -254,119 +255,34 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
 
   return (
     <div className={styles.section}>
-      {variant === 'preview' && (
-        <div className={cn(styles.banner, 'flex items-center')}>
-          <div
-            className={cn(
-              // Figma: the mobile "Verified Member Profile" preview frame (401:8282, node
-              // I401:8413;127:1348 "Frame 84") never stacks — it's always a single row
-              // (label left, one compact action right) at a much shorter ~48px height than
-              // desktop's 80px bar (401:6352). The previous `flex-col ... sm:flex-row` here
-              // stacked on narrow viewports, which doesn't match.
-              'mx-auto flex w-full max-w-[1440px] flex-row items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:gap-4 md:py-0 lg:px-[70px]',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <PublicViewEyeIcon className={cn('size-5 shrink-0', styles.bannerHighlight)} />
-              <p className={cn('text-tiny', styles.bannerText)}>
-                <span className={cn('font-bold', styles.bannerHighlight)}>
-                  {labels.bannerHighlight}
-                </span>
-                {/* Figma: the mobile banner shows ONLY the highlighted "Public viev" label
-                    (node I401:8413;127:1352) — the explanatory suffix ("— this is how others
-                    see your profile") only exists on the desktop frame (401:6356). */}
-                <span className="hidden md:inline"> {labels.bannerRest}</span>
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-5">
-              {/* Static per this stage's scope — no `onClick`/`href`. Figma: mobile is a
-                  compact 32px chip (8px padding, 8px radius, node I401:8413;127:1353 "Frame
-                  83") — desktop (md+) is the larger 56px/171px gradient-bordered pill
-                  (401:6358). Re-verified against both nodes directly (bounds + this project's
-                  own `--radius-*` scale, which redefines Tailwind's stock `rounded-lg`/
-                  `rounded-xl` to 12px/16px rather than the stock 8px/12px — `rounded-lg` was
-                  silently rendering the mobile chip's corner at 12px instead of Figma's 8px,
-                  and `rounded-xl` was rendering the desktop pill at 16px instead of Figma's
-                  12px, the exact inverse of what was needed): mobile radius has no matching
-                  token (8px falls between `--radius-sm` 6px and `--radius-md` 9px) so it's a
-                  one-off arbitrary value; desktop's 12px is exactly `--radius-lg` post-redefine
-                  so that token is reused instead of an arbitrary value. Icon+label gap: bounds
-                  math (button is a FIXED 171px width with its content centered, not packed
-                  left, confirmed by solving for the icon's measured x-offset) resolves to a
-                  12px desktop gap — this button's own shared `gap-3` default from
-                  `buttonVariants` already matches, so the previous `md:gap-2` (8px) override
-                  was actively fighting a value that didn't need overriding. Mobile's hug-width
-                  chip bounds solve cleanly to a 4px gap (`gap-1`, unchanged, already correct). */}
-              <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                  'h-8 gap-1 rounded-[8px] px-2 py-2 text-tiny font-normal md:h-14 md:w-[171px] md:gap-3 md:rounded-lg md:px-5 md:py-[15px] md:text-base md:font-bold',
-                  styles.editButton,
-                )}
-              >
-                <Link href="/dashboard/profile">
-                  {/* Figma: `lucide-react`'s outline `Pen` doesn't match this instance's actual
-                    "ball-pen-fill" vector (a solid pen glyph with a separate ink-flick mark) —
-                    see `components/icons/profile-meta-icons.tsx` for the path-diff confirming
-                    the mobile/desktop instances are the same shape, just scaled. Rendered size
-                    still needs an explicit override on mobile: the shared Button component's
-                    own base class force-sets `[&_svg]:size-4` (16px) on every icon regardless
-                    of the icon's own `className`, at a CSS specificity a same-breakpoint
-                    Tailwind utility on the icon itself can never outrank — `.editButton`'s
-                    `!important` `svg` rule below is what actually wins. */}
-                  <BallPenFillIcon className="size-4" aria-hidden="true" />
-                  {labels.editProfile}
-                </Link>
-              </Button>
-              {/* Figma: zero "Share" nodes exist anywhere on the mobile preview frame
-                  (401:8282) — Share Profile only exists on the desktop frame (401:6375,
-                  node I401:6359;261:3412), so this is hidden below `md`. */}
-              <NotYetAvailable feature="shareProfile" className="hidden md:inline-flex">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled
-                  className={cn(
-                    'h-14 w-[171px] gap-2 rounded-xl px-5 py-[15px] text-base font-bold disabled:opacity-50',
-                    styles.shareButton,
-                  )}
-                >
-                  <Share2 className="size-4" aria-hidden="true" />
-                  {labels.shareProfile}
-                </Button>
-              </NotYetAvailable>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div
         className={cn(
           // Mobile/tablet: the portrait is full-bleed and visually promoted to the top (see
           // the `order-first` wrapper below) — it must sit flush against whatever precedes it
-          // (the global site Header, or the preview banner), so top padding is 0 through the
-          // same `lg` breakpoint where the full-bleed/reorder trick applies. Bottom padding is
-          // unaffected (still steps 40px -> 64px at `md`, as before).
+          // (the global site Header — there is no owner-only banner anymore, Release-1 G1), so
+          // top padding is 0 through the same `lg` breakpoint where the full-bleed/reorder trick
+          // applies. Bottom padding is unaffected (still steps 40px -> 64px at `md`, as before).
           'mx-auto w-full max-w-[1440px] px-4 pt-0 pb-10 sm:px-6 md:pb-16 lg:px-[70px] lg:pt-16',
         )}
       >
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
           <div className="flex w-full flex-col gap-6 lg:max-w-[464px]">
             <div className="flex flex-wrap items-center gap-2">
-              {/* Markup-only for now, per explicit user request — not yet gated on
-                    `profile.verification_status === 'verified'`. Re-add that condition once
-                    the real verified badge is signed off. */}
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
-                  styles.pillVerified,
-                )}
-              >
-                <CheckCircle2 className="size-3" aria-hidden="true" />
-                {labels.verified}
-              </span>
+              {/* Release-1 G4: gated on the real verification status again — this used to render
+                  unconditionally ("markup-only for now, per explicit user request", from before
+                  any test account was actually verified). Colour is untouched here on purpose —
+                  see `MindsetterProfileView`'s own G4 comment on its matching badge for why. */}
+              {profile.verification_status === 'verified' && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-tiny',
+                    styles.pillVerified,
+                  )}
+                >
+                  <CheckCircle2 className="size-3" aria-hidden="true" />
+                  {labels.verified}
+                </span>
+              )}
               {profile.username && (
                 <span
                   className={cn(

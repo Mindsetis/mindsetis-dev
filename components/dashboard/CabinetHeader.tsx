@@ -1,8 +1,8 @@
-import { BadgeCheck } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { EditPencilIcon, ViewProfileIcon } from '@/components/icons/cabinet-header-icons';
+import { CheckCircleFillIcon } from '@/components/icons/check-circle-fill-icon';
 import { Button } from '@/components/ui/button';
 import type { ProfileCompleteness } from '@/lib/profile/completeness';
 import { cn } from '@/lib/utils';
@@ -164,9 +164,23 @@ export async function CabinetHeader({
             <h1 className="truncate text-base font-medium text-foreground md:font-display md:text-[32px]/[42px] md:font-normal">
               {displayName}
             </h1>
+            {/* Figma "Status badge" (`754:11877` Member / `610:4260` Mindsetter, and their 375px
+                twins `1110:16702`/`1001:8339`), re-checked against the live file 2026-09-20 after
+                the owner spotted this badge differing from the design.
+                - GLYPH: Figma uses `ic / check-circle` — a solid disc with the tick knocked out —
+                  not `lucide-react`'s `BadgeCheck`, which is a scalloped shield. Same component
+                  the public profile views already render, so this reuses the shared icon rather
+                  than a third copy of the path.
+                - COLOUR: `#08D6AD` on the icon, the label AND a solid 1px border, with NO fill
+                  behind the pill (the client's "don't fill the pill" requirement, and what the
+                  node's styles show: `strokes` set, `fills` absent). That hex IS `--color-success`,
+                  so this takes the token instead of the `emerald-*` palette it used to borrow.
+                - SPACING: the node's padding really is asymmetric (9px left / 13px right,
+                  5px top+bottom) with a 7px icon→label gap; measured, not rounded to the nearest
+                  Tailwind step. */}
             {isVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 px-2.5 py-1 text-tiny text-emerald-400">
-                <BadgeCheck className="size-4" aria-hidden="true" />
+              <span className="inline-flex items-center gap-[7px] rounded-full border border-success py-[5px] pr-[13px] pl-[9px] text-tiny text-success">
+                <CheckCircleFillIcon className="size-4 shrink-0" />
                 {t('verified')}
               </span>
             )}
