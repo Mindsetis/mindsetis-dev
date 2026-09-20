@@ -107,16 +107,20 @@ _Наскрізна вимога: не «Coming soon», а пояснення ф
 
 ## Блок C — Кабінет: назви, навігація, фідбек
 
-- [ ] **C1.** «Your profile» → **Member details** («Basic info required to attend events
+- [x] **C1.** «Your profile» → **Member details** («Basic info required to attend events
       and book consultations»); «Hero» → **Basic Info** («Photo, name, location, bio,
       company & role»); «Social links» → **Links** («Website & social profiles»);
       груповий заголовок **Mindsetter details** («Your expert landing page for hosting
       events and consultations») над 11 картками Mindsetter.
-- [ ] **C2.** «+» на картках → слово **Edit** _(клієнтка прямо обрала Edit, не шеврон)_;
+- [x] **C2.** «+» на картках → слово **Edit** _(клієнтка прямо обрала Edit, не шеврон)_;
       збільшити зону натискання; полагодити баг кліку саме по іконці.
-- [ ] **C3.** `Cancel` → **Back**, `Save Changes` → **Save & Next**; sticky-панель дій
+- [x] **C3.** `Cancel` → **Back**, `Save Changes` → **Save & Next**; sticky-панель дій
       унизу екрана; попередження «Ви не зберегли зміни» при Back; прибрати `TO TOP`
       у кабінеті (на лендингу лишається).
+      _20.09.2026: один раз поверталась на доопрацювання (вихід через **Log out** лишав
+      `body { pointer-events: none }` — сторінка не клікалась); полагоджено й перевірено
+      повторно, обидві гілки. `TO TOP` у майстрі `/mindsetter-onboarding/*` лишається
+      свідомо._
 - [ ] **C4.** У картці профілю: **View Profile** (відкриває публічну сторінку в новій
       вкладці), показувати **завжди** — навіть коли профіль не заповнений;
       `Become a Mindsetter` звідти прибрати.
@@ -151,7 +155,7 @@ _Наскрізна вимога: не «Coming soon», а пояснення ф
 - [x] **D8.** Тексти помилок валідації під полями з D2 — узгодити з новими підписами:
       `Bio is required.` → **«Short Bio is required.»**, `Bio must be at most {max} characters.`
       → **«Short Bio must be at most {max} characters.»**, `About must be at most {max}
-  characters.` → **«More About You must be at most {max} characters.»** (+ іспанські
+characters.` → **«More About You must be at most {max} characters.»** (+ іспанські
       відповідники). Знайдено під час приймання D2: підписи полів змінили, а помилки лишились
       від старих назв. **Формулювання наше** — клієнтка текстів помилок для D2 не давала
       (на відміну від D1, де текст помилки був виписаний окремо).
