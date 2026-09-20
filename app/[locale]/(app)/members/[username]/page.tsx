@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
 import { MemberProfileView } from '@/components/profile/MemberProfileView';
+import { UpgradeProfileWidget } from '@/components/profile/UpgradeProfileWidget';
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
@@ -161,18 +162,27 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const { id: _id, account_type: _accountType, ...renderedProfile } = profile;
 
   return (
-    <MemberProfileView
-      // `region_name` (snake_case, straight from Postgres) is remapped to the component's
-      // camelCase `regionName`; everything else already matches column-for-column.
-      profile={{ ...renderedProfile, regionName: profile.region_name }}
-      labels={{
-        verified: t('verified'),
-        inviteToEvent: t('inviteToEvent'),
-        aboutEyebrow: t('aboutEyebrow'),
-        beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
-        beyondBusinessHeading: t('beyondBusinessHeading'),
-        website: t('website'),
-      }}
-    />
+    <>
+      <MemberProfileView
+        // `region_name` (snake_case, straight from Postgres) is remapped to the component's
+        // camelCase `regionName`; everything else already matches column-for-column.
+        profile={{ ...renderedProfile, regionName: profile.region_name }}
+        labels={{
+          verified: t('verified'),
+          inviteToEvent: t('inviteToEvent'),
+          aboutEyebrow: t('aboutEyebrow'),
+          beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
+          beyondBusinessHeading: t('beyondBusinessHeading'),
+          website: t('website'),
+        }}
+      />
+      {/* Release-1 C8 — owner-only, Member-only. `profile.account_type` is read straight off the
+          fetched row rather than through `renderedProfile` (which already had it stripped above)
+          — checked here defensively alongside `isOwner`, even though by this point in the
+          function `isOwner && account_type === 'mindsetter'` is already unreachable (that
+          combination always redirects above, since `isMindsetterPageVisible` returns `true`
+          unconditionally for the owner). */}
+      {isOwner && profile.account_type === 'member' && <UpgradeProfileWidget userId={profile.id} />}
+    </>
   );
 }

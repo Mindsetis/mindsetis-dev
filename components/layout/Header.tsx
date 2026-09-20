@@ -4,6 +4,7 @@ import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { AccountMenu } from '@/components/layout/AccountMenu';
+import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { ctaStateFromProfile } from '@/lib/auth/cta-state';
@@ -161,17 +162,18 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
               ) : null}
 
               {ctaState === 'memberComplete' ? (
-                <Button
-                  asChild
+                // `UpgradeToMindsetterTrigger`, not `Button asChild` + `GuardedLink` (Release-1
+                // C7, 2026-09-20): this CTA used to link straight to
+                // `/mindsetter-onboarding/roles` (same destination as `WelcomeCtas.tsx`/
+                // `WhoIsMindsetterDialog.tsx`'s own "Become a Mindsetter" actions); it now opens
+                // the `UpgradeToMindsetterDialog` confirmation first, and the dialog's own
+                // "Continue" button carries the visitor onward from there.
+                <UpgradeToMindsetterTrigger
                   size="sm"
                   className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
                 >
-                  {/* `/mindsetter-onboarding/roles` — same destination as every other "Become a
-                      Mindsetter" entry point (`CabinetHeader.tsx`, `WelcomeCtas.tsx`,
-                      `WhoIsMindsetterDialog.tsx`); a confirmation modal is planned in front of
-                      it later (Release-1 C7), out of scope here. */}
-                  <GuardedLink href="/mindsetter-onboarding/roles">{t('upgrade')}</GuardedLink>
-                </Button>
+                  {t('upgrade')}
+                </UpgradeToMindsetterTrigger>
               ) : null}
 
               {ctaState === 'mindsetter' ? (

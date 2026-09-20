@@ -1504,6 +1504,12 @@
       "cta": "Actualizar ahora"
     }
   },
+  "memberProfileReadyDialog": {
+    "title": "¡Tu perfil de Miembro está listo! 🎉",
+    "description": "Tu perfil está completo y ahora es visible para el resto de la comunidad de Mindsetis.",
+    "previewProfile": "Ver perfil",
+    "continueSetup": "Continuar configuración"
+  },
   "validation": {
     "aboutMax": "«Más sobre ti» no puede superar los {max} caracteres.",
     "authorMax": "El autor no puede superar los {max} caracteres.",
@@ -2032,5 +2038,24 @@
         "body": "Write to legal@mindsetis.com and we will answer within five working days."
       }
     }
+  },
+  "upgradeToMindsetter": {
+    "title": "Conviértete en Mindsetter",
+    "description": "Los Mindsetters son fundadores y empresarios verificados que comparten experiencia real con la comunidad.",
+    "points": {
+      "profile": "Una página de perfil público que funciona como tu sitio web personal.",
+      "sessions": "Tus propias sesiones 1:1 — gratis o de pago, tú fijas el precio.",
+      "events": "Organiza eventos e invita a miembros a participar."
+    },
+    "note": "La configuración lleva cinco pasos breves. Tu página se publica en cuanto el equipo de Mindsetis la verifica.",
+    "continue": "Continuar",
+    "notNow": "Ahora no"
+  },
+  "upgradeProfileWidget": {
+    "title": "Tu perfil puede dar más de sí",
+    "body": "Conviértete en Mindsetter para desbloquear tu propio perfil público, sesiones 1:1 de pago y eventos.",
+    "cta": "Conviértete en Mindsetter",
+    "seeExample": "Ver ejemplo",
+    "close": "Cerrar"
   }
 }

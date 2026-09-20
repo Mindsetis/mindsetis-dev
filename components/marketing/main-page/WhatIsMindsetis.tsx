@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
+import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
@@ -152,13 +153,16 @@ export async function WhatIsMindsetis() {
         ) : null}
 
         {ctaState === 'memberComplete' ? (
-          <Button
-            asChild
+          // `UpgradeToMindsetterTrigger`, not `Button asChild` + `Link` (Release-1 C7,
+          // 2026-09-20): opens the `UpgradeToMindsetterDialog` confirmation instead of navigating
+          // straight to `/mindsetter-onboarding/roles` — same change applied to the header's own
+          // "Upgrade" CTA, see that call site's comment for the shared reasoning.
+          <UpgradeToMindsetterTrigger
             size="default"
             className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
           >
-            <Link href="/mindsetter-onboarding/roles">{tNav('upgrade')}</Link>
-          </Button>
+            {tNav('upgrade')}
+          </UpgradeToMindsetterTrigger>
         ) : null}
 
         {ctaState === 'mindsetter' ? (
