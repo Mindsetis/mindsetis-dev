@@ -52,7 +52,7 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
     supabase
       .from('profiles')
       .select(
-        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industry, socials',
+        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industries, industry_custom, socials',
       )
       .eq('id', session.user.id)
       .maybeSingle(),
@@ -82,7 +82,8 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
       bio: profile?.bio ?? null,
       company: profile?.company ?? null,
       role: profile?.role ?? null,
-      industry: profile?.industry ?? null,
+      industries: profile?.industries ?? null,
+      industryCustom: profile?.industry_custom ?? null,
       socials: profile?.socials ?? null,
     },
     {

@@ -28,7 +28,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
-import { INDUSTRIES, type IndustryValue } from '@/lib/constants/industries';
+import type { IndustryValue } from '@/lib/constants/industries';
+import { INDUSTRIES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
 import type { InterestValue } from '@/lib/constants/interests';
 import {
   buildLanguageAliases,
@@ -36,6 +37,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '@/lib/constants/languages';
 import type { CountryOption } from '@/lib/geo/countries';
+import { MAX_INDUSTRIES, MAX_INDUSTRY_CUSTOM_LENGTH } from '@/lib/validation/build-profile';
 import { createHeroSchema, type HeroInput } from '@/lib/validation/dashboard-profile';
 import { MAX_ABOUT_LENGTH, MAX_BIO_LENGTH } from '@/lib/validation/member-profile';
 
@@ -53,7 +55,8 @@ export type HeroFormProps = {
   initialAvatarUrl?: string | null;
   initialCompany?: string;
   initialRole?: string;
-  initialIndustry?: IndustryValue;
+  initialIndustries?: IndustryValue[];
+  initialIndustryCustom?: string;
   /** Where "Save & Next" navigates once saved — the next card in cabinet section order, computed
    * by the page via `lib/profile/completeness.ts#nextSectionHref` (Release-1 C3). */
   nextHref: string;
@@ -93,7 +96,8 @@ export function HeroForm({
   initialAvatarUrl,
   initialCompany,
   initialRole,
-  initialIndustry,
+  initialIndustries,
+  initialIndustryCustom,
   nextHref,
 }: HeroFormProps) {
   const t = useTranslations('auth');
@@ -121,7 +125,8 @@ export function HeroForm({
       interestIds: initialInterestIds ?? [],
       company: initialCompany ?? '',
       role: initialRole ?? '',
-      industry: initialIndustry,
+      industries: initialIndustries ?? [],
+      industryCustom: initialIndustryCustom ?? '',
       // Declared even though it is always `undefined` here (editing never pre-fills a File — the
       // saved photo lives in `initialAvatarUrl`). React Hook Form derives `isDirty` from
       // `!deepEqual(values, defaultValues)`, and its `deepEqual` rejects on key COUNT before it
@@ -139,6 +144,8 @@ export function HeroForm({
 
   const bioValue = useWatch({ control: form.control, name: 'bio' }) ?? '';
   const aboutValue = useWatch({ control: form.control, name: 'about' }) ?? '';
+  const industriesValue = useWatch({ control: form.control, name: 'industries' }) ?? [];
+  const hasOtherIndustry = industriesValue.includes(OTHER_INDUSTRY_VALUE);
 
   // The city's display data lives outside RHF: the validated value is just the GeoNames id, and
   // the Server Action re-derives every label from the reference tables.
@@ -184,7 +191,8 @@ export function HeroForm({
     for (const id of values.interestIds) formData.append('interestIds', id);
     formData.append('company', values.company);
     formData.append('role', values.role);
-    formData.append('industry', values.industry);
+    for (const industry of values.industries) formData.append('industries', industry);
+    if (values.industryCustom) formData.append('industryCustom', values.industryCustom);
 
     const result = await saveHeroSection(formData);
     if (!result.ok) {
@@ -519,28 +527,72 @@ export function HeroForm({
 
           <FormField
             control={form.control}
-            name="industry"
-            render={({ field }) => (
+            name="industries"
+            render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>
-                  <span className="inline-flex items-center gap-1">
-                    {t('buildProfile.industry.label')} <span className="text-primary">*</span>
+                <div className="flex items-center justify-between gap-2">
+                  <FormLabel>
+                    <span className="inline-flex items-center gap-1">
+                      {t('buildProfile.industries.label')} <span className="text-primary">*</span>
+                    </span>
+                  </FormLabel>
+                  <span className="text-tiny text-muted-foreground">
+                    {t('buildProfile.industries.counter', {
+                      count: field.value.length,
+                      max: MAX_INDUSTRIES,
+                    })}
                   </span>
-                </FormLabel>
-                <Combobox
+                </div>
+                <LanguagesMultiSelect
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(next) => {
+                    field.onChange(next);
+                    if (!next.includes(OTHER_INDUSTRY_VALUE)) {
+                      form.setValue('industryCustom', '', { shouldValidate: true });
+                    }
+                  }}
                   options={INDUSTRIES}
-                  placeholder={t('buildProfile.industry.placeholder')}
-                  searchPlaceholder={t('buildProfile.industry.searchPlaceholder')}
-                  emptyLabel={t('buildProfile.industry.empty')}
-                  invalid={!!form.formState.errors.industry}
+                  max={MAX_INDUSTRIES}
+                  placeholder={t('buildProfile.industries.placeholder')}
+                  searchPlaceholder={t('buildProfile.industries.searchPlaceholder')}
+                  emptyLabel={t('buildProfile.industries.empty')}
+                  removeLabel={(label) => t('buildProfile.industries.remove', { label })}
+                  invalid={!!fieldState.error}
+                  searchable
                 />
-                <FieldHint>{t('buildProfile.industry.hint')}</FieldHint>
+                <FieldHint>{t('buildProfile.industries.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {hasOtherIndustry && (
+            <FormField
+              control={form.control}
+              name="industryCustom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    <span className="inline-flex items-center gap-1">
+                      {t('buildProfile.industries.other.label')}{' '}
+                      <span className="text-primary">*</span>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      maxLength={MAX_INDUSTRY_CUSTOM_LENGTH}
+                      placeholder={t('buildProfile.industries.other.placeholder')}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FieldHint>{t('buildProfile.industries.other.hint')}</FieldHint>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <StepActions

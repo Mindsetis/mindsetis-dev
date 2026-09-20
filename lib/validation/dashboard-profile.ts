@@ -6,7 +6,8 @@
  * `socialLinkFields`, `buildProfileFields`) rather than restating any validation rule, so a change
  * to, say, the bio limit or the URL scheme allow-list lands in both places at once. The cabinet's
  * Hero form spans two wizard steps — sign-up's names, step 3's profile fields, step 4's
- * company/role/industry — because that's exactly what the Figma Hero frame renders, in that order.
+ * company/role/industries — because that's exactly what the Figma Hero frame renders, in that
+ * order.
  *
  * `*ActionSchema` variants mirror `memberProfileActionSchema`'s trick: a `z.preprocess` wrapper
  * used ONLY by the Server Action, to normalize raw `FormData` (a key appended once decodes to a
@@ -16,7 +17,7 @@
  */
 import { z } from 'zod';
 
-import { buildProfileFields } from './build-profile';
+import { buildProfileFields, refineIndustryCustom } from './build-profile';
 import { isLatinOnly, LATIN_ONLY_MESSAGE } from './common';
 import { memberProfileCoreFields, socialLinkFields } from './member-profile';
 import { vmsg } from './messages';
@@ -68,6 +69,11 @@ export function createHeroSchema({ avatarRequired = false }: HeroSchemaOptions =
           path: ['avatar'],
         });
       }
+      // Same Other/industryCustom cross-field rule `buildProfileSchema` applies — this schema
+      // composes `buildProfileFields` directly rather than nesting `buildProfileSchema` itself
+      // (nesting would double the `.superRefine` avatar/industries concerns), so it re-applies
+      // the shared helper instead of re-deriving the rule.
+      refineIndustryCustom(data, ctx);
     });
 }
 
@@ -88,6 +94,7 @@ export const heroActionSchema = z.preprocess(
       ...value,
       languages: toArray(value.languages),
       interestIds: toArray(value.interestIds),
+      industries: toArray(value.industries),
     };
   },
   createHeroSchema({ avatarRequired: false }),

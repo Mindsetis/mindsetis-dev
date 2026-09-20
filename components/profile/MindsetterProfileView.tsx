@@ -323,7 +323,6 @@ export interface MindsetterProfile {
   tagline: string | null;
   company: string | null;
   role: string | null;
-  industry: string | null;
   country: string | null;
   city: string | null;
   /** Subdivision (US state, oblast…). Shown only when it disambiguates — see resolveLocationText. */
@@ -666,8 +665,10 @@ export function MindsetterProfileView({ profile, variant, t }: MindsetterProfile
   const displayName = resolveDisplayName(profile);
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
-  const metaPills = [profile.industry, profile.company, profile.role].filter(
-    (value): value is string => Boolean(value),
+  // `industry` was dropped from this row (Release-1 E5, 2026-09-20) — same public-profile
+  // decision as `MemberProfileView`, see that file's `MemberProfile` doc comment.
+  const metaPills = [profile.company, profile.role].filter((value): value is string =>
+    Boolean(value),
   );
   const interestGroups = groupInterestsByCategory(profile.interests);
   const socials = profile.socials;

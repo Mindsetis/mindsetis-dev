@@ -495,11 +495,18 @@
         "label": "Empresa",
         "placeholder": "El nombre de tu empresa"
       },
-      "industry": {
+      "industries": {
+        "counter": "{count}/{max}",
         "empty": "No se encontró ninguna industria.",
-        "hint": "Tu industria no se muestra en tu perfil público; se usa para los filtros de búsqueda.",
-        "label": "Industria",
-        "placeholder": "Selecciona una industria",
+        "hint": "Tus industrias no se muestran en tu perfil público; se usan para los filtros de búsqueda. Puedes elegir hasta 3.",
+        "label": "Industrias",
+        "other": {
+          "hint": "Por ahora solo tú y nuestro equipo pueden verlo. Aparecerá en la búsqueda cuando nuestro equipo lo revise y apruebe.",
+          "label": "Cuéntanos tu industria",
+          "placeholder": "p. ej. Aeroespacial"
+        },
+        "placeholder": "Selecciona industrias",
+        "remove": "Quitar {label}",
         "searchPlaceholder": "Buscar industrias"
       },
       "role": {
@@ -1514,7 +1521,12 @@
     "firstNameRequired": "El nombre es obligatorio.",
     "imageMax": "La imagen no puede superar los {max} MB.",
     "imageType": "Solo se admiten imágenes PNG o JPEG.",
-    "industryRequired": "Selecciona un sector.",
+    "industriesDuplicate": "Quita la industria duplicada.",
+    "industriesMax": "Puedes seleccionar hasta {max} industrias.",
+    "industriesRequired": "Selecciona al menos una industria.",
+    "industryCustomMax": "Tu industria debe tener como máximo {max} caracteres.",
+    "industryCustomNotAllowed": "Quita este texto, o selecciona \"Other\" entre tus industrias.",
+    "industryCustomRequired": "Cuéntanos tu industria.",
     "interestsMax": "Puedes seleccionar hasta {max} intereses.",
     "invalidRedirect": "Redirección no válida.",
     "labelMax": "La etiqueta no puede superar los {max} caracteres.",

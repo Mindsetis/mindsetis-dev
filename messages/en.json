@@ -495,11 +495,18 @@
         "label": "Company",
         "placeholder": "Your company name"
       },
-      "industry": {
+      "industries": {
+        "counter": "{count}/{max}",
         "empty": "No industry found.",
-        "hint": "Your industry is not shown on your public profile — it's used to power search filters.",
-        "label": "Industry",
-        "placeholder": "Select an industry",
+        "hint": "Your industries are not shown on your public profile — they're used to power search filters. You can select up to 3.",
+        "label": "Industries",
+        "other": {
+          "hint": "Only you and our team can see this for now. It'll appear in search once our team reviews and approves it.",
+          "label": "Tell us your industry",
+          "placeholder": "e.g. Aerospace"
+        },
+        "placeholder": "Select industries",
+        "remove": "Remove {label}",
         "searchPlaceholder": "Search industries"
       },
       "role": {
@@ -1514,7 +1521,12 @@
     "firstNameRequired": "First name is required.",
     "imageMax": "Image must be at most {max} MB.",
     "imageType": "Only PNG or JPEG images are allowed.",
-    "industryRequired": "Please select an industry.",
+    "industriesDuplicate": "Please remove the duplicate industry.",
+    "industriesMax": "You can select up to {max} industries.",
+    "industriesRequired": "Please select at least one industry.",
+    "industryCustomMax": "Your industry must be at most {max} characters.",
+    "industryCustomNotAllowed": "Remove this text, or select \"Other\" among your industries.",
+    "industryCustomRequired": "Tell us your industry.",
     "interestsMax": "You can select up to {max} interests.",
     "invalidRedirect": "Invalid redirect.",
     "labelMax": "Label must be at most {max} characters.",

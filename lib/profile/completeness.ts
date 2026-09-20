@@ -77,7 +77,12 @@ export type ProfileSnapshot = {
   bio: string | null;
   company: string | null;
   role: string | null;
-  industry: string | null;
+  /** Release-1 E1/E2/E3: `profiles.industry` (single, required) → `profiles.industries`
+   *  (up to 3 catalog slugs) + `profiles.industry_custom` (free-text "Other"). Either one being
+   *  non-empty counts as "filled" — approval status of the custom value has no bearing on
+   *  profile completeness, only on whether it later surfaces in search filters. */
+  industries: string[] | null;
+  industryCustom: string | null;
   socials: Json | null;
 };
 
@@ -134,7 +139,7 @@ function isHeroFilled(profile: ProfileSnapshot): boolean {
     hasText(profile.bio) &&
     hasText(profile.company) &&
     hasText(profile.role) &&
-    hasText(profile.industry)
+    ((profile.industries?.length ?? 0) > 0 || hasText(profile.industryCustom))
   );
 }
 

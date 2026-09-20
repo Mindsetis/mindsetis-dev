@@ -46,7 +46,7 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
   // previously-submitted data instead of a blank form — same precedent as `/member-profile`.
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('company, role, industry')
+    .select('company, role, industries, industry_custom')
     .eq('id', session.user.id)
     .maybeSingle();
 
@@ -67,7 +67,8 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
         <BuildProfileForm
           initialCompany={profileData?.company ?? undefined}
           initialRole={profileData?.role ?? undefined}
-          initialIndustry={profileData?.industry ?? undefined}
+          initialIndustries={profileData?.industries ?? undefined}
+          initialIndustryCustom={profileData?.industry_custom ?? undefined}
         />
       </div>
     </div>

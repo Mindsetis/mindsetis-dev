@@ -53,7 +53,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, industry, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
+      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
     )
     .eq('username', username)
     .maybeSingle();
@@ -230,7 +230,6 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         tagline: profile.tagline,
         company: profile.company,
         role: profile.role,
-        industry: profile.industry,
         country: profile.country,
         city: profile.city,
         regionName: profile.region_name,

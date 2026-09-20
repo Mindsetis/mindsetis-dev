@@ -3,8 +3,10 @@
 /**
  * Server Action for the registration wizard's step 4/4 ("What do you build?" — see
  * `page.tsx`, the last step now that `/verify-email` is step 2). Persists `company` / `role` /
- * `industry` onto the caller's own `profiles` row (RLS: `profiles_update_own`,
- * column-agnostic — no new policy needed, see
+ * `industries` / `industry_custom` onto the caller's own `profiles` row (RLS:
+ * `profiles_update_own`, column-agnostic — no new policy needed; `industries`/`industry_custom`
+ * were added by `supabase/migrations/20260920093000_profiles_multi_industry.sql`, replacing the
+ * original single `industry` column from
  * `supabase/migrations/20260714101121_profiles_step3_build_fields.sql`), then (best-effort)
  * sends the informational "Welcome to Mindsetis" email before the wizard redirects to
  * `/welcome` — see `sendWelcomeEmailBestEffort`'s doc comment.
@@ -70,11 +72,16 @@ export const saveBuildProfile = createAction(buildProfileSchema, async (input) =
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
-      // `buildProfileSchema` requires (and trims) all three now — no `?.trim() || null`
+      // `buildProfileSchema` requires (and trims) company/role now — no `?.trim() || null`
       // fallback needed, the parsed values are already guaranteed non-empty strings.
       company: input.company,
       role: input.role,
-      industry: input.industry,
+      industries: input.industries,
+      // Never `industry_custom_status` here — that column is staff-only, DB-guarded
+      // (`guard_profiles_industry_custom_status`, `20260920093000_profiles_multi_industry.sql`);
+      // writing `industry_custom` alone is exactly what that trigger expects from a normal save
+      // (it resets the status to 'pending' on the DB side when the text actually changed).
+      industry_custom: input.industryCustom?.trim() || null,
       onboarding_step: 3,
     })
     .eq('id', user.id);

@@ -32,10 +32,14 @@ import styles from './MemberProfileView.module.css';
 
 /**
  * A member's profile, as rendered by this screen. Hand-typed rather than imported from
- * `lib/supabase/types.gen.ts` — that generated file is stale (missing `role`/`industry`,
- * added by `20260714101121_profiles_step3_build_fields.sql`) and regenerating it
- * (`npm run db:types`) is out of scope for this stage. The single call site
- * (`/members/[username]`) selects this exact column allow-list, never `select('*')`.
+ * `lib/supabase/types.gen.ts` — that generated file's shape doesn't match this screen's exact
+ * column allow-list 1:1, and regenerating call sites around it is out of scope here. The single
+ * call site (`/members/[username]`) selects this exact allow-list, never `select('*')`.
+ *
+ * `industry` (Release-1 E5, 2026-09-20 product decision) no longer appears on the public
+ * profile — it was shown as one of the "meta pills" alongside company/role, but the field is
+ * now multi-select (`profiles.industries` + `profiles.industry_custom`) and meant to power
+ * search filters, not the public header. `company`/`role` still render there.
  */
 export interface MemberProfile {
   username: string;
@@ -45,7 +49,6 @@ export interface MemberProfile {
   bio: string | null;
   about: string | null;
   role: string | null;
-  industry: string | null;
   company: string | null;
   country: string | null;
   city: string | null;
@@ -237,8 +240,8 @@ export function MemberProfileView({ profile, variant, labels }: MemberProfileVie
   const displayName = resolveDisplayName(profile);
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
-  const metaPills = [profile.industry, profile.company, profile.role].filter(
-    (value): value is string => Boolean(value),
+  const metaPills = [profile.company, profile.role].filter((value): value is string =>
+    Boolean(value),
   );
   const interestGroups = groupInterestsByCategory(profile.interests);
   const socials = profile.socials;

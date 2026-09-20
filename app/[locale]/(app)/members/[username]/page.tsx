@@ -30,7 +30,7 @@ const getProfileByUsername = cache(async (username: string) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, industry, company, country, city, region_name, languages, interests, socials, verification_status, is_blocked',
+      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, company, country, city, region_name, languages, interests, socials, verification_status, is_blocked',
     )
     .eq('username', username)
     .eq('is_blocked', false)

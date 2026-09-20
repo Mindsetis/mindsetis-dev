@@ -93,7 +93,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     supabase
       .from('profiles')
       .select(
-        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industry, socials',
+        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industries, industry_custom, socials',
       )
       .eq('id', session.user.id)
       .maybeSingle(),
@@ -123,7 +123,8 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
       bio: profile.bio,
       company: profile.company,
       role: profile.role,
-      industry: profile.industry,
+      industries: profile.industries,
+      industryCustom: profile.industry_custom,
       socials: profile.socials,
     },
     accountType === 'mindsetter'
