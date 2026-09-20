@@ -1279,11 +1279,10 @@
   },
   "dashboard": {
     "header": {
-      "becomeMindsetter": "Conviértete en Mindsetter",
       "completenessLabel": "Perfil completado",
       "edit": "Editar",
       "verified": "Verificado",
-      "viewPublicProfile": "Ver perfil público"
+      "viewProfile": "Ver perfil"
     },
     "nav": {
       "ariaLabel": "Panel",
@@ -1498,6 +1497,11 @@
           "success": "Contraseña cambiada"
         }
       }
+    },
+    "statusBanner": {
+      "title": "Tu estado: Miembro",
+      "body": "Desbloquea las herramientas de Mindsetter para organizar eventos y compartir tu experiencia.",
+      "cta": "Actualizar ahora"
     }
   },
   "validation": {

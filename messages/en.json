@@ -1279,11 +1279,10 @@
   },
   "dashboard": {
     "header": {
-      "becomeMindsetter": "Become a Mindsetter",
       "completenessLabel": "Profile completeness",
       "edit": "Edit",
       "verified": "Verified",
-      "viewPublicProfile": "View public profile"
+      "viewProfile": "View Profile"
     },
     "nav": {
       "ariaLabel": "Cabinet",
@@ -1498,6 +1497,11 @@
           "success": "Password changed"
         }
       }
+    },
+    "statusBanner": {
+      "title": "Your status: Member",
+      "body": "Unlock Mindsetter tools to host events & share expertise.",
+      "cta": "Upgrade Now"
     }
   },
   "validation": {
