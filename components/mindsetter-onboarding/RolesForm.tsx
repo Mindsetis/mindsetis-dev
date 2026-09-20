@@ -651,20 +651,24 @@ export function RolesForm({ initialRoles, editMode, nextHref }: RolesFormProps) 
           </div>
         </SortableList>
 
-        <div className="flex flex-col gap-3 md:gap-4">
-          {fields.length < MAX_ROLES ? (
-            <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
-              <Plus className="size-4" aria-hidden="true" />
-              {t('roles.addRole')}
-            </Button>
-          ) : null}
+        {fields.length < MAX_ROLES ? (
+          <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
+            <Plus className="size-4" aria-hidden="true" />
+            {t('roles.addRole')}
+          </Button>
+        ) : null}
 
-          <StepActions
-            onCancel={() => router.push('/dashboard/profile')}
-            editMode={editMode}
-            isSubmitting={form.formState.isSubmitting}
-          />
-        </div>
+        {/* Direct child of the `<form>`, NOT wrapped with the "Add role" button above (as it was
+            until 2026-09-20): the cabinet bar is `position: sticky`, and sticky can only travel
+            inside its own containing block. Boxed into that two-row wrapper it had ~70px of room,
+            so it never actually pinned — measured live at 375px, where the section is long enough
+            that the buttons should have been held at the bottom edge the whole way down. Every
+            other section form already renders it here for the same reason. */}
+        <StepActions
+          onCancel={() => router.push('/dashboard/profile')}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );

@@ -262,25 +262,20 @@ export function HelpForm({ initialExpertise, editMode, nextHref }: HelpFormProps
           </div>
         </SortableList>
 
-        <div className="flex flex-col gap-3 md:gap-4">
-          {fields.length < MAX_EXPERTISE ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => append(EMPTY_EXPERTISE)}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              {t('help.addExpertise')}
-            </Button>
-          ) : null}
+        {fields.length < MAX_EXPERTISE ? (
+          <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_EXPERTISE)}>
+            <Plus className="size-4" aria-hidden="true" />
+            {t('help.addExpertise')}
+          </Button>
+        ) : null}
 
-          <StepActions
-            onCancel={() => router.push('/dashboard/profile')}
-            editMode={editMode}
-            isSubmitting={form.formState.isSubmitting}
-          />
-        </div>
+        {/* Direct child of the `<form>` — see the same note in `RolesForm`: wrapped together with
+            the "Add expertise" button, the sticky bar had no room to pin. */}
+        <StepActions
+          onCancel={() => router.push('/dashboard/profile')}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );
