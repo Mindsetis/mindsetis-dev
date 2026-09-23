@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
+import { EditPencilIcon } from '@/components/icons/cabinet-header-icons';
 import { SECTION_ICONS } from '@/components/icons/profile-section-icons';
 import { Link } from '@/i18n/navigation';
 import type { ProfileSectionKey } from '@/lib/profile/completeness';
@@ -26,6 +27,18 @@ import type { ProfileSectionKey } from '@/lib/profile/completeness';
  * (client's explicit choice, not a chevron/icon) also GROWS the hit area on its own: a text label is
  * wider than a 17px glyph, so the chip's padding scales with the copy instead of staying pinned to
  * an icon's fixed box.
+ *
+ * PENCIL ICON ADDED (2026-09-21, Release-1 C2 design reconciliation): the designer's later Admin
+ * Panel mock (Figma node `610:4462` "Section card" → "Expand" chip, instance `Tertiary - small`,
+ * `1494:25091`) draws the chip as a pencil glyph ("ball-pen-fill", 14×14) THEN the word "Edit", 5px
+ * apart — not the bare word alone this component previously rendered. The word itself is unchanged
+ * (still the client's explicit choice, not a chevron), so this is additive, not a reversal of the
+ * decision above. `EditPencilIcon` (`cabinet-header-icons.tsx`) is reused rather than re-exporting
+ * a third copy of the same path — it's already this exact glyph at this exact 14×14 grid, confirmed
+ * by a direct node/path comparison against Figma's `ball-pen-fill` (the same shape `CabinetHeader`'s
+ * "Edit" link already renders at the same size). The icon sits INSIDE the same `pointer-events-none`
+ * chip, so the hit-target reasoning above is unaffected — nothing about it gained its own pointer
+ * handling.
  */
 export type ProfileSectionCardProps = {
   sectionKey: ProfileSectionKey;
@@ -73,20 +86,22 @@ export async function ProfileSectionCard({
 
       {/* `border-border` is this project's exact #747474 token (`--color-border`, colors.css).
           `rounded-[11px]`/`bg-[#2a2a2a]` have no matching token (11px falls between the `md`/`lg`
-          radius steps; #2a2a2a is the same one-off divider color used elsewhere in the cabinet).
-          `opacity-90` is the stock Tailwind step for 0.9. `pointer-events-none` — see the doc
-          comment above: this chip must never be able to catch a click itself, only the `<Link>`
-          around it. `min-h-9` (36px) keeps the chip's own tap target at least as tall as the old
-          icon-only circle even though "Edit" no longer forces a fixed size; `px-3.5` lets it grow
-          wider than that circle for the word, which is the "bigger click zone" half of the fix
-          (the other half — the card being the real target — was already true before this change).
-          Shown at every width: Figma draws a trailing chevron on the mobile card instead, but C2's
-          wording is explicit — the word "Edit", not a chevron — and the owner confirmed that
-          reading on 2026-09-19, so the chevron is gone and this chip is the only affordance. */}
+          radius steps; #2a2a2a is the same one-off divider color used elsewhere in the cabinet) —
+          both measured off Figma's "Expand" chip frame (`610:4462`), which also confirms the exact
+          36px height (`min-h-9`), 15px horizontal padding (`px-[15px]`, no matching token), 5px
+          icon↔label gap (`gap-[5px]`), full-opacity white content (no `opacity-90` — Figma's fill
+          is solid `#ffffff`, this project's own `text-foreground`) and Regular/400 weight (no
+          `font-medium` — Figma's "Edit" label is Manrope Regular, not Medium). `pointer-events-none`
+          — see the doc comment above: this chip must never be able to catch a click itself, only
+          the `<Link>` around it. Shown at every width: Figma draws a trailing chevron on the mobile
+          card instead, but C2's wording is explicit — the word "Edit", not a chevron — and the
+          owner confirmed that reading on 2026-09-19, so the chevron is gone and this chip (now with
+          its pencil icon) is the only affordance at every breakpoint. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none flex min-h-9 shrink-0 items-center justify-center rounded-[11px] border border-border bg-[#2a2a2a] px-3.5 py-2 text-tiny font-medium text-foreground opacity-90"
+        className="pointer-events-none flex min-h-9 shrink-0 items-center gap-[5px] rounded-[11px] border border-border bg-[#2a2a2a] px-[15px] text-tiny text-foreground"
       >
+        <EditPencilIcon className="shrink-0" />
         {t('edit')}
       </span>
     </Link>
