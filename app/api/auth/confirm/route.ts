@@ -13,14 +13,17 @@ import { safeRedirectPath } from '@/lib/validation/common';
  *   • Password resets: `requestPasswordReset` (`app/[locale]/(auth)/actions.ts`) points
  *     `redirectTo` here with `?next=/reset-password`.
  *   • Sign-up confirmation (stage 1.5): `signUp()` / `resendConfirmationEmail()` pass
- *     `emailRedirectTo = …/api/auth/confirm?next=/member-profile`. With custom SMTP OFF on the
- *     hosted project, Supabase's default "Confirm signup" template `{{ .ConfirmationURL }}`
- *     verifies the token server-side then redirects here with the PKCE `?code=` (handled by the
- *     `exchangeCodeForSession` branch below), so a confirmed visitor lands straight on the
- *     wizard's step 3. Establishing the session here is what makes `/verify-email` (step 2) a
- *     real blocking gate rather than the informational screen it used to be. (If a custom,
- *     editable template is ever restored, a `?token_hash=&type=` link hits the `verifyOtp`
- *     branch instead — both paths are supported.)
+ *     `emailRedirectTo = …/api/auth/confirm?next=/` (that `?next=/` is load-bearing but not for
+ *     routing — see below). Custom SMTP is now ON, so
+ *     our own "Confirm signup" template (`supabase/templates/`) builds the link as
+ *     `{{ .RedirectTo }}&token_hash=…&type=signup`, which lands on the `verifyOtp` branch.
+ *     Establishing the session here is what makes `/verify-email` (step 2) a real blocking gate
+ *     rather than the informational screen it used to be. The `exchangeCodeForSession` branch
+ *     stays supported: that is what Supabase's own default template produces, and what this
+ *     received before the templates were ours to edit.
+ *
+ *     Verified live 2026-09-23 against a real inbox: the token arrives `pkce_`-prefixed and
+ *     `verifyOtp` accepts it server-side, 307 straight through to the wizard.
  *
  * Lives under `/api` so the i18n middleware doesn't rewrite it (see `middleware.ts` matcher).
  * Supports both Supabase link styles:
@@ -40,11 +43,17 @@ function localized(path: string, origin: string): URL {
 /**
  * Where a caller goes once the link has established their session.
  *
- * `next` used to be obeyed verbatim, and for the signup confirmation it is a hardcoded
- * `/member-profile` baked into the Supabase Auth email template (a dashboard setting, not
- * code) — so everyone landed on wizard step 3/4 regardless of how far they had actually got,
- * and a returning visitor who had already finished the wizard was dropped back into it. That
- * is Release-1 item 1. The stored progress is the honest answer, so we ask for it.
+ * `next` used to be obeyed verbatim, and the signup confirmation carried a hardcoded
+ * `/member-profile` — so everyone landed on wizard step 3/4 regardless of how far they had
+ * actually got, and a returning visitor who had already finished the wizard was dropped back
+ * into it. That is Release-1 item 1. The stored progress is the honest answer, so we ask for it.
+ *
+ * Since this branch ignores `next` anyway, the signup link no longer spells out a destination
+ * it cannot promise: it sends `?next=/` (2026-09-23), which `safeRedirectPath()` would have
+ * produced regardless. Dropping the parameter ENTIRELY was tried the same day and broke every
+ * signup link — the templates append the token with an unconditional `&`, so the redirect URL
+ * must already carry a `?`. See the invariant in `lib/auth/site-url.ts` before touching either
+ * call site. Recovery sends a real `next` and this function honours it.
  *
  * The password-recovery link is the one case that must NOT be re-resolved: `/reset-password`
  * needs the recovery session it was just handed, and its own page decides what happens after.

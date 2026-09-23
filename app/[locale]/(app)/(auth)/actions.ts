@@ -67,12 +67,25 @@ export const signUp = createAction(
       email,
       password,
       options: {
-        // `{{ .ConfirmationURL }}` in Supabase's default "Confirm signup" template redirects
-        // here after GoTrue verifies the token, delivering the PKCE `?code=` to our
-        // `/api/auth/confirm` handler. Required now that the hosted project runs WITHOUT custom
-        // SMTP — with the default (non-editable) template we can't hardcode the link, so the
-        // destination must come from `emailRedirectTo` instead. Mirrors `requestPasswordReset`.
-        emailRedirectTo: siteUrl('/api/auth/confirm?next=/member-profile'),
+        // Where the confirmation link points. Our own "Confirm signup" template
+        // (`supabase/templates/`) builds its href from `{{ .RedirectTo }}` — i.e. from exactly
+        // this value — and appends the token, so this is the whole link a signup email carries.
+        // Mirrors `requestPasswordReset`.
+        //
+        // MUST KEEP A QUERY STRING. The templates append the token as
+        // `{{ .RedirectTo }}&token_hash=…`, so whatever is passed here has to already contain
+        // a `?` or the result is `…/confirm&token_hash=…` — one flat, dead URL. Dropping the
+        // parameter entirely was tried on 2026-09-23 and produced exactly that; a real signup
+        // email caught it.
+        //
+        // `?next=/` rather than the old `?next=/member-profile`: `/api/auth/confirm` throws
+        // this value away for signup anyway. `destinationFor()` honours `next` only for the
+        // password-recovery link and otherwise asks `resolveOnboardingRedirect()` where the
+        // visitor actually left off (Release-1 A1). `/` is also exactly what
+        // `safeRedirectPath()` falls back to, so behaviour is identical to both earlier
+        // versions — it just stops printing a 22-character promise the handler never keeps, in
+        // a URL the email shows in full as its copy-paste fallback.
+        emailRedirectTo: siteUrl('/api/auth/confirm?next=/'),
         data: {
           ...(username ? { username } : {}),
           full_name: fullName,
