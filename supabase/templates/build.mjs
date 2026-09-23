@@ -38,6 +38,26 @@ const FONT = 'Manrope, Helvetica, Arial, sans-serif';
 const SUPPORT_EMAIL = 'support@mindsetis.com';
 
 /**
+ * Brand lockup for the header (Release-1 I4, delivered 2026-09-23).
+ *
+ * Hosted in Supabase Storage rather than `public/` on purpose: an email image needs an
+ * absolute HTTPS URL that anyone can fetch WITHOUT a session — the reader's mail client, or
+ * Google's image proxy on their behalf, opens it cold. Storage is already live and its URL
+ * does not move when Vercel redeploys or while production is still unbuilt.
+ *
+ * The filename carries a content hash. Mail proxies cache images hard and for a long time, so
+ * a logo edited in place would keep showing the old artwork in inboxes for months. A new file
+ * means a new URL means a new cache key — swap this constant, rebuild, re-paste, done.
+ *
+ * The asset is 600×81 and rendered at 300 wide: 2× so it stays sharp on retina displays.
+ */
+const LOGO = {
+  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png',
+  width: 300,
+  height: 41,
+};
+
+/**
  * Physical postal address. Transactional mail is not marketing, so CAN-SPAM's address
  * requirement does not strictly bite here — but Gmail/Outlook reputation scoring likes
  * seeing one, and the moment any of this copy turns promotional it becomes mandatory.
@@ -145,16 +165,20 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
           <table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" style="background-color:${c.card};border-radius:12px;max-width:480px;width:100%;">
             <tr>
               <td class="m-pad" style="padding:40px 32px;">
-                <!-- BRAND HEADER.
-                     Wordmark as live text until Albina delivers the logo file (task I4).
-                     To swap: replace this <p> with
-                       <img src="https://.../logo.png" width="180" alt="Mindsetis Community"
-                            style="display:block;border:0;" />
-                     - absolute HTTPS URL only (no CID, no data:), max 600px wide, light
-                     variant, and keep the alt text: many clients block images by default. -->
-                <p style="color:${c.primary};font-family:${FONT};font-size:20px;font-weight:700;letter-spacing:0.5px;margin:0 0 32px;">
-                  Mindsetis Community
-                </p>
+                <!-- BRAND HEADER (task I4).
+                     width/height are set as ATTRIBUTES as well as CSS because Outlook
+                     ignores the CSS; without them it reserves the file's full 600px and the
+                     card blows out. The alt text is styled to look like the wordmark it
+                     replaces: a large share of readers see images blocked by default, and for
+                     them this line IS the header, so it should still read as Mindsetis rather
+                     than as a broken-image caption. -->
+                <img
+                  src="${LOGO.url}"
+                  width="${LOGO.width}"
+                  height="${LOGO.height}"
+                  alt="Mindsetis"
+                  style="display:block;border:0;outline:none;text-decoration:none;width:${LOGO.width}px;height:auto;max-width:100%;margin:0 0 32px;color:${c.primary};font-family:${FONT};font-size:20px;font-weight:700;letter-spacing:0.5px;"
+                />
 
                 <h1 style="color:${c.foreground};font-family:${FONT};font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
                   ${heading}
