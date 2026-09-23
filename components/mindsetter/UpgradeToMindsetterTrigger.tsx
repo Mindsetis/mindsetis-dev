@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Button, type ButtonProps } from '@/components/ui/button';
 
@@ -18,19 +18,40 @@ type UpgradeToMindsetterTriggerProps = Omit<ButtonProps, 'onClick' | 'type' | 'a
  * through, so each call site keeps its own exact CTA styling; only `onClick`/`type`/`asChild` are
  * owned here, since this always renders a real `<button>` that opens the dialog rather than
  * linking anywhere directly.
+ *
+ * FOCUS RESTORE (2026-09-21, found by live QA on C7): closing the dialog used to drop focus on
+ * `<body>` instead of returning it to the button that opened it, so a keyboard visitor lost their
+ * place on the page and had to Tab from the top again. Radix restores focus by itself, but only to
+ * a `Dialog.Trigger` — and this island deliberately does NOT use one, because the `<Dialog>` root
+ * lives inside `UpgradeToMindsetterDialog` while the button lives out here, which is what lets all
+ * four call sites keep their own CTA styling. So the element is captured here and handed to the
+ * dialog, which focuses it in `onCloseAutoFocus`.
+ *
+ * It is captured from the click's `currentTarget` rather than a `ref` on purpose: `ButtonProps` is
+ * `ButtonHTMLAttributes`, which carries no `ref`, and widening a UI primitive used across the whole
+ * app to fix one dialog is the larger change. `currentTarget` inside the button's own handler is
+ * always that `<button>` — including on keyboard Enter/Space, which dispatch a real click.
  */
 export function UpgradeToMindsetterTrigger({
   children,
   ...buttonProps
 }: UpgradeToMindsetterTriggerProps) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)} {...buttonProps}>
+      <Button
+        type="button"
+        onClick={(event) => {
+          triggerRef.current = event.currentTarget;
+          setOpen(true);
+        }}
+        {...buttonProps}
+      >
         {children}
       </Button>
-      <UpgradeToMindsetterDialog open={open} onOpenChange={setOpen} />
+      <UpgradeToMindsetterDialog open={open} onOpenChange={setOpen} triggerRef={triggerRef} />
     </>
   );
 }

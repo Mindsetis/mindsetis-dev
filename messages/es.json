@@ -2041,15 +2041,16 @@
   },
   "upgradeToMindsetter": {
     "title": "Conviértete en Mindsetter",
-    "description": "Los Mindsetters son fundadores y empresarios verificados que comparten experiencia real con la comunidad.",
+    "description": "Lleva tu membresía al siguiente nivel.",
+    "intro": "Como Mindsetter, desbloqueas privilegios premium:",
     "points": {
-      "profile": "Una página de perfil público que funciona como tu sitio web personal.",
-      "sessions": "Tus propias sesiones 1:1 — gratis o de pago, tú fijas el precio.",
-      "events": "Organiza eventos e invita a miembros a participar."
+      "events": "Organiza tus propios eventos y masterclasses",
+      "consultations": "Ofrece consultas 1:1 a colegas destacados",
+      "invites": "Invita a tu propia red de confianza a Mindsetis"
     },
-    "note": "La configuración lleva cinco pasos breves. Tu página se publica en cuanto el equipo de Mindsetis la verifica.",
-    "continue": "Continuar",
-    "notNow": "Ahora no"
+    "note": "Completar el formulario ampliado lleva unos 5 minutos.",
+    "start": "Iniciar solicitud de Mindsetter",
+    "maybeLater": "Quizás más tarde"
   },
   "upgradeProfileWidget": {
     "title": "Tu perfil puede dar más de sí",

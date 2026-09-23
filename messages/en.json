@@ -2041,15 +2041,16 @@
   },
   "upgradeToMindsetter": {
     "title": "Upgrade to Mindsetter",
-    "description": "Mindsetters are verified founders and business owners who share real experience with the community.",
+    "description": "Take your membership to the next level.",
+    "intro": "As a Mindsetter, you unlock premium privileges:",
     "points": {
-      "profile": "A public profile page that works like your personal website.",
-      "sessions": "Your own 1:1 sessions — free or paid, you set the price.",
-      "events": "Host events and invite members to them."
+      "events": "Host your own events and masterclasses",
+      "consultations": "Offer 1-on-1 consultations to top peers",
+      "invites": "Invite your own trusted network to Mindsetis"
     },
-    "note": "Setup takes five short steps. Your page goes live once the Mindsetis team verifies it.",
-    "continue": "Continue",
-    "notNow": "Not now"
+    "note": "Filling out the extended form takes about 5 minutes.",
+    "start": "Start Mindsetter Application",
+    "maybeLater": "Maybe later"
   },
   "upgradeProfileWidget": {
     "title": "Your profile can do more",
