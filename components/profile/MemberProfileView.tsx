@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
-import { SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
+import { languageDisplayCode, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
 import { regionAddsInformation } from '@/lib/geo/region-label';
 import { cn } from '@/lib/utils';
 
@@ -107,8 +107,14 @@ export const SOCIAL_ICON_MAP: Record<
 
 export const SOCIAL_KEYS = Object.keys(SOCIAL_ICON_MAP) as (keyof typeof SOCIAL_ICON_MAP)[];
 
+/**
+ * Stored value → the badge shown on the page. Goes through `languageDisplayCode`, so Ukrainian
+ * reads "UA" rather than ISO 639-1's "UK" (which, next to "Kyiv, Ukraine", reads as United
+ * Kingdom). See that function for the full rule and for the languages deliberately left on
+ * their ISO code.
+ */
 const LANGUAGE_CODE_BY_VALUE = new Map<string, string>(
-  SUPPORTED_LANGUAGES.map((language) => [language.value, language.code]),
+  SUPPORTED_LANGUAGES.map((language) => [language.value, languageDisplayCode(language.code)]),
 );
 
 /**
@@ -203,7 +209,9 @@ export function resolveLocationText(profile: {
 }
 
 /**
- * "EN / UK" — uppercase ISO 639-1 codes, not full language names. A stored value no longer
+ * "EN / UA" — uppercase two-letter badges, not full language names. The letters follow the
+ * country a language belongs to rather than the ISO 639-1 registry wherever the two disagree
+ * (see `languageDisplayCode`); ISO stays the stored/searched value. A stored value no longer
  * present in `SUPPORTED_LANGUAGES` (e.g. catalog pruned after this profile saved it) is
  * silently skipped, same defensive precedent as `groupInterestsByCategory`. Exported (stage
  * 1.10) for reuse by `MindsetterProfileView.tsx`.
