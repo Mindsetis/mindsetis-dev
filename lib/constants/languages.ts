@@ -116,6 +116,77 @@ export const LANGUAGE_VALUES = SUPPORTED_LANGUAGES.map((language) => language.va
 ];
 
 /**
+ * What the two-letter badge on a profile SHOWS, where it differs from the ISO 639-1 language
+ * code above (owner decision, 2026-09-24).
+ *
+ * `code` stays ISO and is what search matching uses. This map is display only.
+ *
+ * Why: ISO 639-1 is a LANGUAGE registry, and for a couple of dozen languages its code is not
+ * the country letters readers expect. "UK" for Ukrainian next to "Kyiv, Ukraine" reads as
+ * United Kingdom; Figma drew "EN / UA". The design is right about what people expect, so the
+ * badge follows the country, not the registry.
+ *
+ * It was already worse than a cosmetic mismatch: Burmese (`my`) rendered as "MY" — Malaysia —
+ * while Malay itself rendered "MS"; Sinhala (`si`) rendered as "SI" — Slovenia — while
+ * Slovenian rendered "SL". Two pairs of languages were wearing each other's flags.
+ *
+ * THE RULE for adding entries here: override only when the language has ONE unambiguous home
+ * country AND those letters are not already taken by another language in the catalog.
+ *
+ * Deliberately NOT overridden, because they break that rule:
+ *   - Igbo, Hausa, Yoruba — all Nigeria; three languages cannot all be "NG".
+ *   - Kannada, Malayalam, Marathi, Telugu, Gujarati, Punjabi, Tamil — India is already Hindi's
+ *     badge, and Tamil/Punjabi span borders anyway.
+ *   - Catalan, Basque, Galician — Spain is already Spanish's badge.
+ *   - Swahili — Kenya and Tanzania both; picking one would be a statement, not a fact.
+ *   - Arabic — spoken across some two dozen countries.
+ * Those keep their ISO code, which is the honest answer when no single country fits. "EU" for
+ * Basque is an unfortunate read (European Union), but "ES" would collide with Spanish.
+ */
+const LANGUAGE_DISPLAY_CODE: Readonly<Record<string, string>> = {
+  af: 'ZA', // Afrikaans — South Africa ("AF" reads as Afghanistan)
+  am: 'ET', // Amharic — Ethiopia (free once Estonian moves to EE)
+  be: 'BY', // Belarusian
+  bn: 'BD', // Bengali — Bangladesh
+  cs: 'CZ', // Czech
+  da: 'DK', // Danish
+  el: 'GR', // Greek
+  et: 'EE', // Estonian
+  fa: 'IR', // Persian — Iran
+  ga: 'IE', // Irish
+  he: 'IL', // Hebrew
+  hi: 'IN', // Hindi
+  hy: 'AM', // Armenian
+  ja: 'JP', // Japanese
+  ka: 'GE', // Georgian
+  kk: 'KZ', // Kazakh
+  km: 'KH', // Khmer — Cambodia
+  ko: 'KR', // Korean
+  lo: 'LA', // Lao
+  ms: 'MY', // Malay — Malaysia (was "MS"; the letters were being worn by Burmese)
+  my: 'MM', // Burmese — Myanmar (was showing "MY", i.e. Malaysia)
+  ne: 'NP', // Nepali
+  si: 'LK', // Sinhala — Sri Lanka (was showing "SI", i.e. Slovenia)
+  sl: 'SI', // Slovenian
+  sq: 'AL', // Albanian
+  sr: 'RS', // Serbian
+  sv: 'SE', // Swedish
+  tl: 'PH', // Filipino — Philippines
+  uk: 'UA', // Ukrainian — the one that started this
+  ur: 'PK', // Urdu — Pakistan
+  vi: 'VN', // Vietnamese
+  zh: 'CN', // Mandarin Chinese
+};
+
+/**
+ * The uppercase badge for an ISO 639-1 code, as shown on profile pages ("UA", "JP", "EN").
+ * Falls through to the ISO code for every language the map above deliberately leaves alone.
+ */
+export function languageDisplayCode(code: string): string {
+  return (LANGUAGE_DISPLAY_CODE[code] ?? code).toUpperCase();
+}
+
+/**
  * English names a language is ALSO commonly known by, keyed by ISO 639-1 code.
  *
  * ICU gives exactly one English name per language, but several are widely known under a
@@ -153,7 +224,13 @@ const foldDiacritics = (value: string) => value.normalize('NFD').replace(/\p{Dia
  * every browser, so this needs no dataset, no download and no licence.
  */
 export function buildLanguageAliases(code: string, englishLabel: string): string[] {
-  const aliases = new Set<string>([code, ...(ENGLISH_SYNONYMS[code] ?? [])]);
+  // The displayed badge is an alias too: someone who has seen "UA" on a profile and types it
+  // into the picker should land on Ukrainian, not on nothing.
+  const aliases = new Set<string>([
+    code,
+    languageDisplayCode(code).toLowerCase(),
+    ...(ENGLISH_SYNONYMS[code] ?? []),
+  ]);
 
   for (const locale of ALIAS_LOCALES) {
     let localized: string | undefined;

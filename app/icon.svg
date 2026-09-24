@@ -11,12 +11,17 @@
   The framing is hers: the mark occupies the middle band of a 16×16 square rather than filling
   it. That is deliberate breathing room — do not crop it tighter to "use the space".
 
-  Gradient stops use `#79B9E3`, which is this project's `--color-primary` (see `colors.css` and
-  the email templates' inline tokens) — the icon and the UI share the colour by construction,
-  not by coincidence.
+  Gradient stops use `#79B9E3`, which is this project's `color-primary` token (see `colors.css`
+  and the email templates' inline tokens) — the icon and the UI share the colour by
+  construction, not by coincidence.
 
   The square PNG siblings (`apple-icon.png`, and the social card in `opengraph-image.png`) are
   raster because their consumers — iOS home screens, social crawlers — do not accept SVG.
+
+  NOTE FOR EDITORS: this is an XML comment, so it must never contain a double hyphen. Writing
+  the CSS custom property in full here (with its leading dashes) broke the whole file on
+  2026-09-23: browsers parse SVG as strict XML, the document failed with "Unexpected token",
+  and the tab silently fell back to no icon at all. Nothing in the build warns about it.
 -->
 <g clip-path="url(#clip0_3702_634)">
 <path d="M6.32513 8.19472L6.19273 8.3138C5.91907 7.73874 5.60214 7.19696 5.24268 6.68772L4.9043 6.52426C4.61695 6.60377 4.38323 6.59749 4.20312 6.5054L5.38875 4.56572C5.60806 4.207 6.01485 4.03207 6.40242 4.06684C6.70641 4.0942 7.11099 4.24879 7.30329 4.59419L11.2378 11.6529C11.3043 11.7723 11.2899 11.9032 11.2426 11.9731C11.2089 12.0223 11.1142 12.0704 11.0151 12.0708L9.03662 12.0789C8.73448 12.08 8.40645 11.9643 8.25076 11.6813L6.3255 8.19509L6.32513 8.19472Z" fill="url(#paint0_linear_3702_634)"/>
