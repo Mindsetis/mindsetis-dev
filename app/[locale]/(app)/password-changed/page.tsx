@@ -3,10 +3,16 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type PasswordChangedPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: PasswordChangedPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth.passwordChanged');
+}
 
 /**
  * Password changed — Figma `680:9123` (desktop) / `1057:9112` (mobile). Terminal screen of the

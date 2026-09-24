@@ -3,7 +3,9 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
 import { MindsetterProfileView } from '@/components/profile/MindsetterProfileView';
+import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
+import { siteUrl } from '@/lib/auth/site-url';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import type { Expertise } from '@/lib/validation/mindsetter';
@@ -22,20 +24,23 @@ export const dynamic = 'force-dynamic';
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 /**
- * Fetches the target profile + its `mindsetter_profiles`/`session_settings` rows, applies the
- * visibility gate, and resolves the `preview`/`public` variant — memoized per-request
- * (`react/cache`) so `generateMetadata` and the page component share one round-trip of queries.
- * Explicit column allow-lists everywhere, never `select('*')`.
+ * Fetches the target profile + its `mindsetter_profiles`/`session_settings` rows and applies the
+ * visibility gate — memoized per-request (`react/cache`) so `generateMetadata` and the page
+ * component share one round-trip of queries. Explicit column allow-lists everywhere, never
+ * `select('*')`.
  *
  * Visibility gate (defense-in-depth on top of RLS — see the migrations' own policies for the
  * DB-level enforcement of the same rule): visible when `profiles.account_type = 'mindsetter'`
  * AND `mindsetter_profiles.is_public = true` AND `profiles.is_blocked = false` (the "published
  * after verification" public branch — `is_public` is staff-only-settable, guard-triggered in
  * `20260701100100_profiles.sql`, so this implicitly requires staff verification already), OR
- * the viewer is the profile owner (any state — sees the `preview` variant, the same viewer-derived
- * banner `/members/[username]` now resolves too), OR the viewer is staff. Everyone else — or a
- * nonexistent username, or a profile that isn't (yet) a Mindsetter at all — resolves to `null` →
- * `notFound()`.
+ * the viewer is the profile owner (any verification state), OR the viewer is staff. Everyone
+ * else — or a nonexistent username, or a profile that isn't (yet) a Mindsetter at all —
+ * resolves to `null` → `notFound()`.
+ *
+ * `isOwner` no longer changes what gets RENDERED once past this gate (Release-1 G1/G2 removed
+ * the owner-only preview banner and the owner-only hidden CTAs, the two things that used to
+ * differ) — it's still computed and used here only to decide WHETHER this gate passes.
  *
  * Since the 2026-08-10 "one profile page per account" pass this is the CANONICAL page for every
  * `account_type = 'mindsetter'` account: `/members/[username]` redirects here rather than
@@ -53,7 +58,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, industry, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
+      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
     )
     .eq('username', username)
     .maybeSingle();
@@ -88,7 +93,6 @@ const loadMindsetterProfile = cache(async (username: string) => {
     profile,
     mindsetterProfile,
     sessionSettings,
-    variant: isOwner ? ('preview' as const) : ('public' as const),
   };
 });
 
@@ -151,7 +155,8 @@ export async function generateMetadata({ params }: MindsetterProfilePageProps) {
   const { username } = await params;
   const data = await loadMindsetterProfile(username);
   if (!data) notFound();
-  return {};
+  const { full_name: fullName, last_name: lastName } = data.profile;
+  return { title: [fullName, lastName].filter(Boolean).join(' ') || `@${username}` };
 }
 
 /**
@@ -175,7 +180,12 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
     notFound();
   }
 
-  const { profile, mindsetterProfile, sessionSettings, variant } = data;
+  const { profile, mindsetterProfile, sessionSettings } = data;
+
+  // Release-1 G3: canonical, absolute, locale-prefixed public URL for this profile — the one
+  // string `ShareProfileButton` (Web Share API / clipboard fallback) needs. Built server-side
+  // rather than from `window.location` client-side so it's correct even from a cached shell.
+  const shareUrl = siteUrl(localePath(locale, `/mindsetters/${username}`));
 
   const roles = Array.isArray(mindsetterProfile?.roles) ? mindsetterProfile.roles : [];
   const superpowers = Array.isArray(mindsetterProfile?.superpowers)
@@ -218,7 +228,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
 
   return (
     <MindsetterProfileView
-      variant={variant}
+      shareUrl={shareUrl}
       t={t}
       profile={{
         username: profile.username,
@@ -229,7 +239,6 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         tagline: profile.tagline,
         company: profile.company,
         role: profile.role,
-        industry: profile.industry,
         country: profile.country,
         city: profile.city,
         regionName: profile.region_name,

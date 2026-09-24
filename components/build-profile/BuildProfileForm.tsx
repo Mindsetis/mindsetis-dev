@@ -3,13 +3,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/(app)/build-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Combobox } from '@/components/ui/combobox';
+import { FieldHint } from '@/components/ui/field-hint';
 import {
   Form,
   FormControl,
@@ -20,34 +21,43 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
-import { INDUSTRIES, INDUSTRY_VALUES, type IndustryValue } from '@/lib/constants/industries';
-import { type BuildProfileInput, buildProfileSchema } from '@/lib/validation/build-profile';
+import type { IndustryValue } from '@/lib/constants/industries';
+import { INDUSTRIES, INDUSTRY_VALUES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
+import {
+  type BuildProfileInput,
+  buildProfileSchema,
+  MAX_INDUSTRIES,
+  MAX_INDUSTRY_CUSTOM_LENGTH,
+} from '@/lib/validation/build-profile';
 
 type BuildProfileFormProps = {
   /** Already-saved step-3 fields, when the caller revisits this page (Back). */
   initialCompany?: string;
   initialRole?: string;
-  initialIndustry?: string;
+  initialIndustries?: string[];
+  initialIndustryCustom?: string;
 };
 
 /**
  * Registration wizard step 4/4 ("What do you build?") form — mirrors
- * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but simpler:
- * three required fields, no file upload or multi-select controls. Company/Role stay plain
- * text; Industry (stage 1.4 Figma audit) is a fixed-option `Combobox` (`components/ui/combobox.tsx`
- * — Popover + searchable `Command` list, matching `LanguagesMultiSelect`'s visual language but
- * single-select; generalized from an Industry-only component so any other single-select field
- * can reuse the same chrome) sourced from the code-defined `INDUSTRIES` catalog
- * (`lib/constants/industries.ts`) instead of free text.
+ * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`). Company/Role
+ * stay plain text; Industries (Release-1 E2/E3, `profiles.industry` → `profiles.industries
+ * text[]` + `profiles.industry_custom`) is a MULTI-select capped at `MAX_INDUSTRIES`, reusing
+ * `LanguagesMultiSelect` (`max` prop) rather than the old single-select `Combobox` — see that
+ * component's own doc comment for why the name stayed as-is. Picking the catalog's `other` entry
+ * reveals a free-text field (`industryCustom`) capped at `MAX_INDUSTRY_CUSTOM_LENGTH`.
  */
 export function BuildProfileForm({
   initialCompany,
   initialRole,
-  initialIndustry,
+  initialIndustries,
+  initialIndustryCustom,
 }: BuildProfileFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+
+  const knownIndustryValues = new Set<string>(INDUSTRY_VALUES);
 
   const form = useForm<BuildProfileInput>({
     resolver: zodResolver(buildProfileSchema),
@@ -55,18 +65,19 @@ export function BuildProfileForm({
     defaultValues: {
       company: initialCompany ?? '',
       role: initialRole ?? '',
-      // A pre-1.4 profile may have a free-text value that isn't in the fixed catalog anymore —
-      // treat anything outside `INDUSTRY_VALUES` as "no selection" rather than crashing the
-      // enum-typed field or silently submitting an invalid value. Defaults to `''` rather than
-      // `undefined` so `Select` is controlled from the first render — an initially-`undefined`
-      // value flips it from uncontrolled to controlled the moment a user picks something,
-      // which React warns about; `''` never matches an `IndustryValue`, so it still fails Zod
-      // validation the same way `undefined` would if left unselected.
-      industry: (INDUSTRY_VALUES as readonly string[]).includes(initialIndustry ?? '')
-        ? (initialIndustry as IndustryValue)
-        : ('' as IndustryValue),
+      // A pre-E2 profile, or one carrying a stale slug (catalog entry renamed/removed since it
+      // saved), simply drops anything outside `INDUSTRY_VALUES` rather than crashing the
+      // enum-typed field or silently submitting an invalid value — same defensive precedent as
+      // `initialInterestIds` in `MemberProfileForm`.
+      industries: (initialIndustries ?? []).filter((value): value is IndustryValue =>
+        knownIndustryValues.has(value),
+      ),
+      industryCustom: initialIndustryCustom ?? '',
     },
   });
+
+  const industriesValue = useWatch({ control: form.control, name: 'industries' }) ?? [];
+  const hasOtherIndustry = industriesValue.includes(OTHER_INDUSTRY_VALUE);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
@@ -145,27 +156,76 @@ export function BuildProfileForm({
 
           <FormField
             control={form.control}
-            name="industry"
-            render={({ field }) => (
+            name="industries"
+            render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>
-                  <span className="inline-flex items-center gap-1">
-                    {t('buildProfile.industry.label')} <span className="text-primary">*</span>
+                <div className="flex items-center justify-between gap-2">
+                  <FormLabel>
+                    <span className="inline-flex items-center gap-1">
+                      {t('buildProfile.industries.label')} <span className="text-primary">*</span>
+                    </span>
+                  </FormLabel>
+                  <span className="text-tiny text-muted-foreground">
+                    {t('buildProfile.industries.counter', {
+                      count: field.value.length,
+                      max: MAX_INDUSTRIES,
+                    })}
                   </span>
-                </FormLabel>
-                <Combobox
+                </div>
+                <LanguagesMultiSelect
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(next) => {
+                    field.onChange(next);
+                    // Deselecting "Other" clears the free-text field it revealed — this is the
+                    // client-side half of the "empty if Other isn't selected" rule
+                    // (`refineIndustryCustom` is the server-side half, which never trusts this
+                    // ran).
+                    if (!next.includes(OTHER_INDUSTRY_VALUE)) {
+                      form.setValue('industryCustom', '', { shouldValidate: true });
+                    }
+                  }}
                   options={INDUSTRIES}
-                  placeholder={t('buildProfile.industry.placeholder')}
-                  searchPlaceholder={t('buildProfile.industry.searchPlaceholder')}
-                  emptyLabel={t('buildProfile.industry.empty')}
-                  invalid={!!form.formState.errors.industry}
+                  max={MAX_INDUSTRIES}
+                  placeholder={t('buildProfile.industries.placeholder')}
+                  searchPlaceholder={t('buildProfile.industries.searchPlaceholder')}
+                  emptyLabel={t('buildProfile.industries.empty')}
+                  removeLabel={(label) => t('buildProfile.industries.remove', { label })}
+                  invalid={!!fieldState.error}
+                  searchable
                 />
+                <FieldHint>{t('buildProfile.industries.hint')}</FieldHint>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {hasOtherIndustry && (
+            <FormField
+              control={form.control}
+              name="industryCustom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    <span className="inline-flex items-center gap-1">
+                      {t('buildProfile.industries.other.label')}{' '}
+                      <span className="text-primary">*</span>
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      maxLength={MAX_INDUSTRY_CUSTOM_LENGTH}
+                      placeholder={t('buildProfile.industries.other.placeholder')}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FieldHint>{t('buildProfile.industries.other.hint')}</FieldHint>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <Button

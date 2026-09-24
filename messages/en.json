@@ -11,10 +11,15 @@
       "viewPublicProfile": "View public profile"
     },
     "brand": "Mindsetis",
+    "createEvent": "Create Event",
+    "editProfile": "Edit Profile",
+    "exploreCommunity": "Explore Community",
     "join": "Apply to Join",
+    "joinShort": "Join",
     "login": "Log in",
     "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signingOut": "Signing out…",
+    "upgrade": "Upgrade"
   },
   "footer": {
     "columns": {
@@ -101,6 +106,7 @@
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
       "legal": "By signing up, you accept our <terms>Terms</terms> & <privacy>Privacy Policy</privacy>.",
+      "metaTitle": "Apply to Join",
       "or": "or",
       "seeFeatures": "See platform features",
       "subtitle": "Build your stand-out profile, run 1:1 sessions & join P2P events for real connections",
@@ -476,15 +482,31 @@
     "retry": "Try again"
   },
   "auth": {
+    "alreadyApplied": {
+      "duplicateNotice": "Do you want to create another profile? Mindsetis.com allows only one profile per individual. Duplicate accounts will be removed during review.",
+      "editProfile": "Edit Profile",
+      "editPrompt": "Want to continue or update your details? <link>Edit your existing details.</link>",
+      "metaTitle": "You've already applied",
+      "supportLine": "Have questions? Contact <link>support@mindsetis.com</link>.",
+      "title": "You've already applied and logged in as {email}"
+    },
     "buildProfile": {
       "company": {
         "label": "Company",
         "placeholder": "Your company name"
       },
-      "industry": {
+      "industries": {
+        "counter": "{count}/{max}",
         "empty": "No industry found.",
-        "label": "Industry",
-        "placeholder": "Select an industry",
+        "hint": "Your industries are not shown on your public profile — they're used to power search filters. You can select up to 3.",
+        "label": "Industries",
+        "other": {
+          "hint": "Only you and our team can see this for now. It'll appear in search once our team reviews and approves it.",
+          "label": "Tell us your industry",
+          "placeholder": "e.g. Aerospace"
+        },
+        "placeholder": "Select industries",
+        "remove": "Remove {label}",
         "searchPlaceholder": "Search industries"
       },
       "role": {
@@ -502,7 +524,7 @@
       "title": "Check your email"
     },
     "errors": {
-      "invalidLink": "Your link is invalid or expired."
+      "formInvalid": "Please check the form and try again."
     },
     "fields": {
       "confirmPassword": "Confirm password",
@@ -516,15 +538,28 @@
       "subtitle": "Enter the email you signed up with and we will send you a link to set a new password.",
       "title": "Reset your password"
     },
+    "linkExpired": {
+      "body": "This confirmation link is no longer valid — it may have expired or already been used. Enter your email to get a new link, or log in if your account is already active.",
+      "bodyInvalid": "This confirmation link is not valid. Enter your email to get a new link, or log in if your account is already active.",
+      "loginCta": "Log in",
+      "loginPrompt": "Already set up your password?",
+      "submit": "Resend confirmation email",
+      "submitting": "Sending…",
+      "success": "If that address still needs confirming, a new link is on its way.",
+      "title": "Link expired",
+      "titleInvalid": "Confirmation link invalid"
+    },
     "memberProfile": {
       "about": {
-        "label": "About",
-        "placeholder": "Character limit: {max} characters"
+        "hint": "Optional. Displayed below your photo.",
+        "label": "More About You",
+        "placeholder": "Share your background, business philosophy, key projects, and what drives you (up to 1,000 characters)..."
       },
       "bio": {
         "charCount": "{count}/{max}",
-        "label": "BIO",
-        "placeholder": "Character limit: {max} characters"
+        "hint": "Displayed next to your photo in the public header.",
+        "label": "Short Bio",
+        "placeholder": "Briefly state your current role, primary expertise, and key achievement (up to 300 characters)..."
       },
       "city": {
         "label": "City",
@@ -554,10 +589,19 @@
         "searchPlaceholder": "Search languages"
       },
       "photo": {
+        "crop": {
+          "cancel": "Cancel",
+          "confirm": "Use photo",
+          "description": "Drag to reposition and use the slider to zoom. Your photo will be cropped to a square.",
+          "error": "We couldn't process this photo. Please try again or choose a different file.",
+          "loadError": "This photo couldn't be opened. Please choose a different file.",
+          "title": "Adjust your photo",
+          "zoom": "Zoom"
+        },
         "hint": "Only PNG or JPEG",
         "label": "Profile photo",
         "replace": "Replace photo",
-        "requirements": "JPG or PNG · square · at least 800×800",
+        "requirements": "Upload your profile photo. Formats: JPG, PNG. Profiles without photos will not appear in the catalog and have limited access to platform features.",
         "upload": "Upload photo",
         "uploadTitle": "Upload profile photo",
         "uploaded": "uploaded"
@@ -602,7 +646,7 @@
       "continueWithLinkedin": "Continue with Linkedin",
       "fullName": "First name",
       "hidePassword": "Hide password",
-      "lastName": "Second name",
+      "lastName": "Last name",
       "passwordHints": {
         "length": "At least 8 characters",
         "letter": "At least 1 uppercase letter",
@@ -637,6 +681,7 @@
         "seeProfile": "See how looks my profile page"
       },
       "memberTitle": "<accent>Congratulations!</accent><br></br>You are now a member of the community.",
+      "metaTitle": "Application received",
       "mindsetterPitch": {
         "features": {
           "growth": {
@@ -970,6 +1015,7 @@
         "inviteEvent": "Invite on Mindsetis event",
         "seeProfile": "See how looks my profile page"
       },
+      "metaTitle": "Congratulations!",
       "title": "<accent>Congratulations!</accent> You are now a Mindsetter of the community.",
       "video": {
         "caption": "Click for watching"
@@ -978,23 +1024,13 @@
   },
   "profile": {
     "aboutEyebrow": "ABOUT",
-    "banner": {
-      "highlight": "Public view",
-      "rest": "— this is how others see your profile"
-    },
     "beyondBusinessEyebrow": "BEYOND BUSINESS",
     "beyondBusinessHeading": "What I care about beyond work",
-    "editProfile": "Edit Profile",
     "inviteToEvent": "Invite to event",
-    "shareProfile": "Share Profile",
     "verified": "Verified",
     "website": "Website"
   },
   "mindsetterProfile": {
-    "banner": {
-      "highlight": "Public view",
-      "rest": "— this is how others see your profile"
-    },
     "beyondBusiness": {
       "eyebrow": "BEYOND BUSINESS",
       "heading": "What I care about beyond work"
@@ -1011,7 +1047,6 @@
     "ctaBanner2": {
       "heading": "Ready to talk?"
     },
-    "editProfile": "Edit Profile",
     "favorite": "Add to favorites",
     "fckups": {
       "dialogTitle": "MY F*CKUP",
@@ -1103,7 +1138,11 @@
     },
     "sessionPriceFree": "Session price: Free",
     "sessionPricePaid": "Session price: {price}",
-    "shareProfile": "Share Profile",
+    "share": {
+      "ariaLabel": "Share this profile",
+      "copyFailed": "Could not copy the link. You can copy it from the address bar instead.",
+      "linkCopied": "Link copied to clipboard"
+    },
     "superpowers": {
       "eyebrow": "SUPERPOWER(S)",
       "heading": "What makes me different"
@@ -1159,22 +1198,91 @@
     }
   },
   "common": {
-    "comingSoon": "Coming soon",
+    "closeDialog": "Close",
     "imageOptimize": {
       "intro": "Too heavy? Paste this into your favourite AI and attach the photo:",
       "prompt": "Compress this image so the file is under {maxSizeMb} MB. Keep it a PNG or JPEG, keep the original proportions, and keep it as sharp as you can — reduce the file size, not the visible quality. Send the result back as a downloadable file.",
       "copy": "Copy prompt",
       "copied": "Copied"
     },
+    "notYetAvailable": {
+      "close": "Got it",
+      "emailPromise": "We'll email you as soon as it's live.",
+      "features": {
+        "aiSearch": {
+          "body": "Describe who you're looking for in plain words — \"a founder who scaled a marketplace in Europe\" — and the search will find the people who match, instead of making you guess at filters.",
+          "title": "Smart search is on the way"
+        },
+        "bookSession": {
+          "body": "You'll be able to pick a slot in this Mindsetter's calendar and book a 1:1 conversation — free or paid, their choice. The meeting link is created for you automatically.",
+          "title": "Booking is on the way"
+        },
+        "bookings": {
+          "body": "Every session you've booked or been booked for, in one place: upcoming, past, and the links to join them.",
+          "title": "Bookings are on the way"
+        },
+        "createEvent": {
+          "body": "Host your own event for the community — a masterclass, a roundtable, a closed session — and invite the people you want in the room.",
+          "title": "Events are on the way"
+        },
+        "earnings": {
+          "body": "What you've earned from sessions and events, what's on hold, and when it reaches your account.",
+          "title": "Earnings are on the way"
+        },
+        "events": {
+          "body": "Community events you can join — some open to every member, some invite-only.",
+          "title": "Events are on the way"
+        },
+        "exampleProfile": {
+          "title": "Example pages are on the way",
+          "body": "We'll show you a finished Mindsetter page here, so you can see what yours could look like before you fill anything in."
+        },
+        "exploreCommunity": {
+          "body": "Browse the whole community and filter it by industry, expertise and location, so you can find the people worth talking to rather than scrolling past everyone else.",
+          "title": "The community catalog is on the way"
+        },
+        "findEvent": {
+          "body": "Community events you can join — some open to every member, some invite-only.",
+          "title": "Events are on the way"
+        },
+        "findMindsetter": {
+          "body": "Tell us what you're working through, and we'll point you at the Mindsetters who've been there.",
+          "title": "Matching is on the way"
+        },
+        "interviews": {
+          "title": "Interviews are on the way",
+          "body": "The full archive of interviews with Mindsetters, in one place."
+        },
+        "inviteToEvent": {
+          "body": "Invite someone from the community to an event you're hosting — and see who accepted.",
+          "title": "Invites are on the way"
+        },
+        "learnMore": {
+          "title": "More about Mindsetter is on the way",
+          "body": "A full breakdown of what a Mindsetter can do — hosting events, running 1:1 sessions, and the expert page that comes with it."
+        },
+        "originals": {
+          "body": "Interviews and long-form conversations with the people in this community, made by Mindsetis.",
+          "title": "Mindsetis Originals is on the way"
+        },
+        "overview": {
+          "body": "Your dashboard at a glance: upcoming sessions, profile views, and what needs your attention.",
+          "title": "Overview is on the way"
+        },
+        "reviews": {
+          "title": "Reviews are on the way",
+          "body": "After a session you'll be able to leave a review, and read what others said before you book."
+        }
+      }
+    },
     "scrollToTop": "TO TOP"
   },
   "dashboard": {
     "header": {
-      "becomeMindsetter": "Become a Mindsetter",
       "completenessLabel": "Profile completeness",
       "edit": "Edit",
       "verified": "Verified",
-      "viewPublicProfile": "View public profile"
+      "viewProfile": "View Profile"
     },
     "nav": {
       "ariaLabel": "Cabinet",
@@ -1192,9 +1300,19 @@
         "settings": "Settings"
       }
     },
+    "photoReminder": {
+      "body": "Without a photo, you won't appear in the catalog or search, and you can't send invites or book sessions.",
+      "cta": "Add a photo in Basic Info",
+      "title": "Add a profile photo"
+    },
     "profile": {
       "allSections": "All sections",
-      "cancel": "Cancel",
+      "back": "Back",
+      "edit": "Edit",
+      "mindsetterGroup": {
+        "subtitle": "Your expert landing page for hosting events and consultations",
+        "title": "Mindsetter details"
+      },
       "nickname": "Nickname",
       "nicknameHint": "This is your profile link. Changing it breaks links you have already shared — the old address stops working.",
       "optionalPrefix": "Optional · {text}",
@@ -1202,18 +1320,19 @@
         "label": "How it looks on your profile",
         "toggle": "Preview this section on your profile"
       },
+      "saveAndNext": "Save & Next",
       "saveChanges": "Save changes",
       "saved": "Changes saved",
       "sections": {
         "hero": {
           "editorHint": "This is the first thing people see on your public profile.",
-          "hint": "Photo, name, nickname, country, city, language, bio, company, role, industry",
-          "title": "Hero"
+          "hint": "Photo, name, location, bio, company & role",
+          "title": "Basic Info"
         },
         "socialLinks": {
           "editorHint": "Leave a field empty and that icon simply will not appear.",
-          "hint": "Company website · LinkedIn · Instagram · and more",
-          "title": "Social links"
+          "hint": "Website & social profiles",
+          "title": "Links"
         },
         "roles": {
           "editorHint": "What you build and who you are across ventures. At least one role is required.",
@@ -1281,9 +1400,14 @@
           "title": "Video block"
         }
       },
-      "subtitleMember": "a fuller profile gets more invitations",
-      "subtitleMindsetter": "each section is saved separately",
-      "title": "Your profile"
+      "subtitle": "Basic info required to attend events and book consultations",
+      "title": "Member details",
+      "unsavedChanges": {
+        "description": "If you leave now, the changes you made in this section will not be saved.",
+        "leave": "Leave",
+        "stay": "Stay",
+        "title": "You have unsaved changes"
+      }
     },
     "sessions": {
       "title": "Session Settings",
@@ -1373,15 +1497,26 @@
           "success": "Password changed"
         }
       }
+    },
+    "statusBanner": {
+      "title": "Your status: Member",
+      "body": "Unlock Mindsetter tools to host events & share expertise.",
+      "cta": "Upgrade Now"
     }
   },
+  "memberProfileReadyDialog": {
+    "title": "Your Member profile is ready! 🎉",
+    "description": "Your profile is complete and now visible to the rest of the Mindsetis community.",
+    "previewProfile": "Preview Profile",
+    "continueSetup": "Continue Setup"
+  },
   "validation": {
-    "aboutMax": "About must be at most {max} characters.",
+    "aboutMax": "More About You must be at most {max} characters.",
     "authorMax": "Author must be at most {max} characters.",
     "availabilityRequired": "Add availability for at least one day.",
     "avatarRequired": "Profile photo is required.",
-    "bioMax": "Bio must be at most {max} characters.",
-    "bioRequired": "Bio is required.",
+    "bioMax": "Short Bio must be at most {max} characters.",
+    "bioRequired": "Short Bio is required.",
     "cityRequired": "Select your city from the list.",
     "companyMax": "Company must be at most {max} characters.",
     "companyRequired": "Company is required.",
@@ -1399,13 +1534,18 @@
     "firstNameRequired": "First name is required.",
     "imageMax": "Image must be at most {max} MB.",
     "imageType": "Only PNG or JPEG images are allowed.",
-    "industryRequired": "Please select an industry.",
+    "industriesDuplicate": "Please remove the duplicate industry.",
+    "industriesMax": "You can select up to {max} industries.",
+    "industriesRequired": "Please select at least one industry.",
+    "industryCustomMax": "Your industry must be at most {max} characters.",
+    "industryCustomNotAllowed": "Remove this text, or select \"Other\" among your industries.",
+    "industryCustomRequired": "Tell us your industry.",
     "interestsMax": "You can select up to {max} interests.",
     "invalidRedirect": "Invalid redirect.",
     "labelMax": "Label must be at most {max} characters.",
     "labelRequired": "Label is required.",
     "languagesRequired": "Select at least one language.",
-    "lastNameRequired": "Second name is required.",
+    "lastNameRequired": "Last name is required.",
     "latinOnly": "Use Latin characters only.",
     "linksMax": "You can add up to {max} links.",
     "nameMax": "Name is too long.",
@@ -1898,5 +2038,25 @@
         "body": "Write to legal@mindsetis.com and we will answer within five working days."
       }
     }
+  },
+  "upgradeToMindsetter": {
+    "title": "Upgrade to Mindsetter",
+    "description": "Take your membership to the next level.",
+    "intro": "As a Mindsetter, you unlock premium privileges:",
+    "points": {
+      "events": "Host your own events and masterclasses",
+      "consultations": "Offer 1-on-1 consultations to top peers",
+      "invites": "Invite your own trusted network to Mindsetis"
+    },
+    "note": "Filling out the extended form takes about 5 minutes.",
+    "start": "Start Mindsetter Application",
+    "maybeLater": "Maybe later"
+  },
+  "upgradeProfileWidget": {
+    "title": "Your profile can do more",
+    "body": "Become a Mindsetter to unlock your own public profile, paid 1:1 sessions, and events.",
+    "cta": "Become a Mindsetter",
+    "seeExample": "See Example",
+    "close": "Close"
   }
 }

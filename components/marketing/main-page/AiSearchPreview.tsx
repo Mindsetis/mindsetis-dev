@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { SparklingFillIcon } from '@/components/icons/main-page-icons';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { cn } from '@/lib/utils';
 
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -16,7 +16,7 @@ import { SectionEyebrow } from './SectionEyebrow';
  * Per CLAUDE.md ("Togglable modules… AI-search must be switchable from the admin settings
  * without a redeploy. Gate their entry points on an admin-controlled flag") — that admin flag
  * doesn't exist yet, and there's no AI-search backend for this input to call. Rendered as an
- * illustrative, non-functional preview of the feature (the `readOnly` input, a `ComingSoon`
+ * illustrative, non-functional preview of the feature (the `readOnly` input, a `NotYetAvailable`
  * submit button, and non-interactive chips) rather than half-wiring a form with nowhere to send
  * its data — the same "flag the tradeoff instead of guessing a backend" approach as everywhere
  * else this design assumes functionality the app doesn't have yet.
@@ -89,10 +89,10 @@ import { SectionEyebrow } from './SectionEyebrow';
  * - Search button still used `aria-disabled` + `pointer-events-none` (STAGE 1.13 FIRST PASS's
  *   own reasoning: Figma's button instance shows the same live gradient+glow as an enabled
  *   button, so a plain `disabled` looked wrong). The customer has since overridden that call for
- *   the whole page: `ComingSoon` controls should read as visibly unavailable, not merely
+ *   the whole page: `NotYetAvailable` controls should read as visibly unavailable, not merely
  *   click-blocked — already applied to `MindsetisEventsSection`'s "All videos"/"All events" and
  *   `MindsetisOriginalsSection`'s "watch"/"all videos" buttons. This button now matches: plain
- *   `disabled` inside `ComingSoon`, which (per `Button`'s `primary`/default variant) swaps the
+ *   `disabled` inside `NotYetAvailable`, which (per `Button`'s `primary`/default variant) swaps the
  *   gradient to `--color-primary-disabled` and drops the glow shadow — a deliberately dimmed
  *   look, the same tradeoff already made everywhere else on this page.
  *
@@ -314,11 +314,11 @@ export async function AiSearchPreview() {
           aria-label={t('placeholder')}
           className="relative z-10 hidden min-w-0 flex-1 bg-transparent text-body leading-[22px] text-primary-hover placeholder:text-primary-hover focus:outline-none md:block"
         />
-        <ComingSoon>
+        <NotYetAvailable feature="aiSearch">
           <Button size="default" disabled className="relative z-10 w-[120px] shrink-0">
             {t('searchCta')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
 
       {/* `relative z-[2]` on the whole popular-searches block: it sits below the search box,

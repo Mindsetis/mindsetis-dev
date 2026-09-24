@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <!-- This email is dark by design; tell clients so they do not invert it a second time. -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    <title>You have been invited</title>
+    <!--[if mso]>
+      <noscript>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+        </xml>
+      </noscript>
+    <![endif]-->
+    <style>
+      /* Only ever an enhancement - every rule that matters is also inline, because
+         Gmail's webmail strips <style> in forwarded mail and Outlook.com rewrites it. */
+      body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+      table { border-collapse: collapse; }
+      img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+      a { color: #79b9e3; }
+      @media only screen and (max-width: 520px) {
+        .m-pad { padding: 28px 20px !important; }
+        .m-wrap { padding: 16px 8px !important; }
+      }
+    </style>
+  </head>
+  <body style="background-color:#000000;margin:0;padding:0;width:100%;">
+    <div style="display:none;font-size:1px;color:#1a1a1a;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+      You have been invited to join Mindsetis Community.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#000000;">
+      <tr>
+        <td class="m-wrap" align="center" style="padding:32px 16px;">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" style="background-color:#1a1a1a;border-radius:12px;max-width:480px;width:100%;">
+            <tr>
+              <td class="m-pad" style="padding:40px 32px;">
+                <!-- BRAND HEADER (task I4).
+                     width/height are set as ATTRIBUTES as well as CSS because Outlook
+                     ignores the CSS; without them it reserves the file's full 600px and the
+                     card blows out. The alt text is styled to look like the wordmark it
+                     replaces: a large share of readers see images blocked by default, and for
+                     them this line IS the header, so it should still read as Mindsetis rather
+                     than as a broken-image caption. -->
+                <img
+                  src="https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png"
+                  width="300"
+                  height="41"
+                  alt="Mindsetis"
+                  style="display:block;border:0;outline:none;text-decoration:none;width:300px;height:auto;max-width:100%;margin:0 0 32px;color:#79b9e3;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:20px;font-weight:700;letter-spacing:0.5px;"
+                />
+
+                <h1 style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
+                  You have been invited to Mindsetis Community
+                </h1>
+
+                <p style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;margin:0 0 16px;">Someone invited you to join Mindsetis Community - a member-first community of people worth talking to.</p>
+                <p style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;margin:0 0 16px;">Accept the invitation to set your password and create your profile.</p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 0;">
+                  <tr>
+                    <td align="left">
+              <!--[if mso]>
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/member-profile" style="height:50px;v-text-anchor:middle;width:260px;" arcsize="50%" stroke="f" fillcolor="#79b9e3">
+                <w:anchorlock/>
+                <center style="color:#000000;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:bold;">Accept invitation</center>
+              </v:roundrect>
+              <![endif]-->
+              <!--[if !mso]><!-- -->
+              <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/member-profile" style="background-color:#79b9e3;border-radius:999px;color:#000000;display:inline-block;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;">Accept invitation</a>
+              <!--<![endif]-->
+                    </td>
+                  </tr>
+                </table>
+
+            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
+              Button not working? Copy and paste this link into your browser:
+            </p>
+            <p style="margin:8px 0 0;">
+              <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/member-profile" style="color:#79b9e3;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;text-decoration:underline;word-break:break-all;">{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/member-profile</a>
+            </p>
+
+            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
+              This invitation can be used once and expires in 24 hours. If you were not expecting it, you can safely ignore this email - without setting a password, nobody can sign in.
+            </p>
+
+            <hr style="border:0;border-top:1px solid #333333;margin:32px 0 16px;" />
+            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:12px;line-height:18px;margin:0;">
+              Mindsetis Community &middot; Need help? Write to
+              <a href="mailto:support@mindsetis.com" style="color:#a5a5a5;text-decoration:underline;">support@mindsetis.com</a>.
+            </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -4,12 +4,18 @@ import { ChangePasswordForm } from '@/components/dashboard/ChangePasswordForm';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 
 type SettingsPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SettingsPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.settings');
+}
 
 /**
  * Cabinet → Settings (Figma `708:9177` Member / `623:6559` Mindsetter).

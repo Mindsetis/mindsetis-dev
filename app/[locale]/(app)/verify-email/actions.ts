@@ -41,11 +41,12 @@ export const resendConfirmationEmail = createAction(
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      // Same destination as `signUp()` (`(auth)/actions.ts`) — the default (SMTP-off,
-      // non-editable) "Confirm signup" template builds its link from `emailRedirectTo`, so the
-      // resent email must carry it too, otherwise the confirmation `?code=` lands on the Site
-      // URL root instead of our `/api/auth/confirm` handler.
-      options: { emailRedirectTo: siteUrl('/api/auth/confirm?next=/member-profile') },
+      // Same destination as `signUp()` (`(auth)/actions.ts`) — the "Confirm signup" template
+      // builds its link from `{{ .RedirectTo }}`, i.e. from this value, so a resent email must
+      // carry it too or the confirmation lands on the Site URL root instead of our
+      // `/api/auth/confirm` handler. Kept byte-identical to `signUp()`'s, including the
+      // `?next=/` that looks redundant but is not — read the note there before touching either.
+      options: { emailRedirectTo: siteUrl('/api/auth/confirm?next=/') },
     });
     if (error) {
       // Log for observability, but never surface the specific reason to the caller — an

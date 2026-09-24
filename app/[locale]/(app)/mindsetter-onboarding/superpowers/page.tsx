@@ -4,6 +4,7 @@ import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { SuperpowersSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { SuperpowersForm } from '@/components/mindsetter-onboarding/SuperpowersForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import type { Superpower } from '@/lib/validation/mindsetter';
@@ -11,6 +12,11 @@ import type { Superpower } from '@/lib/validation/mindsetter';
 type SuperpowersPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SuperpowersPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'superpowers.title');
+}
 
 /**
  * Extended Mindsetter onboarding — step 2/5 "Your superpowers"

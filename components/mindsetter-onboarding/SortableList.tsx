@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import type { ReactNode } from 'react';
+import { type ReactNode, useId } from 'react';
 
 type SortableListProps = {
   /** Stable ids of the items being sorted, in current render order. Each sortable child must call
@@ -64,6 +64,7 @@ type SortableListProps = {
  * across the page.
  */
 export function SortableList({ ids, onReorder, layout = 'vertical', children }: SortableListProps) {
+  const dndContextId = useId();
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
@@ -80,7 +81,15 @@ export function SortableList({ ids, onReorder, layout = 'vertical', children }: 
   }
 
   return (
+    /* `id` is passed explicitly because dnd-kit falls back to a MODULE-LEVEL counter when it isn't
+       (`DndDescribedBy-0`, `-1`, …), which it writes into the `aria-describedby` of every draggable.
+       That counter restarts at zero on the server for each request but keeps climbing in the
+       browser as contexts mount, so the ids the server rendered and the ones React found on
+       hydration disagreed — a real hydration error in the console on every page with a sortable
+       list (`/dashboard/profile/roles`, `/mindsetter-onboarding/roles`), found 2026-09-20.
+       `useId` is the React-sanctioned answer: same value on both sides, unique per instance. */
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToParentElement]}

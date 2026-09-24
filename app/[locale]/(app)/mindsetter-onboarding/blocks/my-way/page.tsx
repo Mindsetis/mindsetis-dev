@@ -4,6 +4,7 @@ import { MyWayBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { MyWayForm } from '@/components/mindsetter-onboarding/MyWayForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -17,6 +18,11 @@ type MyWayBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: MyWayBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.myWay.title');
+}
 
 /**
  * Optional block "My Way" (onboarding doc section 7, ROADMAP stage 1.9). Mirrors

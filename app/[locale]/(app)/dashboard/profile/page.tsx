@@ -1,7 +1,9 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Fragment } from 'react';
 
 import { ProfileSectionCard } from '@/components/dashboard/ProfileSectionCard';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile, type SectionSummary } from '@/lib/profile/cabinet';
 import type { ProfileSection } from '@/lib/profile/completeness';
 import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
@@ -9,6 +11,11 @@ import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
 type DashboardProfilePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: DashboardProfilePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile');
+}
 
 /**
  * Cabinet → "My Profile": the list of editable sections (Figma `610:4227` Mindsetter, twelve
@@ -77,20 +84,31 @@ export default async function DashboardProfilePage({ params }: DashboardProfileP
         <h2 className="font-display text-[24px] font-normal text-foreground lg:text-m">
           {t('title')}
         </h2>
-        <p className="text-tiny text-muted-foreground">
-          {cabinet.accountType === 'mindsetter' ? t('subtitleMindsetter') : t('subtitleMember')}
-        </p>
+        <p className="text-tiny text-muted-foreground">{t('subtitle')}</p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {cabinet.completeness.sections.map((section) => (
-          <ProfileSectionCard
-            key={section.key}
-            sectionKey={section.key}
-            href={section.href}
-            title={t(`sections.${section.key}.title`)}
-            summary={summaryFor(section)}
-          />
+        {cabinet.completeness.sections.map((section, index) => (
+          <Fragment key={section.key}>
+            {/* Group header above the Mindsetter-only cards (Release-1 C1) — sections[0]/[1]
+                are always Hero/Social links (a Member's whole list), so index 2 is exactly
+                where the eleven Mindsetter cards start for a Mindsetter account; a Member never
+                reaches this branch at all since their `sections` array stops at index 1. */}
+            {cabinet.accountType === 'mindsetter' && index === 2 ? (
+              <div className="mt-2 flex flex-col gap-1 lg:mt-3">
+                <h3 className="font-display text-lg font-normal text-foreground">
+                  {t('mindsetterGroup.title')}
+                </h3>
+                <p className="text-tiny text-muted-foreground">{t('mindsetterGroup.subtitle')}</p>
+              </div>
+            ) : null}
+            <ProfileSectionCard
+              sectionKey={section.key}
+              href={section.href}
+              title={t(`sections.${section.key}.title`)}
+              summary={summaryFor(section)}
+            />
+          </Fragment>
         ))}
       </div>
     </section>

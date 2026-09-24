@@ -31,7 +31,8 @@ function extensionForMimeType(mimeType: string): string {
 }
 
 /**
- * Hero — names, nickname, location, languages, bio/about, interests, company/role/industry, photo.
+ * Hero — names, nickname, location, languages, bio/about, interests, company/role/industries
+ * (+ the optional free-text "Other" industry), photo.
  *
  * `username` is editable here (2026-08-10 product decision) even though it is this profile's public
  * URL: a unique-violation from Postgres is translated into a field-level error rather than a 500,
@@ -144,7 +145,11 @@ export const saveHeroSection = createAction(heroActionSchema, async (input) => {
       avatar_url: avatarUrl,
       company: input.company,
       role: input.role,
-      industry: input.industry,
+      industries: input.industries,
+      // `industry_custom_status` is never written here — it's staff-only, DB-guarded
+      // (`guard_profiles_industry_custom_status`), and resets itself to 'pending' on the DB
+      // side whenever this text actually changes.
+      industry_custom: input.industryCustom?.trim() || null,
     })
     .eq('id', user.id);
 

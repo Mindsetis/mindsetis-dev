@@ -15,6 +15,7 @@ import {
 import { saveNumbersSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { saveNumbers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
@@ -200,6 +201,11 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
     name: 'numbers',
   });
 
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
@@ -211,10 +217,8 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
     }
 
     if (editMode) {
-      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
-      // reverts to what was just saved, not to what the page originally loaded.
       form.reset(values);
-      notifySaved();
+      notifySaved(nextHref);
       return;
     }
 
@@ -255,12 +259,7 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
         ) : null}
 
         <StepActions
-          onCancel={() => {
-            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-            // the section rather than navigating, so this is an undo, not an exit.
-            form.reset();
-            setFormError(null);
-          }}
+          onCancel={() => router.push('/dashboard/profile')}
           editMode={editMode}
           isSubmitting={form.formState.isSubmitting}
           className={fields.length < MAX_NUMBERS ? 'mt-[-4px] md:mt-[-8px]' : undefined}

@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
+import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
 import { MenuExternalIcon, MenuLogoutIcon } from '@/components/icons/account-menu-icons';
 import {
   BookingsIcon,
@@ -17,13 +19,12 @@ import {
 import { AccountAvatar } from '@/components/layout/AccountAvatar';
 import {
   Dialog,
-  DialogClose,
   DialogCloseButton,
   DialogContent,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Link } from '@/i18n/navigation';
+import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
 import { cn } from '@/lib/utils';
 
 export type AccountSheetProps = {
@@ -47,23 +48,41 @@ export type AccountSheetProps = {
  * while the account-menu icons have no such prop, and passing one to the other would leak an
  * unknown attribute onto the DOM.
  */
+type SheetRowBaseProps = {
+  icon: ReactNode;
+  label: string;
+  disabled?: boolean;
+  /** Set together with `disabled`: which unbuilt feature this row leads to. */
+  feature?: NotYetAvailableFeature;
+  destructive?: boolean;
+};
+
+/**
+ * A navigating row and a plain-click row take different, MUTUALLY EXCLUSIVE required props — a
+ * union (not one flat object with everything optional) so forgetting `closeSheet` on an `href`
+ * row is a compile error, not a click that silently leaves the sheet open behind the "unsaved
+ * changes" dialog (Release-1 C-continuation follow-up, 2026-09-19). `closeSheet` closes the sheet
+ * on click, same as the `DialogClose` wrapper this row used before that pass — handled explicitly
+ * now instead, because that wrapper's automatic close fired unconditionally, and the row needs the
+ * click to sometimes NOT navigate (a dirty section editor opens the confirmation dialog instead,
+ * via `GuardedLink`'s own `preventDefault`), while still closing the sheet either way.
+ */
+type SheetRowProps = SheetRowBaseProps &
+  (
+    | { href: string; closeSheet: () => void; onClick?: undefined }
+    | { href?: undefined; onClick?: () => void; closeSheet?: undefined }
+  );
+
 function SheetRow({
   icon,
   label,
   href,
   onClick,
   disabled,
+  feature,
   destructive,
-}: {
-  icon: ReactNode;
-  label: string;
-  href?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  destructive?: boolean;
-}) {
-  const t = useTranslations('common');
-
+  closeSheet,
+}: SheetRowProps) {
   const className = cn(
     'flex h-[54px] w-full items-center gap-3 px-4 text-base font-medium transition-colors',
     destructive ? 'text-destructive' : 'text-foreground',
@@ -74,30 +93,33 @@ function SheetRow({
     <>
       <span className={cn('flex shrink-0 items-center', disabled && 'opacity-45')}>{icon}</span>
       <span className="flex-1 text-left">{label}</span>
-      {/* On the desktop sidebar an unbuilt item explains itself through a hover tooltip
-          (`ComingSoon`). Hover doesn't exist here, and a tooltip that needs a long-press is a
-          label nobody finds — so the same message is spelled out inline instead. */}
-      {disabled ? (
-        <span className="shrink-0 text-tiny text-muted-foreground">{t('comingSoon')}</span>
-      ) : null}
+      {/* The inline "Coming soon" label is gone: tapping the row now opens the same explanation
+          the desktop sidebar shows (Release-1 B1). That also retires the reason this label
+          existed — the old desktop affordance was a hover tooltip, which a touch screen never
+          reveals; a dialog opens on tap like anything else. */}
     </>
   );
 
   if (disabled) {
-    return (
+    const row = (
       <span aria-disabled="true" className={className}>
         {content}
       </span>
+    );
+    return feature ? (
+      <NotYetAvailable feature={feature} className="w-full">
+        {row}
+      </NotYetAvailable>
+    ) : (
+      row
     );
   }
 
   if (href) {
     return (
-      <DialogClose asChild>
-        <Link href={href} className={className}>
-          {content}
-        </Link>
-      </DialogClose>
+      <GuardedLink href={href} className={className} onClick={closeSheet}>
+        {content}
+      </GuardedLink>
     );
   }
 
@@ -122,10 +144,10 @@ const NAV_ICON = 'size-[21px] shrink-0';
  * header avatar opens this sheet, and it is the only way to move between cabinet sections on a
  * phone, which is why it lists all six of them rather than the three the desktop dropdown shows.
  *
- * Four of those six have no page yet (Overview, Bookings, Sessions Setup, Earnings); they render
- * inert with a "Coming soon" label, mirroring the desktop sidebar's treatment. The design also
- * draws a "5" count badge on Bookings — that is mock data with nothing behind it, so it is left
- * out rather than hardcoded.
+ * Three of those six have no page yet (Overview, Bookings, Earnings); they render inert, and
+ * tapping one explains what that section will do (`NotYetAvailable`), mirroring the desktop
+ * sidebar's treatment. The design also draws a "5" count badge on Bookings — that is mock data
+ * with nothing behind it, so it is left out rather than hardcoded.
  *
  * Built on `Dialog` (not `DropdownMenu`): this is a modal surface with a scrim and its own close
  * button, and it needs the focus trap Dialog gives.
@@ -143,7 +165,9 @@ export function AccountSheet({
   const t = useTranslations('nav.accountMenu');
   const tNav = useTranslations('dashboard.nav');
   const tHeader = useTranslations('dashboard.header');
+  const { guard } = useUnsavedChanges();
   const [open, setOpen] = useState(false);
+  const closeSheet = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -183,16 +207,19 @@ export function AccountSheet({
             icon={<OverviewIcon active className={NAV_ICON} />}
             label={tNav('items.overview')}
             disabled
+            feature="overview"
           />
           <SheetRow
             icon={<MyProfileIcon active className={NAV_ICON} />}
             label={tNav('items.myProfile')}
             href="/dashboard/profile"
+            closeSheet={closeSheet}
           />
           <SheetRow
             icon={<BookingsIcon active className={NAV_ICON} />}
             label={tNav('items.bookings')}
             disabled
+            feature="bookings"
           />
           {accountType === 'mindsetter' ? (
             <>
@@ -200,11 +227,13 @@ export function AccountSheet({
                 icon={<SessionsSetupIcon active className={NAV_ICON} />}
                 label={tNav('items.sessionsSetup')}
                 href="/dashboard/sessions"
+                closeSheet={closeSheet}
               />
               <SheetRow
                 icon={<EarningsIcon active className={NAV_ICON} />}
                 label={tNav('items.earnings')}
                 disabled
+                feature="earnings"
               />
             </>
           ) : null}
@@ -212,6 +241,7 @@ export function AccountSheet({
             icon={<CabinetSettingsIcon active className={NAV_ICON} />}
             label={tNav('items.settings')}
             href="/dashboard/settings"
+            closeSheet={closeSheet}
           />
 
           <Divider />
@@ -220,11 +250,14 @@ export function AccountSheet({
             icon={<MenuExternalIcon className={NAV_ICON} />}
             label={t('viewPublicProfile')}
             href={publicProfileHref}
+            closeSheet={closeSheet}
           />
           <SheetRow
             icon={<MenuLogoutIcon className={NAV_ICON} />}
             label={isSigningOut ? t('signingOut') : t('logOut')}
-            onClick={onSignOut}
+            // Routed through `guard` (Release-1 C-continuation, 2026-09-19) — signing out is
+            // also a way off a dirty section editor.
+            onClick={() => guard(onSignOut)}
             destructive
           />
         </div>

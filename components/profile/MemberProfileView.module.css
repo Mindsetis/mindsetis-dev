@@ -13,8 +13,10 @@
  * was clearly drawn from the same brand palette), the rule below reuses `var(--color-*)` /
  * `var(--gradient-*)` instead of repeating the hex — see the comment on each such rule.
  *
- * `!important` is used only on the Button-based overrides (`.editButton`/`.shareButton`/
- * `.inviteButton`): `components/ui/button.tsx`'s `cva` variants already ship their own
+ * `!important` is used only on the Button-based overrides (`.inviteButton`, the sole survivor
+ * of that group — Release-1 G1 removed the owner-only preview banner this file used to also
+ * style, taking `.editButton`/`.shareButton` with it):
+ * `components/ui/button.tsx`'s `cva` variants already ship their own
  * `bg-*`/`border-*`/`text-*` Tailwind utility classes, which are NOT recognized/stripped by
  * `tailwind-merge` when combined with an opaque CSS Module class name (unlike two Tailwind
  * utility classes, which `cn()` can resolve for us) — `!important` guarantees this design's
@@ -25,130 +27,6 @@
 .section {
   background-color: #ffffff;
   color: #000000;
-}
-
-/* ---- Preview banner (variant="preview" only) ---------------------------------------- */
-
-.banner {
-  /* Figma: mobile banner container (node I401:8413;127:1348 "Frame 84") fills pure
-     `#000000`, ~48px tall (8px padding + 32px chip). Desktop (401:6352) fills `#1a1a1a` —
-     exactly the app's existing dark card surface token — at 80px tall (12px padding + 56px
-     buttons). Was one flat rule that only matched the desktop value. */
-  background-color: #000000;
-  min-height: 48px;
-}
-@media (min-width: 768px) {
-  .banner {
-    background-color: var(--color-card);
-    min-height: 80px;
-  }
-}
-
-.bannerText {
-  color: rgb(255 255 255 / 75%);
-}
-
-.bannerHighlight {
-  /* #79B9E3 in the spec is exactly the app's existing --color-primary brand blue. */
-  color: var(--color-primary);
-}
-
-.editButton {
-  /* Figma: the mobile "Edit" chip (node I401:8413;127:1353 "Frame 83") is a plain flat
-     `#1a1a1a` fill (== --color-card) with a solid `#747474` (== --color-border) border and
-     white text/icon — NOT the gradient-bordered pill. That gradient treatment only exists
-     on the desktop "Edit Profile" button (401:6358), applied at `md:` below.
-     `transition` covers `box-shadow` (the `md:` hover below removes the glow) in addition to
-     the `background`/`border`/`color` the shared Button component's own `transition-colors`
-     already animates — that utility doesn't include `box-shadow`, so without this the
-     desktop hover's glow snapped off instantly instead of fading. */
-  background: var(--color-card) !important;
-  border: 1px solid var(--color-border) !important;
-  color: #ffffff !important;
-  transition:
-    background-color 150ms ease,
-    box-shadow 150ms ease;
-}
-.editButton:hover {
-  background: rgb(255 255 255 / 6%) !important;
-}
-@media (min-width: 768px) {
-  .editButton:hover {
-    /* Desktop hover must NOT change the mobile chip's translucent-white background rule
-       above (it's unscoped by media query, so without this override it was silently winning
-       here too via `!important`, wiping out the gradient-border trick's background on
-       hover). Interior fill (padding-box layer) stays the same `var(--color-card)` as the
-       resting state — only the border-box layer swaps from the 3-stop brand gradient to a
-       flat `#9AD2EE`, and the glow (`box-shadow`) is dropped entirely. */
-    background:
-      linear-gradient(var(--color-card), var(--color-card)) padding-box,
-      linear-gradient(#9ad2ee, #9ad2ee) border-box !important;
-    box-shadow: none !important;
-  }
-}
-.editButton svg {
-  /* Figma: the mobile chip's "ball-pen-fill" icon frame is 14x14 (desktop's is 16x16, the
-     `size-4` the icon itself already carries) — a plain Tailwind class on the icon (e.g.
-     `size-3.5`) can't express this because the shared Button component's own base class
-     already force-sets every icon to 16px via `[&_svg]:size-4`, which compiles to a
-     `.buttonClass svg` descendant selector — same specificity as a `.editButton svg` rule
-     here, but higher specificity than a bare utility class placed directly on the `<svg>`
-     (`.size-3.5`), so that class alone would silently lose the fight and stay at 16px.
-     `!important` (same precedent as this file's background/border/color overrides above)
-     guarantees this wins regardless of stylesheet order. */
-  width: 14px !important;
-  height: 14px !important;
-}
-@media (min-width: 768px) {
-  .editButton {
-    /* Gradient 1px border via the padding-box/border-box double-background trick. The top
-       (padding-box) layer must be an OPAQUE color matching the backdrop this button actually
-       sits on — the `.banner` bar, whose desktop background is `var(--color-card)`
-       (`#1a1a1a`), NOT this section's white `.section` background (the banner is a separate
-       dark bar layered on top of the white section, only rendered for `variant="preview"`).
-       A transparent top layer doesn't mask anything, so the border-box gradient underneath
-       paints straight through the whole button as a solid fill instead of just the 1px ring
-       (that was the original bug: `linear-gradient(#0000, #0000)`, fully transparent, let
-       the gradient show everywhere). A prior fix used opaque white here, which was also
-       wrong — confirmed against a Figma reference screenshot showing a dark button interior,
-       not white. Spec's stops (#C3E4F9 0% -> #79B9E3 49.5% -> #21B8E6 100%) are a near-exact
-       match for the existing --gradient-primary token (effects.css: 49% instead of 49.5%,
-       otherwise identical stops/colors) — reused here instead of duplicating a second
-       gradient.
-
-       This desktop instance is Figma's "Secondary - 2a" component — the same one
-       `components/ui/button.tsx`'s `primaryOutline` variant was built from. It used to rely
-       on that variant's shared `shadow-glow-primary` Tailwind utility (`md:shadow-glow-primary`
-       in the component's className) for its glow, but that token (`--shadow-glow-primary:
-       rgb(111 237 227 / 0.8)`, effects.css) doesn't actually match this instance's Figma spec
-       — confirmed via the dev-mode CSS export: `0px 4px 12.3px rgba(111, 186, 237, 0.8)`, same
-       G/B channels as `.inviteButton`'s glow below but a different button. Spelled out here
-       instead (the Tailwind utility was dropped from the JSX) so this button gets the color
-       Figma actually specifies rather than the mismatched shared token. */
-    background:
-      linear-gradient(var(--color-card), var(--color-card)) padding-box,
-      var(--gradient-primary) border-box !important;
-    border: 1px solid transparent !important;
-    color: var(--color-primary) !important;
-    box-shadow: 0 4px 12.3px 0 rgb(111 186 237 / 0.8) !important;
-  }
-  .editButton svg {
-    width: 16px !important;
-    height: 16px !important;
-  }
-}
-
-.shareButton {
-  /* #747474 is exactly the app's existing --color-border token. Explicit `transition` since
-     the `!important` background override otherwise still animates via the shared Button's
-     `transition-colors`, but spelling it out here keeps it correct regardless of that. */
-  background: transparent !important;
-  border: 1px solid var(--color-border) !important;
-  color: #ffffff !important;
-  transition: background-color 150ms ease;
-}
-.shareButton:hover {
-  background: rgb(255 255 255 / 6%) !important;
 }
 
 /* ---- Hero ----------------------------------------------------------------------------- */
@@ -300,8 +178,8 @@
 }
 
 .eyebrow {
-  /* Reuses --color-border (#747474) — same neutral gray as .shareButton's border above, and
-     the closest existing token to a muted label color for this light section (the app's own
+  /* Reuses --color-border (#747474) — the closest existing token to a muted label color for
+     this light section (the app's own
      `text-muted-foreground`, #a5a5a5, is tuned for a BLACK background and reads too faint on
      white, so it's intentionally not reused here). */
   color: var(--color-border);

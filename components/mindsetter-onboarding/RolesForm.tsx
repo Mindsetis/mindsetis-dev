@@ -18,6 +18,7 @@ import {
   saveRoles,
 } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
@@ -52,11 +53,14 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type RolesFormProps = {
-  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Back" + "Save & Next".
    * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
   editMode?: boolean;
   /** Already-saved roles, when the caller revisits this step. */
   initialRoles?: Role[];
+  /** Cabinet mode only: where "Save & Next" navigates once saved — the next card in cabinet
+   * section order (`lib/profile/completeness.ts#nextSectionHref`, Release-1 C3). */
+  nextHref?: string;
 };
 
 const EMPTY_ROLE: Role = { title: '', description: '', links: [] };
@@ -580,7 +584,7 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
  * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), plus a
  * `useFieldArray` of Role cards (each with its own nested links field array, see `RoleCard`).
  */
-export function RolesForm({ initialRoles, editMode }: RolesFormProps) {
+export function RolesForm({ initialRoles, editMode, nextHref }: RolesFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const notifySaved = useCabinetSaved();
@@ -596,6 +600,11 @@ export function RolesForm({ initialRoles, editMode }: RolesFormProps) {
 
   const { fields, append, remove, move } = useFieldArray({ control: form.control, name: 'roles' });
 
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
@@ -608,12 +617,10 @@ export function RolesForm({ initialRoles, editMode }: RolesFormProps) {
 
     // Step 2/5 — "Your superpowers" (not built yet in this foundation slice; wired ahead of
     // the route existing, same precedent as the Member wizard's earlier steps).
-    // Cabinet mode returns to the section list; the wizard continues to step 2/5.
+    // Cabinet mode walks to the next section ("Save & Next"); the wizard continues to step 2/5.
     if (editMode) {
-      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
-      // reverts to what was just saved, not to what the page originally loaded.
       form.reset(values);
-      notifySaved();
+      notifySaved(nextHref);
       return;
     }
 
@@ -644,25 +651,24 @@ export function RolesForm({ initialRoles, editMode }: RolesFormProps) {
           </div>
         </SortableList>
 
-        <div className="flex flex-col gap-3 md:gap-4">
-          {fields.length < MAX_ROLES ? (
-            <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
-              <Plus className="size-4" aria-hidden="true" />
-              {t('roles.addRole')}
-            </Button>
-          ) : null}
+        {fields.length < MAX_ROLES ? (
+          <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_ROLE)}>
+            <Plus className="size-4" aria-hidden="true" />
+            {t('roles.addRole')}
+          </Button>
+        ) : null}
 
-          <StepActions
-            onCancel={() => {
-              // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-              // the section rather than navigating, so this is an undo, not an exit.
-              form.reset();
-              setFormError(null);
-            }}
-            editMode={editMode}
-            isSubmitting={form.formState.isSubmitting}
-          />
-        </div>
+        {/* Direct child of the `<form>`, NOT wrapped with the "Add role" button above (as it was
+            until 2026-09-20): the cabinet bar is `position: sticky`, and sticky can only travel
+            inside its own containing block. Boxed into that two-row wrapper it had ~70px of room,
+            so it never actually pinned — measured live at 375px, where the section is long enough
+            that the buttons should have been held at the bottom edge the whole way down. Every
+            other section form already renders it here for the same reason. */}
+        <StepActions
+          onCancel={() => router.push('/dashboard/profile')}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );

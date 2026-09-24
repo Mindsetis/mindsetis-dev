@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
 import { MemberProfileView } from '@/components/profile/MemberProfileView';
+import { UpgradeProfileWidget } from '@/components/profile/UpgradeProfileWidget';
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
@@ -30,7 +31,7 @@ const getProfileByUsername = cache(async (username: string) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, industry, company, country, city, region_name, languages, interests, socials, verification_status, is_blocked',
+      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, company, country, city, region_name, languages, interests, socials, verification_status, is_blocked',
     )
     .eq('username', username)
     .eq('is_blocked', false)
@@ -85,7 +86,9 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
   const { username } = await params;
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
-  return {};
+  return {
+    title: [profile.full_name, profile.last_name].filter(Boolean).join(' ') || `@${username}`,
+  };
 }
 
 /**
@@ -113,9 +116,15 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
  * motivated this change.
  *
  * Self-view: there is no separate "my profile" route anymore (the old `/dashboard/profile` was
- * removed in the same pass). The owner viewing their own username gets `variant="preview"` here
- * — the "Public view / Edit Profile / Share Profile" top bar — the same way
- * `/mindsetters/[username]` already resolves `preview` vs `public` from the viewer.
+ * removed in the same pass) — the owner viewing their own username lands here like anyone else.
+ * This used to also render a `variant="preview"` top bar ("Public view / Edit Profile / Share
+ * Profile") for that case, the same way `/mindsetters/[username]` resolved `preview` vs `public`
+ * from the viewer — Release-1 G1 (2026-09-20) removed that bar entirely (client's explicit ask),
+ * and with it the `variant` prop `MemberProfileView` used to take: this screen renders IDENTICALLY
+ * for the owner and for any other visitor now, so there is nothing left to resolve per-viewer
+ * here. Edit access for the owner still exists via the account menu's "Edit Profile" entry;
+ * Member profiles get no Share control at all (Release-1 G3 — only the Mindsetter profile's hero
+ * does).
  */
 export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
   const { locale, username } = await params;
@@ -153,23 +162,27 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const { id: _id, account_type: _accountType, ...renderedProfile } = profile;
 
   return (
-    <MemberProfileView
-      // `region_name` (snake_case, straight from Postgres) is remapped to the component's
-      // camelCase `regionName`; everything else already matches column-for-column.
-      profile={{ ...renderedProfile, regionName: profile.region_name }}
-      variant={isOwner ? 'preview' : 'public'}
-      labels={{
-        bannerHighlight: t('banner.highlight'),
-        bannerRest: t('banner.rest'),
-        editProfile: t('editProfile'),
-        shareProfile: t('shareProfile'),
-        verified: t('verified'),
-        inviteToEvent: t('inviteToEvent'),
-        aboutEyebrow: t('aboutEyebrow'),
-        beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
-        beyondBusinessHeading: t('beyondBusinessHeading'),
-        website: t('website'),
-      }}
-    />
+    <>
+      <MemberProfileView
+        // `region_name` (snake_case, straight from Postgres) is remapped to the component's
+        // camelCase `regionName`; everything else already matches column-for-column.
+        profile={{ ...renderedProfile, regionName: profile.region_name }}
+        labels={{
+          verified: t('verified'),
+          inviteToEvent: t('inviteToEvent'),
+          aboutEyebrow: t('aboutEyebrow'),
+          beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
+          beyondBusinessHeading: t('beyondBusinessHeading'),
+          website: t('website'),
+        }}
+      />
+      {/* Release-1 C8 — owner-only, Member-only. `profile.account_type` is read straight off the
+          fetched row rather than through `renderedProfile` (which already had it stripped above)
+          — checked here defensively alongside `isOwner`, even though by this point in the
+          function `isOwner && account_type === 'mindsetter'` is already unreachable (that
+          combination always redirects above, since `isMindsetterPageVisible` returns `true`
+          unconditionally for the owner). */}
+      {isOwner && profile.account_type === 'member' && <UpgradeProfileWidget userId={profile.id} />}
+    </>
   );
 }

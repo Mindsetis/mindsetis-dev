@@ -2,10 +2,16 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { AuthScreen } from '@/components/auth/AuthScreen';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type ResetPasswordPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: ResetPasswordPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth.resetPassword');
+}
 
 /**
  * Set a new password — Figma `680:8987` (desktop) / `1057:9048` (mobile). Reached from the emailed

@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { HeroForm } from '@/components/dashboard/HeroForm';
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import type { IndustryValue } from '@/lib/constants/industries';
 import { INDUSTRY_VALUES } from '@/lib/constants/industries';
 import type { InterestValue } from '@/lib/constants/interests';
@@ -10,11 +11,17 @@ import { INTEREST_VALUES } from '@/lib/constants/interests';
 import type { LanguageValue } from '@/lib/constants/languages';
 import { listCountries } from '@/lib/geo/countries';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.hero');
+}
 
 /**
  * Cabinet → My Profile → "Hero" section editor (Figma `613:4445`). Available to Members and
@@ -40,7 +47,7 @@ export default async function DashboardHeroSectionPage({ params }: SectionPagePr
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'full_name, last_name, username, country, city, country_code, region_code, region_name, city_geoname_id, timezone, bio, about, languages, interests, avatar_url, company, role, industry',
+      'full_name, last_name, username, country, city, country_code, region_code, region_name, city_geoname_id, timezone, bio, about, languages, interests, avatar_url, company, role, industries, industry_custom',
     )
     .eq('id', cabinet.userId)
     .maybeSingle();
@@ -66,13 +73,13 @@ export default async function DashboardHeroSectionPage({ params }: SectionPagePr
     (value): value is InterestValue => knownInterestValues.has(value),
   );
 
-  // Same guard for a stale industry slug: an unknown value would fail the `z.enum` on save with
-  // no matching option visible in the picker to change it.
+  // Same guard for stale industry slugs (a catalog entry renamed/removed after this profile
+  // saved it): unknown values would fail the `z.enum` on save with no matching option visible
+  // in the picker to change them, so they're dropped here rather than passed through.
   const knownIndustryValues = new Set<string>(INDUSTRY_VALUES);
-  const initialIndustry =
-    profile?.industry && knownIndustryValues.has(profile.industry)
-      ? (profile.industry as IndustryValue)
-      : undefined;
+  const initialIndustries = ((profile?.industries ?? []) as string[]).filter(
+    (value): value is IndustryValue => knownIndustryValues.has(value),
+  );
 
   return (
     <SectionEditorShell sectionKey="hero" title={t('title')} description={t('editorHint')}>
@@ -90,7 +97,9 @@ export default async function DashboardHeroSectionPage({ params }: SectionPagePr
         initialAvatarUrl={profile?.avatar_url ?? undefined}
         initialCompany={profile?.company ?? undefined}
         initialRole={profile?.role ?? undefined}
-        initialIndustry={initialIndustry}
+        initialIndustries={initialIndustries}
+        initialIndustryCustom={profile?.industry_custom ?? undefined}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'hero')}
       />
     </SectionEditorShell>
   );

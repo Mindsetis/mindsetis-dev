@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { SignUpForm } from '@/components/auth/SignUpForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { emailSchema } from '@/lib/validation/common';
 
 type SignUpPageProps = {
@@ -10,6 +11,11 @@ type SignUpPageProps = {
 };
 
 const TOTAL_STEPS = 4;
+
+export async function generateMetadata({ params }: SignUpPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'signUp.title');
+}
 
 /**
  * Sign-up screen — Figma "Registration" (mobile, node `165:2853`) / "Registration 1/4 -
@@ -21,7 +27,7 @@ const TOTAL_STEPS = 4;
  * keeps that shared shell untouched for the other auth screens instead of changing their
  * look too. The global `Header`/`Footer` (root `[locale]` layout) still wrap this page.
  *
- * The form now collects two separate, required name fields ("First name" / "Second name"),
+ * The form now collects two separate, required name fields ("First name" / "Last name"),
  * matching `signUpSchema.fullName` / `signUpSchema.lastName` and the desktop Figma frame's
  * two-field composition.
  */

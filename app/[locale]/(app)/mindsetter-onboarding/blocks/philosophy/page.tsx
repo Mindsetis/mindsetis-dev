@@ -4,6 +4,7 @@ import { MyPhilosophyBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { PhilosophyForm } from '@/components/mindsetter-onboarding/PhilosophyForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -16,6 +17,11 @@ type PhilosophyBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: PhilosophyBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.philosophy.title');
+}
 
 /**
  * Optional block "My Philosophy" (onboarding doc section 7, ROADMAP stage 1.9). Mirrors

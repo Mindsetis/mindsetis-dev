@@ -48,6 +48,15 @@ type LanguagesMultiSelectProps = {
    */
   searchable?: boolean;
   /**
+   * Caps how many options may be selected at once (Release-1 E2: the "Industries" field reuses
+   * this component with `max={3}`) — `undefined` (the default, what "Language you speak" still
+   * uses) means unlimited, matching this component's original behavior. Once reached, unselected
+   * rows become inert (same `disabled`-row treatment `InterestsPicker` uses for its own
+   * `MAX_INTERESTS` cap) rather than silently doing nothing on click — a picker that just eats
+   * clicks past the limit reads as broken, not deliberate.
+   */
+  max?: number;
+  /**
    * Error-state styling hook. Rendered as `data-invalid` (a plain data attribute), not
    * `aria-invalid` — the ARIA spec doesn't support `aria-invalid` on `role="button"`, and
    * this trigger isn't a real form control anyway (the actual error text is `FormMessage`,
@@ -85,6 +94,16 @@ function OptionCheckedIcon() {
  * is a `Popover` + `Command` checkbox-list (shadcn combobox pattern) with selected items
  * rendered as removable chips inside the trigger.
  *
+ * Generic enough to be reused wherever the same shape (a capped-or-uncapped set of catalog
+ * values) is needed — the "Industries" field (Release-1 E2, `BuildProfileForm`/`HeroForm`)
+ * reuses this exact component with `max={MAX_INDUSTRIES}` rather than a bespoke picker; the
+ * component's own name stays as-is (languages was the first caller) per the "reuse the existing
+ * pattern" instruction, same precedent as `Combobox` being industry/country/language-agnostic
+ * despite living under `components/ui/`.
+ *
+ * `max` (optional, `undefined` = unlimited, what "Language you speak" itself still uses)
+ * disables not-yet-selected rows once the cap is hit — see `limitReached` below.
+ *
  * The trigger is a `div[role=button]` (not a real `<button>`) so the per-chip remove
  * `<button>`s nested inside it stay valid, interactive, keyboard-focusable elements
  * (a `<button>` can't contain another `<button>`). `Popover.Trigger`'s `onClick`/ARIA wiring
@@ -117,6 +136,7 @@ export function LanguagesMultiSelect({
   removeLabel,
   disabled,
   searchable = false,
+  max,
   invalid,
 }: LanguagesMultiSelectProps) {
   const [open, setOpen] = useState(false);
@@ -126,6 +146,7 @@ export function LanguagesMultiSelect({
 
   const selectedOptions = options.filter((option) => value.includes(option.value));
   const hasValue = selectedOptions.length > 0;
+  const limitReached = max !== undefined && value.length >= max;
 
   // White border/chevron once there's at least one selected chip — not just while `open` —
   // per the 2026-07-17 follow-up, matching `Combobox`'s "has a value" rule.
@@ -143,9 +164,10 @@ export function LanguagesMultiSelect({
   function toggle(optionValue: string) {
     if (value.includes(optionValue)) {
       onChange(value.filter((v) => v !== optionValue));
-    } else {
-      onChange([...value, optionValue]);
+      return;
     }
+    if (limitReached) return;
+    onChange([...value, optionValue]);
   }
 
   function remove(optionValue: string) {
@@ -245,11 +267,13 @@ export function LanguagesMultiSelect({
             <CommandGroup>
               {options.map((option) => {
                 const isSelected = value.includes(option.value);
+                const isDisabled = !isSelected && limitReached;
                 return (
                   <CommandItem
                     key={option.value}
                     value={option.label}
                     keywords={option.keywords}
+                    disabled={isDisabled}
                     onSelect={() => toggle(option.value)}
                     className={cn(isSelected && 'text-foreground')}
                   >

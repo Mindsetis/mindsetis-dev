@@ -1,16 +1,21 @@
 import type { SVGProps } from 'react';
 
 /**
- * `CabinetHeader` link icons (`components/dashboard/CabinetHeader.tsx`) — both provided verbatim
+ * `CabinetHeader`'s "Edit" link icon (`components/dashboard/CabinetHeader.tsx`) — provided verbatim
  * by the designer (2026-08-10). Source markup hardcodes `fill="#79B9E3"` per path; converted here
  * to `fill="currentColor"` on the `<svg>` instead — same precedent as `BallPenFillIcon`/
- * `ProfilePageIcon` in this folder — since both call sites already set `text-primary` (that exact
+ * `ProfilePageIcon` in this folder — since the call site already sets `text-primary` (that exact
  * hex) on the surrounding `<Link>`, so the icon just follows it rather than carrying a second,
  * independent color declaration that happens to match today by coincidence.
  *
- * Both kept at their native size (14×14 / 17×17) — neither matches this project's `size-*` scale
- * exactly at every step, and the designer's own export dimensions are the ones asked for, so
- * callers don't pass a sizing className for these two.
+ * Kept at its native size (14×14) — it doesn't match this project's `size-*` scale exactly at
+ * every step, and the designer's own export dimensions are the ones asked for, so callers don't
+ * pass a sizing className for it.
+ *
+ * This file used to export a second icon, `ViewProfileIcon` (17×17, external-link glyph), for the
+ * card's "View public profile" TEXT link. Release-1 C4 (2026-09-20) turned that link into a filled
+ * `primary` `Button` with no icon, leaving the export unused — removed rather than kept "in case",
+ * since the designer's original SVG lives in Figma and git history either way.
  */
 export function EditPencilIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -23,22 +28,6 @@ export function EditPencilIcon(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path d="M10.412 7.2831L9.99956 6.87062L4.51777 12.3524C4.33023 12.54 4.07588 12.6453 3.81066 12.6453H2.75C2.19771 12.6453 1.75 12.1976 1.75 11.6453V10.5846C1.75 10.3194 1.85536 10.0651 2.04289 9.87753L6.93545 4.98498C7.71649 4.20393 8.98282 4.20393 9.76387 4.98498L11.6495 6.87062C11.8773 7.09841 11.8773 7.46778 11.6495 7.69557L7.93719 11.4079C7.70938 11.6357 7.34004 11.6357 7.11224 11.4078C6.88443 11.18 6.88443 10.8107 7.11224 10.5829L10.412 7.2831ZM10.8245 1.92085L12.4745 3.57077C12.7023 3.79857 12.7023 4.16792 12.4745 4.39573L12.3566 4.51358C11.9661 4.9041 11.3329 4.9041 10.9424 4.51358L9.88172 3.45291C9.4912 3.06239 9.49119 2.42922 9.88171 2.0387L9.99956 1.92085C10.2274 1.69305 10.5967 1.69305 10.8245 1.92085Z" />
-    </svg>
-  );
-}
-
-export function ViewProfileIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 17 17"
-      fill="currentColor"
-      aria-hidden="true"
-      {...props}
-    >
-      <path d="M10.3417 2.40845C10.2301 2.40845 10.1196 2.43043 10.0164 2.47315C9.9133 2.51587 9.8196 2.57848 9.74067 2.65741C9.66174 2.73634 9.59913 2.83004 9.55641 2.93317C9.51369 3.03629 9.49171 3.14682 9.49171 3.25845C9.49171 3.37007 9.51369 3.4806 9.55641 3.58373C9.59913 3.68685 9.66174 3.78056 9.74067 3.85949C9.8196 3.93842 9.9133 4.00103 10.0164 4.04374C10.1196 4.08646 10.2301 4.10845 10.3417 4.10845H11.9709L7.61463 8.4647C7.53556 8.54376 7.47284 8.63763 7.43005 8.74094C7.38726 8.84424 7.36523 8.95496 7.36523 9.06678C7.36523 9.1786 7.38726 9.28932 7.43005 9.39262C7.47284 9.49593 7.53556 9.5898 7.61463 9.66886C7.69369 9.74793 7.78756 9.81065 7.89086 9.85344C7.99417 9.89623 8.10489 9.91825 8.21671 9.91825C8.32853 9.91825 8.43925 9.89623 8.54255 9.85344C8.64586 9.81065 8.73973 9.74793 8.81879 9.66886L13.175 5.31261V6.94178C13.175 7.16721 13.2646 7.38342 13.424 7.54282C13.5834 7.70223 13.7996 7.79178 14.025 7.79178C14.2505 7.79178 14.4667 7.70223 14.6261 7.54282C14.7855 7.38342 14.875 7.16721 14.875 6.94178V3.25845C14.875 2.79095 14.4925 2.40845 14.025 2.40845H10.3417Z" />
-      <path d="M3.82495 4.67505C3.26137 4.67505 2.72086 4.89893 2.32235 5.29745C1.92383 5.69596 1.69995 6.23646 1.69995 6.80005V13.175C1.69995 13.7386 1.92383 14.2791 2.32235 14.6777C2.72086 15.0762 3.26137 15.3 3.82495 15.3H10.2C10.7635 15.3 11.304 15.0762 11.7026 14.6777C12.1011 14.2791 12.325 13.7386 12.325 13.175V11.475C12.325 11.2496 12.2354 11.0334 12.076 10.874C11.9166 10.7146 11.7004 10.625 11.475 10.625C11.2495 10.625 11.0333 10.7146 10.8739 10.874C10.7145 11.0334 10.625 11.2496 10.625 11.475V13.175C10.625 13.2309 10.614 13.2861 10.5926 13.3377C10.5712 13.3893 10.5399 13.4361 10.5005 13.4756C10.461 13.515 10.4142 13.5463 10.3626 13.5677C10.311 13.5891 10.2558 13.6 10.2 13.6H3.82495C3.76914 13.6 3.71387 13.5891 3.66231 13.5677C3.61075 13.5463 3.5639 13.515 3.52443 13.4756C3.48497 13.4361 3.45366 13.3893 3.4323 13.3377C3.41094 13.2861 3.39995 13.2309 3.39995 13.175V6.80005C3.39995 6.68733 3.44473 6.57923 3.52443 6.49953C3.60413 6.41983 3.71223 6.37505 3.82495 6.37505H5.52495C5.75039 6.37505 5.96659 6.2855 6.12599 6.12609C6.2854 5.96668 6.37495 5.75048 6.37495 5.52505C6.37495 5.29962 6.2854 5.08341 6.12599 4.92401C5.96659 4.7646 5.75039 4.67505 5.52495 4.67505H3.82495Z" />
     </svg>
   );
 }

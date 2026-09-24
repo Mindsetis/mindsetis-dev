@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { ChatVoiceAiFillIcon } from '@/components/icons/main-page-icons';
 import { CardSlider } from '@/components/profile/CardSlider';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { cn } from '@/lib/utils';
 
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -78,7 +78,7 @@ const PHOTOS = [
  *    (never removed from `messages/en.json`) and copying `TopMindsettersSection`'s exact recipe:
  *    the header row becomes `md:flex-row md:items-end md:justify-between`; the CTA is full-width
  *    on mobile and a fixed 150px bottom-aligned box on desktop (customer, 2026-08-31), wrapped in
- *    `ComingSoon` — there is no `/events` route yet, same as Top Mindsetters' own CTA. Its STYLING
+ *    `NotYetAvailable` — there is no `/events` route yet, same as Top Mindsetters' own CTA. Its STYLING
  *    is the hero's "How it works" button: `primaryOutline` at `default` size. ITS DISABLED
  *    TREATMENT WAS REVISED IN THE SIXTH CUSTOMER PASS (2026-09-01, see the call site's own comment):
  *    originally kept "live"-looking via `aria-disabled` + `pointer-events-none` (that reasoning is
@@ -154,7 +154,7 @@ const PHOTOS = [
  * line-height over the token's own value" precedent as `HeroBand.tsx`/`TopMindsettersSection.tsx`).
  *
  * "All events" and "Join Waitlist" both have no backend yet (no `/events` route, no waitlist
- * signup flow), so both stay visually-complete but `disabled`+`ComingSoon` controls.
+ * signup flow), so both stay visually-complete but `disabled`+`NotYetAvailable` controls.
  */
 export async function MindsetisEventsSection() {
   const t = await getTranslations('home.main.events');
@@ -188,12 +188,12 @@ export async function MindsetisEventsSection() {
             the work instead of `aria-disabled` — `button.tsx`'s `disabled:` variants flatten the
             gradient border to a plain one and mute the label/drop the glow, which is now the
             intended look, not a regression to work around. Same project convention
-            `WelcomeMemberCtas.tsx` already uses for its own `primaryOutline` inside `ComingSoon`. */}
-        <ComingSoon className="w-full md:w-[150px] md:shrink-0">
+            `WelcomeMemberCtas.tsx` already uses for its own `primaryOutline` inside `NotYetAvailable`. */}
+        <NotYetAvailable feature="events" className="w-full md:w-[150px] md:shrink-0">
           <Button variant="primaryOutline" size="default" disabled className="w-full">
             {t('viewAllCta')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
 
       {/* Figma gap from the heading block to the card row: 32px mobile / 50px desktop — same
@@ -250,11 +250,11 @@ export async function MindsetisEventsSection() {
                       {card.description}
                     </p>
                   </div>
-                  <ComingSoon className="mt-auto w-full">
+                  <NotYetAvailable feature="events" className="mt-auto w-full">
                     <Button variant="outline" size="lg" className="w-full" disabled>
                       {t('joinWaitlistCta')}
                     </Button>
-                  </ComingSoon>
+                  </NotYetAvailable>
                 </div>
               </div>
             );

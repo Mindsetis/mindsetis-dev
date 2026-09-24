@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 
+import { AvatarCropDialog } from '@/components/member-profile/AvatarCropDialog';
 import { ImageOptimizeHint } from '@/components/ui/image-optimize-hint';
 import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { cn } from '@/lib/utils';
@@ -16,7 +17,11 @@ type AvatarUploadProps = {
   triggerLabel: string;
   /** Replaces the headline once a photo exists ("Replace photo"). */
   replaceLabel: string;
-  /** Second line inside the box (Figma: "JPG or PNG · square · at least 800×800"). */
+  /**
+   * Second line inside the box — the client's mandated copy (Release-1 F3): "Upload your profile
+   * photo. Formats: JPG, PNG. Profiles without photos will not appear in the catalog and have
+   * limited access to platform features." (`auth.memberProfile.photo.requirements`).
+   */
   hint: string;
   /** Trailing word of the Uploaded state's hint — rendered as "2.4 MB · uploaded". */
   uploadedLabel: string;
@@ -98,8 +103,16 @@ function formatFileSize(bytes: number): string {
  * component's white — switching it to white only on error/success would read as a second, unasked
  * signal on top of the border colour.
  *
- * The real Storage upload still happens server-side in the Server Action; this only hands the raw
- * `File` up to the form (RHF field value).
+ * The real Storage upload still happens server-side in the Server Action; this only hands a `File`
+ * up to the form (RHF field value).
+ *
+ * A picked/dropped file that LOOKS like an image (matches `ACCEPTED_AVATAR_MIME_TYPES`, size > 0)
+ * is not handed straight to `onFileChange`: it first goes through `AvatarCropDialog` (Release-1
+ * F1/F2), which lets the member frame a square crop, then compresses the result client-side
+ * before it ever becomes the field's value. A file that fails that quick sniff test (wrong type,
+ * zero bytes) skips the dialog and goes to `onFileChange` unchanged, so the existing Zod rule
+ * still produces the right rejection message in this box's own Error state — cropping an
+ * unopenable file would just fail silently instead.
  */
 export function AvatarUpload({
   file,
@@ -114,7 +127,24 @@ export function AvatarUpload({
 }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // The just-picked raw file, staged here while `AvatarCropDialog` is open — it only ever
+  // reaches `onFileChange` (the real form value) after the member confirms a crop.
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const errorText = useValidationMessage()(error);
+
+  // Routes a newly picked/dropped file to the crop dialog when it's a plausible image; anything
+  // else (wrong type, empty file) is handed straight to `onFileChange` so the field's own Zod
+  // rule can reject it with a real message instead of failing silently inside the cropper.
+  function handleFileSelected(selected: File) {
+    const looksLikeImage =
+      selected.size > 0 &&
+      (ACCEPTED_AVATAR_MIME_TYPES as readonly string[]).includes(selected.type);
+    if (looksLikeImage) {
+      setPendingFile(selected);
+    } else {
+      onFileChange(selected);
+    }
+  }
 
   const hasPhoto = Boolean(file ?? initialAvatarUrl);
   // Error wins over Uploaded: a rejected file still leaves the previous photo in place, and the
@@ -157,11 +187,11 @@ export function AvatarUpload({
           setIsDragging(false);
           if (disabled) return;
           // Only the first file — this is a single-avatar field. Type/size are NOT filtered here
-          // on purpose: handing a wrong file straight to the form lets the existing Zod rules
-          // reject it and surface the reason in the box's own Error state, which is far more
-          // useful than a silently ignored drop.
+          // on purpose (see `handleFileSelected`): a file that doesn't look like an image still
+          // reaches `onFileChange` so the existing Zod rules can reject it and surface the reason
+          // in the box's own Error state, rather than a silently ignored drop.
           const dropped = event.dataTransfer.files?.[0];
-          if (dropped) onFileChange(dropped);
+          if (dropped) handleFileSelected(dropped);
         }}
         className={cn(
           // `[&>*]:pointer-events-none` keeps drag events off the icon/labels: without it,
@@ -208,9 +238,18 @@ export function AvatarUpload({
         disabled={disabled}
         onChange={(event) => {
           const selected = event.target.files?.[0] ?? null;
-          onFileChange(selected);
+          if (selected) handleFileSelected(selected);
           // Reset so picking the same file again still fires `onChange`.
           event.target.value = '';
+        }}
+      />
+
+      <AvatarCropDialog
+        file={pendingFile}
+        onCancel={() => setPendingFile(null)}
+        onConfirm={(croppedFile) => {
+          setPendingFile(null);
+          onFileChange(croppedFile);
         }}
       />
     </>

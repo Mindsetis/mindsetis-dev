@@ -14,6 +14,7 @@ import {
 
 import { saveHelp } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
@@ -41,11 +42,14 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type HelpFormProps = {
-  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Back" + "Save & Next".
    * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
   editMode?: boolean;
   /** Already-saved expertise entries, when the caller revisits this step. */
   initialExpertise?: Expertise[];
+  /** Cabinet mode only: where "Save & Next" navigates once saved — the next card in cabinet
+   * section order (`lib/profile/completeness.ts#nextSectionHref`, Release-1 C3). */
+  nextHref?: string;
 };
 
 const EMPTY_EXPERTISE: Expertise = { title: '', description: '' };
@@ -188,7 +192,7 @@ function ExpertiseCard({ control, index, onRemove, id, draggable }: ExpertiseCar
  * `RolesForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`, `useFieldArray`), minus
  * the per-card nested `links` array Roles has.
  */
-export function HelpForm({ initialExpertise, editMode }: HelpFormProps) {
+export function HelpForm({ initialExpertise, editMode, nextHref }: HelpFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const notifySaved = useCabinetSaved();
@@ -207,6 +211,11 @@ export function HelpForm({ initialExpertise, editMode }: HelpFormProps) {
     name: 'expertise',
   });
 
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
@@ -219,12 +228,10 @@ export function HelpForm({ initialExpertise, editMode }: HelpFormProps) {
 
     // Step 4/5 — "Make your profile shine." (Personal session moved to the last core step,
     // product decision D9 — no longer directly after Help.)
-    // Cabinet mode returns to the section list; the wizard continues to step 4/5.
+    // Cabinet mode walks to the next section ("Save & Next"); the wizard continues to step 4/5.
     if (editMode) {
-      // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
-      // reverts to what was just saved, not to what the page originally loaded.
       form.reset(values);
-      notifySaved();
+      notifySaved(nextHref);
       return;
     }
 
@@ -255,30 +262,20 @@ export function HelpForm({ initialExpertise, editMode }: HelpFormProps) {
           </div>
         </SortableList>
 
-        <div className="flex flex-col gap-3 md:gap-4">
-          {fields.length < MAX_EXPERTISE ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => append(EMPTY_EXPERTISE)}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              {t('help.addExpertise')}
-            </Button>
-          ) : null}
+        {fields.length < MAX_EXPERTISE ? (
+          <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_EXPERTISE)}>
+            <Plus className="size-4" aria-hidden="true" />
+            {t('help.addExpertise')}
+          </Button>
+        ) : null}
 
-          <StepActions
-            onCancel={() => {
-              // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-              // the section rather than navigating, so this is an undo, not an exit.
-              form.reset();
-              setFormError(null);
-            }}
-            editMode={editMode}
-            isSubmitting={form.formState.isSubmitting}
-          />
-        </div>
+        {/* Direct child of the `<form>` — see the same note in `RolesForm`: wrapped together with
+            the "Add expertise" button, the sticky bar had no room to pin. */}
+        <StepActions
+          onCancel={() => router.push('/dashboard/profile')}
+          editMode={editMode}
+          isSubmitting={form.formState.isSubmitting}
+        />
       </form>
     </Form>
   );

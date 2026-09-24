@@ -181,11 +181,16 @@ export function AmbassadorsRegionCarousel({
                 index === filteredCards.length - 1 && 'mr-4 sm:mr-6 lg:mr-0',
               )}
             >
+              {/* `aspect-[3/4]` comes from the client's Release-1 list (H5), NOT from a Figma
+                  node: the design pins a fixed photo height, which made the ratio drift between
+                  breakpoints (275×220 ≈ 1.25:1 on mobile vs. 310×300 ≈ 1.03:1 from `md`) and
+                  cropped faces. A single portrait ratio was the requested fix, so the height now
+                  follows the card width instead of the other way round. */}
               {/* eslint-disable-next-line @next/next/no-img-element -- local static asset */}
               <img
                 src={card.photo}
                 alt=""
-                className="h-[220px] w-full rounded-lg object-cover md:h-[300px]"
+                className="aspect-[3/4] w-full rounded-lg object-cover"
               />
               {/* Figma `Frame 558`: `padding: 0 16px` / `gap: 16px` desktop vs. `padding-left:
                   8px` (no right padding) / `gap: 8px` mobile — a real per-breakpoint difference

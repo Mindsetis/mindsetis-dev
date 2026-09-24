@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { WelcomeScreen } from '@/components/auth/WelcomeScreen';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 
 type WelcomePageProps = {
@@ -9,6 +10,15 @@ type WelcomePageProps = {
 };
 
 const TOTAL_STEPS = 4;
+
+// `auth.welcome.title` carries `<accent>`/`<br>` rich-text markup for `WelcomeScreen`'s `t.rich`
+// call, so this points at `metaTitle` — the same heading as plain text — instead. Static rather
+// than mirroring `WelcomeScreen`'s later "Continue as Member" phase: that swap happens entirely
+// client-side, after this server-rendered `<title>` has already shipped.
+export async function generateMetadata({ params }: WelcomePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth.welcome', 'metaTitle');
+}
 
 /**
  * Registration wizard "Congrats screen" — the destination *after* the 4-step wizard completes.

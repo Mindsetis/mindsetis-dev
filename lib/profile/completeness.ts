@@ -77,7 +77,12 @@ export type ProfileSnapshot = {
   bio: string | null;
   company: string | null;
   role: string | null;
-  industry: string | null;
+  /** Release-1 E1/E2/E3: `profiles.industry` (single, required) → `profiles.industries`
+   *  (up to 3 catalog slugs) + `profiles.industry_custom` (free-text "Other"). Either one being
+   *  non-empty counts as "filled" — approval status of the custom value has no bearing on
+   *  profile completeness, only on whether it later surfaces in search filters. */
+  industries: string[] | null;
+  industryCustom: string | null;
   socials: Json | null;
 };
 
@@ -134,7 +139,7 @@ function isHeroFilled(profile: ProfileSnapshot): boolean {
     hasText(profile.bio) &&
     hasText(profile.company) &&
     hasText(profile.role) &&
-    hasText(profile.industry)
+    ((profile.industries?.length ?? 0) > 0 || hasText(profile.industryCustom))
   );
 }
 
@@ -276,4 +281,22 @@ export function computeProfileCompleteness(
     tier: tierForPercent(percent),
     nextUnfilled: sections.find((section) => !section.filled) ?? null,
   };
+}
+
+/**
+ * Href of the section immediately AFTER `key` in card order, or the section list itself
+ * (`SECTION_BASE_HREF`) once `key` is the last one — what "Save & Next" (Release-1 C3, 2026-09-19)
+ * walks to after a successful save.
+ *
+ * Deliberately NOT `nextUnfilled`: that field answers "what's still missing", which would make a
+ * save on an already-complete profile jump around unpredictably (or nowhere, once everything is
+ * filled) instead of simply moving one card down the same list the visitor is looking at. This
+ * walks the literal `sections` order instead — Hero, Social links, then (for a Mindsetter) the
+ * eleven Mindsetter cards — which is the same order `computeProfileCompleteness` returns and the
+ * section list itself renders, so "next" here always means "the next card down", filled or not.
+ */
+export function nextSectionHref(sections: ProfileSection[], key: ProfileSectionKey): string {
+  const index = sections.findIndex((section) => section.key === key);
+  const next = index >= 0 ? sections[index + 1] : undefined;
+  return next?.href ?? SECTION_BASE_HREF;
 }

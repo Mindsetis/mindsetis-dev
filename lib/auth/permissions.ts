@@ -10,6 +10,11 @@
  * `access_restricted` (the hardened 14-day flag) — gets book / create-event / send-invite.
  * There is NO "unverified but still within the 14-day window" allowance; unverified users
  * are ❌ across the board, unconditionally.
+ *
+ * RELEASE-1 F4 addition (2026-09-20, spec "Блок F"): a verified account additionally needs a
+ * profile photo — `avatar_url` set, OR a staff-granted `photo_requirement_waived` — to book a
+ * 1:1 or send an Invite. `canCreateEvent` is deliberately NOT gated on this (out of this
+ * task's scope; the spec only names booking and invites). See `hasPhotoOrWaiver` below.
  */
 import type { StaffRole } from '@/lib/validation/roles';
 
@@ -55,11 +60,20 @@ export function resolvePermissions(
   // during that window.
   const isMindsetter = profile.account_type === 'mindsetter';
 
+  // RELEASE-1 F4 ("Блок F — Фото профілю"): a profile without a photo can still exist and its
+  // public [username] page still works, but by default it's excluded from the catalog/search
+  // and can't send Invites or book sessions — unless staff granted an explicit waiver (public
+  // figures who intentionally have no avatar). This is the SAME condition the future
+  // catalog/search query must use once it exists (no catalog route is built yet — spec F4,
+  // "Частина в каталозі — коли з'явиться каталог"): `avatar_url is not null or
+  // photo_requirement_waived = true`.
+  const hasPhotoOrWaiver = Boolean(profile.avatar_url) || profile.photo_requirement_waived;
+
   return {
     canBrowse: true,
-    canBook: isVerified,
+    canBook: isVerified && hasPhotoOrWaiver,
     canCreateEvent: isVerified,
-    canSendInvite: isVerified,
+    canSendInvite: isVerified && hasPhotoOrWaiver,
     canOpenOwnSessions: isMindsetter && isVerified,
     hasPublicProfile: isMindsetter && isVerified,
     isStaff: staffRole !== null,

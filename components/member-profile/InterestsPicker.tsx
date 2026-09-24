@@ -17,6 +17,22 @@ type InterestsPickerProps = {
 const ALL_CATEGORY = '__all__';
 
 /**
+ * `INTERESTS` is expected to hold one row per `value` (see that file's header), but the "All"
+ * tab dedupes by `value` anyway as a defensive backstop — if a future catalog entry is ever
+ * cross-tagged into a second category again, "All" still shows it once instead of silently
+ * regressing into duplicate chips. Category-filtered tabs are unaffected: they render straight
+ * off `INTERESTS`, where every row still holds its own `category`.
+ */
+function dedupeByValue<T extends { value: string }>(interests: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return interests.filter((interest) => {
+    if (seen.has(interest.value)) return false;
+    seen.add(interest.value);
+    return true;
+  });
+}
+
+/**
  * "Choose your interests" — category filter chips (Figma: All, Sports & Health, Travel &
  * Outdoors, Gastronomy, Culture & Art, Social & Impact) filter which tag chips are shown;
  * tag chips are multi-select toggles capped at `MAX_INTERESTS` total across every category.
@@ -38,7 +54,7 @@ export function InterestsPicker({
 
   const visibleInterests =
     activeCategory === ALL_CATEGORY
-      ? INTERESTS
+      ? dedupeByValue(INTERESTS)
       : INTERESTS.filter((interest) => interest.category === activeCategory);
 
   const limitReached = value.length >= MAX_INTERESTS;
@@ -87,8 +103,9 @@ export function InterestsPicker({
             const isSelected = value.includes(interest.value);
             return (
               <Chip
-                // `value` repeats across categories (e.g. "yoga" in both Sports & Health and
-                // Culture & Art), so the key must include `category` to stay unique.
+                // Keyed by `category` + `value` rather than `value` alone: `dedupeByValue`
+                // keeps "All" unique today, but a category-filtered tab renders straight off
+                // `INTERESTS`, so this stays defensive against a future cross-tagged entry.
                 key={`${interest.category}-${interest.value}`}
                 selected={isSelected}
                 showCheck

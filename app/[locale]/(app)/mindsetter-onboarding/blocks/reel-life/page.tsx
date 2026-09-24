@@ -4,6 +4,7 @@ import { ReelLifeBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { ReelLifeForm } from '@/components/mindsetter-onboarding/ReelLifeForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -16,6 +17,11 @@ type ReelLifeBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: ReelLifeBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.reelLife.title');
+}
 
 /** How long a resolved signed URL for an already-saved photo stays valid on this page — long
  * enough for one edit session; a fresh batch is minted on every page load, so there's no need

@@ -9,7 +9,6 @@ import { z } from 'zod';
 import {
   emailSchema,
   isLatinOnly,
-  isSafeRedirectPath,
   LATIN_ONLY_MESSAGE,
   passwordSchema,
   passwordSignInSchema,
@@ -47,11 +46,21 @@ export const signUpSchema = z
   });
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
+/**
+ * Sign-in payload. Note what is NOT here: the post-login destination.
+ *
+ * It used to be a `redirectTo` field carried through a hidden input, and it was dead weight —
+ * `signIn` never read it; the form already had the value as a prop and used that for the push.
+ * Worse, it was an active hazard: a hidden input renders `value=""` when its default is
+ * `undefined`, and `""` fails the safe-path refine while `.optional()` only excuses a real
+ * `undefined`. The form then failed validation on a field with no `FormMessage`, so submitting
+ * did nothing at all — no request, no error, no console output (Release-1 A1, caught in live
+ * browser testing). The destination is a client-side navigation concern; it stays out of the
+ * validated payload.
+ */
 export const signInSchema = z.object({
   email: emailSchema,
   password: passwordSignInSchema,
-  /** Where to send the user after a successful sign-in (validated as a safe relative path). */
-  redirectTo: z.string().refine(isSafeRedirectPath, vmsg('invalidRedirect')).optional(),
 });
 export type SignInInput = z.infer<typeof signInSchema>;
 

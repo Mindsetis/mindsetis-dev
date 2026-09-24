@@ -7,7 +7,14 @@ import { cn } from '@/lib/utils';
 
 /**
  * Tooltip (Radix). Added 2026-08-06 for the "coming soon" markers on controls whose feature
- * isn't built yet — see `components/ui/coming-soon.tsx`.
+ * isn't built yet.
+ *
+ * NOTHING IMPORTS IT RIGHT NOW. Those markers became `components/ui/not-yet-available.tsx`, a
+ * click-opened dialog, precisely because a tooltip was the wrong tool for them: hover copy is
+ * invisible on touch, and the wrapper span never received the keyboard activation a tooltip
+ * needs. This file stays as a general UI Kit primitive for a future tooltip that is genuinely
+ * supplementary — but if none appears, delete it together with `@radix-ui/react-tooltip`
+ * rather than letting it sit here unused.
  *
  * `TooltipProvider` is baked into `Tooltip` itself rather than mounted once at the app root:
  * every tooltip in this app is an isolated, self-contained marker (no shared open/close

@@ -210,26 +210,6 @@ export function VideoBlockIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 /**
- * The trailing "+" affordance chip (`ProfileSectionCard.tsx`) — native 17×17, provided verbatim
- * by the designer (2026-08-11). Keeps its source's hardcoded `fill="white"` + `<g opacity="0.85">`
- * as-is (not `currentColor`): this glyph sits inside a fixed-look decorative chip whose own
- * background/border never changes with any row state, so there's no surrounding color context
- * for it to follow.
- */
-export function SectionPlusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true" {...props}>
-      <g opacity={0.85}>
-        <path
-          d="M8.50002 2.62085C9.01002 2.62085 9.42085 3.03168 9.42085 3.54168V7.57918H13.4583C13.7026 7.57918 13.9368 7.6762 14.1095 7.84889C14.2822 8.02158 14.3792 8.2558 14.3792 8.50002C14.3792 8.74424 14.2822 8.97845 14.1095 9.15114C13.9368 9.32383 13.7026 9.42085 13.4583 9.42085H9.42085V13.4583C9.42085 13.7026 9.32383 13.9368 9.15114 14.1095C8.97845 14.2822 8.74424 14.3792 8.50002 14.3792C8.2558 14.3792 8.02158 14.2822 7.84889 14.1095C7.6762 13.9368 7.57918 13.7026 7.57918 13.4583V9.42085H3.54168C3.29746 9.42085 3.06325 9.32383 2.89056 9.15114C2.71787 8.97845 2.62085 8.74424 2.62085 8.50002C2.62085 8.2558 2.71787 8.02158 2.89056 7.84889C3.06325 7.6762 3.29746 7.57918 3.54168 7.57918H7.57918V3.54168C7.57918 3.03168 7.99002 2.62085 8.50002 2.62085Z"
-          fill="white"
-        />
-      </g>
-    </svg>
-  );
-}
-
-/**
  * The info glyph beside a section editor's heading (`SectionEditorShell`) — provided verbatim by
  * the designer (2026-08-11), native 17×17. The source hardcodes `fill="#A5A5A5"`, which is exactly
  * this project's `--color-muted-foreground` token, so it's wired to `currentColor` and the caller

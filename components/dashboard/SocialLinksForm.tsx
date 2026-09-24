@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 
 import { saveSocialLinks } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,6 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useRouter } from '@/i18n/navigation';
 import { type SocialLinksInput, socialLinksSchema } from '@/lib/validation/dashboard-profile';
 import { OPTIONAL_SOCIAL_FIELDS } from '@/lib/validation/member-profile';
 
@@ -32,6 +34,9 @@ export type SocialLinksFormProps = {
     threads?: string;
     youtube?: string;
   };
+  /** Where "Save & Next" navigates once saved — the next card in cabinet section order, computed
+   * by the page via `lib/profile/completeness.ts#nextSectionHref` (Release-1 C3). */
+  nextHref: string;
 };
 
 /**
@@ -46,8 +51,9 @@ export type SocialLinksFormProps = {
  * don't use it). The user confirmed on 2026-08-10 that the newer rule wins, so this form follows
  * `socialLinkFields`, not the mock.
  */
-export function SocialLinksForm({ initialSocials }: SocialLinksFormProps) {
+export function SocialLinksForm({ initialSocials, nextHref }: SocialLinksFormProps) {
   const t = useTranslations('auth');
+  const router = useRouter();
   const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -65,6 +71,10 @@ export function SocialLinksForm({ initialSocials }: SocialLinksFormProps) {
     },
   });
 
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19) so
+  // every exit path — not just this form's own "Back" — can ask before leaving a dirty edit.
+  useSectionDirtyGuard(form.formState.isDirty);
+
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
 
@@ -76,10 +86,10 @@ export function SocialLinksForm({ initialSocials }: SocialLinksFormProps) {
       return;
     }
 
-    // Stays on the section rather than returning to the list. `reset(values)` rebases the form so
-    // a later "Cancel" reverts to what was just saved, not to what the page originally loaded.
+    // `reset(values)` rebases the form so `formState.isDirty` reads clean right after a save.
+    // "Save & Next" then navigates to the next section (`nextHref`).
     form.reset(values);
-    notifySaved();
+    notifySaved(nextHref);
   });
 
   return (
@@ -142,12 +152,7 @@ export function SocialLinksForm({ initialSocials }: SocialLinksFormProps) {
         </div>
 
         <StepActions
-          onCancel={() => {
-            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-            // the section rather than navigating, so this is an undo, not an exit.
-            form.reset();
-            setFormError(null);
-          }}
+          onCancel={() => router.push('/dashboard/profile')}
           editMode
           isSubmitting={form.formState.isSubmitting}
         />

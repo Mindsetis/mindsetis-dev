@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { ForwardEndFillIcon, PlayFillIcon } from '@/components/icons/main-page-icons';
 import { CardSlider } from '@/components/profile/CardSlider';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { cn } from '@/lib/utils';
 
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -207,7 +207,7 @@ const MOBILE_ONLY_TITLE_BREAK_INDEXES = new Set([1]);
  *    Styling matches the dump: transparent fill, gradient border, `#79B9E3` text, `border-radius:
  *    12px`, `padding: 15px 20px` — i.e. `Button`'s `primaryOutline` variant at `default` size,
  *    same as Events' own CTA. No `/originals` or video-catalog route exists yet, so it's wrapped in
- *    `ComingSoon` and kept live-looking via `aria-disabled` + `pointer-events-none` rather than the
+ *    `NotYetAvailable` and kept live-looking via `aria-disabled` + `pointer-events-none` rather than the
  *    `disabled` attribute — `disabled` flattens `primaryOutline`'s gradient border to a plain grey
  *    (see `button.tsx`'s `disabled:` variants), which is exactly the regression already hit and
  *    fixed on Events' own "All events" button.
@@ -280,16 +280,16 @@ export async function MindsetisOriginalsSection() {
         </div>
         {/* "All videos" — real Figma button (`1188:6020` desktop / `1253:23746` mobile), see the
             top-level doc comment item 1 for the node-level proof of its real label. No video-catalog
-            route exists yet, so it is a plain `disabled` button inside `ComingSoon` — the project's
+            route exists yet, so it is a plain `disabled` button inside `NotYetAvailable` — the project's
             own convention for an unbuilt gradient-border CTA (`WelcomeMemberCtas.tsx` does exactly
             this with the same `primaryOutline` variant). `disabled` deliberately flattens the
             gradient border, mutes the label and drops the glow: a coming-soon control should read
             as unavailable at a glance, not merely refuse the click. */}
-        <ComingSoon className="w-full md:w-[150px] md:shrink-0">
+        <NotYetAvailable feature="originals" className="w-full md:w-[150px] md:shrink-0">
           <Button variant="primaryOutline" size="default" disabled className="w-full">
             {t('viewAllCta')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
 
       {/* Figma gap from the heading block to the card row: 32px mobile / 50px desktop — same
@@ -320,7 +320,15 @@ export async function MindsetisOriginalsSection() {
                   isLast && 'mr-4 sm:mr-6 lg:mr-[max(70px,calc((100%_-_1440px)/2_+_70px))]',
                 )}
               >
-                <div className="relative h-[180px] w-full shrink-0 bg-card md:h-full md:w-[309px]">
+                {/* Mobile photo box is 260px tall, NOT the 180px Figma's mobile card specifies
+                    (owner's call, 2026-09-20). The asset is a 618×700 portrait; a 320×180 box has
+                    to hide half of it vertically — `object-top` (see the MOBILE PHOTO CROP note
+                    above) saves the faces, but everything below the collarbone still goes. At
+                    260px the same crop keeps ~72% of the frame (people read down to the waist)
+                    without turning the card into half a phone screen; 362px would show the photo
+                    whole, which was too tall to be worth it. Desktop is untouched — there the box
+                    matches the asset exactly and nothing is cropped at all. */}
+                <div className="relative h-[260px] w-full shrink-0 bg-card md:h-full md:w-[309px]">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element -- local static asset
                     <img
@@ -375,9 +383,9 @@ export async function MindsetisOriginalsSection() {
                           {personName}
                         </span>
                       </div>
-                      <ComingSoon>
+                      <NotYetAvailable feature="originals">
                         <Button disabled>{t('watchCta')}</Button>
-                      </ComingSoon>
+                      </NotYetAvailable>
                     </div>
                   </div>
                 </div>

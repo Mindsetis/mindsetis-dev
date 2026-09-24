@@ -2,6 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ComponentProps, HTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -73,6 +74,12 @@ function DialogContent({
   showCloseButton = true,
   ...props
 }: ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
+  // Feeds only the built-in close button rendered below. Every call site that flips
+  // `showCloseButton` to `false` instead builds its own `DialogCloseButton` with its own
+  // (already-translated) `label` — `WhoIsMindsetterDialog`, `CookiePreferencesDialog`,
+  // `AccountSheet`, `AmbassadorApplicationDialog`, `PlatformFeeModal`, `OnboardingDialog`, and
+  // `ReviewQuoteText` — so this doesn't touch any of those.
+  const t = useTranslations('common');
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -81,13 +88,20 @@ function DialogContent({
         className={cn(
           'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg duration-200',
           'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          // Keep the header clear of the built-in close button, which is absolutely positioned
+          // (`top-4 right-4`, `size-8`) and so overlaps the last ~24px of a title that runs the
+          // full content width: `p-6` leaves 24px, the button claims 16-48px. Caught in manual
+          // testing (17.09.2026) on the "not yet available" popup. It lives here rather than in
+          // `DialogHeader` because only THIS branch renders the button — dialogs passing
+          // `showCloseButton={false}` build their own and already pad themselves.
+          showCloseButton && '[&_[data-slot=dialog-header]]:pr-10',
           className,
         )}
         {...props}
       >
         {children}
         {showCloseButton ? (
-          <DialogCloseButton label="Close" className="absolute top-4 right-4" />
+          <DialogCloseButton label={t('closeDialog')} className="absolute top-4 right-4" />
         ) : null}
       </DialogPrimitive.Content>
     </DialogPortal>
@@ -98,7 +112,23 @@ function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      // shadcn ships this header centred below `sm` (`text-center sm:text-left`). In this app the
+      // body copy that follows a header sits OUTSIDE it — e.g. the `emailPromise` line in
+      // `NotYetAvailable` — and stays left-aligned, so on a phone the title centred while the last
+      // line did not (caught in manual testing, 17.09.2026). One alignment everywhere instead.
+      //
+      // `min-w-0`: this `div` is a direct child of `DialogContent`'s `grid` — a grid item's
+      // initial `min-width` is `auto`, i.e. "at least my content's min-content size", which for
+      // a long unbreakable token (an email, a URL) is that token's full rendered width. With no
+      // override, the grid track grows to fit it and the whole dialog overflows its `max-w-*`
+      // instead of wrapping (caught in manual/live testing, Release-1 A5's "already applied"
+      // modal, 17.09.2026: a long email in `DialogTitle` pushed the dialog ~124px past the
+      // viewport at 375px). `min-w-0` lets this item — and the column it sizes — shrink back
+      // down to the container's actual width; it has no effect on short content, which never
+      // needed the room in the first place, so every other dialog is visually unchanged.
+      // Breaking the long token itself is a second, separate step — see whichever child
+      // actually renders it (e.g. `break-words` on that dialog's own `DialogTitle`).
+      className={cn('min-w-0 flex flex-col gap-2 text-left', className)}
       {...props}
     />
   );
@@ -108,7 +138,9 @@ function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      // `min-w-0`: same grid-shrink fix as `DialogHeader` above — this is the other direct
+      // `DialogContent` grid child every dialog renders.
+      className={cn('min-w-0 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
   );

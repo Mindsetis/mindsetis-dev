@@ -1,10 +1,19 @@
 import { setRequestLocale } from 'next-intl/server';
 
 import { HeroSection } from '@/components/marketing/HeroSection';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type JoinPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+// `home.hero.title` (the page's own on-screen heading) is a full marketing sentence — too long
+// for a tab title — so this points at `metaTitle`, a short clean label instead, matching what
+// every "Apply to Join" CTA across the site already calls this destination (`nav.join`).
+export async function generateMetadata({ params }: JoinPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'home.hero', 'metaTitle');
+}
 
 /**
  * `/join` — the email-capture entry point every "Apply to Join" CTA on the site now points to

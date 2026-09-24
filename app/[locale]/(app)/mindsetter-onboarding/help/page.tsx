@@ -4,6 +4,7 @@ import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { HelpSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { HelpForm } from '@/components/mindsetter-onboarding/HelpForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import type { Expertise } from '@/lib/validation/mindsetter';
@@ -11,6 +12,11 @@ import type { Expertise } from '@/lib/validation/mindsetter';
 type HelpPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: HelpPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'help.title');
+}
 
 /**
  * Extended Mindsetter onboarding — step 3/5 "You can help with"

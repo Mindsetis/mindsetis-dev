@@ -29,7 +29,7 @@ work: `fix/<slug>`, `chore/<slug>`, `docs/<slug>`. Never commit directly to `mai
 - Subject ≤ ~72 chars, no trailing period; use en-dashes for stage ranges (e.g. `stages 0.3–0.4`).
 - Body (optional) explains *why*, wrapped ~72 cols.
 - End every commit message with this trailer (harness requirement):
-  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`
+  `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`
 
 ## Behavior
 

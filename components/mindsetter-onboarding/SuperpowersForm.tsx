@@ -8,6 +8,7 @@ import { type Control, useForm, type UseFormReturn, useWatch } from 'react-hook-
 
 import { saveSuperpowers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
@@ -35,11 +36,14 @@ import {
 } from '@/lib/validation/mindsetter';
 
 type SuperpowersFormProps = {
-  /** Cabinet section-editor mode: swaps "Save & Continue" for "Cancel" + "Save changes".
+  /** Cabinet section-editor mode: swaps "Save & Continue" for "Back" + "Save & Next".
    * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
   editMode?: boolean;
   /** Already-saved superpowers, when the caller revisits this step. */
   initialSuperpowers?: Superpower[];
+  /** Cabinet mode only: where "Save & Next" navigates once saved — the next card in cabinet
+   * section order (`lib/profile/completeness.ts#nextSectionHref`, Release-1 C3). */
+  nextHref?: string;
 };
 
 const EMPTY_SUPERPOWER: Superpower = { title: '', description: '' };
@@ -187,7 +191,7 @@ function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCa
  * 3 filled" rule doesn't block submission — this form still filters empty slots out of what's
  * actually sent to `saveSuperpowers` below, just AFTER validation, not before.
  */
-export function SuperpowersForm({ initialSuperpowers, editMode }: SuperpowersFormProps) {
+export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: SuperpowersFormProps) {
   const router = useRouter();
   const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<string | null>(null);
@@ -201,6 +205,11 @@ export function SuperpowersForm({ initialSuperpowers, editMode }: SuperpowersFor
     mode: 'onChange',
     defaultValues: { superpowers: paddedInitial },
   });
+
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
 
   const onSubmit = form.handleSubmit(
     async (values) => {
@@ -216,12 +225,10 @@ export function SuperpowersForm({ initialSuperpowers, editMode }: SuperpowersFor
       }
 
       // Step 3/5 — "You can help with".
-      // Cabinet mode returns to the section list; the wizard continues to step 3/5.
+      // Cabinet mode walks to the next section ("Save & Next"); the wizard continues to step 3/5.
       if (editMode) {
-        // Stay on the section. `reset(values)` rebases the form so a later "Cancel"
-        // reverts to what was just saved, not to what the page originally loaded.
         form.reset(values);
-        notifySaved();
+        notifySaved(nextHref);
         return;
       }
 
@@ -282,12 +289,7 @@ export function SuperpowersForm({ initialSuperpowers, editMode }: SuperpowersFor
         </SortableList>
 
         <StepActions
-          onCancel={() => {
-            // Back to the last-saved values (the `defaultValues` captured at mount); stays on
-            // the section rather than navigating, so this is an undo, not an exit.
-            form.reset();
-            setFormError(null);
-          }}
+          onCancel={() => router.push('/dashboard/profile')}
           editMode={editMode}
           isSubmitting={form.formState.isSubmitting}
         />

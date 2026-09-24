@@ -1,10 +1,16 @@
 import { setRequestLocale } from 'next-intl/server';
 
 import { LegalPage } from '@/components/legal/LegalPage';
+import { pageTitle } from '@/i18n/page-metadata';
 
 type PrivacyPolicyPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: PrivacyPolicyPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'legal.privacyPolicy');
+}
 
 /**
  * Privacy Policy — Figma "Privacy Policy" (`1112:26877`, desktop) / "Privacy Policy - Mobile -

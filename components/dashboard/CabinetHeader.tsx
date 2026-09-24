@@ -1,16 +1,20 @@
-import { BadgeCheck } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
-import { EditPencilIcon, ViewProfileIcon } from '@/components/icons/cabinet-header-icons';
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
+import { EditPencilIcon } from '@/components/icons/cabinet-header-icons';
+import { CheckCircleFillIcon } from '@/components/icons/check-circle-fill-icon';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import type { ProfileCompleteness } from '@/lib/profile/completeness';
 import { cn } from '@/lib/utils';
 
 /**
- * Interaction states shared by "Edit" and "View public profile" (2026-08-10 design ask) — both
- * icons already render `fill="currentColor"` (`cabinet-header-icons.tsx`), so a single text-color
- * utility recolors icon + label together for every state below, no separate icon handling needed.
+ * Interaction states for the "Edit" text link (2026-08-10 design ask; narrowed 2026-09-20,
+ * Release-1 C4). This used to be shared with a second text link, "View public profile" — that
+ * link is gone from this component (see the component doc comment below), so only "Edit" uses
+ * this utility now. `EditPencilIcon` already renders `fill="currentColor"`
+ * (`cabinet-header-icons.tsx`), so this single text-color utility recolors icon + label together
+ * for every state below, no separate icon handling needed.
  *
  *   - Hover: `#fff` — the exact `--color-foreground` token, not a raw hex.
  *   - Pressed (`:active`): back to the DEFAULT `text-primary` (explicitly restated — otherwise a
@@ -19,12 +23,10 @@ import { cn } from '@/lib/utils';
  *   - Disabled: `#747474` (no matching semantic token — `--color-border`/`--color-input` happen
  *     to share this hex but are not text-color tokens, so this stays an arbitrary value).
  *
- * Neither link has a live "disabled" trigger in this component today (`nextUnfilled` gates
- * whether "Edit" renders AT ALL rather than rendering it inert, and "View public profile" is
- * always a real route) — this targets `aria-disabled="true"` via Tailwind's `aria-disabled:`
- * variant so the state is ready the moment either link gains one, and `pointer-events-none`
- * alongside it so hover/active can never fire while disabled (removing any doubt about which
- * state wins if a browser ever matched more than one at once).
+ * "Edit" has no live "disabled" trigger in this component today (`nextUnfilled` gates whether it
+ * renders AT ALL rather than rendering it inert) — this targets `aria-disabled="true"` via
+ * Tailwind's `aria-disabled:` variant so the state is ready the moment it gains one, and
+ * `pointer-events-none` alongside it so hover/active can never fire while disabled.
  */
 const LINK_STATE_CLASSES =
   'text-primary transition-colors hover:text-foreground active:text-primary active:opacity-70 aria-disabled:pointer-events-none aria-disabled:text-[#747474]';
@@ -34,25 +36,26 @@ const LINK_STATE_CLASSES =
  * on every cabinet screen (including each My Profile section editor), which is why it lives in
  * the `/dashboard` layout rather than in any one page.
  *
- * Three pieces of behavior worth stating, all resolved with the user on 2026-08-10:
- *   - "Edit" appears ONLY below 100% and links to the first unfilled section in card order
- *     (`completeness.nextUnfilled`, computed in `lib/profile/completeness.ts`). Optional sections
- *     count too, so a profile only hits 100% — and only loses this button — once every card,
- *     optional ones included, is filled.
- *   - "View public profile" points at whichever page is canonical for this account: a Mindsetter's
- *     `/mindsetters/{username}`, a Member's `/members/{username}`. Those routes resolve the
- *     owner-preview banner themselves (2026-08-10 "one profile page per account" pass), so this is
- *     a plain link, not a special preview mode.
- *   - "Become a Mindsetter" shows for Members only, and starts the extended wizard at its first
- *     step. A Mindsetter has nothing to become, so the slot is empty for them.
- *
- * WHERE those last two actually sit changed on 2026-09-02, after re-reading the cabinet frames:
- * the card holds ONE action per role on the right, and the completeness row's trailing cell holds
- * the other. A Member: "Become a Mindsetter" on the right, "View public profile" in that cell once
- * the profile is complete. A Mindsetter: "View public profile" on the right, in a visibly heavier
- * treatment (16px Bold + external-link glyph vs 14px Regular + pencil). The two inline comments
- * at those call sites carry the frame IDs and the reasoning; both are unreachable below `md`,
- * where the design moves this navigation into the account sheet instead.
+ * Two pieces of behavior worth stating up front (the inline comments at each call site carry the
+ * full history and frame IDs):
+ *   - "Edit" (2026-08-10) appears ONLY below 100% and links to the first unfilled section in card
+ *     order (`completeness.nextUnfilled`, computed in `lib/profile/completeness.ts`). Optional
+ *     sections count too, so a profile only hits 100% — and only loses this link — once every
+ *     card, optional ones included, is filled. Lives in the completeness row and renders at every
+ *     width, including mobile.
+ *   - "View Profile" (right-hand slot) — PRODUCT-OWNER DECISION, 2026-09-20 (Release-1 C4): this
+ *     is now the SAME filled `primary` `Button` for BOTH roles, shown unconditionally (not gated
+ *     on completeness), pointing at whichever page is canonical for the account — a Mindsetter's
+ *     `/mindsetters/{username}`, a Member's `/members/{username}` — opened in a NEW TAB. Those
+ *     routes resolve the owner-preview banner themselves (2026-08-10 "one profile page per
+ *     account" pass), so this is a plain link, not a special preview mode. This is a deliberate
+ *     departure from the Figma mock, which still draws a plain text link for a Mindsetter here —
+ *     the owner chose one consistent filled-button treatment over matching that one frame, and
+ *     asked it recorded here for whoever reconciles this against Figma next. "Become a
+ *     Mindsetter" is removed from this card entirely; that destination
+ *     (`/mindsetter-onboarding/roles`) is now reached via the header/landing "Upgrade" CTA and the
+ *     `UpgradeToMindsetterDialog` confirmation (Release-1 C7) instead. Unreachable below `md` —
+ *     the design moves this navigation into the account sheet instead.
  */
 export type CabinetHeaderProps = {
   accountType: 'member' | 'mindsetter';
@@ -81,13 +84,18 @@ export async function CabinetHeader({
   const publicProfileHref =
     accountType === 'mindsetter' ? `/mindsetters/${username}` : `/members/${username}`;
 
-  // The two roles do NOT share a width budget, so they no longer share a layout either.
-  //
-  // A Member's right-hand action is the 204px "Become a Mindsetter" button, and once the profile
-  // is complete their completeness row also carries the long "View public profile" link — that
-  // combination is what overflowed on narrow desktops. A Mindsetter's right-hand action is a
-  // ~167px text link and their completeness row only ever holds the short "Edit", so the row fits
-  // where the Member's does not, and the Mindsetter card is left exactly as it was.
+  // As of 2026-09-20 (Release-1 C4) the two roles render the exact SAME right-hand "View Profile"
+  // button and the exact same completeness-row content ("Edit" or nothing), so the width-budget
+  // gap that originally justified a Member-only `xl` breakpoint (a wider "Become a Mindsetter"
+  // button PLUS a second "View public profile" link that used to appear in the Member's
+  // completeness row at 100%) is gone — both roles now need LESS row width than before, never
+  // more. Left the split in place regardless rather than collapsing it to a single breakpoint:
+  // the `xl` threshold below was arrived at by live measurement (see the comment further down),
+  // and a narrower Member row can only make that threshold conservative, not wrong, whereas
+  // guessing a new shared breakpoint without re-measuring could introduce a real regression this
+  // pass has no way to verify (no live browser access here). Flagging this for whoever next
+  // touches this file: unifying `isMember` away entirely is very likely safe now, but should be
+  // done with a fresh live measurement, not assumed.
   const isMember = accountType === 'member';
 
   return (
@@ -95,9 +103,9 @@ export async function CabinetHeader({
     // `radius.css`) tops out at `xl` (16px); 20px falls between that and the untouched stock
     // `2xl`/`3xl` (16px/24px), so no existing token lands on it. `bg-card` is the exact
     // #1a1a1a token (`colors.css`), reused rather than hardcoding the hex again.
-    // Mobile (Figma `1001:8333`): 16px radius, 18/16 padding, and the row never splits — the two
-    // right-hand CTAs below are hidden entirely on a phone, so there is nothing to wrap to a
-    // second line. Desktop keeps its 20px radius and 24px padding.
+    // Mobile (Figma `1001:8333`): 16px radius, 18/16 padding, and the row never splits — the
+    // right-hand "View Profile" button below is hidden entirely on a phone, so there is nothing
+    // to wrap to a second line. Desktop keeps its 20px radius and 24px padding.
     //
     // A MEMBER'S ROW ONLY STARTS AT `xl` (2026-09-02); a Mindsetter's still starts at `md`, as it
     // always did. Figma draws this card at one width only — 970px, inside the 1440 frame — and
@@ -164,9 +172,23 @@ export async function CabinetHeader({
             <h1 className="truncate text-base font-medium text-foreground md:font-display md:text-[32px]/[42px] md:font-normal">
               {displayName}
             </h1>
+            {/* Figma "Status badge" (`754:11877` Member / `610:4260` Mindsetter, and their 375px
+                twins `1110:16702`/`1001:8339`), re-checked against the live file 2026-09-20 after
+                the owner spotted this badge differing from the design.
+                - GLYPH: Figma uses `ic / check-circle` — a solid disc with the tick knocked out —
+                  not `lucide-react`'s `BadgeCheck`, which is a scalloped shield. Same component
+                  the public profile views already render, so this reuses the shared icon rather
+                  than a third copy of the path.
+                - COLOUR: `#08D6AD` on the icon, the label AND a solid 1px border, with NO fill
+                  behind the pill (the client's "don't fill the pill" requirement, and what the
+                  node's styles show: `strokes` set, `fills` absent). That hex IS `--color-success`,
+                  so this takes the token instead of the `emerald-*` palette it used to borrow.
+                - SPACING: the node's padding really is asymmetric (9px left / 13px right,
+                  5px top+bottom) with a 7px icon→label gap; measured, not rounded to the nearest
+                  Tailwind step. */}
             {isVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 px-2.5 py-1 text-tiny text-emerald-400">
-                <BadgeCheck className="size-4" aria-hidden="true" />
+              <span className="inline-flex items-center gap-[7px] rounded-full border border-success py-[5px] pr-[13px] pl-[9px] text-tiny text-success">
+                <CheckCircleFillIcon className="size-4 shrink-0" />
                 {t('verified')}
               </span>
             )}
@@ -215,36 +237,24 @@ export async function CabinetHeader({
             </div>
             <span className="text-tiny text-muted-foreground">{completeness.percent}%</span>
 
-            {/* ONE SLOT, TWO LINKS (2026-09-02, re-read off Figma). This trailing cell holds
-                "Edit" while the profile is incomplete and, for a Member, becomes "View public
-                profile" once it hits 100% — the two mocks show exactly that and never contradict
-                each other: the Mindsetter frame (`610:4255`) sits at 64% and draws "Edit" here,
-                the Member frames (`754:11872` and the three sibling cabinet screens) sit at 100%
-                and draw "View public profile" here, same cell, same 14px Regular type, same
-                `ball-pen-fill` pencil — not the external-link glyph the right-hand version uses.
-                So the slot follows COMPLETENESS, and the difference the customer noticed between
-                the two roles' styling is real and deliberate, not a copy artifact.
-
-                Gated to Members because a Mindsetter already has this link in the actions block
-                on the right; without the gate a 100% Mindsetter would render it twice. Figma has
-                no Mindsetter-at-100% frame to confirm that directly, so this is the reading that
-                keeps both drawn frames exact and adds no duplicate. */}
+            {/* ONE SLOT, ONE LINK (narrowed 2026-09-20, Release-1 C4 — used to be "one slot, two
+                links", swapping to "View public profile" for a complete Member; the owner's C4
+                decision moved that job to the right-hand "View Profile" button below, which now
+                renders unconditionally for both roles, so this cell no longer needs a second
+                link to cover it). This trailing cell holds ONLY "Edit", for both roles alike,
+                and only while the profile is incomplete — once `nextUnfilled` is `null` the cell
+                is simply empty. */}
             {completeness.nextUnfilled ? (
-              <Link
+              // `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): this
+              // card renders on every cabinet screen, INCLUDING the section editor it can jump
+              // away from, so it's a real exit path for whatever section is currently dirty.
+              <GuardedLink
                 href={completeness.nextUnfilled.href}
                 className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
               >
                 <EditPencilIcon />
                 {t('edit')}
-              </Link>
-            ) : accountType === 'member' ? (
-              <Link
-                href={publicProfileHref}
-                className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
-              >
-                <EditPencilIcon />
-                {t('viewPublicProfile')}
-              </Link>
+              </GuardedLink>
             ) : null}
           </div>
         </div>
@@ -252,34 +262,39 @@ export async function CabinetHeader({
 
       {/* Hidden below `md`: the mobile frame's header card carries only the identity block and the
           progress row. Re-confirmed 2026-09-02 against `1110:16696` (Member) and `1001:8333`
-          (Mindsetter) — neither draws either action — and against the only other place they could
-          have moved to, the account sheet (`1110:17043` / `1004:8011`), which carries "View public
-          profile" and still no "Become a Mindsetter" in either role.
+          (Mindsetter) — neither draws the right-hand action — and against the only other place it
+          could have moved to, the account sheet (`1110:17043` / `1004:8011`), which carries "View
+          public profile" on mobile instead.
 
-          ONE ACTION PER ROLE, not both. Figma gives this block a different single occupant per
-          role, which is the placement the customer asked about: a Member gets only "Become a
-          Mindsetter" (their view-profile link lives in the completeness slot on the left, see
-          above), a Mindsetter gets only "View public profile" — 16px Bold with the external-link
-          glyph, i.e. a genuinely different treatment from the 14px Regular pencil version on the
-          left. Rendering both side by side, as this did before, matched neither frame. */}
+          ONE ACTION, SAME FOR BOTH ROLES — PRODUCT-OWNER DECISION, 2026-09-20 (Release-1 C4).
+          This used to be a per-role choice (a Member got "Become a Mindsetter", a Mindsetter got
+          a "View public profile" text link) picked by re-reading Figma on 2026-09-02. The owner
+          has since asked for ONE treatment regardless of role: "View Profile", styled as the
+          filled `primary` Button that used to be Member-only "Become a Mindsetter" — a deliberate
+          divergence from the Figma mock, which still draws a plain text link for the Mindsetter
+          role. "Become a Mindsetter" is removed from this card entirely; see the component doc
+          comment at the top of the file for where that destination lives now. */}
       <div className="hidden shrink-0 flex-wrap items-center gap-4 md:flex">
-        {accountType === 'member' ? (
-          // `size="default"` (h-14 px-5), not `lg` (h-14 px-8): Figma's own instance
-          // (`754:11880`) is 204×52 with 20px horizontal padding — `default`'s padding and 12px
-          // radius already match it exactly, `lg`'s 32px never did. `h-[52px]` trims the
-          // remaining 4px, the one dimension no shared size lands on.
-          <Button asChild variant="primary" size="default" className="h-[52px]">
-            <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
-          </Button>
-        ) : (
-          <Link
-            href={publicProfileHref}
-            className={cn('inline-flex items-center gap-2 text-base font-bold', LINK_STATE_CLASSES)}
-          >
-            <ViewProfileIcon />
-            {t('viewPublicProfile')}
+        {/* `size="default"` (h-14 px-5), not `lg` (h-14 px-8): Figma's own "Become a Mindsetter"
+            instance (`754:11880`) was 204×52 with 20px horizontal padding — `default`'s padding
+            and 12px radius already match it exactly, `lg`'s 32px never did. `h-[52px]` trims the
+            remaining 4px, the one dimension no shared size lands on. Reused as-is for "View
+            Profile" (2026-09-20, C4) since the owner asked for the SAME button styling, not a new
+            one — see the component doc comment for why this button, not a text link, now covers
+            both roles.
+
+            Plain `Link` (`@/i18n/navigation`), deliberately NOT `GuardedLink` (2026-09-20, C4):
+            every other link in this file goes through the unsaved-changes guard because it
+            navigates the CURRENT tab away from a possibly-dirty section editor. This one opens in
+            a NEW tab (`target="_blank"`) — the current tab, and whatever form is dirty on it,
+            never unmounts, so there is nothing for the guard to protect against here; routing it
+            through `GuardedLink` would only add a confirmation prompt for a navigation that isn't
+            actually happening on this page. */}
+        <Button asChild variant="primary" size="default" className="h-[52px]">
+          <Link href={publicProfileHref} target="_blank" rel="noopener noreferrer">
+            {t('viewProfile')}
           </Link>
-        )}
+        </Button>
       </div>
     </div>
   );

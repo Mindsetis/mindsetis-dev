@@ -3,6 +3,9 @@ import type { ReactNode } from 'react';
 
 import { CabinetHeader } from '@/components/dashboard/CabinetHeader';
 import { CabinetSidebar } from '@/components/dashboard/CabinetSidebar';
+import { MemberProfileReadyDialog } from '@/components/dashboard/MemberProfileReadyDialog';
+import { MemberStatusBanner } from '@/components/dashboard/MemberStatusBanner';
+import { PhotoReminderBanner } from '@/components/dashboard/PhotoReminderBanner';
 import { redirect } from '@/i18n/navigation';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
 
@@ -85,11 +88,34 @@ export default async function DashboardLayout({ children, params }: DashboardLay
       </aside>
 
       {/* `lg:pt-10` (40px, 2026-08-10): top offset of the content column itself. `gap-8` (32px) is
-          the space below `CabinetHeader` before the page's own content — the column has only these
-          two children, so the flex `gap` alone gives that spacing precisely, and it matches the
-          mobile frame's own 32px between the header card and "Your profile". Mobile's own `pt-4`
-          is the 16px the frame leaves between the site header and the card. */}
+          the space below `CabinetHeader` before the page's own content — the flex `gap` alone
+          gives that spacing precisely, and it matches the mobile frame's own 32px between the
+          header card and "Your profile". Mobile's own `pt-4` is the 16px the frame leaves
+          between the site header and the card.
+          `PhotoReminderBanner` (Release-1 F4, 2026-09-20) sits above `CabinetHeader` — the
+          cabinet's topmost slot — and renders nothing when the profile has a photo or a staff
+          waiver, so it costs no extra gap in that (eventually common) case. `MemberStatusBanner`
+          (Release-1 C5, 2026-09-20) sits right below it, above `CabinetHeader` — the two banners
+          are independent (a Member missing a photo sees both stacked, same `gap-8` between every
+          child here; a Mindsetter, or a Member with a photo, sees at most one). */}
       <div className="flex min-w-0 flex-1 flex-col gap-8 pt-4 lg:pt-10">
+        <PhotoReminderBanner
+          hasPhoto={Boolean(cabinet.avatarUrl)}
+          photoRequirementWaived={cabinet.photoRequirementWaived}
+        />
+
+        <MemberStatusBanner accountType={cabinet.accountType} />
+
+        {/* Release-1 C6 — mounted at the SHELL level (not the section-list page alone) so it
+            fires no matter which cabinet screen a Member's `Save & Next` happens to land them on
+            once their two-card profile hits 100%. Renders nothing until `eligible` flips true AND
+            the browser hasn't recorded showing it before (see the component's own doc comment). */}
+        <MemberProfileReadyDialog
+          userId={cabinet.userId}
+          username={cabinet.username}
+          eligible={cabinet.accountType === 'member' && cabinet.completeness.percent === 100}
+        />
+
         <CabinetHeader
           accountType={cabinet.accountType}
           username={cabinet.username}

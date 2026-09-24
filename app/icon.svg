@@ -1,27 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Mindsetis">
-  <!--
-    Site favicon, served by Next's file convention (`app/icon.svg` → a global <link rel="icon">).
-    Its only job today is to answer the request every browser makes for an icon: without one, each
-    page load logged a 404 for /favicon.ico, which was the single console error left on the site.
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" role="img" aria-label="Mindsetis">
+<!--
+  Site favicon, served by Next's file convention (`app/icon.svg` → a global <link rel="icon">).
 
-    PLACEHOLDER, not a brand mark. There is no logo asset in this repo — the header wordmark is
-    live text (Cal Sans, `text-primary`) — and inventing a real mark is the designer's call, not
-    a side effect of clearing a console error. So this reuses the project's own token pairing
-    verbatim: `--color-primary` (#79b9e3) as the tile, `--color-primary-foreground` (#000000) as
-    the glyph, the same combination every primary surface in the app already uses. Values are
-    literal because an SVG served as a static file cannot read CSS custom properties.
+  This is the real mark, delivered by the designer 2026-09-23 (Release-1 I5) — it replaces the
+  placeholder that used to sit here purely so browsers had something to fetch. Kept as the
+  designer exported it, with two edits: the fixed `width`/`height` attributes are dropped so the
+  icon scales to whatever box a browser or OS asks for (the `viewBox` carries the geometry), and
+  `role`/`aria-label` are added.
 
-    Swap in the real icon when it exists; a same-named replacement needs no code change.
-  -->
-  <rect width="32" height="32" rx="7" fill="#79b9e3" />
-  <text
-    x="16"
-    y="17"
-    fill="#000000"
-    font-family="Verdana, DejaVu Sans, sans-serif"
-    font-size="19"
-    font-weight="700"
-    text-anchor="middle"
-    dominant-baseline="central"
-  >M</text>
+  The framing is hers: the mark occupies the middle band of a 16×16 square rather than filling
+  it. That is deliberate breathing room — do not crop it tighter to "use the space".
+
+  Gradient stops use `#79B9E3`, which is this project's `--color-primary` (see `colors.css` and
+  the email templates' inline tokens) — the icon and the UI share the colour by construction,
+  not by coincidence.
+
+  The square PNG siblings (`apple-icon.png`, and the social card in `opengraph-image.png`) are
+  raster because their consumers — iOS home screens, social crawlers — do not accept SVG.
+-->
+<g clip-path="url(#clip0_3702_634)">
+<path d="M6.32513 8.19472L6.19273 8.3138C5.91907 7.73874 5.60214 7.19696 5.24268 6.68772L4.9043 6.52426C4.61695 6.60377 4.38323 6.59749 4.20312 6.5054L5.38875 4.56572C5.60806 4.207 6.01485 4.03207 6.40242 4.06684C6.70641 4.0942 7.11099 4.24879 7.30329 4.59419L11.2378 11.6529C11.3043 11.7723 11.2899 11.9032 11.2426 11.9731C11.2089 12.0223 11.1142 12.0704 11.0151 12.0708L9.03662 12.0789C8.73448 12.08 8.40645 11.9643 8.25076 11.6813L6.3255 8.19509L6.32513 8.19472Z" fill="url(#paint0_linear_3702_634)"/>
+<path d="M14.5962 12.079L12.6377 12.0561C12.2878 12.052 12.1717 11.6714 12.0238 11.4041L8.96945 5.87828C8.88477 5.72517 8.79971 5.53213 8.89068 5.37939L9.52825 4.30693C9.66027 4.0843 9.92284 3.98852 10.1617 4.00109C10.3881 4.01292 10.6436 4.16529 10.7886 4.42564L14.8162 11.6578C14.8691 11.7524 14.8676 11.8527 14.854 11.9133C14.8355 11.9939 14.7316 12.0808 14.5966 12.0793L14.5962 12.079Z" fill="url(#paint1_linear_3702_634)"/>
+<path d="M6.33422 8.20054L5.62861 6.8803C5.48512 6.61366 5.2562 6.42764 5.01656 6.36108C4.72219 6.27935 4.47145 6.41581 4.20408 6.50087L3.8387 7.11069L3.45261 7.75343L3.09759 8.30927L2.63162 9.08551L2.14013 9.90206L1.02773 11.7356C0.979282 11.8155 1.00332 11.9231 1.0318 11.9671C1.06582 12.0196 1.14866 12.0762 1.25369 12.0755L3.57872 12.0603C3.84868 12.0585 4.04432 11.8968 4.16044 11.7219L6.33422 8.20054Z" fill="url(#paint2_linear_3702_634)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_3702_634" x1="5.27374" y1="4.7865" x2="9.99296" y2="12.289" gradientUnits="userSpaceOnUse">
+<stop stop-color="#B6E2F5"/>
+<stop offset="0.28" stop-color="#79B9E3"/>
+<stop offset="0.66" stop-color="#79B9E3"/>
+<stop offset="1" stop-color="#436476"/>
+</linearGradient>
+<linearGradient id="paint1_linear_3702_634" x1="9.03898" y1="4.89752" x2="14.3935" y2="11.8478" gradientUnits="userSpaceOnUse">
+<stop stop-color="#B6E2F5"/>
+<stop offset="0.28" stop-color="#79B9E3"/>
+<stop offset="0.66" stop-color="#79B9E3"/>
+<stop offset="1" stop-color="#436476"/>
+</linearGradient>
+<linearGradient id="paint2_linear_3702_634" x1="2.48554" y1="12.0888" x2="5.342" y2="7.02083" gradientUnits="userSpaceOnUse">
+<stop stop-color="#92D8FD"/>
+<stop offset="0.34" stop-color="#79B9E3"/>
+<stop offset="0.99"/>
+</linearGradient>
+<clipPath id="clip0_3702_634">
+<rect width="13.8607" height="8.08122" fill="white" transform="translate(1 4)"/>
+</clipPath>
+</defs>
 </svg>

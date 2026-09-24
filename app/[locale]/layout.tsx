@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { CookieConsentBanner } from '@/components/cookies/CookieConsentBanner';
 import { CookieConsentProvider } from '@/components/cookies/CookieConsentProvider';
 import { CookiePreferencesDialog } from '@/components/cookies/CookiePreferencesDialog';
+import { UnsavedChangesProvider } from '@/components/dashboard/unsaved-changes';
 import { ScrollToTopButton } from '@/components/layout/ScrollToTopButton';
 import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
@@ -53,7 +54,14 @@ export const metadata: Metadata = {
   // `app/[locale]/page.tsx`. Same origin the auth emails link to, so there is exactly one
   // source of truth for "where does this deployment live".
   metadataBase: new URL(siteUrl('/')),
-  title: 'Mindsetis Community',
+  // Site-wide title template: any route that sets its own `title` (a plain string) gets
+  // rendered as "Mindsetis — <that title>"; a route that sets none at all — the homepage,
+  // today — falls back to the bare `default` below. Individual pages should therefore set
+  // `title: 'Page Name'`, never `'Mindsetis — Page Name'` themselves, or the brand doubles up.
+  title: {
+    template: 'Mindsetis — %s',
+    default: 'Mindsetis',
+  },
   description: 'A member-first community platform for 1:1 sessions and events.',
   // SITE-WIDE DEFAULT: KEEP OUT OF SEARCH RESULTS.
   //
@@ -94,7 +102,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       <body className="flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale}>
           <CookieConsentProvider initialConsent={initialConsent}>
-            {children}
+            <UnsavedChangesProvider>{children}</UnsavedChangesProvider>
             <CookieConsentBanner />
             <CookiePreferencesDialog />
             <ScrollToTopButton />

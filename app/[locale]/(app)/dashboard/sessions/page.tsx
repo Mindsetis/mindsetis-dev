@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SessionsSetupForm } from '@/components/dashboard/SessionsSetupForm';
+import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { createClient } from '@/lib/supabase/server';
 import { type Expertise, WEEKDAYS, type WeeklyAvailability } from '@/lib/validation/mindsetter';
@@ -9,6 +10,11 @@ import { type Expertise, WEEKDAYS, type WeeklyAvailability } from '@/lib/validat
 type SessionsPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SessionsPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.sessions');
+}
 
 /**
  * Normalizes the stored `weekly_availability` jsonb into the exact seven-key shape the form

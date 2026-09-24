@@ -4,6 +4,7 @@ import { FckupsBlockIcon } from '@/components/icons/shine-block-icons';
 import { BlockShell } from '@/components/mindsetter-onboarding/BlockShell';
 import { FckupsForm } from '@/components/mindsetter-onboarding/FckupsForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import {
   buildBlockHref,
@@ -17,6 +18,11 @@ type FckupsBlockPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ blocks?: string | string[]; i?: string | string[] }>;
 };
+
+export async function generateMetadata({ params }: FckupsBlockPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'blocks.fckups.title');
+}
 
 /**
  * Optional block "My F*ckUp(s)" (onboarding doc section 7, ROADMAP stage 1.9). Mirrors

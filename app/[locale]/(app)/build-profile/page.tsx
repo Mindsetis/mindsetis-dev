@@ -3,12 +3,18 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { BuildProfileForm } from '@/components/build-profile/BuildProfileForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 
 type BuildProfilePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: BuildProfilePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'buildProfile.title');
+}
 
 const TOTAL_STEPS = 4;
 
@@ -40,7 +46,7 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
   // previously-submitted data instead of a blank form — same precedent as `/member-profile`.
   const { data: profileData } = await supabase
     .from('profiles')
-    .select('company, role, industry')
+    .select('company, role, industries, industry_custom')
     .eq('id', session.user.id)
     .maybeSingle();
 
@@ -61,7 +67,8 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
         <BuildProfileForm
           initialCompany={profileData?.company ?? undefined}
           initialRole={profileData?.role ?? undefined}
-          initialIndustry={profileData?.industry ?? undefined}
+          initialIndustries={profileData?.industries ?? undefined}
+          initialIndustryCustom={profileData?.industry_custom ?? undefined}
         />
       </div>
     </div>

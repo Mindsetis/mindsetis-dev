@@ -82,7 +82,7 @@ const PHOTOS = [
  * `MindsetisEventsSection`) — it fits its own `max-w-[1440px]` content column almost exactly.
  *
  * "Apply for Ambassadorship" opens `AmbassadorApplicationDialog` (Figma's standalone
- * "Ambassador Application - Steps" frame, `1261:16826`) instead of the `ComingSoon`-wrapped
+ * "Ambassador Application - Steps" frame, `1261:16826`) instead of the `NotYetAvailable`-wrapped
  * disabled stub every other unbuilt CTA on this page uses — STAGE 1.13 explicitly scoped this
  * popup as visual + step-navigation only (no persistence, no backend), so it's real and
  * clickable rather than a placeholder. The trigger button + dialog live together in one client

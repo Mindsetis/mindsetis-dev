@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { computeProfileCompleteness } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
@@ -10,6 +11,11 @@ import { createClient } from '@/lib/supabase/server';
 type ShinePageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: ShinePageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'shine.title');
+}
 
 /**
  * Extended Mindsetter onboarding — step 4/5 "Make your profile shine."
@@ -46,7 +52,7 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
     supabase
       .from('profiles')
       .select(
-        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industry, socials',
+        'full_name, last_name, username, avatar_url, country_code, city_geoname_id, languages, bio, company, role, industries, industry_custom, socials',
       )
       .eq('id', session.user.id)
       .maybeSingle(),
@@ -76,7 +82,8 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
       bio: profile?.bio ?? null,
       company: profile?.company ?? null,
       role: profile?.role ?? null,
-      industry: profile?.industry ?? null,
+      industries: profile?.industries ?? null,
+      industryCustom: profile?.industry_custom ?? null,
       socials: profile?.socials ?? null,
     },
     {

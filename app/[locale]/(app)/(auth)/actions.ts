@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
+import { resolveOnboardingRedirect } from '@/lib/auth/onboarding-redirect';
 import { siteUrl } from '@/lib/auth/site-url';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
@@ -66,12 +67,25 @@ export const signUp = createAction(
       email,
       password,
       options: {
-        // `{{ .ConfirmationURL }}` in Supabase's default "Confirm signup" template redirects
-        // here after GoTrue verifies the token, delivering the PKCE `?code=` to our
-        // `/api/auth/confirm` handler. Required now that the hosted project runs WITHOUT custom
-        // SMTP — with the default (non-editable) template we can't hardcode the link, so the
-        // destination must come from `emailRedirectTo` instead. Mirrors `requestPasswordReset`.
-        emailRedirectTo: siteUrl('/api/auth/confirm?next=/member-profile'),
+        // Where the confirmation link points. Our own "Confirm signup" template
+        // (`supabase/templates/`) builds its href from `{{ .RedirectTo }}` — i.e. from exactly
+        // this value — and appends the token, so this is the whole link a signup email carries.
+        // Mirrors `requestPasswordReset`.
+        //
+        // MUST KEEP A QUERY STRING. The templates append the token as
+        // `{{ .RedirectTo }}&token_hash=…`, so whatever is passed here has to already contain
+        // a `?` or the result is `…/confirm&token_hash=…` — one flat, dead URL. Dropping the
+        // parameter entirely was tried on 2026-09-23 and produced exactly that; a real signup
+        // email caught it.
+        //
+        // `?next=/` rather than the old `?next=/member-profile`: `/api/auth/confirm` throws
+        // this value away for signup anyway. `destinationFor()` honours `next` only for the
+        // password-recovery link and otherwise asks `resolveOnboardingRedirect()` where the
+        // visitor actually left off (Release-1 A1). `/` is also exactly what
+        // `safeRedirectPath()` falls back to, so behaviour is identical to both earlier
+        // versions — it just stops printing a 22-character promise the handler never keeps, in
+        // a URL the email shows in full as its copy-paste fallback.
+        emailRedirectTo: siteUrl('/api/auth/confirm?next=/'),
         data: {
           ...(username ? { username } : {}),
           full_name: fullName,
@@ -149,7 +163,16 @@ export const signUp = createAction(
   { rateLimit: { key: 'auth:sign-up', limit: 5, window: '10 m' } },
 );
 
-/** Sign in with email + password. On success the session cookie is set; client redirects. */
+/**
+ * Sign in with email + password. On success the session cookie is set and the action returns
+ * `next` — where this particular caller belongs, read from their stored onboarding progress.
+ *
+ * The client used to fall back to `/` when there was no explicit `redirectTo`, which is how
+ * someone with a half-finished registration ended up on the homepage with no way back into the
+ * wizard (Release-1 items 1-2: the same complaint applies after a password change, since that
+ * flow deliberately ends in a fresh sign-in). Deciding here rather than in the form keeps the
+ * DB read on the server and gives every caller of `signIn` the same answer.
+ */
 export const signIn = createAction(
   signInSchema,
   async ({ email, password }) => {
@@ -166,7 +189,10 @@ export const signIn = createAction(
       // Don't distinguish "wrong password" from "no such user" (enumeration).
       throw new ActionError('unauthenticated', 'Invalid email or password.');
     }
-    return null;
+    // The session cookie is set on `supabase` above, so this resolver — which calls
+    // `getUser()` on a fresh server client reading the same cookie jar — sees the user that
+    // just signed in.
+    return { next: await resolveOnboardingRedirect() };
   },
   { rateLimit: { key: 'auth:sign-in', limit: 10, window: '5 m' } },
 );

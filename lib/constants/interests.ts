@@ -7,10 +7,12 @@
  * is the icon prefixed to each tag chip's label, and `sortOrder` controls display order within
  * a category.
  *
- * "Yoga" intentionally appears twice (`Sports & Health` sort 130 and `Culture & Art` sort 60)
- * with the same `value: 'yoga'` — it's one underlying interest cross-tagged into a second
- * category for filtering purposes; both rows stay in the array as separate entries sharing one
- * value.
+ * `value` is expected to be unique across the whole catalog — cross-tagging one interest into
+ * two categories (as "Yoga" briefly was, in `Sports & Health` and `Culture & Art`) makes it
+ * show up twice in the picker's "All" tab, which reads oddly to users. `INTEREST_VALUES`
+ * below still dedupes defensively for `z.enum()`'s sake, and `InterestsPicker`'s "All" tab
+ * dedupes by `value` too, but the catalog itself should not rely on that as a matter of
+ * course — keep each `value` to a single row.
  *
  * Not run through next-intl: these are catalog values (like `SUPPORTED_LANGUAGES`), not
  * translated UI copy — profile content stays in the author's `content_locale` convention.
@@ -190,7 +192,6 @@ export const INTERESTS = [
     emoji: '🎥',
     sortOrder: 50,
   },
-  { value: 'yoga', label: 'Yoga', category: INTEREST_CATEGORIES[3], emoji: '🧘', sortOrder: 60 },
   { value: 'dance', label: 'Dance', category: INTEREST_CATEGORIES[3], emoji: '💃', sortOrder: 70 },
   {
     value: 'mindfulness',
@@ -247,8 +248,10 @@ export const INTERESTS = [
 
 export type InterestValue = (typeof INTERESTS)[number]['value'];
 
-/** Deduped at runtime (unlike the raw `.map`) since `'yoga'` appears twice above — harmless
- *  either way for `z.enum()`, but explicit dedup keeps this list clean. */
+/** Deduped at runtime (unlike the raw `.map`) as a defensive backstop — every `value` above is
+ *  meant to be unique (see this file's header), but a future duplicate would otherwise widen
+ *  `InterestValue` with a repeated literal. Harmless either way for `z.enum()`; explicit dedup
+ *  just keeps this list clean. */
 export const INTEREST_VALUES = Array.from(new Set(INTERESTS.map((interest) => interest.value))) as [
   InterestValue,
   ...InterestValue[],

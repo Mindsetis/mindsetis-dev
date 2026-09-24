@@ -11,14 +11,18 @@ in stage 0.5, finalized here).
 | ---------------------------------------- | ------------------- | --------------- | ------------------ | ----- |
 | Browse platform/catalog                  | ✅                  | ✅              | ✅                 | ✅    |
 | Public profile                           | —                   | —               | ✅ (once verified) | —     |
-| Book 1:1                                 | ❌                  | ✅              | ✅                 | —     |
+| Book 1:1                                 | ❌                  | ✅ ¹            | ✅ ¹               | —     |
 | Create events                            | ❌                  | ✅              | ✅                 | —     |
-| Send Invite                              | ❌                  | ✅              | ✅                 | —     |
+| Send Invite                              | ❌                  | ✅ ¹            | ✅ ¹               | —     |
 | Open own 1:1 sessions                    | ❌                  | ❌              | ✅ (once verified) | —     |
 | Change verification status / staff roles | ❌                  | ❌              | ❌                 | ✅    |
 
-**As implemented, this is intentionally strict** (`lib/auth/permissions.ts:8-13`,
-`lib/auth/guards.ts:131-138`): a right is granted **only** when
+¹ Since Release-1 F4 (below), Book 1:1 and Send Invite additionally require a profile
+photo (or a staff-granted waiver) — verification alone is no longer enough for these two.
+Create events is **not** gated on the photo.
+
+**As implemented, this is intentionally strict** (`lib/auth/permissions.ts:50-51`,
+`lib/auth/guards.ts:166-167`): a right is granted **only** when
 `verification_status === 'verified' && !is_blocked && !access_restricted`. There is **no**
 "unverified but still inside the 14-day window" allowance — unverified accounts are ❌ across
 the board, unconditionally, from day one. The 14-day deadline never _grants_ anything; it only
@@ -34,6 +38,36 @@ wizard is done, which is **before** staff verification (a separate, later step).
 sit in `account_type = 'mindsetter'`, `verification_status = 'unverified'` for a while — during
 that window they must have zero Mindsetter-only rights. See the same note in
 `lib/auth/permissions.ts` at `resolvePermissions`'s `isMindsetter` line.
+
+## Release-1 F4: photo required for booking/invites (not events)
+
+Added on top of the strict matrix above (`lib/auth/permissions.ts:14-17,63-70,74-76`,
+migration `supabase/migrations/20260920101855_profiles_photo_requirement_waiver.sql`). A
+profile without a photo can still exist and its public `[username]` page still works, but by
+default it:
+
+- is excluded from the catalog/search (no catalog/search query exists yet — when one is
+  built, it **must** use the same condition below, per the migration's own inline TODO), and
+- cannot send Invites or book 1:1 sessions.
+
+The gate is `avatar_url is not null OR photo_requirement_waived = true`
+(`hasPhotoOrWaiver` in `resolvePermissions`, `lib/auth/permissions.ts:70`):
+
+- `canBook = isVerified && hasPhotoOrWaiver`
+- `canSendInvite = isVerified && hasPhotoOrWaiver`
+- `canCreateEvent = isVerified` — deliberately **not** gated on the photo.
+
+`photo_requirement_waived` is a staff-only escape hatch (public figures who intentionally
+have no avatar). It can **only** be set by staff or the service role — enforced not just by
+RLS but by a dedicated `guard_profiles_photo_requirement_waived` BEFORE INSERT/UPDATE
+trigger: a non-staff self-insert is silently coerced to `false`, and any non-staff attempt to
+change it on UPDATE is rejected outright, regardless of which other columns are touched in
+the same statement. No app code writes this column from the client.
+
+No booking or invite Server Action exists yet (both CTAs are still `NotYetAvailable`
+placeholders) — see the "Usage in a Server Action" note below for how whoever builds them
+must gate on `resolvePermissions(...).canBook` / `.canSendInvite`, not on
+`requireVerifiedMember()` alone.
 
 ## 14-day rule → `access_restricted`
 
@@ -83,20 +117,20 @@ the narrow, non-forgeable cron bypass that lets `expire_unverified_access()` alo
 
 ## Server guards (`lib/auth/guards.ts`, `lib/auth/permissions.ts`)
 
-| Function                    | Behavior                                                                                       |
-| --------------------------- | ---------------------------------------------------------------------------------------------- |
-| `getCurrentUser()`          | Signed-in `User` or `null` (re-validates via `getUser()`).                                     |
-| `getSessionContext()`       | `{ user, profile }` or `null` — optional auth for rendering.                                   |
-| `getStaffRole(userId?)`     | `'admin' \| 'moderator' \| null` for the caller (or a given uid).                              |
-| `getEffectivePermissions()` | Full `EffectivePermissions` for the current caller, or `null` if unauthenticated/no profile.   |
-| `requireUser()`             | Throws `unauthenticated` if not signed in.                                                     |
-| `requireConfirmedUser()`    | `requireUser()` + throws `forbidden` if email isn't confirmed.                                 |
-| `requireSessionContext()`   | Signed-in + has a profile + not `is_blocked`; throws otherwise.                                |
-| `requireVerifiedMember()`   | Strict matrix gate: `verification_status === 'verified' && !access_restricted && !is_blocked`. |
-| `requireMindsetter()`       | `requireVerifiedMember()` + `account_type === 'mindsetter'`.                                   |
-| `requireStaff(minRole?)`    | Has a `staff_roles` row; pass `'admin'` to require admin specifically (moderator < admin).     |
+| Function                    | Behavior                                                                                                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getCurrentUser()`          | Signed-in `User` or `null` (re-validates via `getUser()`).                                                                                                                                               |
+| `getSessionContext()`       | `{ user, profile }` or `null` — optional auth for rendering.                                                                                                                                             |
+| `getStaffRole(userId?)`     | `'admin' \| 'moderator' \| null` for the caller (or a given uid).                                                                                                                                        |
+| `getEffectivePermissions()` | Full `EffectivePermissions` for the current caller, or `null` if unauthenticated/no profile.                                                                                                             |
+| `requireUser()`             | Throws `unauthenticated` if not signed in.                                                                                                                                                               |
+| `requireConfirmedUser()`    | `requireUser()` + throws `forbidden` if email isn't confirmed.                                                                                                                                           |
+| `requireSessionContext()`   | Signed-in + has a profile + not `is_blocked`; throws otherwise.                                                                                                                                          |
+| `requireVerifiedMember()`   | Strict matrix gate: `verification_status === 'verified' && !access_restricted && !is_blocked`. Sufficient **only** for event creation — see the F4 note above and the example below for booking/invites. |
+| `requireMindsetter()`       | `requireVerifiedMember()` + `account_type === 'mindsetter'`.                                                                                                                                             |
+| `requireStaff(minRole?)`    | Has a `staff_roles` row; pass `'admin'` to require admin specifically (moderator < admin).                                                                                                               |
 
-`resolvePermissions(profile, staffRole)` (`lib/auth/permissions.ts:41-60`) is the pure
+`resolvePermissions(profile, staffRole)` (`lib/auth/permissions.ts:46-82`) is the pure
 resolver behind `getEffectivePermissions()` — no Supabase import, so it's unit-testable and
 reusable for read-only client-side UI hints if ever needed. Returns:
 
@@ -117,16 +151,33 @@ interface EffectivePermissions {
 
 ```ts
 'use server';
-import { requireVerifiedMember, requireMindsetter, requireStaff } from '@/lib/auth/guards';
+import {
+  requireVerifiedMember,
+  requireMindsetter,
+  requireStaff,
+  getStaffRole,
+} from '@/lib/auth/guards';
+import { resolvePermissions } from '@/lib/auth/permissions';
+import { ActionError } from '@/lib/api/errors';
 
-// Gate a booking/event/invite action:
+// Gate EVENT creation: verification alone is enough, no photo requirement.
 const { user, profile } = await requireVerifiedMember(); // throws ActionError('forbidden', …)
+
+// Gate BOOKING / INVITE actions (Release-1 F4): requireVerifiedMember() is NOT enough —
+// it doesn't know about the photo-or-waiver rule. Resolve full permissions instead:
+const ctx = await requireVerifiedMember();
+const staffRole = await getStaffRole(ctx.user.id);
+const perms = resolvePermissions(ctx.profile, staffRole);
+if (!perms.canBook) {
+  throw new ActionError('forbidden', 'Add a profile photo to book a session.');
+}
+// perms.canSendInvite follows the same pattern for sending an Invite.
 
 // Gate opening own 1:1 session types:
 const { profile } = await requireMindsetter();
 
 // Gate an admin action; omit minRole to allow admin OR moderator:
-const { staffRole } = await requireStaff('admin');
+const { staffRole: adminStaffRole } = await requireStaff('admin');
 ```
 
 See `docs/API_CONVENTIONS.md` for the full `createAction` / `ActionResult` contract these

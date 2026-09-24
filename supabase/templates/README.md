@@ -1,0 +1,108 @@
+# Supabase Auth email templates
+
+Our own HTML bodies for the five emails **Supabase Auth itself** sends (confirm signup,
+reset password, change email, magic link, invite). Release-1 task **I3**.
+
+These are **not** the `lib/email/` Resend-queue templates. That pipeline is for
+Mindsetis-originated mail (bookings, reminders) and never touches auth flows — see
+`docs/SUPABASE_SETUP.md` §3a and `lib/email/send.ts`. The two look identical on purpose;
+the design tokens here are copied from `lib/email/templates/base-layout.tsx`.
+
+## Files
+
+| File                  | Dashboard template   | Link `type=`   |
+| --------------------- | -------------------- | -------------- |
+| `confirm-signup.html` | Confirm signup       | `signup`       |
+| `reset-password.html` | Reset password       | `recovery`     |
+| `change-email.html`   | Change email address | `email_change` |
+| `magic-link.html`     | Magic link           | `magiclink`    |
+| `invite-user.html`    | Invite user          | `invite`       |
+
+`build.mjs` generates all five. **Edit `build.mjs`, never the `.html` files** — they are
+build output and the next `node supabase/templates/build.mjs` overwrites them.
+
+## Prerequisite: custom SMTP must be on
+
+With Supabase's default shared sender the template bodies are **not editable** — the
+dashboard ignores them and sends Supabase's own default markup (this is why
+`lib/auth/site-url.ts` says the confirmation link has to come from `emailRedirectTo`).
+So none of this takes effect until task **I2** (custom SMTP via Resend) is done, which in
+turn needs **I1** (verified domain). Writing and reviewing the templates does not.
+
+## Installing
+
+Per project (**prod and dev separately** — they are different Supabase projects):
+
+1. **Dashboard → Authentication → Emails → Templates**, pick the template.
+2. Paste the whole file into the message body. Subject lines are already agreed and live
+   in `supabase/config.toml` under `[auth.email.template.*]` — keep them in sync:
+   - Confirm signup — `Confirm your Mindsetis Community signup`
+   - Reset password — `Reset your Mindsetis Community password`
+   - Change email address — `Confirm your new email address`
+   - Magic link — `Your Mindsetis Community sign-in link`
+   - Invite user — `You've been invited to Mindsetis Community`
+3. **Authentication → URL Configuration**: `Site URL` must be that environment's real
+   origin, and `/api/auth/confirm` must be in the redirect allowlist (the dev project on
+   its Vercel domain is the one that gets forgotten).
+4. Send yourself a real email through the actual flow and click the link.
+
+## Why the links use `token_hash`, not `{{ .ConfirmationURL }}`
+
+This is Release-1 task **I6**, and it is the one thing to get right.
+
+`{{ .ConfirmationURL }}` points at Supabase's own `/auth/v1/verify`, which verifies the
+token and then 303s to our app. When the link is dead, that redirect carries the reason in
+the **URL fragment** (`#error=access_denied&error_code=otp_expired`) — and a server never
+receives a fragment, so `/api/auth/confirm` sees a bare request with no token and no error
+and cannot tell what happened. `app/api/auth/confirm/route.ts` documents this at length;
+it is why `/link-expired` has to re-read the fragment on the client.
+
+A `?token_hash=…&type=…` link goes straight to our route handler, which calls
+`verifyOtp()` itself and gets a real error object back. Same outcome on success, a
+truthful one on failure.
+
+**Do not** switch these to an implicit-flow link (`#access_token=…`). That was found
+during the A2 check: the fragment never reaches the server, so the visitor lands on
+`/link-expired` even though the link was perfectly good.
+
+## `{{ .RedirectTo }}` vs `{{ .SiteURL }}`
+
+`confirm-signup.html` and `reset-password.html` build their URL from **`{{ .RedirectTo }}`**
+— the `emailRedirectTo` / `redirectTo` the app passed from code
+(`lib/auth/site-url.ts` → `NEXT_PUBLIC_SITE_URL` + `/api/auth/confirm?next=…`). It already
+carries `?next=…`, so the token is appended with `&`.
+
+> **Whatever the app passes must contain a query string.** The `&` above is unconditional, so a
+> bare `/api/auth/confirm` renders as `/api/auth/confirm&token_hash=…` — not a URL, and every
+> signup link is dead. Tried on 2026-09-23 while shortening the link; nothing in typecheck,
+> lint or the template itself catches it, only a real email did. Both call sites now pass
+> `?next=/` and say why.
+
+That keeps **one template working in three environments**: a link triggered from a
+developer's machine points at `localhost:3000`, prod points at prod, dev points at dev —
+nothing to edit per project. A hardcoded `{{ .SiteURL }}` would send every locally
+triggered confirmation to the deployed origin and make local signup untestable.
+
+The other three templates have no code path passing a `redirectTo` today, so they fall
+back to `{{ .SiteURL }}` plus an explicit `next=`.
+
+> **Verify this first** when SMTP goes live: if `{{ .RedirectTo }}` ever renders empty
+> (e.g. a link generated by `auth.admin.generateLink()` with no redirect), the href
+> degrades to `&token_hash=…`, which is not a URL. Swap those two templates to the
+> `{{ .SiteURL }}` form in `build.mjs` if that shows up.
+
+## Open questions
+
+- **Reply-To.** Task I2 asks for `support@mindsetis.com` as Reply-To. Supabase's SMTP
+  settings form has **no Reply-To field**, so auth mail will carry only the `no-reply@`
+  From. The footer here points at the support address in the body text instead. Decide
+  whether that is enough, and confirm the mailbox actually exists.
+  (Separately: `supabase/functions/process-email-queue/index.ts` doesn't send `reply_to`
+  either — that one is fixable in code.)
+- **Postal address.** `POSTAL_ADDRESS` in `build.mjs` is deliberately `null`. Not strictly
+  required for transactional mail, but good for deliverability and mandatory the moment
+  any of it turns promotional. Needs the client's registered address.
+- **Logo (task I4).** The header is a text wordmark until Albina delivers the file. The
+  swap point is commented in `build.mjs` — absolute HTTPS URL, light variant, ≤600px.
+- **Localisation.** Supabase templates are single-language, so these are English-only,
+  consistent with the English-first rule. The `lib/email/` pipeline stays localised.

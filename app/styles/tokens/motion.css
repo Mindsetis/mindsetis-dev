@@ -41,6 +41,101 @@
   }
 }
 
+/**
+ * `hero-map-avatar-pulse-scale` + `hero-map-avatar-glow` — soft glow + gentle grow/shrink for the
+ * Main Page hero map avatars (`HeroBand`). Split across two elements/utilities (see below) that
+ * both read their timing from `--pulse-delay`/`--pulse-duration` custom properties set once per
+ * avatar on the shared wrapper `<span>` in `HeroBand` (values computed in
+ * `lib/marketing/hero-map-avatars.ts` — 25 avatars, grouped + independently-timed so they pulse
+ * chaotically rather than in one synchronized wave or a periodic collective "breathing"; see
+ * that file's doc comment). `--pulse-delay` is frequently NEGATIVE — a legal, well-supported CSS
+ * `animation-delay` value meaning "act as if the animation had already been running this many
+ * seconds", used deliberately to pre-seed each avatar's starting phase instead of having all 25
+ * start flat and ramp up together on page load.
+ *
+ * WHY TWO ELEMENTS INSTEAD OF ONE (H2 → H3 change): H2's demo (3 avatars) animated `transform:
+ * scale()` AND `filter: drop-shadow()` together on the avatar `<img>` itself. `filter` forces the
+ * browser to re-rasterize (repaint) the element's pixels every animation frame — negligible for
+ * 3 avatars, but code review flagged it as a real cost once H3 turns this on for all 25,
+ * especially on low-end phones. `transform` and `opacity` are the two properties a browser can
+ * animate purely on the compositor (no repaint, no layout) — since a *feathered/blurred* glow
+ * can't be reproduced with `transform` alone, the fix is to stop animating the glow's *shape*
+ * (which `filter: drop-shadow`'s blur radius effectively did) and instead pre-render the glow as
+ * a static `radial-gradient` layer and only animate ITS `opacity` (0 → 1 → 0). The browser then
+ * has two cheap, compositor-only animations running in parallel per avatar — `scale` on the photo,
+ * `opacity` on the glow — instead of one expensive repainting one.
+ *
+ * - `hero-map-avatar-glow` — a decorative `<span aria-hidden>` sibling placed BEFORE the avatar
+ *   `<img>` in the DOM (so the `<img>` — itself given `position: relative` in `HeroBand` for
+ *   exactly this — paints on top of it; a `position: static` `<img>` would otherwise paint over
+ *   an absolutely-positioned sibling regardless of DOM order per the CSS painting-order spec).
+ *   Sized just past the avatar's own box (`inset: -5%`) so the glow reads as a rim on the photo
+ *   rather than a wash of light around it, using the same cyan as the rest of the UI Kit's glow
+ *   (`--shadow-glow-primary`'s color, `rgba(111, 186, 237, …)`) so it reads as "the avatar's own
+ *   baked-in halo turning up its brightness", not an unrelated color appearing. Opacity idles at
+ *   0 (invisible, matching the avatar's static baked-in halo) and animates up to 1 at the
+ *   midpoint.
+ * - `hero-map-avatar-pulse-scale` — `scale(1 → 1.12 → 1)`. Started at 4% (H2's brief asked for a
+ *   3–5% budget), raised to 12% on the owner's call (2026-09-20) once the glow was pulled in
+ *   tight: with less light spilling around the photo, the movement has to carry the effect, and
+ *   4% was invisible at the avatars' real on-screen size. Eased both ways, so it still reads as
+ *   breathing rather than a jump. Applied to
+ *   the avatar `<img>` alone, never combined with the `translate(-50%, -50%)` centering transform
+ *   (which lives on the wrapper `<span>` one level up) — animating `transform` here would
+ *   otherwise fight that inline centering transform for the same CSS property.
+ */
+@utility hero-map-avatar-pulse-scale {
+  animation: hero-map-avatar-pulse-scale var(--pulse-duration, 3.6s) ease-in-out infinite;
+  animation-delay: var(--pulse-delay, 0s);
+
+  /* Static, ungrown — matches every other (non-pulsing) avatar on the map. */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes hero-map-avatar-pulse-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@utility hero-map-avatar-glow {
+  position: absolute;
+  /* NO BACKGROUND (owner's call, 2026-09-20). This layer started as a cyan `radial-gradient` that
+     brightened on the beat, tightened twice (-35% → -12% → -5%) and then dropped entirely: every
+     avatar file already carries its own halo, baked in from the Figma drop-shadow, so a second
+     painted glow on top of it only thickened that ring. The pulse is now carried by the scale
+     animation alone. The element stays (inert, zero-size-agnostic) so the timing plumbing and the
+     reduced-motion contract are in one place if a glow is ever wanted again. */
+  inset: -5%;
+  border-radius: 9999px;
+  opacity: 0;
+  pointer-events: none;
+  animation: hero-map-avatar-pulse-glow var(--pulse-duration, 3.6s) ease-in-out infinite;
+  animation-delay: var(--pulse-delay, 0s);
+
+  /* Fully invisible — matches every other (non-pulsing) avatar's static baked-in halo. */
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+@keyframes hero-map-avatar-pulse-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @keyframes cta-hover-lift {
   /* Resting, untouched, for the first two-thirds of the cycle. */
   0%,

@@ -4,12 +4,19 @@ import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
 import { SectionEditorShell } from '@/components/dashboard/SectionEditorShell';
 import { SocialLinksForm } from '@/components/dashboard/SocialLinksForm';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
+import { nextSectionHref } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SectionPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'dashboard.profile.sections.socialLinks');
+}
 
 /**
  * Cabinet → My Profile → "Social links" section editor (Figma `613:4606`). Available to both
@@ -40,7 +47,10 @@ export default async function DashboardSocialLinksSectionPage({ params }: Sectio
 
   return (
     <SectionEditorShell sectionKey="socialLinks" title={t('title')} description={t('editorHint')}>
-      <SocialLinksForm initialSocials={socials} />
+      <SocialLinksForm
+        initialSocials={socials}
+        nextHref={nextSectionHref(cabinet.completeness.sections, 'socialLinks')}
+      />
     </SectionEditorShell>
   );
 }

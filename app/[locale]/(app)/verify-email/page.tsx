@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { RegistrationStepHeader } from '@/components/auth/RegistrationStepHeader';
 import { ResendConfirmationEmailButton } from '@/components/auth/ResendConfirmationEmailButton';
 import { Link } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getCurrentUser } from '@/lib/auth/guards';
 
 type VerifyEmailPageProps = {
@@ -11,6 +12,11 @@ type VerifyEmailPageProps = {
 };
 
 const TOTAL_STEPS = 4;
+
+export async function generateMetadata({ params }: VerifyEmailPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'verifyEmail.title');
+}
 
 /**
  * Registration wizard step 2/4 — "Check your inbox" (Figma "Registration" flow). Reached

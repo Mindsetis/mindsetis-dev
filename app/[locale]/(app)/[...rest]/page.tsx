@@ -1,9 +1,22 @@
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 
+import { pageTitle } from '@/i18n/page-metadata';
+
 type CatchAllPageProps = {
   params: Promise<{ locale: string; rest: string[] }>;
 };
+
+// Metadata for a route is resolved from whichever file system segment actually MATCHED the URL
+// — this catch-all page, here — not from `app/[locale]/(app)/not-found.tsx`, even though that
+// file is what visibly renders as the body once the component below calls `notFound()`. Setting
+// `not-found.tsx`'s own `generateMetadata` (done alongside this) has no effect for URLs that
+// land here; this is the one that actually reaches the browser tab for a genuinely unmatched
+// URL. Confirmed live: without this, the tab fell back to the layout's bare "Mindsetis" default.
+export async function generateMetadata({ params }: CatchAllPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'notFound');
+}
 
 /**
  * Catch-all for any URL under a resolved locale that doesn't match a real route (added

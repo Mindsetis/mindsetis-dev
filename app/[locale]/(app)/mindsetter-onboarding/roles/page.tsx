@@ -5,6 +5,7 @@ import { RolesSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { RolesForm } from '@/components/mindsetter-onboarding/RolesForm';
 import { RolesPreviewCta } from '@/components/mindsetter-onboarding/RolesPreviewCta';
 import { redirect } from '@/i18n/navigation';
+import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import type { Role } from '@/lib/validation/mindsetter';
@@ -12,6 +13,11 @@ import type { Role } from '@/lib/validation/mindsetter';
 type RolesPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: RolesPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'mindsetterOnboarding', 'roles.rolesHeading');
+}
 
 /**
  * Extended Mindsetter onboarding — step 1/5 "Your roles" (ROADMAP stage 1.9 foundation slice,

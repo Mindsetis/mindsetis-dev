@@ -11,6 +11,7 @@ import {
   saveReelLife,
   uploadReelLifePhoto,
 } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
@@ -238,9 +239,12 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
     }));
 
   const [items, setItems] = useState<ReelLifeItem[]>(initialItems);
-  /** The tile list "Cancel" restores. Starts at what the page loaded and moves forward on every
-   * successful cabinet save, since the component no longer remounts with fresh props after one. */
-  const savedItems = useRef<ReelLifeItem[]>(items);
+  /** The baseline `isDirty` (below) compares `items` against. Starts at what the page loaded and
+   * moves forward on every successful cabinet save, since the component no longer remounts with
+   * fresh props after one. STATE, not a ref (2026-09-19): `isDirty` reads it during render to
+   * decide whether "Back" needs to confirm, and refs may not be read during render (React's
+   * `react-hooks/refs` rule) — a ref here would silently go stale for that read. */
+  const [savedItems, setSavedItems] = useState<ReelLifeItem[]>(items);
   const [fileError, setFileError] = useState<string | null>(null);
   /** Size errors get the "optimize it with an AI" prompt; a wrong file type has nothing to
    * compress, so it doesn't. */
@@ -254,6 +258,22 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
    * it, and it must survive re-renders without causing one.
    */
   const pendingDeletions = useRef<string[]>([]);
+
+  /** This form keeps its tiles in local state, not RHF, so there's no `formState.isDirty` to
+   * read — "Back" (`StepActions`) needs its own answer to "does leaving now lose anything".
+   * Compares tile identity + order against `savedItems`, the baseline the form itself tracks;
+   * a still-uploading tile always counts as dirty (its bytes aren't in `reel_life` yet). */
+  const isDirty =
+    items.length !== savedItems.length ||
+    items.some((item, index) => {
+      const saved = savedItems[index];
+      return item.status !== 'ready' || saved?.status !== 'ready' || item.path !== saved.path;
+    });
+
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
+  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
+  // the cabinet's exit guard (see that hook's own doc comment).
+  useSectionDirtyGuard(editMode ? isDirty : false);
 
   const isUploading = items.some((item) => item.status === 'uploading');
   const canAddMore = items.length < MAX_REEL_LIFE_PHOTOS;
@@ -368,10 +388,8 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
     setSubmitting(false);
 
     if (editMode) {
-      // Stay on the section. The tiles on screen ARE the saved state now, so they become the new
-      // baseline that "Cancel" restores — the page doesn't remount with fresh props any more.
-      savedItems.current = items;
-      notifySaved();
+      setSavedItems(items);
+      notifySaved(nextHref);
       return;
     }
 
@@ -505,17 +523,12 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
         disabled={isUploading}
         onSubmit={() => void handleSubmit()}
         onCancel={() => {
-          // This form keeps its tiles in local state, not RHF, so the revert is manual: restore
-          // the saved tiles and drop the queued deletions (nothing was deleted from Storage yet
-          // — `removeItem` only queues in cabinet mode, precisely so Cancel can undo it).
-          //
-          // Photos UPLOADED during this session are already in Storage and stay there as
-          // orphans, same as before this change: they were never referenced by `reel_life`, so
-          // nothing user-visible survives the revert.
-          setItems(savedItems.current);
+          // Drop anything queued for deletion (nothing was actually deleted from Storage yet —
+          // `removeItem` only queues in cabinet mode). Photos UPLOADED during this session are
+          // already in Storage and stay there as orphans, same as before: they were never
+          // referenced by `reel_life`, so nothing user-visible survives leaving.
           pendingDeletions.current = [];
-          setFormError(null);
-          setFileError(null);
+          router.push('/dashboard/profile');
         }}
       />
     </div>

@@ -5,7 +5,7 @@ import { GroupFillIcon } from '@/components/icons/main-page-icons';
 import { LanguageBubbleIcon, LocationPinIcon } from '@/components/icons/profile-meta-icons';
 import { CardSlider } from '@/components/profile/CardSlider';
 import { Button } from '@/components/ui/button';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { cn } from '@/lib/utils';
 
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -84,11 +84,11 @@ export async function TopMindsettersSection() {
         </div>
         {/* Figma: mobile "Primary" CTA spans the full 343px text column; desktop sizes to content
             and sits bottom-aligned next to the heading (`md:items-end` above). */}
-        <ComingSoon className="w-full md:w-fit md:shrink-0">
+        <NotYetAvailable feature="exploreCommunity" className="w-full md:w-fit md:shrink-0">
           <Button size="lg" disabled className="w-full">
             {t('viewAllCta')}
           </Button>
-        </ComingSoon>
+        </NotYetAvailable>
       </div>
 
       {/* Figma gap from the heading block to the card row: 32px mobile (`2916 - 2884`), 50px
@@ -127,12 +127,11 @@ export async function TopMindsettersSection() {
                 index === PHOTOS.length - 1 && 'mr-4 sm:mr-6 lg:mr-0',
               )}
             >
+              {/* `aspect-[3/4]` per the client's Release-1 list (H5) rather than a Figma node —
+                  see the identical note in `AmbassadorsRegionCarousel`, which this section's
+                  cards mirror. */}
               {/* eslint-disable-next-line @next/next/no-img-element -- local static asset */}
-              <img
-                src={photo}
-                alt=""
-                className="h-[220px] w-full rounded-lg object-cover md:h-[300px]"
-              />
+              <img src={photo} alt="" className="aspect-[3/4] w-full rounded-lg object-cover" />
               <div className="flex flex-col gap-2 pl-2 md:gap-4 md:px-4">
                 <span className="inline-flex h-6 w-fit items-center gap-1 rounded-full border border-success px-2">
                   <CheckCircleFillIcon className="size-3 text-success" />

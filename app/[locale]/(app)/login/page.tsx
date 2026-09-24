@@ -1,13 +1,18 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SignInForm } from '@/components/auth/SignInForm';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { safeRedirectPath } from '@/lib/validation/common';
+import { pageTitle } from '@/i18n/page-metadata';
+import { isSafeRedirectPath } from '@/lib/validation/common';
 
 type LoginPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ redirectTo?: string; error?: string }>;
+  searchParams: Promise<{ redirectTo?: string }>;
 };
+
+export async function generateMetadata({ params }: LoginPageProps) {
+  const { locale } = await params;
+  return pageTitle(locale, 'auth', 'signIn.title');
+}
 
 /**
  * Log in — Figma `679:8779` (desktop 1440) / `1056:8939` (mobile 375), page "Admin Panel".
@@ -25,7 +30,7 @@ type LoginPageProps = {
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { redirectTo, error } = await searchParams;
+  const { redirectTo } = await searchParams;
   const t = await getTranslations('auth');
 
   return (
@@ -38,12 +43,16 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           {t('signIn.title')}
         </h1>
 
-        {error === 'invalid_link' ? (
-          <Alert variant="destructive">
-            <AlertDescription>{t('errors.invalidLink')}</AlertDescription>
-          </Alert>
-        ) : null}
-        <SignInForm redirectTo={safeRedirectPath(redirectTo)} />
+        {/* The "Your link is invalid or expired" banner that used to sit here is gone: a dead
+            confirmation link now has its own screen, `/link-expired` (Release-1 A2). Nothing in
+            the codebase sends anyone to `?error=invalid_link` any more, and leaving an
+            unreachable second copy of that message around only invites the two wordings to
+            drift apart. */}
+        {/* Deliberately NOT `safeRedirectPath(redirectTo)`: that helper falls back to `'/'`,
+            and a truthy `'/'` here overrides the server's "continue where you left off" answer
+            for every visitor who simply opened /login — the dead end Release-1 A1 is about. An
+            absent or unsafe value must arrive as `undefined` so the form asks the server. */}
+        <SignInForm redirectTo={isSafeRedirectPath(redirectTo) ? redirectTo : undefined} />
       </div>
     </div>
   );
