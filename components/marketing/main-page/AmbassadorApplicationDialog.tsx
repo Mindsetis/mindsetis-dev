@@ -65,6 +65,8 @@ export type AmbassadorApplicationCopy = {
   submit: string;
   submitting: string;
   error: string;
+  /** Shown instead of `error` when the action is rate-limited (per-IP or per-email). */
+  rateLimited: string;
   thanks: {
     eyebrow: string;
     title: string;
@@ -224,7 +226,9 @@ export function AmbassadorApplicationDialog({
           placed = true;
         }
       }
-      if (!placed) setFormError(copy.error);
+      if (!placed) {
+        setFormError(result.error.code === 'rate_limited' ? copy.rateLimited : copy.error);
+      }
       return;
     }
 

@@ -403,6 +403,7 @@
           "submit": "Submit application",
           "submitting": "Submitting…",
           "error": "We couldn’t submit your application. Please try again.",
+          "rateLimited": "Too many attempts. Please wait a while and try again later.",
           "thanks": {
             "eyebrow": "APPLICATION RECEIVED",
             "title": "Thanks — we've got your application.",
@@ -697,7 +698,7 @@
     "verifyEmail": {
       "changeIt": "Change it",
       "resend": "Resend email",
-      "resendRateLimited": "Too many requests. Please wait a little while before requesting another email.",
+      "resendRateLimited": "Too many requests. Please wait at least a minute before requesting another email.",
       "resending": "Sending…",
       "resendSuccess": "Confirmation email sent.",
       "subtitle": "We sent a confirmation link. Click it to activate your account and continue.",
