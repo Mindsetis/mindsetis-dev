@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { signIn } from '@/app/[locale]/(app)/(auth)/actions';
+import { ResendConfirmationEmailButton } from '@/components/auth/ResendConfirmationEmailButton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
-import { type SignInInput, signInSchema } from '@/lib/validation/auth';
+import { SIGN_IN_EMAIL_NOT_CONFIRMED, type SignInInput, signInSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
 import { PasswordToggle } from './password-field';
@@ -53,6 +54,9 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  // The address that signed in with the right password but was never confirmed — drives the
+  // "confirm your email first" hint + resend button instead of a generic error.
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignInInput>({
@@ -63,8 +67,13 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
   const onSubmit = form.handleSubmit(
     async (values) => {
       setFormError(null);
+      setUnconfirmedEmail(null);
       const result = await signIn(values);
       if (!result.ok) {
+        if (result.error.fieldErrors?._form?.[0] === SIGN_IN_EMAIL_NOT_CONFIRMED) {
+          setUnconfirmedEmail(values.email);
+          return;
+        }
         applyFieldErrors(form.setError, result.error.fieldErrors);
         setFormError(result.error.message);
         return;
@@ -90,6 +99,15 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {unconfirmedEmail ? (
+          <Alert>
+            <AlertDescription className="flex flex-col items-start gap-3">
+              <span>{t('signIn.emailNotConfirmed', { email: unconfirmedEmail })}</span>
+              <ResendConfirmationEmailButton email={unconfirmedEmail} />
+            </AlertDescription>
           </Alert>
         ) : null}
 

@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { SuperpowersSectionIcon } from '@/components/icons/onboarding-section-icons';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { SuperpowersForm } from '@/components/mindsetter-onboarding/SuperpowersForm';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
@@ -35,7 +35,6 @@ export default async function MindsetterOnboardingSuperpowersPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
-  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -56,13 +55,9 @@ export default async function MindsetterOnboardingSuperpowersPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[28px]">
-        <RegistrationBackLink
-          href="/mindsetter-onboarding/roles"
-          label={tAuth('signUp.back')}
-          className="md:static md:translate-y-0"
-        />
-      </div>
+      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
+          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <div className="mb-4 flex items-center gap-2 md:mb-8 md:gap-4">
@@ -72,7 +67,9 @@ export default async function MindsetterOnboardingSuperpowersPage({
           </h1>
         </div>
 
-        <SuperpowersForm initialSuperpowers={initialSuperpowers} />
+        <OnboardingBack href="/mindsetter-onboarding/roles">
+          <SuperpowersForm initialSuperpowers={initialSuperpowers} />
+        </OnboardingBack>
       </div>
     </div>
   );

@@ -64,6 +64,12 @@ export const signInSchema = z.object({
 });
 export type SignInInput = z.infer<typeof signInSchema>;
 
+/**
+ * `_form` marker `signIn` returns when the password was right but the address was never
+ * confirmed — the sign-in form swaps it for its own localized hint + "Resend email" button.
+ */
+export const SIGN_IN_EMAIL_NOT_CONFIRMED = 'auth:email-not-confirmed';
+
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });

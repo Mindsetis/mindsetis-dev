@@ -28,11 +28,11 @@ import { Link } from '@/i18n/navigation';
  * context, not confirmed by a click-through. Flagged per-button below; also called out in the
  * handoff report.
  *
- * - The white pill used to open `WhoIsMindsetterDialog` ("Who is Mindsetter?"). Per the owner's
- *   call on 2026-09-19 it must no longer open a popup, so it is now static text with the same
- *   look — not a button, not focusable, no pointer cursor. `WhoIsMindsetterDialog.tsx` is kept
- *   (nothing renders it) in case the explainer comes back; its `auth.welcome.whoIsMindsetter.*`
- *   keys stay too, and `trigger` is still the caption below.
+ * - The white pill used to open `WhoIsMindsetterDialog` ("Who is Mindsetter?"), then (owner's
+ *   call, 2026-09-19) was static text. Since 2026-09-29 it opens the same dialog as "Learn more"
+ *   below (client request). `WhoIsMindsetterDialog.tsx` is kept (nothing renders it) in case the
+ *   explainer comes back; its `auth.welcome.whoIsMindsetter.*` keys stay too, and `trigger` is
+ *   still the pill's caption.
  * - "Apply for Mindsetter" → `/mindsetter-onboarding/roles`, the only remaining entry point into
  *   the flow on this screen.
  * - "Continue as Member" (Figma "Secondary - 2a", gradient border → `primaryOutline`) does not
@@ -48,17 +48,18 @@ export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => 
   const t = useTranslations('auth.welcome');
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8">
+    <div className="flex flex-col gap-6 md:gap-8 short:gap-5">
       {/* Figma: white bg, black text, Cal Sans 22px on desktop but plain Manrope 16px/bold on
-          mobile. Was a `Button` (ghost, fully reskinned) while it opened the explainer dialog;
-          now that it opens nothing it is a paragraph, which drops the button's interactive
-          affordances (cursor, focus ring, hover/active color shifts, screen-reader "button"
-          role) while keeping the pill's exact box: the flex parent stretches a block-level `p`
-          to the same full width the `inline-flex` button got, and the height stays
-          content-driven off the same paddings (2-line wrap on mobile vs 1 line on desktop). */}
-      <p className="rounded-xl bg-white px-4 py-3 text-left font-sans text-base font-bold text-black md:px-6 md:py-4 md:font-display md:text-[22px] md:font-normal">
-        {t('whoIsMindsetter.trigger')}
-      </p>
+          mobile. Opens the same dialog as "Learn more" below (client request, 2026-09-29) — both
+          ask the same question. `NotYetAvailable` supplies the click/keyboard trigger (pointer
+          cursor, focus ring, "button" role); the pill itself is a block `span` rather than the
+          old `p` because it now sits inside that trigger's `span`. Height stays content-driven
+          off the same paddings (2-line wrap on mobile vs 1 line on desktop). */}
+      <NotYetAvailable feature="learnMore" className="w-full rounded-xl">
+        <span className="block w-full rounded-xl bg-white px-4 py-3 text-left font-sans text-base font-bold text-black md:px-6 md:py-4 short:py-3 md:font-display md:text-[22px] md:font-normal">
+          {t('whoIsMindsetter.trigger')}
+        </span>
+      </NotYetAvailable>
 
       <WelcomeMindsetterPitchCard />
 

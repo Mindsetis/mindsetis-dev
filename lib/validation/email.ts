@@ -37,7 +37,21 @@ export const httpUrlSchema = z
 
 export const enqueueEmailEnvelopeSchema = z.object({
   to: emailSchema,
-  toName: z.string().trim().min(1, 'Name is too short.').max(200, 'Name is too long.').optional(),
+  /**
+   * Display name for the `To:` header. Header-significant characters (`<>",;:@\` and line
+   * breaks) are stripped — guests type this name, and left raw it could spoof the display name
+   * or smuggle extra recipients into `Name <addr>`. The Edge Function also quotes it on send.
+   */
+  toName: z
+    .string()
+    .transform((v) =>
+      v
+        .replace(/[<>"\\,;:@\r\n\t]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .pipe(z.string().min(1, 'Name is too short.').max(200, 'Name is too long.'))
+    .optional(),
   locale: localeSchema.default('en'),
   /**
    * Optional idempotency key (e.g. `'session_reminder_24h:<session_id>'`). Mirrors
@@ -95,6 +109,19 @@ export const welcomeEmailPropsSchema = z.object({
 export type WelcomeEmailProps = z.infer<typeof welcomeEmailPropsSchema>;
 
 /**
+ * `ambassador_application` template props — receipt for the homepage "Apply for Ambassadorship"
+ * popup (`submitAmbassadorApplication`). `isGuest` switches in the "you must create an account
+ * with this email to become an Ambassador" paragraph; `signUpUrl` is that paragraph's button and
+ * is only sent for guests.
+ */
+export const ambassadorApplicationEmailPropsSchema = z.object({
+  userName: z.string().trim().min(1).max(200).optional(),
+  isGuest: z.boolean(),
+  signUpUrl: httpUrlSchema.optional(),
+});
+export type AmbassadorApplicationEmailProps = z.infer<typeof ambassadorApplicationEmailPropsSchema>;
+
+/**
  * `template_key` -> props-schema map. The single source of truth for which template
  * keys exist; `lib/email/registry.tsx` maps the same keys to renderers, and
  * `email_messages.template_key` (free text in the DB) is expected to only ever contain
@@ -105,6 +132,7 @@ export const emailTemplatePropsSchema = {
   password_reset: passwordResetEmailPropsSchema,
   generic: genericEmailPropsSchema,
   welcome: welcomeEmailPropsSchema,
+  ambassador_application: ambassadorApplicationEmailPropsSchema,
 } as const;
 
 export type EmailTemplateKey = keyof typeof emailTemplatePropsSchema;

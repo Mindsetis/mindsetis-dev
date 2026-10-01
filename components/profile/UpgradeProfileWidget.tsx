@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 
 import { useCookieConsent } from '@/components/cookies/CookieConsentProvider';
 import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
-import { Link } from '@/i18n/navigation';
-import { EXAMPLE_MINDSETTER_PROFILE_USERNAME } from '@/lib/profile/example-profile';
+import { NotYetAvailable } from '@/components/ui/not-yet-available';
+import { EXAMPLE_PROFILE_URL } from '@/lib/config/example-profile';
 import { cn } from '@/lib/utils';
 
 /** `localStorage` key prefix — same naming scheme as `MemberProfileReadyDialog`'s own key and
@@ -99,9 +99,11 @@ export type UpgradeProfileWidgetProps = {
  * DRAFT COPY (2026-09-20): title/body are our own one-liners — the client gave no copy for this
  * widget, only its behavior — kept short and swappable via a translation-key edit alone.
  *
- * "SEE EXAMPLE" — see `lib/profile/example-profile.ts`'s own doc comment: that constant is empty
- * until the client finishes building her example profile, and this renders NO link at all while
- * it's blank (no dead link to a profile that doesn't exist).
+ * "SEE EXAMPLE" — reads the shared `EXAMPLE_PROFILE_URL` (`lib/config/example-profile.ts`), same
+ * as "See how it looks" and "See example" elsewhere. Until the client's showcase profile exists
+ * it opens the "Example pages are on the way" dialog; once configured, the profile in a new tab.
+ * (It used to read its own username constant and render nothing while that was empty — replaced
+ * 2026-09-30 so the three entry points can't drift apart.)
  *
  * POSITIONING — bottom-LEFT (`ScrollToTopButton` owns bottom-right, permanently, on every
  * non-cabinet page including this one). CORRECTED, 2026-09-20 review + live pass: an earlier
@@ -208,10 +210,6 @@ export function UpgradeProfileWidget({ userId }: UpgradeProfileWidgetProps) {
   // rather than an invisible-but-mounted widget, same as `MemberStatusBanner` returning `null`.
   if (!canShow) return null;
 
-  const exampleHref = EXAMPLE_MINDSETTER_PROFILE_USERNAME
-    ? `/mindsetters/${EXAMPLE_MINDSETTER_PROFILE_USERNAME}`
-    : null;
-
   // See the "FIX" / "STACKING ABOVE THE SCROLL-TO-TOP PILL" doc-comment sections above for the
   // full reasoning — mobile always clears `ScrollToTopButton`'s own footprint (it co-occupies the
   // same vertical band once both are lifted by the same `bannerHeight`), `md:`+ only ever needs
@@ -265,14 +263,24 @@ export function UpgradeProfileWidget({ userId }: UpgradeProfileWidgetProps) {
         <UpgradeToMindsetterTrigger size="sm" tabIndex={visible ? 0 : -1}>
           {t('cta')}
         </UpgradeToMindsetterTrigger>
-        {exampleHref && (
-          <Link
-            href={exampleHref}
+        {/* The client's showcase profile — the same `EXAMPLE_PROFILE_URL` as "See how it looks"
+            (Roles step) and "See example" (/welcome), so all three switch on together once it's
+            configured (new tab). Until then it opens the same "Example pages are on the way"
+            dialog they do, instead of the link silently not rendering (2026-09-30). */}
+        {EXAMPLE_PROFILE_URL ? (
+          <a
+            href={EXAMPLE_PROFILE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             tabIndex={visible ? 0 : -1}
             className="text-tiny font-medium text-primary underline"
           >
             {t('seeExample')}
-          </Link>
+          </a>
+        ) : (
+          <NotYetAvailable feature="exampleProfile" className="inline">
+            <span className="text-tiny font-medium text-primary underline">{t('seeExample')}</span>
+          </NotYetAvailable>
         )}
       </div>
     </div>

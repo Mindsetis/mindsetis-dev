@@ -69,6 +69,19 @@ export const saveBuildProfile = createAction(buildProfileSchema, async (input) =
   const user = await requireUser();
   const supabase = await createClient();
 
+  // `onboarding_step` only ever moves FORWARD — same rule as `saveMemberProfile`: a user already
+  // past this step (e.g. a Mindsetter in the extended wizard) who re-saves here must not drop to 3.
+  const { data: currentStepRow, error: stepReadError } = await supabase
+    .from('profiles')
+    .select('onboarding_step')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (stepReadError) {
+    console.error('[build-profile] onboarding_step read failed:', stepReadError);
+    throw new ActionError('internal_error', 'Could not save your profile. Please try again.');
+  }
+  const nextOnboardingStep = Math.max(currentStepRow?.onboarding_step ?? 0, 3);
+
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
@@ -82,7 +95,7 @@ export const saveBuildProfile = createAction(buildProfileSchema, async (input) =
       // writing `industry_custom` alone is exactly what that trigger expects from a normal save
       // (it resets the status to 'pending' on the DB side when the text actually changed).
       industry_custom: input.industryCustom?.trim() || null,
-      onboarding_step: 3,
+      onboarding_step: nextOnboardingStep,
     })
     .eq('id', user.id);
 

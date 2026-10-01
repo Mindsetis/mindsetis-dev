@@ -14,6 +14,7 @@
     "createEvent": "Create Event",
     "editProfile": "Edit Profile",
     "exploreCommunity": "Explore Community",
+    "exploreMindsetis": "Explore Mindsetis",
     "join": "Apply to Join",
     "joinShort": "Join",
     "login": "Log in",
@@ -155,10 +156,11 @@
         "searchCta": "Search",
         "popularLabel": "POPULAR SEARCHES",
         "popularSearches": [
-          "Finding my first paying customers",
-          "Raising a seed round",
-          "Raising a seed round",
-          "Raising a seed round"
+          "Scaling & expansion",
+          "Partnerships",
+          "Fundraising",
+          "Hiring",
+          "Crisis management"
         ]
       },
       "topMindsetters": {
@@ -345,43 +347,66 @@
           "intro": {
             "eyebrow": "MINDSETIS AMBASSADORS",
             "title": "Apply to moderate events and represent Mindsetis in your city or worldwide.",
-            "subtitle": "Three quick questions — about 5 minutes. We'll follow up by email once we've reviewed your application.",
+            "subtitle": "Three quick questions and your contact details — about 5 minutes. We’ll follow up by email once we’ve reviewed your application.",
             "cta": "Get started"
           },
           "steps": [
             {
-              "stepLabel": "Step 2 of 5",
+              "stepLabel": "Step 1 of 4",
               "eyebrow": "MODERATION & EVENT EXPERIENCE",
               "question": "What experience do you have with organizing, hosting, or moderating events and group discussions?",
               "placeholder": "Share any relevant details, from small meetups to large formats..."
             },
             {
-              "stepLabel": "Step 3 of 5",
+              "stepLabel": "Step 2 of 4",
               "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
               "question": "Which business clubs or communities have you been a member of?",
-              "placeholder": "Tell us what you loved and what you'd improve..."
+              "placeholder": "Name the clubs or communities and your role in them..."
             },
             {
-              "stepLabel": "Step 4 of 5",
+              "stepLabel": "Step 3 of 4",
               "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
               "question": "What worked well there, and what would you do differently?",
               "placeholder": "Tell us what you loved and what you'd improve..."
-            },
-            {
-              "stepLabel": "Step 5 of 5",
-              "eyebrow": "MOTIVATION & FORMATS",
-              "question": "Why do you want to become a Mindsetis Ambassador, and which formats (Brain Lab, Sensession, Chew & Chat, Mastermind) are you most excited to host?",
-              "placeholder": "Share your motivation and vision..."
             }
           ],
+          "details": {
+            "stepLabel": "Step 4 of 4",
+            "eyebrow": "YOUR DETAILS",
+            "title": "Where should we send our reply?",
+            "firstName": {
+              "label": "First name",
+              "placeholder": "Your first name"
+            },
+            "lastName": {
+              "label": "Last name",
+              "placeholder": "Your last name"
+            },
+            "email": {
+              "label": "Email",
+              "placeholder": "you@company.com"
+            },
+            "signedInAs": "We’ll send this application from your account: {name} ({email}).",
+            "privacy": {
+              "before": "By submitting, you agree to our ",
+              "link": "Privacy Policy",
+              "after": "."
+            },
+            "accountExists": {
+              "before": "This email already has an account. ",
+              "link": "Log in",
+              "after": " to apply."
+            }
+          },
           "back": "Back",
           "next": "Next",
           "submit": "Submit application",
+          "submitting": "Submitting…",
+          "error": "We couldn’t submit your application. Please try again.",
           "thanks": {
-            "stepLabel": "Step 5 of 5",
             "eyebrow": "APPLICATION RECEIVED",
             "title": "Thanks — we've got your application.",
-            "body": "We review every Ambassador application by hand and usually follow up within a few business days. We'll email you either way.",
+            "body": "We review every Ambassador application by hand and usually follow up within a few business days. We’ve also sent a confirmation to your email.",
             "cta": "Back to homepage"
           }
         }
@@ -520,7 +545,7 @@
       "resend": "Resend link",
       "resending": "Sending…",
       "resent": "Reset link sent again",
-      "subtitle": "We sent a reset link to {email}. It is valid for 30 minutes.",
+      "subtitle": "We sent a reset link to {email}. It is valid for 1 hour.",
       "title": "Check your email"
     },
     "errors": {
@@ -610,7 +635,15 @@
         "facebook": "Facebook URL",
         "instagram": "Instagram URL",
         "linkedin": "Linkedin URL",
-        "placeholder": "Link",
+        "placeholders": {
+          "website": "yourcompany.com",
+          "linkedin": "linkedin.com/in/username",
+          "instagram": "instagram.com/username",
+          "facebook": "facebook.com/username",
+          "tiktok": "tiktok.com/@username",
+          "threads": "threads.net/@username",
+          "youtube": "youtube.com/@channel"
+        },
         "threads": "Threads URL",
         "tiktok": "Tik-tok URL",
         "website": "Company Website URL",
@@ -637,7 +670,8 @@
       "signUpLink": "Apply to join",
       "submit": "Log in",
       "submitting": "Logging in…",
-      "title": "Welcome back"
+      "title": "Welcome back",
+      "emailNotConfirmed": "Your email {email} isn’t confirmed yet. Click the link we sent you when you signed up, or get a new one:"
     },
     "signUp": {
       "back": "Back",
@@ -745,7 +779,7 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Character limit: {max} characters",
       "editLinkTitle": "Edit link title",
-      "linkPlaceholder": "Link",
+      "linkPlaceholder": "yourwebsite.com/article",
       "linkPreviewLoading": "Loading preview…",
       "removeLink": "Remove link",
       "removeRole": "Remove role",
@@ -956,7 +990,6 @@
           "tooLarge": "Video must be 200MB or smaller.",
           "uploadFailed": "Could not upload your video. Please try again."
         },
-        "linkPlaceholder": "Link",
         "orDivider": "OR",
         "removeVideo": "Remove video",
         "title": "Promo video",
@@ -964,7 +997,9 @@
         "uploading": "Uploading…",
         "uploadLabel": "Upload video",
         "vimeoLabel": "Vimeo URL",
-        "youtubeLabel": "Youtube URL"
+        "vimeoPlaceholder": "vimeo.com/123456789",
+        "youtubeLabel": "Youtube URL",
+        "youtubePlaceholder": "youtube.com/watch?v=…"
       },
       "reelLife": {
         "addPhoto": "Add Photo",
@@ -980,10 +1015,11 @@
         "uploadLabel": "Upload photo"
       },
       "videoBlog": {
-        "linkPlaceholder": "Link",
         "title": "Video blog",
         "vimeoLabel": "Vimeo URL",
-        "youtubeLabel": "Youtube URL"
+        "vimeoPlaceholder": "vimeo.com/123456789",
+        "youtubeLabel": "Youtube URL",
+        "youtubePlaceholder": "youtube.com/watch?v=…"
       },
       "wins": {
         "addWin": "Add win",
@@ -1165,10 +1201,18 @@
     }
   },
   "email": {
+    "ambassadorApplication": {
+      "subject": "We’ve received your Mindsetis Ambassador application",
+      "heading": "Thanks for applying to become a Mindsetis Ambassador",
+      "greeting": "Hi {name},",
+      "greetingGeneric": "Hi there,",
+      "body": "We’ve received your application. Our team reviews every application by hand — we’ll look through yours and get back to you by email within a few business days.",
+      "guestRegister": "One important step: Ambassadors must have a Mindsetis account. Please sign up with this same email address so we can match your account to your application — without an account we can’t move your application forward.",
+      "guestCta": "Create your account"
+    },
     "footer": {
-      "address": "Mindsetis Community",
-      "automated": "This is an automated message — please don't reply directly to this email.",
-      "unsubscribe": "Manage your email preferences"
+      "brand": "Mindsetis Community",
+      "help": "Need help? Write to"
     },
     "passwordReset": {
       "body": "We received a request to reset the password for your Mindsetis Community account. Click the button below to choose a new one.",
@@ -1238,8 +1282,9 @@
           "body": "We'll show you a finished Mindsetter page here, so you can see what yours could look like before you fill anything in."
         },
         "exploreCommunity": {
-          "body": "Browse the whole community and filter it by industry, expertise and location, so you can find the people worth talking to rather than scrolling past everyone else.",
-          "title": "The community catalog is on the way"
+          "body": "You’ll be able to explore our network & events, filter by expertise and format, and find exact matches for your challenges.",
+          "emailPromise": "We’ll send an email to the address you used during registration as soon as it’s ready.",
+          "title": "Network & events directory is coming soon"
         },
         "findEvent": {
           "body": "Community events you can join — some open to every member, some invite-only.",
@@ -1585,7 +1630,7 @@
     "titleRequired": "Title is required.",
     "topicsMax": "You can select up to {max} topics.",
     "topicsRequired": "Select at least one topic.",
-    "urlInvalid": "Enter a valid URL.",
+    "urlInvalid": "Please enter a valid website address (e.g. company.com).",
     "usernameChars": "Use only letters, numbers, and underscores.",
     "usernameMax": "Username must be at most {max} characters.",
     "usernameMin": "Username must be at least {min} characters.",

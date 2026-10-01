@@ -39,6 +39,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      ambassador_applications: {
+        Row: {
+          applicant_type: string
+          communities: string | null
+          communities_feedback: string | null
+          created_at: string
+          email: string
+          event_experience: string | null
+          first_name: string
+          id: string
+          last_name: string
+          locale: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          applicant_type: string
+          communities?: string | null
+          communities_feedback?: string | null
+          created_at?: string
+          email: string
+          event_experience?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          locale?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          applicant_type?: string
+          communities?: string | null
+          communities_feedback?: string | null
+          created_at?: string
+          email?: string
+          event_experience?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          locale?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_slots: {
         Row: {
           created_at: string | null
@@ -870,6 +926,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      email_has_confirmed_account: {
+        Args: { p_email: string }
+        Returns: boolean
+      }
       expire_unverified_access: { Args: never; Returns: undefined }
       industries_valid: { Args: { arr: string[] }; Returns: boolean }
       is_mindsetter: { Args: { uid: string }; Returns: boolean }
@@ -908,6 +968,8 @@ export type Database = {
           created_at: string | null
           file_size_limit: number | null
           id: string
+          lifecycle_configuration: Json | null
+          lifecycle_configuration_generation: string | null
           name: string
           owner: string | null
           owner_id: string | null
@@ -922,6 +984,8 @@ export type Database = {
           created_at?: string | null
           file_size_limit?: number | null
           id: string
+          lifecycle_configuration?: Json | null
+          lifecycle_configuration_generation?: string | null
           name: string
           owner?: string | null
           owner_id?: string | null
@@ -936,6 +1000,8 @@ export type Database = {
           created_at?: string | null
           file_size_limit?: number | null
           id?: string
+          lifecycle_configuration?: Json | null
+          lifecycle_configuration_generation?: string | null
           name?: string
           owner?: string | null
           owner_id?: string | null
@@ -1250,7 +1316,7 @@ export type Database = {
         Returns: string
       }
       get_size_by_bucket: {
-        Args: never
+        Args: { delete_markers?: string; noncurrent_versions?: string }
         Returns: {
           bucket_id: string
           size: number
@@ -1264,6 +1330,7 @@ export type Database = {
           next_key_token?: string
           next_upload_token?: string
           prefix_param: string
+          raw_prefix_param?: string
         }
         Returns: {
           created_at: string
@@ -1274,28 +1341,38 @@ export type Database = {
       list_objects_with_delimiter: {
         Args: {
           _bucket_id: string
+          delete_markers?: string
           delimiter_param: string
           max_keys?: number
           next_token?: string
+          next_token_archived_at?: string
+          next_token_version?: string
+          noncurrent_versions?: string
           prefix_param: string
           sort_order?: string
           start_after?: string
         }
         Returns: {
+          archived_at: string
           created_at: string
           id: string
+          is_delete_marker: boolean
+          is_versioned: boolean
           last_accessed_at: string
           metadata: Json
           name: string
           updated_at: string
+          version: string
         }[]
       }
       operation: { Args: never; Returns: string }
       search: {
         Args: {
           bucketname: string
+          delete_markers?: string
           levels?: number
           limits?: number
+          noncurrent_versions?: string
           offsets?: number
           prefix: string
           search?: string
@@ -1303,16 +1380,22 @@ export type Database = {
           sortorder?: string
         }
         Returns: {
+          archived_at: string
           created_at: string
           id: string
+          is_delete_marker: boolean
+          is_versioned: boolean
           last_accessed_at: string
           metadata: Json
           name: string
           updated_at: string
+          version: string
         }[]
       }
       search_by_timestamp: {
         Args: {
+          delete_markers?: string
+          noncurrent_versions?: string
           p_bucket_id: string
           p_level: number
           p_limit: number
@@ -1321,36 +1404,50 @@ export type Database = {
           p_sort_column_after: string
           p_sort_order: string
           p_start_after: string
+          p_start_after_version?: string
         }
         Returns: {
+          archived_at: string
           created_at: string
           id: string
+          is_delete_marker: boolean
+          is_versioned: boolean
           key: string
           last_accessed_at: string
           metadata: Json
           name: string
           updated_at: string
+          version: string
         }[]
       }
       search_v2: {
         Args: {
           bucket_name: string
+          delete_markers?: string
           levels?: number
           limits?: number
+          noncurrent_versions?: string
           prefix: string
           sort_column?: string
           sort_column_after?: string
           sort_order?: string
           start_after?: string
+          start_after_archived_at?: string
+          start_after_is_continuation?: boolean
+          start_after_version?: string
         }
         Returns: {
+          archived_at: string
           created_at: string
           id: string
+          is_delete_marker: boolean
+          is_versioned: boolean
           key: string
           last_accessed_at: string
           metadata: Json
           name: string
           updated_at: string
+          version: string
         }[]
       }
     }

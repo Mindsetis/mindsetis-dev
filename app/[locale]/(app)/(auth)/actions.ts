@@ -21,6 +21,7 @@ import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
+  SIGN_IN_EMAIL_NOT_CONFIRMED,
   signInSchema,
   signUpSchema,
 } from '@/lib/validation/auth';
@@ -186,6 +187,15 @@ export const signIn = createAction(
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      // An unconfirmed address gets its own answer so the form can offer to resend the
+      // confirmation email instead of a dead-end "invalid" (verification finding, 2026-09-30).
+      // Safe to reveal: GoTrue only reports `email_not_confirmed` AFTER the password matched,
+      // so it tells nothing to someone who doesn't already hold the credentials.
+      if (error.code === 'email_not_confirmed') {
+        throw new ActionError('forbidden', 'Please confirm your email address first.', {
+          _form: [SIGN_IN_EMAIL_NOT_CONFIRMED],
+        });
+      }
       // Don't distinguish "wrong password" from "no such user" (enumeration).
       throw new ActionError('unauthenticated', 'Invalid email or password.');
     }

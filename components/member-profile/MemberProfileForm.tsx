@@ -441,7 +441,7 @@ export function MemberProfileForm({
                   <Input
                     type="url"
                     autoComplete="url"
-                    placeholder={t('memberProfile.socials.placeholder')}
+                    placeholder={t('memberProfile.socials.placeholders.website')}
                     {...field}
                   />
                 </FormControl>
@@ -464,7 +464,7 @@ export function MemberProfileForm({
                     <Input
                       type="url"
                       autoComplete="url"
-                      placeholder={t('memberProfile.socials.placeholder')}
+                      placeholder={t(`memberProfile.socials.placeholders.${social}`)}
                       {...field}
                       value={field.value ?? ''}
                     />

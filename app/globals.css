@@ -32,3 +32,12 @@
 @import './styles/tokens/motion.css';
 
 @import './styles/base.css';
+
+/**
+ * `short:` — tablet-and-up viewports that are LOW rather than narrow: iPad Pro in landscape
+ * (~760–950px of visible height under Safari's toolbars) and short laptop screens. Used to
+ * tighten vertical rhythm where a screen's primary buttons would otherwise fall below the fold
+ * (first user: `/welcome`, client request 2026-09-29). Phones (below 48rem) and portrait tablets
+ * (taller than 1000px) never match, so their layout is untouched.
+ */
+@custom-variant short (@media (min-width: 48rem) and (max-height: 1000px));

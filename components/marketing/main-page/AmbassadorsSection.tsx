@@ -1,8 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 
+import { createClient } from '@/lib/supabase/server';
+
 import {
   type AmbassadorApplicationCopy,
   AmbassadorApplicationDialog,
+  type AmbassadorApplicationViewer,
 } from './AmbassadorApplicationDialog';
 import { type AmbassadorCard, AmbassadorsRegionCarousel } from './AmbassadorsRegionCarousel';
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -83,10 +86,11 @@ const PHOTOS = [
  *
  * "Apply for Ambassadorship" opens `AmbassadorApplicationDialog` (Figma's standalone
  * "Ambassador Application - Steps" frame, `1261:16826`) instead of the `NotYetAvailable`-wrapped
- * disabled stub every other unbuilt CTA on this page uses — STAGE 1.13 explicitly scoped this
- * popup as visual + step-navigation only (no persistence, no backend), so it's real and
- * clickable rather than a placeholder. The trigger button + dialog live together in one client
- * component (parallel to `AmbassadorsRegionCarousel`'s own trigger-lives-with-its-state shape)
+ * disabled stub every other unbuilt CTA on this page uses. Since 2026-09-29 it is a working
+ * application: it saves into `ambassador_applications` and emails a receipt (see the dialog's
+ * own doc comment and `submitAmbassadorApplication`), with `viewer` below deciding whether the
+ * last step asks a guest for contact details or names the signed-in account. The trigger button
+ * + dialog live together in one client component (parallel to `AmbassadorsRegionCarousel`'s own trigger-lives-with-its-state shape)
  * since this RSC has nowhere to hold `open` state itself; every string the dialog needs is
  * fetched here via `getTranslations` and passed down as `copy`, same as `tabs`/`cards` below.
  *
@@ -94,6 +98,30 @@ const PHOTOS = [
  * — this section is illustrative marketing content, matching the visitor-facing/pre-signup
  * framing of the rest of this page, not a feature being built here.
  */
+/**
+ * The signed-in applicant for the popup's "Your details" step — name and email shown in its
+ * "applying as …" line. Display only: `submitAmbassadorApplication` re-reads the session itself
+ * and never trusts this. `null` for a visitor without a session (the guest form is shown).
+ */
+async function resolveApplicationViewer(): Promise<AmbassadorApplicationViewer> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return null;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, last_name')
+    .eq('id', user.id)
+    .maybeSingle();
+  const name = [profile?.full_name, profile?.last_name]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+  return { name: name || user.email, email: user.email };
+}
+
 export async function AmbassadorsSection() {
   const t = await getTranslations('home.main.ambassadors');
   const tabs = t.raw('tabs') as { id: string; label: string }[];
@@ -103,6 +131,7 @@ export async function AmbassadorsSection() {
     photo: PHOTOS[index] ?? PHOTOS[0]!,
   }));
   const applicationCopy = t.raw('application') as AmbassadorApplicationCopy;
+  const viewer = await resolveApplicationViewer();
 
   return (
     <section className="w-full py-16 md:py-20 lg:py-24">
@@ -130,7 +159,11 @@ export async function AmbassadorsSection() {
           </p>
         </div>
         <div className="relative z-10 mt-4 md:mt-8">
-          <AmbassadorApplicationDialog triggerLabel={t('applyCta')} copy={applicationCopy} />
+          <AmbassadorApplicationDialog
+            triggerLabel={t('applyCta')}
+            copy={applicationCopy}
+            viewer={viewer}
+          />
         </div>
       </div>
 

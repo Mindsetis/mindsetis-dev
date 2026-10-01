@@ -252,7 +252,7 @@ const templates = {
     ctaLabel: 'Confirm email',
     url: fromRedirectTo('signup'),
     finePrint:
-      'This link can be used once and expires in 24 hours. If you did not create a Mindsetis Community account, you can safely ignore this email - nothing will happen.',
+      'This link can be used once and expires in 1 hour. If you did not create a Mindsetis Community account, you can safely ignore this email - nothing will happen.',
   },
 
   // Dashboard -> Authentication -> Emails -> Templates -> "Reset password"
@@ -281,7 +281,7 @@ const templates = {
     ctaLabel: 'Confirm new address',
     url: fromSiteUrl('email_change', '/'),
     finePrint:
-      'This link can be used once and expires in 24 hours. If you did not request this change, ignore this email and consider changing your password.',
+      'This link can be used once and expires in 1 hour. If you did not request this change, ignore this email and consider changing your password.',
   },
 
   // Dashboard -> Authentication -> Emails -> Templates -> "Magic link"
@@ -313,7 +313,7 @@ const templates = {
     // ignoring the invite actually buys the reader is that nobody can sign in as them, which
     // is what this now says.
     finePrint:
-      'This invitation can be used once and expires in 24 hours. If you were not expecting it, you can safely ignore this email - without setting a password, nobody can sign in.',
+      'This invitation can be used once and expires in 1 hour. If you were not expecting it, you can safely ignore this email - without setting a password, nobody can sign in.',
   },
 };
 

@@ -4,6 +4,10 @@ import type { ReactElement } from 'react';
 
 import type { EmailLocale, EmailTemplateKey, EmailTemplatePropsMap } from '@/lib/validation/email';
 
+import {
+  AmbassadorApplicationEmail,
+  ambassadorApplicationEmailSubject,
+} from './templates/ambassador-application-email';
 import { GenericEmail, genericEmailSubject } from './templates/generic-email';
 import { PasswordResetEmail, passwordResetEmailSubject } from './templates/password-reset-email';
 import { VerificationEmail, verificationEmailSubject } from './templates/verification-email';
@@ -42,5 +46,9 @@ export const emailTemplateRegistry: { [K in EmailTemplateKey]: EmailTemplateDefi
   welcome: {
     render: (props, locale) => <WelcomeEmail {...props} locale={locale} />,
     subject: (_props, locale) => welcomeEmailSubject(locale),
+  },
+  ambassador_application: {
+    render: (props, locale) => <AmbassadorApplicationEmail {...props} locale={locale} />,
+    subject: (_props, locale) => ambassadorApplicationEmailSubject(locale),
   },
 };

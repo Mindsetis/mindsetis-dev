@@ -18,6 +18,11 @@
   The square PNG siblings (`apple-icon.png`, and the social card in `opengraph-image.png`) are
   raster because their consumers — iOS home screens, social crawlers — do not accept SVG.
 
+  `favicon.ico` (16/32/48) and `icon1.png` (96×96) are raster fallbacks rendered from this file,
+  for browsers that ignore SVG favicons (Safari on iPad showed another site's icon in the tab
+  without them, 2026-09-28). The PNG is numbered because Next keeps only one of two same-named
+  `icon.*` files, which silently dropped this SVG. Regenerate both whenever this mark changes.
+
   NOTE FOR EDITORS: this is an XML comment, so it must never contain a double hyphen. Writing
   the CSS custom property in full here (with its leading dashes) broke the whole file on
   2026-09-23: browsers parse SVG as strict XML, the document failed with "Unexpected token",

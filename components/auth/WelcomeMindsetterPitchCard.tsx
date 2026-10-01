@@ -1,10 +1,12 @@
 import { useTranslations } from 'next-intl';
 
-import { MindsetterArrowIcon } from '@/components/icons/mindsetter-arrow-icon';
-import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
+import { EXAMPLE_PROFILE_URL } from '@/lib/config/example-profile';
 
 const FEATURE_KEYS = ['website', 'sessions', 'growth'] as const;
+
+const SEE_EXAMPLE_CLASSNAME =
+  'font-bold text-primary underline underline-offset-2 hover:text-primary-hover';
 
 /**
  * Dark card on `/welcome` pitching the Mindsetter path — Figma "Frame 657" (`1180:36147`
@@ -25,20 +27,25 @@ const FEATURE_KEYS = ['website', 'sessions', 'growth'] as const;
  * hidden in both exported frames), so it's treated as leftover paste debris and not built, same
  * precedent as the orphan sub-form noted in `WhoIsMindsetterDialog`'s doc comment.
  *
- * "See example" has no real destination anywhere in the codebase (no example-site route) — wrapped
- * in `NotYetAvailable` rather than a dead `<Link href="/">`, same pattern as the other unbuilt CTAs on
- * this screen.
+ * "See example" opens the client's showcase profile in a new tab once `EXAMPLE_PROFILE_URL` is
+ * configured (`lib/config/example-profile.ts`, shared with the Roles step's "See how it looks").
+ * That profile doesn't exist yet, so until then it opens the `NotYetAvailable` dialog rather than
+ * a dead `<Link href="/">`, same pattern as the other unbuilt CTAs on this screen.
+ *
+ * Since 2026-09-29 (client request, to free up space) "See example" is an inline link at the end of
+ * the feature's own sentence instead of the Figma button with the arrow badge below it — same
+ * dialog, one line shorter card.
  */
 export function WelcomeMindsetterPitchCard() {
   const t = useTranslations('auth.welcome.mindsetterPitch');
 
   return (
-    <div className="flex flex-col gap-4 rounded-3xl bg-card p-4 md:gap-5 md:p-8">
+    <div className="flex flex-col gap-4 rounded-3xl bg-card p-4 md:gap-5 md:p-8 short:gap-4 short:p-6">
       <h2 className="bg-[image:var(--gradient-primary)] bg-clip-text font-display text-[24px] leading-none text-transparent md:text-[32px]">
         {t('heading')}
       </h2>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 short:gap-3">
         {FEATURE_KEYS.map((key) => (
           <div key={key} className="flex flex-col gap-3">
             <div className="flex flex-col gap-0">
@@ -47,23 +54,27 @@ export function WelcomeMindsetterPitchCard() {
               </h3>
               <p className="text-base font-medium text-muted-foreground">
                 {t(`features.${key}.body`)}
+                {key === 'website' ? (
+                  <>
+                    {' '}
+                    {EXAMPLE_PROFILE_URL ? (
+                      <a
+                        href={EXAMPLE_PROFILE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={SEE_EXAMPLE_CLASSNAME}
+                      >
+                        {t('features.website.cta')}
+                      </a>
+                    ) : (
+                      <NotYetAvailable feature="exampleProfile" className="inline align-baseline">
+                        <span className={SEE_EXAMPLE_CLASSNAME}>{t('features.website.cta')}</span>
+                      </NotYetAvailable>
+                    )}
+                  </>
+                ) : null}
               </p>
             </div>
-
-            {key === 'website' && (
-              <NotYetAvailable feature="exampleProfile" className="w-fit">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled
-                  className="h-auto px-4 py-3"
-                >
-                  {t('features.website.cta')}
-                  <MindsetterArrowIcon disabled />
-                </Button>
-              </NotYetAvailable>
-            )}
           </div>
         ))}
       </div>

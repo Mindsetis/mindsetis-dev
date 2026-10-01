@@ -14,6 +14,7 @@ import { isSupportedVideoUrl } from '@/lib/video-embed';
 
 import { isLatinOnly, LATIN_ONLY_MESSAGE } from './common';
 import { vmsg } from './messages';
+import { webUrlSchema } from './url';
 
 // -----------------------------------------------------------------------------------------
 // Step "Your roles" — stored as `mindsetter_profiles.roles` jsonb (migrated text[] -> jsonb
@@ -65,12 +66,9 @@ function isHttpUrl(value: string): boolean {
 export const MAX_ROLE_LINK_TITLE_LENGTH = 200;
 
 export const roleLinkSchema = z.object({
-  url: z
-    .string()
-    .trim()
-    .min(1, vmsg('urlInvalid'))
-    .url(vmsg('urlInvalid'))
-    .refine(isHttpUrl, 'must be http(s)'),
+  // Typed by the member, so the scheme is optional (`./url` prepends `https://`); the stored value
+  // is still always an absolute http(s) URL, which is what `isHttpUrl` guarded here before.
+  url: z.string().trim().min(1, vmsg('urlInvalid')).pipe(webUrlSchema()),
   /**
    * The link's display label — seeded by the scraper, then EDITABLE by the member (pencil on
    * the preview row, `RolesForm.tsx`). It is what the public profile renders instead of a
@@ -100,7 +98,7 @@ export type RoleLink = z.infer<typeof roleLinkSchema>;
  * (`RolesForm.tsx`); the preview fields above are never client input, only ever the action's
  * OUTPUT. */
 export const roleLinkPreviewRequestSchema = z.object({
-  url: z.string().trim().min(1, vmsg('urlInvalid')).url(vmsg('urlInvalid')),
+  url: z.string().trim().min(1, vmsg('urlInvalid')).pipe(webUrlSchema()),
 });
 
 export type RoleLinkPreviewRequest = z.infer<typeof roleLinkPreviewRequestSchema>;
@@ -543,26 +541,14 @@ function urlHostMatches(value: string, hosts: readonly string[]): boolean {
  * iframe on the public profile. `parseVideoUrl` additionally requires a well-formed video id in a
  * recognised path shape (`/watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, `/live/`).
  */
-const youtubeUrlField = z.union([
-  z.literal(''),
-  z
-    .string()
-    .trim()
-    .url(vmsg('urlInvalid'))
-    .refine((value) => urlHostMatches(value, YOUTUBE_HOSTS), vmsg('youtubeHost'))
-    .refine((value) => isSupportedVideoUrl(value), vmsg('youtubeVideo')),
-]);
+const youtubeUrlField = webUrlSchema({ allowEmpty: true })
+  .refine((value) => !value || urlHostMatches(value, YOUTUBE_HOSTS), vmsg('youtubeHost'))
+  .refine((value) => !value || isSupportedVideoUrl(value), vmsg('youtubeVideo'));
 
 /** Optional "Vimeo URL" field — empty, or a link to a single Vimeo video. Same reasoning. */
-const vimeoUrlField = z.union([
-  z.literal(''),
-  z
-    .string()
-    .trim()
-    .url(vmsg('urlInvalid'))
-    .refine((value) => urlHostMatches(value, VIMEO_HOSTS), vmsg('vimeoHost'))
-    .refine((value) => isSupportedVideoUrl(value), vmsg('vimeoVideo')),
-]);
+const vimeoUrlField = webUrlSchema({ allowEmpty: true })
+  .refine((value) => !value || urlHostMatches(value, VIMEO_HOSTS), vmsg('vimeoHost'))
+  .refine((value) => !value || isSupportedVideoUrl(value), vmsg('vimeoVideo'));
 
 /**
  * Promo video — LINK ONLY (YouTube / Vimeo).

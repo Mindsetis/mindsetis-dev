@@ -14,6 +14,7 @@
     "createEvent": "Crear evento",
     "editProfile": "Editar perfil",
     "exploreCommunity": "Explorar comunidad",
+    "exploreMindsetis": "Explorar Mindsetis",
     "join": "Solicitar unirse",
     "joinShort": "Unirse",
     "login": "Entrar",
@@ -155,10 +156,11 @@
         "searchCta": "Buscar",
         "popularLabel": "BÚSQUEDAS POPULARES",
         "popularSearches": [
-          "Conseguir mis primeros clientes de pago",
-          "Levantar una ronda seed",
-          "Levantar una ronda seed",
-          "Levantar una ronda seed"
+          "Escalado y expansión",
+          "Alianzas",
+          "Captación de fondos",
+          "Contratación",
+          "Gestión de crisis"
         ]
       },
       "topMindsetters": {
@@ -345,43 +347,66 @@
           "intro": {
             "eyebrow": "EMBAJADORES DE MINDSETIS",
             "title": "Postúlate para moderar eventos y representar a Mindsetis en tu ciudad o en todo el mundo.",
-            "subtitle": "Tres preguntas rápidas — unos 5 minutos. Te escribiremos por email en cuanto revisemos tu solicitud.",
+            "subtitle": "Tres preguntas rápidas y tus datos de contacto — unos 5 minutos. Te escribiremos por email en cuanto revisemos tu solicitud.",
             "cta": "Empezar"
           },
           "steps": [
             {
-              "stepLabel": "Paso 2 de 5",
+              "stepLabel": "Paso 1 de 4",
               "eyebrow": "EXPERIENCIA EN MODERACIÓN Y EVENTOS",
               "question": "¿Qué experiencia tienes organizando, presentando o moderando eventos y debates en grupo?",
               "placeholder": "Comparte cualquier detalle relevante, desde meetups pequeños hasta grandes formatos..."
             },
             {
-              "stepLabel": "Paso 3 de 5",
+              "stepLabel": "Paso 2 de 4",
               "eyebrow": "EXPERIENCIA EN COMUNIDADES Y CLUBES DE NEGOCIOS",
               "question": "¿De qué clubes de negocios o comunidades has sido miembro?",
-              "placeholder": "Cuéntanos qué te encantó y qué mejorarías..."
+              "placeholder": "Menciona los clubes o comunidades y tu papel en ellos..."
             },
             {
-              "stepLabel": "Paso 4 de 5",
+              "stepLabel": "Paso 3 de 4",
               "eyebrow": "EXPERIENCIA EN COMUNIDADES Y CLUBES DE NEGOCIOS",
               "question": "¿Qué funcionó bien allí y qué harías diferente?",
               "placeholder": "Cuéntanos qué te encantó y qué mejorarías..."
-            },
-            {
-              "stepLabel": "Paso 5 de 5",
-              "eyebrow": "MOTIVACIÓN Y FORMATOS",
-              "question": "¿Por qué quieres ser Embajador de Mindsetis y qué formatos (Brain Lab, Sensession, Chew & Chat, Mastermind) te entusiasma más organizar?",
-              "placeholder": "Comparte tu motivación y tu visión..."
             }
           ],
+          "details": {
+            "stepLabel": "Paso 4 de 4",
+            "eyebrow": "TUS DATOS",
+            "title": "¿Dónde te enviamos nuestra respuesta?",
+            "firstName": {
+              "label": "Nombre",
+              "placeholder": "Tu nombre"
+            },
+            "lastName": {
+              "label": "Apellido",
+              "placeholder": "Tu apellido"
+            },
+            "email": {
+              "label": "Email",
+              "placeholder": "tu@empresa.com"
+            },
+            "signedInAs": "Enviaremos esta solicitud desde tu cuenta: {name} ({email}).",
+            "privacy": {
+              "before": "Al enviar, aceptas nuestra ",
+              "link": "Política de privacidad",
+              "after": "."
+            },
+            "accountExists": {
+              "before": "Este email ya tiene una cuenta. ",
+              "link": "Inicia sesión",
+              "after": " para postularte."
+            }
+          },
           "back": "Atrás",
           "next": "Siguiente",
           "submit": "Enviar solicitud",
+          "submitting": "Enviando…",
+          "error": "No pudimos enviar tu solicitud. Inténtalo de nuevo.",
           "thanks": {
-            "stepLabel": "Paso 5 de 5",
             "eyebrow": "SOLICITUD RECIBIDA",
             "title": "Gracias, ya tenemos tu solicitud.",
-            "body": "Revisamos a mano cada solicitud de Embajador y solemos responder en unos días hábiles. Te escribiremos por email en cualquier caso.",
+            "body": "Revisamos a mano cada solicitud de Embajador y solemos responder en unos días hábiles. También te hemos enviado una confirmación por email.",
             "cta": "Volver al inicio"
           }
         }
@@ -520,7 +545,7 @@
       "resend": "Reenviar enlace",
       "resending": "Enviando…",
       "resent": "Enlace enviado de nuevo",
-      "subtitle": "Enviamos un enlace a {email}. Es válido durante 30 minutos.",
+      "subtitle": "Enviamos un enlace a {email}. Es válido durante 1 hora.",
       "title": "Revisa tu correo"
     },
     "errors": {
@@ -610,7 +635,15 @@
         "facebook": "URL de Facebook",
         "instagram": "URL de Instagram",
         "linkedin": "URL de Linkedin",
-        "placeholder": "Enlace",
+        "placeholders": {
+          "website": "tuempresa.com",
+          "linkedin": "linkedin.com/in/usuario",
+          "instagram": "instagram.com/usuario",
+          "facebook": "facebook.com/usuario",
+          "tiktok": "tiktok.com/@usuario",
+          "threads": "threads.net/@usuario",
+          "youtube": "youtube.com/@canal"
+        },
         "threads": "URL de Threads",
         "tiktok": "URL de Tik-tok",
         "website": "URL del sitio web de la empresa",
@@ -637,7 +670,8 @@
       "signUpLink": "Solicita unirte",
       "submit": "Iniciar sesión",
       "submitting": "Iniciando sesión…",
-      "title": "Bienvenido de nuevo"
+      "title": "Bienvenido de nuevo",
+      "emailNotConfirmed": "Tu email {email} aún no está confirmado. Haz clic en el enlace que te enviamos al registrarte o pide uno nuevo:"
     },
     "signUp": {
       "back": "Atrás",
@@ -745,7 +779,7 @@
       "descriptionLabel": "Descripción",
       "descriptionPlaceholder": "Límite de caracteres: {max} caracteres",
       "editLinkTitle": "Editar título del enlace",
-      "linkPlaceholder": "Enlace",
+      "linkPlaceholder": "tusitio.com/articulo",
       "linkPreviewLoading": "Cargando vista previa…",
       "removeLink": "Quitar enlace",
       "removeRole": "Quitar rol",
@@ -956,7 +990,6 @@
           "tooLarge": "El video debe pesar 200MB o menos.",
           "uploadFailed": "No se pudo subir tu video. Inténtalo de nuevo."
         },
-        "linkPlaceholder": "Enlace",
         "orDivider": "O",
         "removeVideo": "Quitar video",
         "title": "Video promocional",
@@ -964,7 +997,9 @@
         "uploading": "Subiendo…",
         "uploadLabel": "Subir video",
         "vimeoLabel": "URL de Vimeo",
-        "youtubeLabel": "URL de Youtube"
+        "vimeoPlaceholder": "vimeo.com/123456789",
+        "youtubeLabel": "URL de Youtube",
+        "youtubePlaceholder": "youtube.com/watch?v=…"
       },
       "reelLife": {
         "addPhoto": "Añadir foto",
@@ -980,10 +1015,11 @@
         "uploadLabel": "Subir foto"
       },
       "videoBlog": {
-        "linkPlaceholder": "Enlace",
         "title": "Video blog",
         "vimeoLabel": "URL de Vimeo",
-        "youtubeLabel": "URL de Youtube"
+        "vimeoPlaceholder": "vimeo.com/123456789",
+        "youtubeLabel": "URL de Youtube",
+        "youtubePlaceholder": "youtube.com/watch?v=…"
       },
       "wins": {
         "addWin": "Añadir logro",
@@ -1165,10 +1201,18 @@
     }
   },
   "email": {
+    "ambassadorApplication": {
+      "subject": "Hemos recibido tu solicitud de Embajador de Mindsetis",
+      "heading": "Gracias por postularte como Embajador de Mindsetis",
+      "greeting": "Hola {name},",
+      "greetingGeneric": "Hola,",
+      "body": "Hemos recibido tu solicitud. Nuestro equipo revisa cada solicitud a mano: revisaremos la tuya y te responderemos por email en unos días hábiles.",
+      "guestRegister": "Un paso importante: los Embajadores deben tener una cuenta en Mindsetis. Regístrate con esta misma dirección de email para que podamos vincular tu cuenta con tu solicitud; sin una cuenta no podemos avanzar con tu solicitud.",
+      "guestCta": "Crear tu cuenta"
+    },
     "footer": {
-      "address": "Mindsetis Community",
-      "automated": "Este es un mensaje automático — no respondas directamente a este correo.",
-      "unsubscribe": "Gestiona tus preferencias de correo"
+      "brand": "Mindsetis Community",
+      "help": "¿Necesitas ayuda? Escríbenos a"
     },
     "passwordReset": {
       "body": "Recibimos una solicitud para restablecer la contraseña de tu cuenta de Mindsetis Community. Haz clic en el botón de abajo para elegir una nueva.",
@@ -1238,8 +1282,9 @@
           "body": "Aquí te mostraremos una página de Mindsetter ya terminada, para que veas cómo podría quedar la tuya antes de rellenar nada."
         },
         "exploreCommunity": {
-          "body": "Explora toda la comunidad y fíltrala por sector, experiencia y ubicación, para encontrar a las personas que te interesan sin recorrer al resto.",
-          "title": "El catálogo de la comunidad está en camino"
+          "body": "Podrás explorar nuestra red y nuestros eventos, filtrar por experiencia y formato, y encontrar a las personas exactas para tus retos.",
+          "emailPromise": "Te enviaremos un email a la dirección que usaste al registrarte en cuanto esté listo.",
+          "title": "El directorio de la red y los eventos llegará pronto"
         },
         "findEvent": {
           "body": "Eventos de la comunidad a los que puedes unirte: algunos abiertos a todos los miembros, otros solo por invitación.",
@@ -1585,7 +1630,7 @@
     "titleRequired": "El título es obligatorio.",
     "topicsMax": "Puedes seleccionar hasta {max} temas.",
     "topicsRequired": "Selecciona al menos un tema.",
-    "urlInvalid": "Introduce una URL válida.",
+    "urlInvalid": "Introduce una dirección web válida (p. ej., empresa.com).",
     "usernameChars": "Usa solo letras, números y guiones bajos.",
     "usernameMax": "El nombre de usuario no puede superar los {max} caracteres.",
     "usernameMin": "El nombre de usuario debe tener al menos {min} caracteres.",

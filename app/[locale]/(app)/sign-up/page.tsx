@@ -38,9 +38,6 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
 
   const { email } = await searchParams;
   const parsedEmail = emailSchema.safeParse(email);
-  // The onboarding tour is a popup now, not a page (reworked 2026-07-18) — "Back" just
-  // returns to the homepage it was opened from, rather than reopening that popup.
-  const backHref = '/';
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
@@ -48,7 +45,6 @@ export default async function SignUpPage({ params, searchParams }: SignUpPagePro
           desktop Back is absolutely pinned to that left edge while the step bar is centered
           over the form and spans the form width; on mobile the bar renders above Back. */}
       <RegistrationStepHeader
-        backHref={backHref}
         step={1}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 1, total: TOTAL_STEPS })}

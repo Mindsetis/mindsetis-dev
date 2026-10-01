@@ -1,6 +1,17 @@
 import 'server-only';
 
-import { Body, Button, Container, Head, Hr, Html, Preview, Text } from '@react-email/components';
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Hr,
+  Html,
+  Img,
+  Link,
+  Preview,
+  Text,
+} from '@react-email/components';
 import type { ReactNode } from 'react';
 
 import type { EmailTranslator } from '@/lib/email/i18n';
@@ -22,6 +33,25 @@ const colors = {
   border: '#333333',
 } as const;
 
+const FONT = 'Manrope, Helvetica, Arial, sans-serif';
+
+/**
+ * Brand chrome shared with the Supabase Auth emails (`supabase/templates/build.mjs`, which keeps
+ * its own dependency-free copy of these values — change both together). Both mail streams must
+ * read as one product (client request, 2026-09-29: the queue emails still had a plain-text
+ * wordmark and a different footer after the auth ones got the logo).
+ *
+ * The logo lives in Supabase Storage with a content-hashed name: an email image needs a public
+ * absolute URL, and mail proxies cache hard, so a new artwork means a new filename. 600×81 file
+ * rendered at 300 wide (2× for retina).
+ */
+const LOGO = {
+  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png',
+  width: 300,
+  height: 41,
+} as const;
+const SUPPORT_EMAIL = 'support@mindsetis.com';
+
 export interface BaseLayoutProps {
   /** Shown as the inbox preview snippet; not rendered in the body. */
   previewText: string;
@@ -39,14 +69,18 @@ export interface BaseLayoutProps {
 export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
   return (
     <Html>
-      <Head />
+      <Head>
+        {/* Dark by design — tell clients so they don't invert it a second time. */}
+        <meta name="color-scheme" content="dark" />
+        <meta name="supported-color-schemes" content="dark" />
+      </Head>
       <Preview>{previewText}</Preview>
       <Body
         style={{
           backgroundColor: colors.background,
           margin: 0,
           padding: '32px 16px',
-          fontFamily: 'Manrope, Helvetica, Arial, sans-serif',
+          fontFamily: FONT,
         }}
       >
         <Container
@@ -58,28 +92,40 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
             margin: '0 auto',
           }}
         >
-          <Text
+          {/* Alt text styled as the old wordmark: many readers have images blocked by default,
+              and for them this line IS the header. */}
+          <Img
+            src={LOGO.url}
+            width={LOGO.width}
+            height={LOGO.height}
+            alt="Mindsetis"
             style={{
+              display: 'block',
+              border: 0,
+              width: LOGO.width,
+              height: 'auto',
+              maxWidth: '100%',
+              margin: '0 0 32px',
               color: colors.primary,
+              fontFamily: FONT,
               fontSize: 20,
               fontWeight: 700,
               letterSpacing: 0.5,
-              margin: '0 0 32px',
             }}
-          >
-            Mindsetis Community
-          </Text>
+          />
 
           {children}
 
           <Hr style={{ borderColor: colors.border, margin: '32px 0 16px' }} />
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: '18px', margin: 0 }}>
-            {t('footer.automated')}
-          </Text>
-          <Text
-            style={{ color: colors.muted, fontSize: 12, lineHeight: '18px', margin: '4px 0 0' }}
-          >
-            {t('footer.address')} · {t('footer.unsubscribe')}
+            {t('footer.brand')} · {t('footer.help')}{' '}
+            <Link
+              href={`mailto:${SUPPORT_EMAIL}`}
+              style={{ color: colors.muted, textDecoration: 'underline' }}
+            >
+              {SUPPORT_EMAIL}
+            </Link>
+            .
           </Text>
         </Container>
       </Body>
@@ -110,7 +156,13 @@ export function EmailButton({ href, children }: { href: string; children: ReactN
 
 /** Shared text styles for template body copy (heading/paragraph/fine-print). */
 export const textStyles = {
-  heading: { color: colors.foreground, fontSize: 24, fontWeight: 400, margin: '0 0 16px' },
+  heading: {
+    color: colors.foreground,
+    fontSize: 24,
+    fontWeight: 400,
+    lineHeight: '32px',
+    margin: '0 0 16px',
+  },
   body: { color: colors.foreground, fontSize: 16, lineHeight: '24px', margin: '0 0 16px' },
   fine: { color: colors.muted, fontSize: 13, lineHeight: '20px', margin: '24px 0 0' },
 } as const;

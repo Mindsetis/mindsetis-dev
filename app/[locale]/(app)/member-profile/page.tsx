@@ -110,7 +110,6 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
       {/* Same Back + progress-bar layout as sign-up's step 1 (see that page's comment for
           why Back is pinned to the logo's left edge on desktop but above it on mobile). */}
       <RegistrationStepHeader
-        backHref="/verify-email"
         step={3}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 3, total: TOTAL_STEPS })}

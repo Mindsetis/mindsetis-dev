@@ -63,7 +63,6 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       <RegistrationStepHeader
-        backHref="/sign-up"
         step={2}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}

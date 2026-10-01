@@ -41,8 +41,9 @@ const PHOTOS = [
  * scroll (Superpower(s)/REEL LIFE) — this section's cards are uniform width like the former
  * group, so the same per-card paging reads correctly here too.
  *
- * "Find your mindsetter" links to `/mindsetters` — the one real catalog route that exists today.
- * Individual cards are NOT linked to a profile: the four cards' identical placeholder content
+ * "Find your mindsetter" opens the catalog `NotYetAvailable` popup (`exploreCommunity`, shared
+ * with the hero's "Explore Community" and the video's "Explore Mindsetis") — there is no catalog
+ * route yet (`/mindsetters` itself 404s; only `/mindsetters/[username]` exists). Individual cards are NOT linked to a profile: the four cards' identical placeholder content
  * doesn't correspond to any real user, so linking to `/mindsetters/[username]` would 404.
  *
  * The "Verified" pill is sized by an explicit `h-6` (24px) rather than by its own padding:

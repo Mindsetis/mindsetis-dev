@@ -75,10 +75,11 @@
  *   baked-in halo turning up its brightness", not an unrelated color appearing. Opacity idles at
  *   0 (invisible, matching the avatar's static baked-in halo) and animates up to 1 at the
  *   midpoint.
- * - `hero-map-avatar-pulse-scale` — `scale(1 → 1.12 → 1)`. Started at 4% (H2's brief asked for a
+ * - `hero-map-avatar-pulse-scale` — `scale(1 → 1.2 → 1)`. Started at 4% (H2's brief asked for a
  *   3–5% budget), raised to 12% on the owner's call (2026-09-20) once the glow was pulled in
  *   tight: with less light spilling around the photo, the movement has to carry the effect, and
- *   4% was invisible at the avatars' real on-screen size. Eased both ways, so it still reads as
+ *   4% was invisible at the avatars' real on-screen size. Raised again to 20% (client request,
+ *   2026-09-29) to make the pulse more noticeable. Eased both ways, so it still reads as
  *   breathing rather than a jump. Applied to
  *   the avatar `<img>` alone, never combined with the `translate(-50%, -50%)` centering transform
  *   (which lives on the wrapper `<span>` one level up) — animating `transform` here would
@@ -98,19 +99,40 @@
   0%,
   100% {
     transform: scale(1);
+    box-shadow: var(--hero-map-avatar-shadow);
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.2);
+    box-shadow: var(--hero-map-avatar-shadow-peak);
   }
+}
+
+/**
+ * `hero-map-avatar-photo` — the avatar photo itself, with the Figma "shadow" effect style drawn in
+ * CSS (client request, 2026-09-29) instead of baked into the file: `DROP_SHADOW`, rgba(111, 186,
+ * 237, 0.8), 0/4px offset, 12.3px blur, no spread — identical for every avatar, and a FIXED px
+ * blur whatever the avatar's size, exactly like Figma. The files are square crops with faint halo
+ * remnants in their corners, so `border-radius: 50%` clips them to the circle the shadow follows.
+ *
+ * The pulse (`hero-map-avatar-pulse-scale` above) animates this shadow too: at the peak it spreads
+ * and brightens (`--hero-map-avatar-shadow-peak`) while the photo grows, then settles back — the
+ * glow breathes with the avatar instead of just scaling along with it. Reduced motion keeps the
+ * static Figma shadow.
+ */
+@utility hero-map-avatar-photo {
+  --hero-map-avatar-shadow: 0 4px 12.3px rgba(111, 186, 237, 0.8);
+  --hero-map-avatar-shadow-peak: 0 4px 22px 4px rgba(111, 186, 237, 0.95);
+  border-radius: 9999px;
+  box-shadow: var(--hero-map-avatar-shadow);
 }
 
 @utility hero-map-avatar-glow {
   position: absolute;
   /* NO BACKGROUND (owner's call, 2026-09-20). This layer started as a cyan `radial-gradient` that
-     brightened on the beat, tightened twice (-35% → -12% → -5%) and then dropped entirely: every
-     avatar file already carries its own halo, baked in from the Figma drop-shadow, so a second
-     painted glow on top of it only thickened that ring. The pulse is now carried by the scale
-     animation alone. The element stays (inert, zero-size-agnostic) so the timing plumbing and the
+     brightened on the beat, tightened twice (-35% → -12% → -5%) and then dropped entirely: the
+     avatar already had its own halo (baked into the file then, a CSS box-shadow on the photo since
+     2026-09-29 — see `hero-map-avatar-photo`), so a second painted glow only thickened that ring.
+     The pulse is carried by the photo's scale + shadow animation. The element stays (inert, zero-size-agnostic) so the timing plumbing and the
      reduced-motion contract are in one place if a glow is ever wanted again. */
   inset: -5%;
   border-radius: 9999px;
@@ -119,10 +141,47 @@
   animation: hero-map-avatar-pulse-glow var(--pulse-duration, 3.6s) ease-in-out infinite;
   animation-delay: var(--pulse-delay, 0s);
 
-  /* Fully invisible — matches every other (non-pulsing) avatar's static baked-in halo. */
+  /* Fully invisible — the photo's own static CSS glow is what shows. */
   @media (prefers-reduced-motion: reduce) {
     animation: none;
     opacity: 0;
+  }
+}
+
+/**
+ * `hero-map-avatar-appear` — entrance for each person on the hero map (client request,
+ * 2026-09-29): hidden until its photo has loaded (`HeroMapAvatar` sets `data-loaded`), then it
+ * pops in — fade + grow from nothing with an overshoot — at its own `--appear-delay` and
+ * `--appear-duration` (scattered per avatar by `getHeroMapAppearStyle`, for the chaotic burst the
+ * client picked over an ordered wave). Animates the individual `scale` property, NOT
+ * `transform`: the wrapper's inline `translate(-50%, -50%)` centering lives on `transform`, and
+ * the photo's idle pulse animates `transform` on the `<img>` inside — `scale` composes with
+ * both instead of overwriting either. Reduced motion: shown as soon as it has loaded, no motion.
+ */
+@utility hero-map-avatar-appear {
+  opacity: 0;
+
+  &[data-loaded] {
+    animation: hero-map-avatar-appear var(--appear-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1)
+      var(--appear-delay, 0s) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-loaded] {
+      animation: none;
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes hero-map-avatar-appear {
+  from {
+    opacity: 0;
+    scale: 0;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
   }
 }
 

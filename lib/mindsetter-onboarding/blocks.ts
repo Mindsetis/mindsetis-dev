@@ -104,6 +104,11 @@ export function parseBlocksParam(searchParams: BlocksSearchParams): {
  */
 export function nextBlockHref(blocks: readonly BlockSlug[], index: number): string {
   const nextIndex = index + 1;
-  if (nextIndex >= blocks.length) return CONGRATS_ROUTE;
+  // The picked blocks ride along to Congrats so its Back can return to the LAST block rather than
+  // to the picker (client request, 2026-09-29: Back steps through the wizard). `i` is omitted —
+  // Congrats derives "last" itself.
+  if (nextIndex >= blocks.length) {
+    return `${CONGRATS_ROUTE}?${new URLSearchParams({ blocks: blocks.join(',') }).toString()}`;
+  }
   return buildBlockHref(blocks, nextIndex);
 }

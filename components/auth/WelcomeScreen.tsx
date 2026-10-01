@@ -41,16 +41,27 @@ export function WelcomeScreen({ username }: { username: string | null }) {
 
           `brDesktop` is `hidden md:block` — phase 1's heading is 3 lines on desktop but 2 on
           mobile (confirmed via the raw Figma text data). Phase 2's copy has no such split, so it
-          only uses `br`; passing an unused tag to `t.rich` is harmless. */}
-      <h1 className="font-display text-h1 text-foreground md:text-h3">
+          only uses `br`; passing an unused tag to `t.rich` is harmless.
+
+          `short:` (low viewports — iPad Pro landscape, client request 2026-09-29) drops the forced
+          breaks and the size to 36px so the heading wraps naturally onto two lines, one of the
+          savings that keeps the buttons above the fold there. */}
+      <h1 className="font-display text-h1 text-foreground md:text-h3 short:text-[36px]">
         {t.rich(continuedAsMember ? 'memberTitle' : 'title', {
           accent: (chunks) => (
             <span className="bg-[linear-gradient(91.2deg,#c3e4fa_1.66%,#79b9e3_50.18%,#21b8e6_99.72%)] bg-clip-text text-transparent">
               {chunks}
             </span>
           ),
-          brDesktop: () => <br className="hidden md:block" />,
-          br: () => <br />,
+          brDesktop: () => <br className="hidden md:block short:hidden" />,
+          // The copy has no space around `<br>` ("application<br>has"), so where the break is
+          // dropped a space has to stand in for it.
+          br: () => (
+            <>
+              <br className="short:hidden" />
+              <span className="hidden short:inline"> </span>
+            </>
+          ),
         })}
       </h1>
 

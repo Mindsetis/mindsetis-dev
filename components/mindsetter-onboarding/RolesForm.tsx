@@ -51,6 +51,7 @@ import {
   type RolesStepInput,
   rolesStepSchema,
 } from '@/lib/validation/mindsetter';
+import { isWebUrl, normalizeWebUrl } from '@/lib/validation/url';
 
 type RolesFormProps = {
   /** Cabinet section-editor mode: swaps "Save & Continue" for "Back" + "Save & Next".
@@ -94,29 +95,21 @@ function RemoveLinkIcon() {
   );
 }
 
-/** `true` only for a string that `fetchRoleLinkPreview` could plausibly fetch (http/https,
- * well-formed) — anything else (empty, `javascript:`, malformed) never triggers a server round
- * trip, mirroring the SSRF guard's own protocol allow-list in `lib/link-preview.ts` (that guard
- * still re-checks server-side; this is purely a client-side "don't bother calling" short-circuit,
- * not a security boundary). */
+/** `true` only for a string that `fetchRoleLinkPreview` could plausibly fetch — a web address,
+ * scheme optional (`medfuture.ua` counts, see `lib/validation/url.ts`). Anything else (empty,
+ * `javascript:`, malformed) never triggers a server round trip, mirroring the SSRF guard's own
+ * protocol allow-list in `lib/link-preview.ts` (that guard still re-checks server-side; this is
+ * purely a client-side "don't bother calling" short-circuit, not a security boundary). */
 function isFetchableUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  return isWebUrl(normalizeWebUrl(value));
 }
 
 /** Best-effort hostname for the "no og:title yet — fall back to the domain" preview-card state
  * (product decision: never show a raw/invalid URL as the fallback title). `null` when `value`
- * isn't parseable as a URL at all. */
+ * isn't a web address at all. */
 function getHostname(value: string): string | null {
-  try {
-    return new URL(value).hostname;
-  } catch {
-    return null;
-  }
+  const url = normalizeWebUrl(value);
+  return isWebUrl(url) ? new URL(url).hostname : null;
 }
 
 /**
@@ -297,7 +290,7 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
   useEffect(() => {
     for (const linkField of linkFields) {
       if (!(linkField.id in fetchedUrlByLinkId.current)) {
-        fetchedUrlByLinkId.current[linkField.id] = (linkField.url ?? '').trim();
+        fetchedUrlByLinkId.current[linkField.id] = normalizeWebUrl(linkField.url ?? '');
       }
     }
   }, [linkFields]);
@@ -325,7 +318,7 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
    * from whatever it was when that preview was fetched (product decision: don't wait for blur to
    * drop a stale card), without waiting for `handleLinkBlur` to actually re-fetch. */
   function handleLinkUrlChange(linkIndex: number, fieldId: string, rawValue: string) {
-    const trimmed = rawValue.trim();
+    const trimmed = normalizeWebUrl(rawValue);
     if (fetchedUrlByLinkId.current[fieldId] === trimmed) return;
     clearLinkPreview(linkIndex);
   }
@@ -334,7 +327,7 @@ function RoleCard({ control, index, onRemove, id, draggable }: RoleCardProps) {
    * non-empty, fetchable-looking URL that's genuinely different from what was last fetched. */
   async function handleLinkBlur(linkIndex: number, fieldId: string) {
     const link = getValues(`roles.${index}.links.${linkIndex}`);
-    const url = link?.url?.trim();
+    const url = normalizeWebUrl(link?.url ?? '');
     if (!url || !isFetchableUrl(url)) return;
     if (fetchedUrlByLinkId.current[fieldId] === url) return;
 
@@ -600,10 +593,10 @@ export function RolesForm({ initialRoles, editMode, nextHref }: RolesFormProps) 
 
   const { fields, append, remove, move } = useFieldArray({ control: form.control, name: 'roles' });
 
-  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
-  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
-  // the cabinet's exit guard (see that hook's own doc comment).
-  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19) in
+  // both modes: since 2026-09-29 the wizard has a bottom "Back" of its own, which should ask
+  // before dropping an edited step just like the cabinet's (see that hook's own doc comment).
+  useSectionDirtyGuard(form.formState.isDirty);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);

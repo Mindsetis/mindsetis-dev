@@ -1,7 +1,6 @@
-import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 
 type BlockShellProps = {
   /** Previous picked block (`buildBlockHref(blocks, index - 1)`), or back to the "Make your
@@ -22,7 +21,7 @@ type BlockShellProps = {
  * Shared chrome for the "optional block" screens (onboarding doc section 7, ROADMAP stage 1.9).
  * These run AFTER the core wizard, so they deliberately do NOT reuse `RegistrationProgress`
  * (product decision D5: no step/block counters anywhere in this flow, matching Figma) — but the
- * Back link itself now matches every other onboarding step exactly: `RegistrationBackLink` in
+ * Back control now lives in the form's bottom row via `OnboardingBack` (2026-09-29). Before that it was `RegistrationBackLink` in
  * the same `relative mb-8 md:mb-[28px]` wrapper (product follow-up, 2026-07-19 — previously a
  * bespoke `Link`+`ArrowLeft` row shared with a "Skip" link, both removed: "Skip" doesn't belong
  * here per the same follow-up — a picked block is meant to be filled, not skipped one-by-one;
@@ -37,20 +36,17 @@ type BlockShellProps = {
  * Every block page wraps its heading + form in this shell so the chrome (and the `?blocks=&i=`
  * query-param handoff it implies) stays identical across all 8 block routes.
  */
-export async function BlockShell({ backHref, children }: BlockShellProps) {
-  const t = await getTranslations('auth');
-
+export function BlockShell({ backHref, children }: BlockShellProps) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[28px]">
-        <RegistrationBackLink
-          href={backHref}
-          label={t('signUp.back')}
-          className="md:static md:translate-y-0"
-        />
-      </div>
+      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
+          Back now lives in the form's bottom row (client request, 2026-09-29): `OnboardingBack`
+          hands `backHref` to the block form's `StepActions`. */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">{children}</div>
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+        <OnboardingBack href={backHref}>{children}</OnboardingBack>
+      </div>
     </div>
   );
 }

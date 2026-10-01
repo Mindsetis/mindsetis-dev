@@ -73,12 +73,11 @@ export function useUnsavedChanges(): UnsavedChangesContextValue {
  * `GuardedLink`s in the header/sidebar, `StepActions`' own "Back" — can decide whether leaving
  * needs confirmation, without each of them needing a prop threaded down from the form itself.
  *
- * Pass `false` (never `isDirty && …` collapsed away) when the caller isn't actually editing in
- * cabinet mode — every one of the eleven form components this feeds is SHARED with the
- * `/mindsetter-onboarding/*` wizard, and the wizard must stay completely untouched by this
- * feature (its own `StepActions` branch and navigation are unaffected either way, but the wizard
- * ALSO renders the site Header/sidebar-less layout under the same root provider, so a wizard step
- * left dirty would otherwise arm the guard for a page that never asked for it).
+ * The eleven form components this feeds are SHARED with the `/mindsetter-onboarding/*` wizard.
+ * They used to report `false` there, keeping the wizard out of this guard entirely; since
+ * 2026-09-29 they report their real state in both modes, because the wizard now has a bottom
+ * "Back" of its own (`OnboardingBackButton` in `StepActions.tsx`) that should ask before dropping
+ * an edited step. The site header's guarded links follow along on those steps as a result.
  *
  * The cleanup effect (not the sync one) is what makes "leaving clears the flag" hold for every
  * exit, not just a successful save: whatever unmounts this form — a confirmed "Leave", a

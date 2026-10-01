@@ -7,7 +7,9 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/(app)/build-profile/actions';
 import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
+import { OnboardingBackButton } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldHint } from '@/components/ui/field-hint';
@@ -75,6 +77,10 @@ export function BuildProfileForm({
       industryCustom: initialIndustryCustom ?? '',
     },
   });
+
+  // Arms the shared "unsaved changes" warning for this step's bottom Back (and the header links)
+  // while edits are pending — same guard the Mindsetter wizard and the cabinet use.
+  useSectionDirtyGuard(form.formState.isDirty);
 
   const industriesValue = useWatch({ control: form.control, name: 'industries' }) ?? [];
   const hasOtherIndustry = industriesValue.includes(OTHER_INDUSTRY_VALUE);
@@ -228,14 +234,24 @@ export function BuildProfileForm({
           )}
         </div>
 
-        <Button
-          type="submit"
-          variant="primaryOutline"
-          size="lg"
-          loading={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? t('signUp.submitting') : t('signUp.submit')}
-        </Button>
+        {/* Back → step 3 sits beside Continue, like the cabinet's Back + Save row (client request,
+            2026-09-29: the top-left Back link is gone from the wizard steps). */}
+        <div className="flex flex-row gap-3">
+          <OnboardingBackButton
+            href="/member-profile"
+            disabled={form.formState.isSubmitting}
+            className="flex-1"
+          />
+          <Button
+            type="submit"
+            variant="primaryOutline"
+            size="lg"
+            loading={form.formState.isSubmitting}
+            className="flex-1"
+          >
+            {form.formState.isSubmitting ? t('signUp.submitting') : t('signUp.submit')}
+          </Button>
+        </div>
       </form>
     </Form>
   );

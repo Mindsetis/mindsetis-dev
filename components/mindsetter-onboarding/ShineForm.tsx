@@ -10,6 +10,10 @@ import {
   ShineOptionCheckedIcon,
   ShineOptionUncheckedIcon,
 } from '@/components/icons/shine-block-icons';
+import {
+  OnboardingBackButton,
+  useOnboardingBackHref,
+} from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
@@ -64,6 +68,7 @@ function ContinueFillIcon() {
  */
 export function ShineForm({ completeness }: ShineFormProps) {
   const t = useTranslations('mindsetterOnboarding');
+  const backHref = useOnboardingBackHref();
   const router = useRouter();
   const [selected, setSelected] = useState<ReadonlySet<BlockSlug>>(new Set());
   const [formError, setFormError] = useState<string | null>(null);
@@ -168,7 +173,11 @@ export function ShineForm({ completeness }: ShineFormProps) {
         </div>
       </div>
 
+      {/* `flex-col-reverse` on mobile: Continue on top, then Skip, then Back at the bottom. */}
       <div className="mt-6 flex flex-col-reverse gap-3 md:flex-row">
+        {backHref ? (
+          <OnboardingBackButton href={backHref} disabled={pending} className="md:flex-1" />
+        ) : null}
         <Button
           type="button"
           variant="outline"

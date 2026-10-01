@@ -1,11 +1,62 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 
 import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
 import { Button } from '@/components/ui/button';
+import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
+
+/**
+ * The previous onboarding step for the wizard's bottom "Back" (client request, 2026-09-29: Back
+ * moved from the top-left link to the submit row, "like the cabinet", and it must step back
+ * through the wizard rather than act like the browser's back). Provided by the page — which is
+ * the only thing that knows the step order and the `?blocks=&i=` handoff — around the form, so
+ * the eleven shared form components don't each need a new prop threaded through to here.
+ * `null` (no provider) keeps the single "Save & Continue" button.
+ */
+const OnboardingBackContext = createContext<string | null>(null);
+
+export function OnboardingBack({ href, children }: { href: string; children: ReactNode }) {
+  return <OnboardingBackContext.Provider value={href}>{children}</OnboardingBackContext.Provider>;
+}
+
+/** The surrounding `OnboardingBack` href, for forms with a submit row of their own (Shine). */
+export function useOnboardingBackHref(): string | null {
+  return useContext(OnboardingBackContext);
+}
+
+/**
+ * The wizard's "Back" button, shared by `StepActions` and the forms with their own submit row
+ * (`ShineForm`, `BuildProfileForm`). Goes through the same unsaved-changes `guard` as the
+ * cabinet's Back, so an edited step asks before its changes are dropped.
+ */
+export function OnboardingBackButton({
+  href,
+  disabled,
+  className,
+}: {
+  href: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const tCabinet = useTranslations('dashboard.profile');
+  const router = useRouter();
+  const { guard } = useUnsavedChanges();
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="lg"
+      disabled={disabled}
+      onClick={() => guard(() => router.push(href))}
+      className={className}
+    >
+      {tCabinet('back')}
+    </Button>
+  );
+}
 
 /**
  * The submit row shared by every Mindsetter step/block form, in its two modes.
@@ -88,6 +139,7 @@ export function StepActions({
   const t = useTranslations('mindsetterOnboarding');
   const tCabinet = useTranslations('dashboard.profile');
   const { guard } = useUnsavedChanges();
+  const onboardingBackHref = useContext(OnboardingBackContext);
 
   /**
    * Whether the cabinet bar is actually PINNED right now, as opposed to sitting at the end of the
@@ -120,17 +172,31 @@ export function StepActions({
   }, []);
 
   if (!editMode) {
-    return (
+    const continueButton = (
       <Button
         {...submitProps}
         variant="primaryOutline"
         size="lg"
         loading={isSubmitting}
         disabled={disabled}
-        className={className}
+        className={onboardingBackHref ? 'flex-1' : className}
       >
         {isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
       </Button>
+    );
+    if (!onboardingBackHref) return continueButton;
+
+    // Back + Save & Continue side by side, halves of the form column at every width. `className`
+    // (the forms' spacing tweaks) moves to the row so it still positions the whole control.
+    return (
+      <div className={cn('flex flex-row gap-3', className)}>
+        <OnboardingBackButton
+          href={onboardingBackHref}
+          disabled={isSubmitting}
+          className="flex-1"
+        />
+        {continueButton}
+      </div>
     );
   }
 

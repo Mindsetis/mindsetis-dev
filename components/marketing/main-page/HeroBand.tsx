@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server';
-import type { CSSProperties } from 'react';
 
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
@@ -8,11 +7,13 @@ import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
 import { resolveCtaState } from '@/lib/auth/cta-state';
 import {
+  getHeroMapAppearStyle,
   getHeroMapPulseStyle,
   HERO_MAP_AVATARS,
   HERO_MAP_MOBILE_AVATARS,
 } from '@/lib/marketing/hero-map-avatars';
-import { cn } from '@/lib/utils';
+
+import { HeroMapAvatar } from './HeroMapAvatar';
 
 /**
  * Main Page hero band — Figma "Main Page" (`572:5427` desktop, confirmed via the file's own
@@ -123,8 +124,8 @@ import { cn } from '@/lib/utils';
  *   Originally one flattened `public/images/main-page-avatar-map.png` (dots + all 25 avatars +
  *   glow baked in, 1.36MB). Re-exported from Figma as a dot-only base
  *   (`public/images/hero-map/base.webp`, no avatars) plus 25 individual avatar files
- *   (`avatar-01.webp` … `avatar-25.webp`, each with its OWN baked-in glow halo already applied —
- *   only the animated pulse in `motion.css` is layered on top of that at runtime), composited
+ *   (`avatar-01.webp` … `avatar-25.webp` — clean photos since 2026-09-29; the Figma glow is drawn
+ *   and pulsed in CSS, `hero-map-avatar-photo` in `motion.css`), composited
  *   here as absolutely-positioned layers sized/placed from `lib/marketing/hero-map-avatars.ts`.
  *   Reasons: (1) unblocks the H2 pulse demo below, which needs individually-addressable avatar
  *   elements; (2) WebP beats the old flattened PNG on total weight (~691KB for the full 26-file
@@ -136,9 +137,8 @@ import { cn } from '@/lib/utils';
  *   width/height (matching Figma's node position, converted from px), applied via inline
  *   `style` + `translate(-50%, -50%)` on a wrapper `<span>` (percentage `left`/`top` need a
  *   sized/positioned ancestor to resolve against — the map wrapper div below, not the page).
- *   `width` is the EXPORTED FILE's width (photo + halo), not the visible photo diameter: Figma's
- *   halo blur radius is a fixed px value that doesn't shrink with the avatar, so sizing off the
- *   photo alone would make small avatars' halos disproportionately thick. The sizing/shift
+ *   `width` is the photo's own diameter (the files carried a baked halo until 2026-09-29, and
+ *   `width` used to include it; see `width` on the `HeroMapAvatar` type). The sizing/shift
  *   classes that used to sit directly on the `<img>` (mobile `w-[258%] -translate-x-[37%]`,
  *   desktop `md:w-full md:max-w-[1440px]`) now sit on this same map wrapper div instead — the
  *   base image and every avatar are percentage-positioned inside it, so the whole layered
@@ -156,7 +156,7 @@ import { cn } from '@/lib/utils';
  *   The 25-avatar layer above is desktop/tablet content: at 375-ish mobile widths Figma
  *   (`1490:21781` "map-base 2") hand-places a DIFFERENT set of 9 avatars
  *   (`HERO_MAP_MOBILE_AVATARS`), each its own export (`avatar-m-01.webp` … `avatar-m-09.webp`,
- *   own baked-in halo, not a resize of the desktop file for the same person). Two structural
+ *   a separate crop, not a resize of the desktop file for the same person). Two structural
  *   differences from the desktop layer, both explained in full in
  *   `hero-map-avatars.ts`'s doc comment on `HERO_MAP_MOBILE_AVATARS`:
  *
@@ -204,7 +204,7 @@ import { cn } from '@/lib/utils';
  *   animated `filter: drop-shadow` on the photo itself: repaint cost across 25 avatars vs. a
  *   compositor-only opacity fade). No client component needed: it's pure CSS `@keyframes`
  *   driven by inline custom properties, and `prefers-reduced-motion: reduce` is handled inside
- *   those same utilities (falls back to the avatar's static baked-in halo).
+ *   those same utilities (falls back to the avatar's static CSS glow).
  *
  * "How it works" has no prototype destination in Figma (`get_reactions` returned empty) — routed
  * to an in-page anchor at the "What you actually get here" section below (`#how-it-works`),
@@ -298,49 +298,16 @@ export async function HeroBand() {
               below for the converse (desktop-exclusion) case and the file-level "MOBILE AVATAR
               SET" doc comment above for why this beats `<picture>`/a client-side width check. */}
           <div className="hidden md:contents">
-            {HERO_MAP_AVATARS.map((avatar) => {
-              const pulseStyle = getHeroMapPulseStyle(avatar.id);
-
-              return (
-                <span
-                  key={avatar.id}
-                  className="absolute"
-                  // Cast: `--pulse-delay`/`--pulse-duration` are legal inline-style custom
-                  // properties but aren't part of React's typed `CSSProperties` surface — same
-                  // escape hatch as `ScrollToTopButton`'s `--cookie-banner-offset`.
-                  style={
-                    {
-                      left: `${avatar.left}%`,
-                      top: `${avatar.top}%`,
-                      width: `${avatar.width}%`,
-                      transform: 'translate(-50%, -50%)',
-                      ...pulseStyle,
-                    } as CSSProperties
-                  }
-                >
-                  {/* Decorative glow layer, BEFORE the photo in the DOM on purpose: an
-                      absolutely-positioned sibling paints above a `position: static` element
-                      regardless of DOM order, so the `<img>` below needs (and gets) its own
-                      `relative` to end up on top of this. */}
-                  {pulseStyle ? <span aria-hidden="true" className="hero-map-avatar-glow" /> : null}
-                  {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, see base layer above */}
-                  <img
-                    src={`/images/hero-map/${avatar.id}.webp`}
-                    alt=""
-                    aria-hidden="true"
-                    // Decorative pins: `lazy` doubles as the mobile-exclusion mechanism (see the
-                    // wrapper comment above); `async` decoding keeps them off the main thread so
-                    // they don't compete with the base layer, this section's largest paint.
-                    loading="lazy"
-                    decoding="async"
-                    className={cn(
-                      'relative block h-auto w-full',
-                      pulseStyle && 'hero-map-avatar-pulse-scale',
-                    )}
-                  />
-                </span>
-              );
-            })}
+            {/* Each pin pops in once its photo has loaded, in a scattered, chaotic order (client
+                request, 2026-09-29) — see `HeroMapAvatar`. */}
+            {HERO_MAP_AVATARS.map((avatar) => (
+              <HeroMapAvatar
+                key={avatar.id}
+                {...avatar}
+                pulseStyle={getHeroMapPulseStyle(avatar.id)}
+                appearStyle={getHeroMapAppearStyle(avatar.id)}
+              />
+            ))}
           </div>
         </div>
 
@@ -356,39 +323,14 @@ export async function HeroBand() {
             `loading="lazy"` for the same defer-while-boxless reason as the desktop layer, so
             desktop visitors never download these 9 files. */}
         <div className="absolute inset-x-0 top-0 aspect-[375/314] md:hidden">
-          {HERO_MAP_MOBILE_AVATARS.map((avatar) => {
-            const pulseStyle = getHeroMapPulseStyle(avatar.id);
-
-            return (
-              <span
-                key={avatar.id}
-                className="absolute"
-                style={
-                  {
-                    left: `${avatar.left}%`,
-                    top: `${avatar.top}%`,
-                    width: `${avatar.width}%`,
-                    transform: 'translate(-50%, -50%)',
-                    ...pulseStyle,
-                  } as CSSProperties
-                }
-              >
-                {pulseStyle ? <span aria-hidden="true" className="hero-map-avatar-glow" /> : null}
-                {/* eslint-disable-next-line @next/next/no-img-element -- local static asset, see base layer above */}
-                <img
-                  src={`/images/hero-map/${avatar.id}.webp`}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  className={cn(
-                    'relative block h-auto w-full',
-                    pulseStyle && 'hero-map-avatar-pulse-scale',
-                  )}
-                />
-              </span>
-            );
-          })}
+          {HERO_MAP_MOBILE_AVATARS.map((avatar) => (
+            <HeroMapAvatar
+              key={avatar.id}
+              {...avatar}
+              pulseStyle={getHeroMapPulseStyle(avatar.id)}
+              appearStyle={getHeroMapAppearStyle(avatar.id)}
+            />
+          ))}
         </div>
       </div>
     </section>

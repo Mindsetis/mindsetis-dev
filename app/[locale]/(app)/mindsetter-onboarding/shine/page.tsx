@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -36,7 +36,6 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
-  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -103,13 +102,9 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[28px]">
-        <RegistrationBackLink
-          href="/mindsetter-onboarding/help"
-          label={tAuth('signUp.back')}
-          className="md:static md:translate-y-0"
-        />
-      </div>
+      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
+          Back now lives in the picker's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-1 md:gap-4">
@@ -117,7 +112,9 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
           <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
         </div>
 
-        <ShineForm completeness={completeness} />
+        <OnboardingBack href="/mindsetter-onboarding/help">
+          <ShineForm completeness={completeness} />
+        </OnboardingBack>
       </div>
     </div>
   );

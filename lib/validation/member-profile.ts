@@ -20,6 +20,7 @@ import { LANGUAGE_VALUES } from '@/lib/constants/languages';
 
 import { isLatinOnly, LATIN_ONLY_MESSAGE, usernameSchema } from './common';
 import { vmsg } from './messages';
+import { webUrlSchema } from './url';
 
 export const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // matches the `avatars` bucket's file_size_limit
 export const ACCEPTED_AVATAR_MIME_TYPES = ['image/png', 'image/jpeg'] as const;
@@ -28,33 +29,13 @@ export const MAX_BIO_LENGTH = 300;
 export const MAX_ABOUT_LENGTH = 1000;
 
 /**
- * `z.string().url()` accepts any scheme the WHATWG `URL` constructor parses, including
- * `javascript:`/`data:`/`vbscript:` — these social links are rendered as real `<a href>`s on
- * the public `/members/[username]` page (`components/profile/MemberProfileView.tsx`), so an
- * unrestricted scheme here is a stored-XSS vector (security-auditor finding, stage 1.6).
- * Restrict to `http:`/`https:` only.
+ * Optional social URL: a web address or an empty string (the RHF default before the user types
+ * anything). These links are rendered as real `<a href>`s on the public `/members/[username]`
+ * page, so `webUrlSchema` keeps only `http:`/`https:` (stored-XSS guard, security-auditor
+ * finding, stage 1.6) while letting people omit the scheme — see `./url`. No `z.preprocess`
+ * involved (see file header), so the field's inferred input type stays a concrete `string`.
  */
-function isHttpUrl(value: string): boolean {
-  try {
-    const protocol = new URL(value).protocol;
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Optional social URL: a real http(s) URL, or an empty string (the RHF default before the
- * user types anything) — `.optional()` alone only special-cases `undefined`, not `''`, so an
- * untouched field would otherwise fail `.url()`. No `z.preprocess` involved (see file
- * header), so the field's inferred input type stays a concrete `string`, not `unknown`.
- */
-const optionalUrlSchema = z
-  .union([
-    z.literal(''),
-    z.string().trim().url(vmsg('urlInvalid')).refine(isHttpUrl, vmsg('urlInvalid')),
-  ])
-  .optional();
+const optionalUrlSchema = webUrlSchema({ allowEmpty: true }).optional();
 
 /**
  * `File` is a global in the Node 20+ runtime this app requires (engines.node in
@@ -157,12 +138,7 @@ export const socialLinkFields = {
   // The one mandatory channel is now the COMPANY WEBSITE, not LinkedIn (2026-08-05
   // product decision): a company site is the stronger signal for a member-first
   // community, and demanding LinkedIn excluded people who simply do not use it.
-  website: z
-    .string()
-    .trim()
-    .min(1, vmsg('websiteRequired'))
-    .url(vmsg('urlInvalid'))
-    .refine(isHttpUrl, vmsg('urlInvalid')),
+  website: z.string().trim().min(1, vmsg('websiteRequired')).pipe(webUrlSchema()),
   linkedin: optionalUrlSchema,
   instagram: optionalUrlSchema,
   facebook: optionalUrlSchema,

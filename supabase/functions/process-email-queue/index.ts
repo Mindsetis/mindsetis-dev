@@ -203,7 +203,10 @@ async function markRetryOrFailed(row: EmailMessageRow, errorMessage: string): Pr
 }
 
 async function sendViaResend(row: EmailMessageRow): Promise<string | null> {
-  const to = row.to_name ? `${row.to_name} <${row.to_email}>` : row.to_email;
+  // RFC 5322 quoted display name; header-significant chars are dropped (defense in depth — the
+  // enqueue schema already strips them), so `to_name` can never add recipients or break the header.
+  const safeName = row.to_name?.replace(/["\\\r\n]/g, '').trim();
+  const to = safeName ? `"${safeName}" <${row.to_email}>` : row.to_email;
   const res = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
     headers: {

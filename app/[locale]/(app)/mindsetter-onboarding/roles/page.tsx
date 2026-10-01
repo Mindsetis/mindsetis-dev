@@ -1,9 +1,9 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { RolesSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { RolesForm } from '@/components/mindsetter-onboarding/RolesForm';
 import { RolesPreviewCta } from '@/components/mindsetter-onboarding/RolesPreviewCta';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -23,8 +23,9 @@ export async function generateMetadata({ params }: RolesPageProps) {
  * Extended Mindsetter onboarding — step 1/5 "Your roles" (ROADMAP stage 1.9 foundation slice,
  * `docs/mindsetter-extended-onboarding.md` section 2). Entered from the "Cool, I want to
  * become a Mindsetter" button in `WhoIsMindsetterDialog` (a signed-in Member). No step/progress
- * indicator anywhere in this flow (product decision D5 — Figma has none) — just a plain Back
- * link (`RegistrationBackLink`), unlike the Member wizard's `RegistrationStepHeader`.
+ * indicator anywhere in this flow (product decision D5 — Figma has none). Back sits in the
+ * form's bottom row (`OnboardingBack`, client request 2026-09-29) and returns to `/welcome`,
+ * where the Member chose to become a Mindsetter.
  *
  * `RolesForm`'s submit navigates to `/mindsetter-onboarding/superpowers`.
  *
@@ -37,7 +38,6 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
-  const tAuth = await getTranslations('auth');
 
   const session = await getSessionContext();
   if (!session?.profile) {
@@ -59,13 +59,9 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[28px]">
-        <RegistrationBackLink
-          href="/welcome"
-          label={tAuth('signUp.back')}
-          className="md:static md:translate-y-0"
-        />
-      </div>
+      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
+          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <div className="flex flex-col gap-1 md:gap-4">
@@ -77,8 +73,8 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
           </p>
         </div>
 
-        {/* Reuses the homepage's onboarding tour popup (`OnboardingDialog`) instead of navigating
-            to the (not-yet-built) public Mindsetter profile page — see `RolesPreviewCta`. */}
+        {/* Opens the client's showcase profile in a new tab once it's configured; until then the
+            "Example pages are on the way" dialog — see `RolesPreviewCta`. */}
         <div className="mt-6">
           <RolesPreviewCta />
         </div>
@@ -90,7 +86,9 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
           </h2>
         </div>
 
-        <RolesForm initialRoles={initialRoles} />
+        <OnboardingBack href="/welcome">
+          <RolesForm initialRoles={initialRoles} />
+        </OnboardingBack>
       </div>
     </div>
   );

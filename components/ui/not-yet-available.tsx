@@ -131,8 +131,14 @@ export function NotYetAvailable({ feature, children, className }: NotYetAvailabl
         </DialogHeader>
 
         {/* The promise the client asked for, in one place rather than repeated in fourteen
-            descriptions — so changing how we word it is one edit, not fourteen. */}
-        <p className="text-sm text-muted-foreground">{t('emailPromise')}</p>
+            descriptions — so changing how we word it is one edit, not fourteen. A feature may
+            carry its own `emailPromise` when the client wrote one for it (the catalog popup,
+            2026-09-29); every other feature keeps the shared line. */}
+        <p className="text-sm text-muted-foreground">
+          {t.has(`features.${feature}.emailPromise`)
+            ? t(`features.${feature}.emailPromise`)
+            : t('emailPromise')}
+        </p>
 
         <DialogFooter>
           <DialogClose asChild>

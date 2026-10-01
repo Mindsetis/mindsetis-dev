@@ -22,8 +22,9 @@ import { HeroEmailCta } from './HeroEmailCta';
  *
  * `OnboardingCta`/`OnboardingDialog` (the 4-step onboarding tour) were NOT deleted — only
  * unhooked from this page, per explicit instruction (this is a product decision about content,
- * not a call to remove working code). `OnboardingDialog` still has a live entry point elsewhere:
- * `RolesPreviewCta` on `/mindsetter-onboarding/roles` opens the same dialog. `OnboardingCta`
+ * not a call to remove working code). Its other entry point, `RolesPreviewCta` on
+ * `/mindsetter-onboarding/roles`, switched to the showcase profile on 2026-09-29, so nothing
+ * renders the tour right now. `OnboardingCta`
  * itself (this page's own trigger button) and `home.hero.seeFeatures` are now unused — see the
  * handoff report; `watchLabel`/`clickToWatch`/`or`/`tourLabel` are unused too (nothing else in
  * the codebase reads them). None of it was removed from `messages/*.json` — left in place in

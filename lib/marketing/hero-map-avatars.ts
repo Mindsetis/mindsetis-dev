@@ -20,10 +20,11 @@ export type HeroMapAvatar = {
   /** Center Y of the avatar, in % of the map's own height. */
   readonly top: number;
   /**
-   * Rendered width, in % of the map's own width — the EXPORTED FILE's width (photo + its baked-in
-   * glow halo), not the visible photo diameter. Figma's blur radius for the halo is a fixed px
-   * value that doesn't scale down with a smaller avatar, so using the photo diameter here would
-   * make small avatars' halos disproportionately thick relative to big ones.
+   * Rendered width, in % of the map's own width — the PHOTO's diameter (Figma frame size ÷ frame
+   * width). Since 2026-09-29 the files carry no baked-in halo (re-exported clean from Figma,
+   * client request) and the glow is drawn in CSS instead, so the width no longer has to include
+   * it. Figma's blur is a fixed 12.3px regardless of avatar size, which the CSS reproduces the
+   * same way (fixed px, see `hero-map-avatar-photo` in `motion.css`).
    */
   readonly width: number;
 };
@@ -34,40 +35,40 @@ export type HeroMapAvatar = {
  * matters here — avatars don't meaningfully overlap.
  */
 export const HERO_MAP_AVATARS: readonly HeroMapAvatar[] = [
-  { id: 'avatar-01', left: 17.64, top: 10.68, width: 5.9 },
-  { id: 'avatar-02', left: 47.92, top: 13.03, width: 5.63 },
-  { id: 'avatar-03', left: 63.47, top: 13.46, width: 5.07 },
-  { id: 'avatar-04', left: 61.25, top: 11.75, width: 3.68 },
-  { id: 'avatar-05', left: 71.67, top: 17.74, width: 4.24 },
-  { id: 'avatar-06', left: 26.39, top: 19.66, width: 4.24 },
-  { id: 'avatar-07', left: 89.03, top: 26.28, width: 5.07 },
-  { id: 'avatar-08', left: 86.81, top: 24.57, width: 3.68 },
-  { id: 'avatar-09', left: 39.86, top: 26.5, width: 4.51 },
-  { id: 'avatar-10', left: 56.32, top: 29.27, width: 6.04 },
-  { id: 'avatar-11', left: 11.6, top: 28.63, width: 5.21 },
-  { id: 'avatar-12', left: 6.67, top: 32.48, width: 6.32 },
-  { id: 'avatar-13', left: 59.1, top: 30.34, width: 4.51 },
-  { id: 'avatar-14', left: 66.88, top: 29.7, width: 3.4 },
-  { id: 'avatar-15', left: 68.19, top: 31.41, width: 4.1 },
-  { id: 'avatar-16', left: 61.18, top: 34.19, width: 4.51 },
-  { id: 'avatar-17', left: 48.26, top: 50.64, width: 5.9 },
-  { id: 'avatar-18', left: 45.07, top: 54.49, width: 5.9 },
-  { id: 'avatar-19', left: 16.39, top: 61.75, width: 6.32 },
-  { id: 'avatar-20', left: 43.19, top: 61.54, width: 4.51 },
-  { id: 'avatar-21', left: 19.38, top: 63.25, width: 4.51 },
-  { id: 'avatar-22', left: 89.24, top: 63.89, width: 3.4 },
-  { id: 'avatar-23', left: 20.83, top: 68.59, width: 4.51 },
-  { id: 'avatar-24', left: 86.6, top: 77.56, width: 5.9 },
-  { id: 'avatar-25', left: 90.07, top: 77.56, width: 5.9 },
+  { id: 'avatar-01', left: 17.64, top: 10.68, width: 4.17 },
+  { id: 'avatar-02', left: 47.92, top: 13.03, width: 3.89 },
+  { id: 'avatar-03', left: 63.47, top: 13.46, width: 3.33 },
+  { id: 'avatar-04', left: 61.25, top: 11.75, width: 1.94 },
+  { id: 'avatar-05', left: 71.67, top: 17.74, width: 2.5 },
+  { id: 'avatar-06', left: 26.39, top: 19.66, width: 2.5 },
+  { id: 'avatar-07', left: 89.03, top: 26.28, width: 3.33 },
+  { id: 'avatar-08', left: 86.81, top: 24.57, width: 1.94 },
+  { id: 'avatar-09', left: 39.86, top: 26.5, width: 2.78 },
+  { id: 'avatar-10', left: 56.32, top: 29.27, width: 4.31 },
+  { id: 'avatar-11', left: 11.6, top: 28.63, width: 3.47 },
+  { id: 'avatar-12', left: 6.67, top: 32.48, width: 4.58 },
+  { id: 'avatar-13', left: 59.1, top: 30.34, width: 2.78 },
+  { id: 'avatar-14', left: 66.88, top: 29.7, width: 1.67 },
+  { id: 'avatar-15', left: 68.19, top: 31.41, width: 2.36 },
+  { id: 'avatar-16', left: 61.18, top: 34.19, width: 2.78 },
+  { id: 'avatar-17', left: 48.26, top: 50.64, width: 4.17 },
+  { id: 'avatar-18', left: 45.07, top: 54.49, width: 4.17 },
+  { id: 'avatar-19', left: 16.39, top: 61.75, width: 4.58 },
+  { id: 'avatar-20', left: 43.19, top: 61.54, width: 2.78 },
+  { id: 'avatar-21', left: 19.38, top: 63.25, width: 2.78 },
+  { id: 'avatar-22', left: 89.24, top: 63.89, width: 1.67 },
+  { id: 'avatar-23', left: 20.83, top: 68.59, width: 2.78 },
+  { id: 'avatar-24', left: 86.6, top: 77.56, width: 4.17 },
+  { id: 'avatar-25', left: 90.07, top: 77.56, width: 4.17 },
 ];
 
 /**
  * MOBILE AVATARS (Release-1 H4, added 2026-09-20) — a DIFFERENT set from `HERO_MAP_AVATARS`
  * above, not a responsive re-crop of it. Figma's mobile frame (`1490:21781` "map-base 2",
- * 375×314, nested inside the mobile hero frame `1249:18262`) hand-places 9 avatars, each
- * exported with its own halo baked for its own diameter (`avatar-m-01.webp` … `avatar-m-09.webp`
- * — the desktop `avatar-NN.webp` files, despite showing the same people, are NOT reused here:
- * their halo blur radius was baked for the desktop crop's sizes).
+ * 375×314, nested inside the mobile hero frame `1249:18262`) hand-places 9 avatars, each its own
+ * export (`avatar-m-01.webp` … `avatar-m-09.webp`) — the desktop `avatar-NN.webp` files, despite
+ * showing the same people, are separate crops at different sizes. Like the desktop set, these are
+ * clean photos without the halo since 2026-09-29 (the glow is CSS now).
  *
  * COORDINATE SYSTEM — READ BEFORE TOUCHING THIS ARRAY. `HERO_MAP_AVATARS`'s `left`/`top`/`width`
  * are percentages of the MAP IMAGE's own box, because on desktop the avatars travel WITH the map
@@ -83,18 +84,18 @@ export const HERO_MAP_AVATARS: readonly HeroMapAvatar[] = [
  * but that box is the 375×314 frame, not the map.
  */
 export const HERO_MAP_MOBILE_AVATARS: readonly HeroMapAvatar[] = [
-  { id: 'avatar-m-01', left: 43.13, top: 47.93, width: 24.53 },
-  { id: 'avatar-m-02', left: 30.33, top: 53.98, width: 22.4 },
-  { id: 'avatar-m-03', left: 22.67, top: 64.93, width: 15.73 },
-  { id: 'avatar-m-04', left: 62.13, top: 19.75, width: 18.93 },
-  { id: 'avatar-m-05', left: 72.53, top: 16.56, width: 20.53 },
-  { id: 'avatar-m-06', left: 15.2, top: 19.43, width: 22.67 },
+  { id: 'avatar-m-01', left: 43.13, top: 47.93, width: 17.87 },
+  { id: 'avatar-m-02', left: 30.33, top: 53.98, width: 15.73 },
+  { id: 'avatar-m-03', left: 22.67, top: 64.93, width: 11.2 },
+  { id: 'avatar-m-04', left: 62.13, top: 19.75, width: 12.27 },
+  { id: 'avatar-m-05', left: 72.53, top: 16.56, width: 16 },
+  { id: 'avatar-m-06', left: 15.2, top: 19.43, width: 16 },
   // Only non-square export in either set — Figma's halo bbox came out asymmetric because this
   // avatar sits almost flush against the frame's right edge, next to a neighbor (95×106 @2x); a
   // deliberate quirk of the source export, not something to "correct" by forcing a square size.
-  { id: 'avatar-m-07', left: 94.4, top: 41.08, width: 12.67 },
-  { id: 'avatar-m-08', left: 88.0, top: 38.54, width: 15.73 },
-  { id: 'avatar-m-09', left: 30.07, top: 24.13, width: 15.6 },
+  { id: 'avatar-m-07', left: 94.4, top: 41.08, width: 7.47 },
+  { id: 'avatar-m-08', left: 88.0, top: 38.54, width: 11.2 },
+  { id: 'avatar-m-09', left: 30.07, top: 24.13, width: 8.95 },
 ];
 
 /**
@@ -272,5 +273,43 @@ export function getHeroMapPulseStyle(
   return {
     '--pulse-delay': `${delaySeconds.toFixed(2)}s`,
     '--pulse-duration': `${durationSeconds.toFixed(2)}s`,
+  };
+}
+
+/**
+ * Entrance timing for the hero map avatars (client request, 2026-09-29: the people should appear
+ * after the page loads). First shipped as a centre-outwards wave; replaced the same day, at the
+ * client's request, with a CHAOTIC pop-in like the "Tripple — Stories" reference: every avatar
+ * gets its own scattered delay and a slightly different duration, so they burst onto the map one
+ * by one in no visible order.
+ *
+ * "Random" but deterministic — the same mulberry32 streams the idle pulse uses, seeded from the
+ * avatar's number — so the server render and the browser agree (no hydration mismatch) and the
+ * page looks the same on every visit. Same function for the desktop and mobile sets.
+ */
+const HERO_MAP_APPEAR_DELAY_SEED_SALT = 0xc2b2ae35;
+const HERO_MAP_APPEAR_DURATION_SEED_SALT = 0x27d4eb2f;
+/** Earliest start, and the window the starts are scattered across. */
+export const HERO_MAP_APPEAR_BASE_DELAY_S = 0.1;
+export const HERO_MAP_APPEAR_SPREAD_S = 1.4;
+/** Pop-in duration range — shorter ones read as a snap, longer ones as a soft bloom. */
+const HERO_MAP_APPEAR_MIN_DURATION_S = 0.45;
+const HERO_MAP_APPEAR_DURATION_SPREAD_S = 0.35;
+
+export function getHeroMapAppearStyle(id: string): {
+  '--appear-delay': string;
+  '--appear-duration': string;
+} {
+  const n = avatarNumber(id);
+  const delay =
+    HERO_MAP_APPEAR_BASE_DELAY_S +
+    createSeededRandom(seedFor(n, HERO_MAP_APPEAR_DELAY_SEED_SALT))() * HERO_MAP_APPEAR_SPREAD_S;
+  const duration =
+    HERO_MAP_APPEAR_MIN_DURATION_S +
+    createSeededRandom(seedFor(n, HERO_MAP_APPEAR_DURATION_SEED_SALT))() *
+      HERO_MAP_APPEAR_DURATION_SPREAD_S;
+  return {
+    '--appear-delay': `${delay.toFixed(2)}s`,
+    '--appear-duration': `${duration.toFixed(2)}s`,
   };
 }

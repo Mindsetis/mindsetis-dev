@@ -2,9 +2,13 @@ import { getTranslations } from 'next-intl/server';
 
 import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
 import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
+import { cn } from '@/lib/utils';
 
 type RegistrationStepHeaderProps = {
-  backHref: string;
+  /** Top-left Back link. Only `/welcome` passes it now (→ the previous step, `/build-profile`):
+   * since 2026-09-29 the wizard steps have no top Back — `/build-profile` carries it in its
+   * bottom row instead, and the first three steps have none at all (client request). */
+  backHref?: string;
   step: number;
   total: number;
   label: string;
@@ -12,6 +16,9 @@ type RegistrationStepHeaderProps = {
    * Congrats screen (`step === total`, nothing left "in progress") passes this; the four
    * in-wizard steps leave it unset. */
   complete?: boolean;
+  /** Extra classes on the wrapper — `/welcome` uses it to shrink the 100px gap under the
+   * progress bar on low viewports (`short:`). */
+  className?: string;
 };
 
 /**
@@ -43,12 +50,18 @@ export async function RegistrationStepHeader({
   total,
   label,
   complete,
+  className,
 }: RegistrationStepHeaderProps) {
   const t = await getTranslations('auth');
 
   return (
-    <div className="relative mb-8 flex flex-col-reverse items-start gap-3 md:mb-[100px] md:flex-row md:items-center md:justify-center md:gap-4">
-      <RegistrationBackLink href={backHref} label={t('signUp.back')} />
+    <div
+      className={cn(
+        'relative mb-8 flex flex-col-reverse items-start gap-3 md:mb-[100px] md:flex-row md:items-center md:justify-center md:gap-4',
+        className,
+      )}
+    >
+      {backHref ? <RegistrationBackLink href={backHref} label={t('signUp.back')} /> : null}
 
       {/* Progress spans the form width (max-w-640) and is centered over the form. */}
       <div className="w-full max-w-[640px] flex-1 md:flex-none">

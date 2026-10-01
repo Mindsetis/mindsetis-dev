@@ -6,9 +6,12 @@ import { MindsetterCongratsCtas } from '@/components/mindsetter-onboarding/Minds
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
+import { buildBlockHref, parseBlocksParam } from '@/lib/mindsetter-onboarding/blocks';
 
 type MindsetterCongratsPageProps = {
   params: Promise<{ locale: string }>;
+  /** `?blocks=` handed over by the last block's `nextBlockHref` — absent after the picker's Skip. */
+  searchParams: Promise<{ blocks?: string | string[] }>;
 };
 
 // `congrats.title` carries `<accent>` rich-text markup for the page's `t.rich` heading below, so
@@ -60,8 +63,9 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * info modal, no dismiss/swap-after-confirm button; see `MindsetterCongratsCtas`'s own doc
  * comment.
  *
- * Renders a `RegistrationBackLink` back to the Shine picker, same chrome convention every core
- * step's own page.tsx already uses. Going back is safe even though `account_type` has already
+ * Keeps its top `RegistrationBackLink` (owner's call, 2026-09-29 — every other wizard step moved
+ * Back into its bottom row) but points it at the previous STEP: the last picked block when blocks
+ * were filled (`?blocks=` from `nextBlockHref`), otherwise the Shine picker. Going back is safe even though `account_type` has already
  * flipped to `'mindsetter'` by the time this page renders — every step's write path is idempotent,
  * so revisiting one doesn't undo the flip or duplicate anything.
  *
@@ -81,8 +85,12 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  */
 export default async function MindsetterOnboardingCongratsPage({
   params,
+  searchParams,
 }: MindsetterCongratsPageProps) {
   const { locale } = await params;
+  const { blocks } = parseBlocksParam(await searchParams);
+  const backHref =
+    blocks.length > 0 ? buildBlockHref(blocks, blocks.length - 1) : '/mindsetter-onboarding/shine';
   setRequestLocale(locale);
   const t = await getTranslations('mindsetterOnboarding');
   const tAuth = await getTranslations('auth');
@@ -109,7 +117,7 @@ export default async function MindsetterOnboardingCongratsPage({
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       <div className="relative mb-8 md:mb-[52px]">
         <RegistrationBackLink
-          href="/mindsetter-onboarding/shine"
+          href={backHref}
           label={tAuth('signUp.back')}
           className="md:static md:translate-y-0"
         />

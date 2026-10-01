@@ -53,7 +53,6 @@ export default async function BuildProfilePage({ params }: BuildProfilePageProps
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       <RegistrationStepHeader
-        backHref="/member-profile"
         step={4}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}

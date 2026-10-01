@@ -126,11 +126,26 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
     ...(input.linkedin ? { linkedin: input.linkedin } : {}),
   };
 
+  // `onboarding_step` only ever moves FORWARD: this step marks 2, but a Member who already
+  // finished (3) and came back here via the wizard's Back button must stay at 3 — writing a flat
+  // 2 used to send a completed profile back into onboarding (verification finding, 2026-09-30).
+  // Same `Math.max` rule as `advanceOnboardingStep` in the Mindsetter wizard.
+  const { data: currentStepRow, error: stepReadError } = await supabase
+    .from('profiles')
+    .select('onboarding_step')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (stepReadError) {
+    console.error('[member-profile] onboarding_step read failed:', stepReadError);
+    throw new ActionError('internal_error', 'Could not save your profile. Please try again.');
+  }
+  const nextOnboardingStep = Math.max(currentStepRow?.onboarding_step ?? 0, 2);
+
   // 2. Upsert the profile fields. `profiles_update_own` RLS (see
   //    `supabase/migrations/20260701100100_profiles.sql`) lets the caller update their own
   //    row; the row itself already exists from the `handle_new_user` signup trigger, so a
-  //    plain `update` (not `upsert`) is correct here. `onboarding_step` advances to 2 so
-  //    later steps/gating can tell this step is complete.
+  //    plain `update` (not `upsert`) is correct here. `onboarding_step` advances to (at least) 2
+  //    so later steps/gating can tell this step is complete.
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
@@ -150,7 +165,7 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
       about: input.about?.trim() || null,
       avatar_url: avatarUrl,
       socials,
-      onboarding_step: 2,
+      onboarding_step: nextOnboardingStep,
     })
     .eq('id', user.id);
 

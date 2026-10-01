@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server';
 
 import { JoinIcon } from '@/components/icons/join-icon';
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
-import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
@@ -84,12 +83,12 @@ import { WhatIsMindsetisVideo } from './WhatIsMindsetisVideo';
  *    export/measurement details. This component no longer renders its own glow.
  *
  * BOTTOM BUTTON STATE (Release-1 A4, added 2026-09-17)
- *   Same `lib/auth/cta-state.ts` state as the header — this section's mapping matches the
- *   header's exactly (`Edit Profile` → `/continue`, `Upgrade` → `/mindsetter-onboarding/roles`,
- *   `Create Event` → the `NotYetAvailable` popup), unlike the hero's, which collapses both
- *   signed-in Member states into one "Explore Community" popup. The fixed `lg:w-[302px]` width
+ *   Same `lib/auth/cta-state.ts` state as the header, but not the same labels: both Member
+ *   states get `Explore Mindsetis` → the catalog `NotYetAvailable` popup here, not the header's
+ *   `Edit Profile` / `Upgrade` (client request, 2026-09-29). Guest and Mindsetter follow the
+ *   header (`Apply to Join`, `Create Event` → the `NotYetAvailable` popup). The fixed `lg:w-[302px]` width
  *   (measured off the Figma "Apply to Join" instance above) is kept for every state, not just
- *   `guest`: all four labels are short enough to fit it comfortably (this button has no icon
+ *   `guest`: every label is short enough to fit it comfortably (this button has no icon
  *   competing for the space at any state, unlike the header's fixed 199px CTA), so there is no
  *   hug-content case to make here.
  */
@@ -142,27 +141,19 @@ export async function WhatIsMindsetis() {
           </Button>
         ) : null}
 
-        {ctaState === 'memberIncomplete' ? (
-          <Button
-            asChild
-            size="default"
+        {ctaState === 'memberIncomplete' || ctaState === 'memberComplete' ? (
+          // Both Member states were "Edit Profile" → `/continue` / "Upgrade"; the client asked
+          // for "Explore Mindsetis" into the catalog instead (2026-09-29). The catalog screen
+          // isn't built yet, so it opens the same "catalog is on the way" dialog as the hero's
+          // "Explore Community" until it is.
+          <NotYetAvailable
+            feature="exploreCommunity"
             className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
           >
-            <Link href="/continue">{tNav('editProfile')}</Link>
-          </Button>
-        ) : null}
-
-        {ctaState === 'memberComplete' ? (
-          // `UpgradeToMindsetterTrigger`, not `Button asChild` + `Link` (Release-1 C7,
-          // 2026-09-20): opens the `UpgradeToMindsetterDialog` confirmation instead of navigating
-          // straight to `/mindsetter-onboarding/roles` — same change applied to the header's own
-          // "Upgrade" CTA, see that call site's comment for the shared reasoning.
-          <UpgradeToMindsetterTrigger
-            size="default"
-            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
-          >
-            {tNav('upgrade')}
-          </UpgradeToMindsetterTrigger>
+            <Button type="button" disabled size="default" className="w-full">
+              {tNav('exploreMindsetis')}
+            </Button>
+          </NotYetAvailable>
         ) : null}
 
         {ctaState === 'mindsetter' ? (

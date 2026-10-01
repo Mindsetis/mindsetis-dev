@@ -42,10 +42,9 @@ export async function generateMetadata({ params }: WelcomePageProps) {
  * (unlike the desktop-only Back in `387:3000`'s own layer tree, mobile `421:3523` has none), a
  * deliberate deviation for consistency with the other three steps rather than one extra
  * mobile-only special case; see that component's own doc comment for the reuse rationale.
- * `backHref="/"`: neither Figma frame carries a prototype reaction on the Back link (checked via
- * `get_reactions`, empty), and there's no natural "previous step" once the account already
- * exists — home is a safe, always-valid default, but this destination is UNCONFIRMED, flag if a
- * better one (e.g. a dashboard route) surfaces.
+ * `backHref="/build-profile"`: the previous wizard step (owner's call, 2026-09-29 — Back steps
+ * through the wizard; it used to go home). This is also the one wizard screen that keeps its
+ * top-left Back: the other steps moved it into their bottom row or dropped it.
  *
  */
 export default async function WelcomePage({ params }: WelcomePageProps) {
@@ -57,13 +56,16 @@ export default async function WelcomePage({ params }: WelcomePageProps) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       <RegistrationStepHeader
-        backHref="/"
+        backHref="/build-profile"
         step={4}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 4, total: TOTAL_STEPS })}
+        className="short:mb-8"
       />
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 md:gap-8">
+      {/* `short:` = low viewports (iPad Pro landscape): tighter rhythm so "Apply for Mindsetter"
+          and the Member buttons stay on screen without scrolling (client request, 2026-09-29). */}
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 md:gap-8 short:gap-5">
         <WelcomeScreen username={session?.profile?.username ?? null} />
       </div>
     </div>

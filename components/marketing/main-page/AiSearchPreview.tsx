@@ -200,10 +200,11 @@ import { SectionEyebrow } from './SectionEyebrow';
  *   for the desktop single-row layout) and the chip wrapper drops its `justify-center` (Figma
  *   doesn't specify one; the row already fills its own column when centered, and now sits
  *   flush left, matching the design). The `sm:` breakpoint switches became `md:`, matching the
- *   rest of this file/page's own 375/1440 convention. Desktop chips are explicitly `md:flex-
- *   nowrap` — Figma's own desktop row is a single, non-wrapping line (`831px` container exactly
- *   fits the 4 real chips' `650px` combined width); mobile keeps `flex-wrap` (mandatory there —
- *   343px available width is well under the same 650px).
+ *   rest of this file/page's own 375/1440 convention. The chip row always wraps and each chip is
+ *   `whitespace-nowrap` (2026-09-29, when the client's five topic chips replaced Figma's four
+ *   placeholders): a forced `md:flex-nowrap` row squeezed the chips at tablet widths until their
+ *   text broke onto two lines inside the fixed 40px pill (Spanish, ~768–900px). At desktop width
+ *   the five still sit on one line, as in Figma; narrower, whole chips move to the next line.
  *
  * STAGE 1.13 FOURTH PASS — the customer supplied Figma's own inspector panel for `Frame 229`
  * at both breakpoints (screenshots), which settles the border by evidence instead of pixel
@@ -272,11 +273,18 @@ export async function AiSearchPreview() {
       </div>
 
       <div className="relative mx-auto mt-6 flex h-[72px] max-w-[860px] flex-row items-center justify-between overflow-hidden rounded-2xl bg-black pr-2 pl-6 shadow-[0px_4px_39.7px_rgba(111,186,237,0.5)] md:mt-[30px] md:h-24 md:rounded-3xl md:pr-5 md:pl-[33px]">
-        {/* `Ellipse 3` — see doc comment above for why `Ellipse 2` isn't reproduced. */}
+        {/* `Ellipse 3` — see doc comment above for why `Ellipse 2` isn't reproduced. The glow
+            sits in its own `clip-path` layer: Safari (seen on iPad Pro, 2026-09-28) ignores the
+            parent's rounded `overflow-hidden` for a `filter: blur()` child and clips it to the
+            square box instead, leaving translucent sharp corners outside the ring. `clip-path`
+            with `round` is honored there, and being on this inner layer it leaves the box's own
+            outer drop shadow alone. Radii mirror the box's `rounded-2xl` / `md:rounded-3xl`. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-[129px] -left-[48px] h-[160px] w-[216px] rounded-full bg-[#61bbdf] blur-[90px] md:-top-[134px] md:-left-[53px] md:w-[341px]"
-        />
+          className="pointer-events-none absolute inset-0 [clip-path:inset(0_round_16px)] md:[clip-path:inset(0_round_24px)]"
+        >
+          <div className="absolute -top-[129px] -left-[48px] h-[160px] w-[216px] rounded-full bg-[#61bbdf] blur-[90px] md:-top-[134px] md:-left-[53px] md:w-[341px]" />
+        </div>
         {/* Gradient stroke — see the FOURTH PASS note in the doc comment above for the source
             values. Drawn as its own layer rather than a `border`/`box-shadow` because neither
             can carry a gradient: the double-background `padding-box`/`border-box` trick can't be
@@ -328,11 +336,11 @@ export async function AiSearchPreview() {
         <span className="text-[11px] leading-[13px] font-bold whitespace-nowrap tracking-[0.3em] text-muted-foreground uppercase">
           {t('popularLabel')}
         </span>
-        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
+        <div className="flex flex-wrap items-center gap-2">
           {popularSearches.map((search, index) => (
             <span
               key={`${search}-${index}`}
-              className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-[11px] text-[12px] leading-4 text-foreground"
+              className="inline-flex h-10 items-center rounded-lg border border-border bg-card px-[11px] text-[12px] leading-4 whitespace-nowrap text-foreground"
             >
               {search}
             </span>

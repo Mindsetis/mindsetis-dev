@@ -70,10 +70,10 @@ export function PhilosophyForm({
 
   const quoteValue = useWatch({ control: form.control, name: 'philosophy' }) ?? '';
 
-  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19), but
-  // only in cabinet mode — this form is also the wizard's own step, which must stay unaffected by
-  // the cabinet's exit guard (see that hook's own doc comment).
-  useSectionDirtyGuard(editMode ? form.formState.isDirty : false);
+  // Reported up to the shared "unsaved changes" guard (Release-1 C-continuation, 2026-09-19) in
+  // both modes: since 2026-09-29 the wizard has a bottom "Back" of its own, which should ask
+  // before dropping an edited step just like the cabinet's (see that hook's own doc comment).
+  useSectionDirtyGuard(form.formState.isDirty);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setFormError(null);
