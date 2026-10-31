@@ -17,10 +17,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useRouter } from '@/i18n/navigation';
+import { toast } from '@/components/ui/sonner';
+import { Link, useRouter } from '@/i18n/navigation';
 import { type ResetPasswordInput, resetPasswordSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
+import { authErrorText } from './auth-errors';
 import { PasswordRequirements, PasswordToggle } from './password-field';
 
 type FieldName = 'password' | 'confirmPassword';
@@ -38,14 +40,19 @@ const FIELDS = [
  * describing a password that already exists — here it is doing real work: these ARE the rules the
  * new password must satisfy.
  *
- * On success it goes to `/password-changed` (Figma `680:9123`) instead of the old
- * `/login?reset=success` banner. `updatePassword` ends the recovery session first, so that screen
- * is reached signed-out and its "Log in" button is the only way on.
+ * On success the visitor stays signed in and goes straight on (Release 2 П3): `updatePassword`
+ * revokes their OTHER sessions, keeps this one, and returns where they belong — the cabinet or the
+ * wizard step they never finished — with a "Password updated successfully!" toast. The old
+ * `/password-changed` screen (Figma `680:9123`) and its "Log in" button are gone: the recovery link
+ * already proved they own the inbox, so asking them to type the new password again added nothing.
  */
 export function ResetPasswordForm() {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  // Set when there is no recovery session at all (link opened in another browser, session
+  // expired): the only useful next step is a fresh link, so the banner offers one.
+  const [sessionMissing, setSessionMissing] = useState(false);
   const [visible, setVisible] = useState<Record<FieldName, boolean>>({
     password: false,
     confirmPassword: false,
@@ -61,13 +68,26 @@ export function ResetPasswordForm() {
 
   const onSubmit = form.handleSubmit(async (input) => {
     setFormError(null);
+    setSessionMissing(false);
     const result = await updatePassword(input);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      if (result.error.code === 'unauthenticated') {
+        setSessionMissing(true);
+        setFormError(t('resetPassword.sessionExpired'));
+      } else if (result.error.code === 'conflict') {
+        setFormError(t('resetPassword.samePassword'));
+      } else {
+        setFormError(authErrorText(t, result.error));
+      }
       return;
     }
-    router.push('/password-changed');
+    // The toast lives in the root layout's `<Toaster>`, which survives client-side navigation, so
+    // it is still on screen when the destination renders. `refresh()` re-reads the session for
+    // the header/account menu, the same as after a log-in.
+    toast.success(t('resetPassword.success'));
+    router.push(result.data.next);
+    router.refresh();
   });
 
   return (
@@ -75,7 +95,17 @@ export function ResetPasswordForm() {
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
         {formError ? (
           <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
+            <AlertDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>{formError}</span>
+              {sessionMissing ? (
+                <Link
+                  href="/forgot-password"
+                  className="font-bold underline underline-offset-2 hover:text-primary"
+                >
+                  {t('resetPassword.requestNew')}
+                </Link>
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : null}
 

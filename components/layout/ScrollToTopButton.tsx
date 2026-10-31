@@ -69,6 +69,10 @@ export function ScrollToTopButton() {
   // `CabinetSidebar` uses), so this matches every `/dashboard/*` route regardless of locale.
   const pathname = usePathname();
   const isCabinetRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
+  // The Mindsetter wizard pins "Save & Continue" to the bottom of the screen (call of 28.10.2026),
+  // right where this pill floats — on a phone it covered the button's right half.
+  const isWizardRoute =
+    pathname === '/mindsetter-onboarding' || pathname.startsWith('/mindsetter-onboarding/');
 
   useEffect(() => {
     let ticking = false;
@@ -101,8 +105,9 @@ export function ScrollToTopButton() {
   // from `/dashboard/*` specifically while it stays on the marketing site. `null` after the
   // scroll-listener effect above (not before it): the effect itself is harmless with nobody able
   // to see the button, and keeping every hook call unconditional avoids a "rendered fewer hooks
-  // than expected" error on a route change between a cabinet and a non-cabinet page.
-  if (isCabinetRoute) return null;
+  // than expected" error on a route change between a cabinet and a non-cabinet page. Same for the
+  // Mindsetter wizard (see `isWizardRoute`).
+  if (isCabinetRoute || isWizardRoute) return null;
 
   return (
     <button

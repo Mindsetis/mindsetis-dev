@@ -3,18 +3,22 @@
 import { useTranslations } from 'next-intl';
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
 
+import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
 import { Button } from '@/components/ui/button';
-import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /**
- * The previous onboarding step for the wizard's bottom "Back" (client request, 2026-09-29: Back
- * moved from the top-left link to the submit row, "like the cabinet", and it must step back
- * through the wizard rather than act like the browser's back). Provided by the page — which is
- * the only thing that knows the step order and the `?blocks=&i=` handoff — around the form, so
- * the eleven shared form components don't each need a new prop threaded through to here.
- * `null` (no provider) keeps the single "Save & Continue" button.
+ * The previous wizard step, for the bottom "Back" next to "Save and continue". Provided by the
+ * PAGE around the form — the only thing that knows the step order and the `?blocks=&i=` handoff —
+ * so the eleven shared form components don't each need a new prop threaded through to here. `null`
+ * (no provider: the cabinet, or a form used outside the wizard) keeps the single primary button.
+ *
+ * History: Back sat in this row from 2026-09-29, moved to the top-left corner on 30.10.2026
+ * (Release-2 П6, call of 28.10) and came back here on 31.10.2026 — the owner wants it in one
+ * container with "Save and continue", pinned with it, on every wizard step. Only the screens with
+ * no primary button at all (`/verify-email`, `/welcome`, `/mindsetter-onboarding/congrats`) keep a
+ * top-left Back (`StickyBackLink`).
  */
 const OnboardingBackContext = createContext<string | null>(null);
 
@@ -28,9 +32,13 @@ export function useOnboardingBackHref(): string | null {
 }
 
 /**
- * The wizard's "Back" button, shared by `StepActions` and the forms with their own submit row
- * (`ShineForm`, `BuildProfileForm`). Goes through the same unsaved-changes `guard` as the
- * cabinet's Back, so an edited step asks before its changes are dropped.
+ * The wizard's "Back", shared by `WizardActionBar`, `ShineForm` and the Member wizard's 4/4
+ * (`BuildProfileForm`). A `GuardedLink` styled as a button, so it goes through the same
+ * unsaved-changes guard as the site header's links: an edited step asks before it is dropped, and
+ * Cmd/Ctrl/middle-click still opens the previous step in a new tab untouched.
+ *
+ * `disabled` (a save in flight) cannot use the native attribute on an anchor, so it mirrors the
+ * `outline` variant's own disabled look and takes the link out of the pointer/tab order.
  */
 export function OnboardingBackButton({
   href,
@@ -42,27 +50,164 @@ export function OnboardingBackButton({
   className?: string;
 }) {
   const tCabinet = useTranslations('dashboard.profile');
-  const router = useRouter();
-  const { guard } = useUnsavedChanges();
   return (
     <Button
-      type="button"
+      asChild
       variant="outline"
       size="lg"
-      disabled={disabled}
-      onClick={() => guard(() => router.push(href))}
-      className={className}
+      className={cn(
+        'px-4 md:px-8',
+        disabled && 'pointer-events-none border-border text-border',
+        className,
+      )}
     >
-      {tCabinet('back')}
+      <GuardedLink
+        href={href}
+        aria-disabled={disabled || undefined}
+        tabIndex={disabled ? -1 : undefined}
+      >
+        {tCabinet('back')}
+      </GuardedLink>
     </Button>
+  );
+}
+
+/**
+ * A row of form actions that stays pinned to the bottom of the viewport while a long form scrolls,
+ * instead of requiring a scroll all the way down to reach Save. First built for the cabinet
+ * (Release-1 C3); since the call of 28.10.2026 the Mindsetter wizard's "Save & Continue" sits in
+ * one too, and since 31.10.2026 the wizard's Back is pinned together with it in the same bar.
+ *
+ * `sticky`, not `fixed` — it stays inside its own containing block (the section CARD on desktop,
+ * the bare page on mobile and throughout the wizard) rather than floating over unrelated page
+ * chrome full-viewport-width, and it naturally rejoins normal flow once the form itself ends. Same
+ * technique already proven in this codebase by the site Header (`sticky top-0`, `Header.tsx`) and
+ * the cabinet sidebar (`lg:sticky lg:top-[112px]`, `CabinetSidebar.tsx`). `z-10` keeps it above the
+ * form fields it slides over; the site Header's `z-40` and any dialog's `z-50` both still win.
+ *
+ * Only the PINNED state gets a surface of its own: while the bar floats over scrolling fields it
+ * needs an opaque background and a top edge so the content underneath doesn't bleed through, but
+ * once the form ends and the bar rejoins normal flow that same background reads as a stray panel
+ * welded under the buttons (owner's call on `/dashboard/sessions`, 2026-09-20, where the form is
+ * short enough to never pin at all). `surface` picks the background the bar sits on: the cabinet's
+ * section card from `lg` up, or the bare page everywhere in the wizard.
+ *
+ * Pinned-ness is detected with a 1px sentinel rendered directly BELOW the bar: while that sentinel
+ * is on screen, the bar is at its resting place; once it scrolls out of view the bar is holding
+ * the viewport's bottom edge. CSS has no `:stuck` selector to ask this directly, and reading
+ * `getBoundingClientRect` on scroll would cost a layout read per frame.
+ */
+export function StickyActionBar({
+  surface,
+  className,
+  children,
+}: {
+  surface: 'card' | 'page';
+  className?: string;
+  children: ReactNode;
+}) {
+  const [isPinned, setIsPinned] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsPinned(!entry?.isIntersecting),
+      // Trims the very edge of the viewport so the sentinel doesn't read as "visible" at the exact
+      // pixel the bar is pinned over it.
+      { rootMargin: '0px 0px -1px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <div
+        // Read by `components/ui/form-errors.ts` to keep a revealed error clear of the bar.
+        data-sticky-action-bar=""
+        className={cn(
+          'sticky bottom-0 z-10 flex flex-row gap-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:pt-4 lg:pb-4',
+          isPinned && 'border-t border-[#2a2a2a] bg-background',
+          isPinned && surface === 'card' && 'lg:bg-card',
+          className,
+        )}
+      >
+        {children}
+      </div>
+
+      {/* Sentinel for `isPinned` — see the doc comment. Purely a measuring device: no height of
+          its own beyond the 1px the observer needs, nothing to announce. */}
+      <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
+    </>
+  );
+}
+
+/**
+ * The wizard's pinned `[Back | primary]` pair — ONE component for the Mindsetter steps/blocks
+ * (via `StepActions`) and the Member wizard's 4/4 (`BuildProfileForm`), so Back has the same
+ * container, size and pinned behaviour everywhere (owner's call, 31.10.2026).
+ *
+ * Both buttons are `flex-1`, i.e. halves, in ONE row at every width, so the pair fits a 375px phone
+ * too. Measured with the real Manrope Bold 16px: "Save and continue" is 143px, "Guardar y
+ * continuar" 154px, "Back"/"Atrás" 37/41px. On a 343px row (375 minus the page's 16px padding) the
+ * label floor of the primary button (text + the 16px side padding below `md`) is 175px (en) /
+ * 186px (es), so it takes marginally more than half and Back gets the rest (156/145px) — nothing
+ * wraps or overflows down to a 320px screen. `md` and up use the roomier 32px padding.
+ *
+ * `backHref` is `null` when no `OnboardingBack` wraps the form: the primary button then stands
+ * alone, as before.
+ */
+export function WizardActionBar({
+  backHref,
+  isSubmitting,
+  label,
+  pendingLabel,
+  onSubmit,
+  disabled,
+  className,
+}: {
+  backHref: string | null;
+  isSubmitting: boolean;
+  label: string;
+  pendingLabel: string;
+  /** Opt out of `type="submit"` — see `StepActionsProps.onSubmit`. */
+  onSubmit?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const submitProps = onSubmit
+    ? ({ type: 'button', onClick: onSubmit } as const)
+    : ({ type: 'submit' } as const);
+
+  return (
+    <StickyActionBar surface="page" className={className}>
+      {backHref ? (
+        <OnboardingBackButton href={backHref} disabled={isSubmitting} className="flex-1" />
+      ) : null}
+      <Button
+        {...submitProps}
+        variant="primaryOutline"
+        size="lg"
+        loading={isSubmitting}
+        disabled={disabled}
+        className="flex-1 px-4 md:px-8"
+      >
+        {isSubmitting ? pendingLabel : label}
+      </Button>
+    </StickyActionBar>
   );
 }
 
 /**
  * The submit row shared by every Mindsetter step/block form, in its two modes.
  *
- * ONBOARDING (default, `editMode` omitted): a single "Save & Continue" button — byte-for-byte the
- * markup each form carried inline before this was extracted, so wizard behavior is unchanged.
+ * ONBOARDING (default, `editMode` omitted): `[Back | Save and continue]` side by side in one
+ * pinned bar (`WizardActionBar`) — the Back's target comes from the page's `OnboardingBack`
+ * provider, so the forms don't carry it. Pinned to the bottom of the screen while the step scrolls
+ * (calls of 28.10 and 31.10.2026).
  *
  * CABINET (`editMode`): "Back" + "Save & Next" (label overridable, see `saveLabel`), per Release-1
  * C3 (2026-09-19) — this SUPERSEDES the 2026-08-11 "Cancel discards edits and stays on the
@@ -109,7 +254,7 @@ export type StepActionsProps = {
    */
   saveLabel?: string;
   /**
-   * Applied to the ONBOARDING button only. Several block forms pin a negative top margin here to
+   * Applied to the ONBOARDING row only. Several block forms pin a negative top margin here to
    * tighten the gap between "+ Add …" and the submit button; that spacing is specific to the
    * wizard's single-button layout, so it must not leak into the cabinet's two-button row.
    */
@@ -139,113 +284,44 @@ export function StepActions({
   const t = useTranslations('mindsetterOnboarding');
   const tCabinet = useTranslations('dashboard.profile');
   const { guard } = useUnsavedChanges();
-  const onboardingBackHref = useContext(OnboardingBackContext);
-
-  /**
-   * Whether the cabinet bar is actually PINNED right now, as opposed to sitting at the end of the
-   * form where it naturally belongs. Only the pinned state gets a surface of its own: while the
-   * bar floats over scrolling fields it needs an opaque background and a top edge so the content
-   * underneath doesn't bleed through, but once the form ends and the bar rejoins normal flow that
-   * same background reads as a stray panel welded under the buttons (owner's call on
-   * `/dashboard/sessions`, 2026-09-20, where the form is short enough to never pin at all).
-   *
-   * Detected with a 1px sentinel rendered directly BELOW the bar: while that sentinel is on
-   * screen, the bar is at its resting place; once it scrolls out of view the bar is holding the
-   * viewport's bottom edge. CSS has no `:stuck` selector to ask this directly, and reading
-   * `getBoundingClientRect` on scroll would cost a layout read per frame.
-   */
-  const [isPinned, setIsPinned] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsPinned(!entry?.isIntersecting),
-      // Trims the very edge of the viewport so the sentinel doesn't read as "visible" at the exact
-      // pixel the bar is pinned over it.
-      { rootMargin: '0px 0px -1px 0px' },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
+  const onboardingBackHref = useOnboardingBackHref();
 
   if (!editMode) {
-    const continueButton = (
-      <Button
-        {...submitProps}
-        variant="primaryOutline"
-        size="lg"
-        loading={isSubmitting}
-        disabled={disabled}
-        className={onboardingBackHref ? 'flex-1' : className}
-      >
-        {isSubmitting ? t('common.saving') : t('common.saveAndContinue')}
-      </Button>
-    );
-    if (!onboardingBackHref) return continueButton;
-
-    // Back + Save & Continue side by side, halves of the form column at every width. `className`
-    // (the forms' spacing tweaks) moves to the row so it still positions the whole control.
     return (
-      <div className={cn('flex flex-row gap-3', className)}>
-        <OnboardingBackButton
-          href={onboardingBackHref}
-          disabled={isSubmitting}
-          className="flex-1"
-        />
-        {continueButton}
-      </div>
+      <WizardActionBar
+        backHref={onboardingBackHref}
+        isSubmitting={isSubmitting}
+        label={t('common.saveAndContinue')}
+        pendingLabel={t('common.saving')}
+        onSubmit={onSubmit}
+        disabled={disabled}
+        className={className}
+      />
     );
   }
 
   return (
-    /* Sticky bottom action bar (Release-1 C3): stays pinned to the bottom of the viewport
-       while a long section form scrolls (Hero alone is twelve fields), instead of requiring a
-       scroll all the way down to reach Save. `sticky`, not `fixed` — it stays inside its own
-       containing block (the section CARD on desktop, the bare page on mobile) rather than
-       floating over unrelated page chrome full-viewport-width, and it naturally rejoins normal
-       flow once the form itself ends. Same technique already proven in this codebase by the
-       site Header (`sticky top-0`, `Header.tsx`) and the cabinet sidebar
-       (`lg:sticky lg:top-[112px]`, `CabinetSidebar.tsx`). `bg-background`/`lg:bg-card` matches
-       whichever surface this bar sits on at that breakpoint (the bare page vs. the section
-       card), so content scrolling underneath never shows through — but only while it IS pinned;
-       see `isPinned` above for why the surface disappears once the bar comes to rest. `z-10` keeps
-       it above the form fields it slides over; the site Header's `z-40` and any dialog's `z-50`
-       both still win. */
-    <>
-      <div
-        className={cn(
-          'sticky bottom-0 z-10 flex flex-row gap-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:pt-4 lg:pb-4',
-          isPinned && 'border-t border-[#2a2a2a] bg-background lg:bg-card',
-        )}
+    <StickyActionBar surface="card">
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        onClick={() => guard(onCancel)}
+        disabled={isSubmitting}
+        className="h-[52px] flex-1 px-4 lg:h-14 lg:flex-none lg:px-8"
       >
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={() => guard(onCancel)}
-          disabled={isSubmitting}
-          className="h-[52px] flex-1 px-4 lg:h-14 lg:flex-none lg:px-8"
-        >
-          {tCabinet('back')}
-        </Button>
-        <Button
-          {...submitProps}
-          variant="primary"
-          size="lg"
-          loading={isSubmitting}
-          disabled={disabled}
-          className="h-[52px] flex-1 px-4 lg:h-14 lg:flex-none lg:px-8"
-        >
-          {isSubmitting ? t('common.saving') : (saveLabel ?? tCabinet('saveAndNext'))}
-        </Button>
-      </div>
-
-      {/* Sentinel for `isPinned` — see its doc comment. Purely a measuring device: no height of
-          its own beyond the 1px the observer needs, nothing to announce. */}
-      <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
-    </>
+        {tCabinet('back')}
+      </Button>
+      <Button
+        {...submitProps}
+        variant="primary"
+        size="lg"
+        loading={isSubmitting}
+        disabled={disabled}
+        className="h-[52px] flex-1 px-4 lg:h-14 lg:flex-none lg:px-8"
+      >
+        {isSubmitting ? t('common.saving') : (saveLabel ?? tCabinet('saveAndNext'))}
+      </Button>
+    </StickyActionBar>
   );
 }

@@ -17,6 +17,8 @@ import {
   TiktokIcon,
   YoutubeIcon,
 } from '@/components/icons/social-icons';
+import { IndustryPill } from '@/components/profile/IndustryPill';
+import { OwnerShareButton } from '@/components/profile/OwnerShareButton';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
@@ -33,10 +35,13 @@ import styles from './MemberProfileView.module.css';
  * column allow-list 1:1, and regenerating call sites around it is out of scope here. The single
  * call site (`/members/[username]`) selects this exact allow-list, never `select('*')`.
  *
- * `industry` (Release-1 E5, 2026-09-20 product decision) no longer appears on the public
- * profile — it was shown as one of the "meta pills" alongside company/role, but the field is
- * now multi-select (`profiles.industries` + `profiles.industry_custom`) and meant to power
- * search filters, not the public header. `company`/`role` still render there.
+ * INDUSTRY HISTORY. Release-1 E5 (2026-09-20 product decision) REMOVED industry from the public
+ * profile — it used to be one of the "meta pills" alongside company/role, and the field had
+ * become multi-select (`profiles.industries` + `profiles.industry_custom`), meant to power
+ * search filters rather than the public header. "Правки 3.0" П9 REVERSES that for Member
+ * profiles: Albina drew industry back as its own field (a separate outlined pill under the
+ * company/role pills — Figma `1642:23098` / `1747:33853`), so it renders again as
+ * `industryLabels` below. `company`/`role` are unchanged.
  */
 export interface MemberProfile {
   username: string;
@@ -55,21 +60,51 @@ export interface MemberProfile {
   interests: string[] | null;
   socials: SocialsJson | null;
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  /**
+   * Display labels of the member's industries, ALREADY MODERATION-FILTERED by the page via
+   * `resolveIndustryLabels` (`lib/profile/industry-labels.ts`) — the only industry data this
+   * component ever receives. The raw
+   * `industries` slugs, `industry_custom` and `industry_custom_status` deliberately do NOT cross
+   * this boundary: an unapproved free-text value must never reach a component that renders it.
+   * Empty = nothing to show, the pill is hidden.
+   */
+  industryLabels: string[];
 }
 
 /** Translated copy, resolved server-side by each page via `getTranslations('profile')`. */
 export interface MemberProfileViewLabels {
+  /** The small caps caption inside the industry pill ("INDUSTRY"). */
+  industry: string;
   verified: string;
   inviteToEvent: string;
   aboutEyebrow: string;
   beyondBusinessEyebrow: string;
   beyondBusinessHeading: string;
   website: string;
+  /** Accessible name of the owner-only icon-only Share control. */
+  shareAriaLabel: string;
+  /** Toast shown after the clipboard-copy fallback succeeds. */
+  shareLinkCopied: string;
+  /** Toast shown when both Web Share and the clipboard fallback are unavailable. */
+  shareCopyFailed: string;
 }
 
 export interface MemberProfileViewProps {
   profile: MemberProfile;
   labels: MemberProfileViewLabels;
+  /**
+   * Whether the viewer is looking at THEIR OWN profile (resolved server-side by the page from
+   * the session). The owner gets a working Share control where everyone else gets "Invite to
+   * event". Only a boolean crosses this boundary — nothing else about the viewer.
+   */
+  isOwner: boolean;
+  /**
+   * Canonical, already-locale-prefixed, already-absolute public URL of this profile
+   * (`siteUrl(localePath(...))`, built server-side exactly like `mindsetters/[username]/page.tsx`
+   * does) — consumed only by the owner's `ShareProfileButton`. `null` for every non-owner
+   * viewer (the page doesn't build it for them).
+   */
+  shareUrl: string | null;
 }
 
 /**
@@ -238,17 +273,22 @@ export function resolveLanguageText(profile: { languages: string[] | null }): st
  * profile" banner (with its Edit Profile / Share Profile buttons) that used to render here for
  * the profile owner is REMOVED — the client's explicit ask, not merely hidden. Edit access for
  * the owner still exists via the account menu's own always-available "Edit Profile" entry
- * (`/dashboard/profile`). Share is explicitly NOT rebuilt here — per the tracker, Member profiles
- * get no share control at all (only the Mindsetter profile's hero does, see
- * `MindsetterProfileView`'s `ShareProfileButton`). With the banner gone this screen no longer
- * renders anything differently for the owner vs. any other visitor, so the `variant` prop this
- * component used to take was removed too — do not reintroduce an owner/preview-only code path
- * here without a real reason.
+ * (`/dashboard/profile`). Per the tracker, Member profiles got no share control at all (only
+ * the Mindsetter profile's hero did, see `MindsetterProfileView`'s `ShareProfileButton`).
+ *
+ * "Правки 3.0" П11 REVERSES that Release-1 G3 decision for Members: on the viewer's OWN profile
+ * the "Invite to event" slot now holds a working `ShareProfileButton` (share the link to your
+ * own page — inviting yourself to an event makes no sense), while on someone else's profile
+ * "Invite to event" stays as it was. That is the one remaining owner-vs-visitor difference on
+ * this screen and it is driven by the `isOwner` + `shareUrl` props the page resolves
+ * server-side; the old `variant` prop (owner banner) stays removed — do not grow more
+ * owner-only code paths here without a real reason.
  */
-export function MemberProfileView({ profile, labels }: MemberProfileViewProps) {
+export function MemberProfileView({ profile, labels, isOwner, shareUrl }: MemberProfileViewProps) {
   const displayName = resolveDisplayName(profile);
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
+  const industryLabels = profile.industryLabels;
   const metaPills = [profile.company, profile.role].filter((value): value is string =>
     Boolean(value),
   );
@@ -311,31 +351,53 @@ export function MemberProfileView({ profile, labels }: MemberProfileViewProps) {
 
             {profile.bio && <p className="text-body">{profile.bio}</p>}
 
-            {metaPills.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {metaPills.map((label) => (
-                  <span
-                    key={label}
-                    className={cn(
-                      // Fixed 28px height (h-7), vertically centered via flex — top/bottom
-                      // padding dropped in favor of centering so the pill hits exactly 28px
-                      // regardless of text-tiny's per-breakpoint line-height (16.8px mobile /
-                      // 19.6px desktop), which stacked with any padding value couldn't land on
-                      // 28px cleanly at both breakpoints at once. Horizontal padding unchanged
-                      // (8px mobile / 12px desktop, node 401:8241 / 401:6393).
-                      'inline-flex h-7 items-center px-2 text-tiny md:px-3',
-                      styles.metaPill,
-                    )}
-                  >
-                    {label}
-                  </span>
-                ))}
+            {/* Company/role pills + (П9) the INDUSTRY pill beneath them. Figma desktop: one frame
+                ("Frame 827", `1642:23108`) holding the pills row (`383:4684`, 24px tall) and the
+                industry pill (`1642:23098`, 24px tall) 10px below it (y=34 vs 0+24) — hence
+                `gap-2.5`. Each is hidden when it has nothing to show. */}
+            {(metaPills.length > 0 || industryLabels.length > 0) && (
+              <div className="flex flex-col items-start gap-2.5">
+                {metaPills.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {metaPills.map((label) => (
+                      <span
+                        key={label}
+                        className={cn(
+                          // Fixed 24px height (h-6), vertically centered via flex — top/bottom
+                          // padding dropped in favor of centering so the pill hits exactly the
+                          // design height regardless of text-tiny's per-breakpoint line-height
+                          // (16.8px mobile / 19.6px desktop). Was 28px (h-7) against the old
+                          // frames; the current Figma pills are 24px on both breakpoints
+                          // (`383:4687`/`1746:33839` desktop, `401:8241` mobile), re-measured
+                          // with П9 so the industry pill under them lines up. Horizontal padding
+                          // unchanged (8px mobile / 12px desktop).
+                          'inline-flex h-6 items-center px-2 text-tiny md:px-3',
+                          styles.metaPill,
+                        )}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Shared with the Mindsetter profile (see `IndustryPill` for the Figma nodes).
+                    Figma `1642:23098` desktop; the Member MOBILE frames `48:567`/`401:8282`
+                    predate the pill, so mobile takes the mobile variant `1751:38850` (12px
+                    values). Renders nothing when there are no labels. */}
+                <IndustryPill caption={labels.industry} labels={industryLabels} theme="light" />
               </div>
             )}
 
             {/* Static per this stage's scope — no `onClick`/`href`. Figma: "Invite to event"
                 doesn't exist anywhere on either mobile "Verified Member Profile" frame
-                (401:8282 preview, 48:567 public) — desktop-only. Re-verified the actual node:
+                (401:8282 preview, 48:567 public) — re-checked 31.10: still absent there. "Правки
+                3.0" П11 (owner, 31.10) asks for it on phones anyway, so the mobile placement is a
+                DEVELOPER DECISION, not a Figma one: it keeps its desktop slot — after the
+                company/role/industry pills, before the location/language row — and goes
+                full-width (`w-full`, like the Mindsetter hero's phone CTAs, `401:7614`) with the
+                same 56px height; 188px wide from `md` up as drawn. Replace once Albina draws the
+                mobile frame. Re-verified the actual node:
                 `401:6377`/`401:6359` (the pair previously cited here) are, respectively, the
                 site's own "Header PC" instance and the desktop Share Profile button — NEITHER
                 is this button. The real node is the "Primary" instance `401:6401` (preview) /
@@ -348,24 +410,49 @@ export function MemberProfileView({ profile, labels }: MemberProfileViewProps) {
                 (`rounded-lg`/`gap-3`) rather than matching Figma's real cornerRadius 12 / 12px
                 icon-to-text gap — same inverted-radius mistake as the Edit button, so both
                 overrides are dropped here rather than corrected to an explicit value. */}
-            {/* Event invites are unbuilt — same treatment as every other unbuilt control across
-                the app (see `components/ui/not-yet-available.tsx`), including Share Profile in the
-                banner above. Edit Profile is the one banner action that is NOT marked: it now
-                links to the cabinet (2026-08-12). */}
-            <NotYetAvailable feature="inviteToEvent" className="hidden md:inline-flex">
-              <Button
-                type="button"
-                variant="ghost"
-                disabled
-                className={cn(
-                  'h-14 w-[188px] px-5 py-[15px] text-base font-bold disabled:opacity-50',
-                  styles.inviteButton,
-                )}
-              >
-                <UserAddFillIcon className="size-4" aria-hidden="true" />
-                {labels.inviteToEvent}
-              </Button>
-            </NotYetAvailable>
+            {isOwner && shareUrl ? (
+              // "Правки 3.0" П11 (reverses Release-1 G3 for Members): on your OWN profile this slot
+              // is a working Share control instead of "Invite to event". The same
+              // `OwnerShareButton` (shared with the Mindsetter owner view, which owns the 44px
+              // shape — see that file) in the light-gray bordered box this screen's social icons
+              // use (`socialIconButton`).
+              //
+              // NOT FROM THE DESIGN: Figma has no Share control on ANY Member profile frame —
+              // neither desktop (`383:4667` own profile shows no button at all, `401:6375` the
+              // preview shows only "Invite to event") nor mobile (`48:567`/`401:8282`), so the
+              // placement (the Invite slot, which is visible at every breakpoint since П11 put
+              // Invite on phones too) and the size are developer decisions, to be replaced once
+              // Albina draws it. Size: 44x44 (`size-11`) — the 32px box used in the Mindsetter hero
+              // is below the 44px touch target a primary, tapped-on-mobile action needs (live
+              // tester finding); the 20px glyph (`[&_svg]:size-5`) overrides the button's own
+              // `size-4` so it doesn't look lost in the bigger box.
+              <OwnerShareButton
+                url={shareUrl}
+                ariaLabel={labels.shareAriaLabel}
+                copiedMessage={labels.shareLinkCopied}
+                errorMessage={labels.shareCopyFailed}
+                shareTitle={displayName}
+                className={cn('self-start', styles.socialIconButton)}
+              />
+            ) : (
+              // Event invites are unbuilt — same treatment as every other unbuilt control across
+              // the app (see `components/ui/not-yet-available.tsx`). Rendered for everyone who is
+              // NOT looking at their own profile — at every breakpoint, phones included.
+              <NotYetAvailable feature="inviteToEvent" className="w-full md:w-auto">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled
+                  className={cn(
+                    'h-14 w-full px-5 py-[15px] text-base font-bold disabled:opacity-50 md:w-[188px]',
+                    styles.inviteButton,
+                  )}
+                >
+                  <UserAddFillIcon className="size-4" aria-hidden="true" />
+                  {labels.inviteToEvent}
+                </Button>
+              </NotYetAvailable>
+            )}
 
             {(locationText || languageText) && (
               // Figma: "Tulum, Mexico" / "EN / UA" render at 14px desktop / 12px mobile

@@ -37,9 +37,16 @@ export function LinkExpiredHashReason() {
     if (!code) return;
 
     const reason = code === 'otp_expired' || code === 'access_denied' ? 'expired' : 'invalid';
+    const next = new URLSearchParams({ reason });
+    // The server already worked out which email this link came from (`/api/auth/confirm` →
+    // `?type=recovery`) and it is still in the query string — dropping it here would turn a dead
+    // password-reset link back into a "resend confirmation" screen (Release 2 П2).
+    if (new URLSearchParams(window.location.search).get('type') === 'recovery') {
+      next.set('type', 'recovery');
+    }
     // `replace`, not `push`: this is a correction of the current URL, not a step the visitor
     // took, and Back should return them to their mail client rather than to the fragment.
-    router.replace(`/link-expired?reason=${reason}`);
+    router.replace(`/link-expired?${next.toString()}`);
   }, [router]);
 
   return null;

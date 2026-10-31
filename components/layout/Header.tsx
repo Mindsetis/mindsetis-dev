@@ -7,8 +7,13 @@ import { AccountMenu } from '@/components/layout/AccountMenu';
 import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
-import { ctaStateFromProfile } from '@/lib/auth/cta-state';
+import { ctaStateFromProfile, needsMindsetterStep } from '@/lib/auth/cta-state';
 import { getCurrentUser } from '@/lib/auth/guards';
+import {
+  fetchMindsetterOnboardingStep,
+  memberWizardPath,
+  mindsetterResumePath,
+} from '@/lib/auth/onboarding-redirect';
 import { createClient } from '@/lib/supabase/server';
 
 type HeaderProps = {
@@ -70,6 +75,8 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
     onboarding_step: number | null;
   } | null = null;
 
+  let mindsetterStep: number | null = null;
+
   if (user) {
     const supabase = await createClient();
     const { data } = await supabase
@@ -78,12 +85,18 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
       .eq('id', user.id)
       .maybeSingle();
     profile = data;
+
+    // Only a complete Member can be mid-way through the Mindsetter wizard, so only they pay for
+    // the extra lookup ("Upgrade" vs. "Continue Registration", Release-2 П5).
+    if (needsMindsetterStep(profile)) {
+      mindsetterStep = await fetchMindsetterOnboardingStep(supabase, user.id);
+    }
   }
 
   // `guest` is unreachable here (falls through to the `user ? null : …` branch below instead) —
-  // this only ever resolves to one of the three signed-in states, all reusing the same
-  // `profile` row `AccountMenu` needs.
-  const ctaState = profile ? ctaStateFromProfile(true, profile) : null;
+  // this only ever resolves to one of the signed-in states, all reusing the same `profile` row
+  // `AccountMenu` needs.
+  const ctaState = profile ? ctaStateFromProfile(true, profile, mindsetterStep) : null;
 
   return (
     <header className="sticky top-0 z-40 bg-card">
@@ -152,12 +165,17 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                   applies (`lg:h-14 lg:px-5` unchanged, still Figma-exact — 1440 guest Join CTA
                   re-measured at exactly 199px wide, right edge 1355px, zero overflow). */}
               {ctaState === 'memberIncomplete' ? (
+                // Straight to the Member wizard step this profile is at (`profile.onboarding_step`
+                // is already loaded above) instead of `/continue`, which would read the same row
+                // and redirect there anyway — one hop saved on every click.
                 <Button
                   asChild
                   size="sm"
                   className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
                 >
-                  <GuardedLink href="/continue">{t('editProfile')}</GuardedLink>
+                  <GuardedLink href={memberWizardPath(profile.onboarding_step)}>
+                    {t('editProfile')}
+                  </GuardedLink>
                 </Button>
               ) : null}
 
@@ -174,6 +192,28 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 >
                   {t('upgrade')}
                 </UpgradeToMindsetterTrigger>
+              ) : null}
+
+              {ctaState === 'mindsetterInProgress' ? (
+                // Release-2 П5 (call of 28.10.2026): a Member who already started the Mindsetter
+                // wizard resumes it instead of seeing the upgrade pitch again. Straight to their
+                // next unsaved step (`mindsetterStep` is looked up above for exactly this state),
+                // not via the wizard's entry route, which would compute the same path and
+                // redirect to it. Shortened below `lg` so it fits the 375px row like the other
+                // states.
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                >
+                  <GuardedLink
+                    href={mindsetterResumePath(mindsetterStep)}
+                    aria-label={t('continueRegistration')}
+                  >
+                    <span className="lg:hidden">{t('continueRegistrationShort')}</span>
+                    <span className="hidden lg:inline">{t('continueRegistration')}</span>
+                  </GuardedLink>
+                </Button>
               ) : null}
 
               {ctaState === 'mindsetter' ? (

@@ -164,9 +164,10 @@ export function WhoIsMindsetterDialog({ open, onOpenChange }: WhoIsMindsetterDia
             size="lg"
             className="w-full md:order-2 md:flex-1"
           >
-            {/* Extended Mindsetter onboarding, step 1/5 "Your roles" (ROADMAP stage 1.9) —
-                previously a placeholder `/` link (stage 1.6). */}
-            <Link href="/mindsetter-onboarding/roles">{t('becomeMindsetter')}</Link>
+            {/* Extended Mindsetter onboarding (ROADMAP stage 1.9) via its entry route, which
+                resumes at the next unsaved step (Release-2 П5) — previously a placeholder `/`
+                link (stage 1.6). */}
+            <Link href="/mindsetter-onboarding">{t('becomeMindsetter')}</Link>
           </Button>
           <DialogClose asChild>
             <Button

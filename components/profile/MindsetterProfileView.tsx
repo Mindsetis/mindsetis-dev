@@ -30,6 +30,7 @@ import { WinCardGlow, WinTrophyIcon } from '@/components/icons/win-card-glow';
 import { CardSlider } from '@/components/profile/CardSlider';
 import { ExpandableAccordion } from '@/components/profile/ExpandableAccordion';
 import { HelpWithAccordion } from '@/components/profile/HelpWithAccordion';
+import { IndustryPill } from '@/components/profile/IndustryPill';
 import {
   groupInterestsByCategory,
   isSafeHttpUrl,
@@ -39,6 +40,7 @@ import {
   SOCIAL_ICON_MAP,
   SOCIAL_KEYS,
 } from '@/components/profile/MemberProfileView';
+import { OwnerShareButton } from '@/components/profile/OwnerShareButton';
 import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
 import { ReviewQuoteText } from '@/components/profile/ReviewQuoteText';
 import { ShareProfileButton } from '@/components/profile/ShareProfileButton';
@@ -329,6 +331,13 @@ export interface MindsetterProfile {
   interests: string[] | null;
   socials: SocialsJson | null;
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  /**
+   * Display labels of the Mindsetter's industries, ALREADY MODERATION-FILTERED by the page via
+   * `resolveIndustryLabels` (`lib/profile/industry-labels.ts`) — same contract as
+   * `MemberProfile.industryLabels`: the raw `industries` slugs, `industry_custom` and its status
+   * never cross this boundary. Empty = nothing to show, the pill is hidden.
+   */
+  industryLabels: string[];
   roles: Role[];
   superpowers: Superpower[];
   promoVideo: VideoJson;
@@ -359,6 +368,14 @@ export interface MindsetterProfileViewProps {
    * so sharing still resolves to the real public route.
    */
   shareUrl: string;
+  /**
+   * Whether the viewer is looking at THEIR OWN profile (resolved server-side by the page from the
+   * session, never from anything client-supplied). The owner gets a square Share control wherever
+   * everyone else gets "Invite to event" / "Book a Session" — hero and both CTA banners — exactly
+   * like the Member profile's owner view ("Правки 3.0" П11, extended to Mindsetters 31.10). Only
+   * a boolean crosses this boundary.
+   */
+  isOwner: boolean;
   /**
    * The resolved `mindsetterProfile` namespace translator, passed through directly rather than
    * destructured into an individual `labels` object (the pattern `MemberProfileView` uses) —
@@ -589,7 +606,8 @@ function CtaBanner({
         </p>
       )}
       {/* Same unbuilt features as the hero's own pair — event invites and session booking.
-          Disabled + `NotYetAvailable` rather than left clickable-but-inert. */}
+          Disabled + `NotYetAvailable` rather than left clickable-but-inert. The owner sees them too:
+          only the hero swaps them for Share (owner's call, 31.10.2026). */}
       <div className="relative flex flex-col gap-3 sm:flex-row">
         <NotYetAvailable feature="inviteToEvent" className="max-[600px]:w-full">
           <Button
@@ -662,11 +680,32 @@ function CtaBanner({
  * render — likewise the micro-nav's OWN items are gated per-target (an anchor only appears once
  * its target section actually renders), except the two always-rendering targets above.
  */
-export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfileViewProps) {
+export function MindsetterProfileView({
+  profile,
+  shareUrl,
+  isOwner,
+  t,
+}: MindsetterProfileViewProps) {
   const displayName = resolveDisplayName(profile);
+  // "Правки 3.0" П11 (Members) extended to Mindsetters 31.10: on your OWN profile the Invite /
+  // Book CTAs (hero + both banners) give way to this single Share control — same component and
+  // same 44x44 shape as the Member owner view, in this page's dark `.socialIconButton` colours.
+  // Built once, rendered in each of the three slots (a React element is just a description, so
+  // reusing it is safe). `null` for everyone else, which leaves their markup untouched.
+  const ownerShare = isOwner ? (
+    <OwnerShareButton
+      url={shareUrl}
+      ariaLabel={t('share.ariaLabel')}
+      copiedMessage={t('share.linkCopied')}
+      errorMessage={t('share.copyFailed')}
+      shareTitle={displayName}
+      className={styles.socialIconButton}
+    />
+  ) : null;
   const locationText = resolveLocationText(profile);
   const languageText = resolveLanguageText(profile);
-  // `industry` was dropped from this row (Release-1 E5, 2026-09-20) — same public-profile
+  // Industry left this row in Release-1 E5 (2026-09-20) and came back in "Правки 3.0" П9 as its
+  // own pill under it (`IndustryPill`, `profile.industryLabels`) — same history and same
   // decision as `MemberProfileView`, see that file's `MemberProfile` doc comment.
   const metaPills = [profile.company, profile.role].filter((value): value is string =>
     Boolean(value),
@@ -749,11 +788,12 @@ export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfil
           access for the owner still exists (the account menu's own "Edit Profile" entry, always
           available, links to `/dashboard/profile`), and Share now lives in the hero below for
           every visitor (`ShareProfileButton`, Release-1 G3) instead of being an owner-only,
-          non-functional control here. With the banner gone, this screen no longer renders
-          anything differently for the owner vs. any other visitor, so the `variant` prop this
-          component used to take was removed too (see git history for the old version) — do not
-          reintroduce an owner/preview-only code path without a real reason, per that same
-          decision.
+          non-functional control here. With the banner gone the `variant` prop this component
+          used to take was removed too (see git history for the old version). The one owner-only
+          difference since 31.10.2026 (Release 2 П9, owner's call) is `isOwner`: the owner's own
+          hero swaps "Invite to event" / "Book a Session" for a share button (`ownerShare`); the
+          CTA banners further down stay the same for everyone — keep any further owner-only paths
+          that small.
 
           ============================== HERO ==============================
           STAGE 1.12 LAYOUT PASS (2026-07-23, explicit user direction after re-reviewing Figma):
@@ -856,37 +896,62 @@ export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfil
                   best available stand-in: it's above the fold at every breakpoint and already
                   the hero's "small controls" row. `ml-auto` pushes it to the row's trailing edge
                   without adding a second wrapper; move it next to the real favorite control once
-                  that gets built. */}
-              <ShareProfileButton
-                url={shareUrl}
-                ariaLabel={t('share.ariaLabel')}
-                copiedMessage={t('share.linkCopied')}
-                errorMessage={t('share.copyFailed')}
-                shareTitle={displayName}
-                className={cn(
-                  'ml-auto flex size-8 items-center justify-center rounded-md',
-                  styles.socialIconButton,
-                )}
-              />
+                  that gets built.
+
+                31.10: NOT rendered for the owner — their CTA row below now holds the 44px Share
+                control (`ownerShare`), and two share icons in one hero would just be noise. */}
+              {!isOwner && (
+                <ShareProfileButton
+                  url={shareUrl}
+                  ariaLabel={t('share.ariaLabel')}
+                  copiedMessage={t('share.linkCopied')}
+                  errorMessage={t('share.copyFailed')}
+                  shareTitle={displayName}
+                  className={cn(
+                    'ml-auto flex size-8 items-center justify-center rounded-md',
+                    styles.socialIconButton,
+                  )}
+                />
+              )}
             </div>
 
             <h1 className={cn('font-display', styles.heroName)}>{displayName}</h1>
 
             {heroText && <p className="text-body">{heroText}</p>}
 
-            {metaPills.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {metaPills.map((label) => (
-                  <span
-                    key={label}
-                    className={cn(
-                      'inline-flex h-7 items-center px-2 text-tiny md:px-3',
-                      styles.metaPill,
-                    )}
-                  >
-                    {label}
-                  </span>
-                ))}
+            {/* "Tags" — company/role pills + (П9, "Правки 3.0") the INDUSTRY pill beneath them.
+                Figma: one frame ("Tags", `1750:33839` desktop `327:1080` / `1751:38857` mobile
+                `401:7567`, 58px tall) holding the pills row (24px) and the industry pill ("Frame
+                785", `1750:33840` / `1751:38858`, 24px) 10px below it (y=34 vs 0+24) — hence
+                `gap-2.5`. It sits right under the bio on both breakpoints, same as the Member
+                profile. Each part is hidden when it has nothing to show. */}
+            {(metaPills.length > 0 || profile.industryLabels.length > 0) && (
+              <div className="flex flex-col items-start gap-2.5">
+                {metaPills.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {metaPills.map((label) => (
+                      <span
+                        key={label}
+                        className={cn(
+                          // 24px (h-6) like the Figma pills (`327:1122` "Frame 7" desktop) and like
+                          // the Member profile's — was h-7 (28px) from the older frames, which
+                          // would have made this row 4px taller than the industry pill's 24px
+                          // beside it in the same "Tags" group.
+                          'inline-flex h-6 items-center px-2 text-tiny md:px-3',
+                          styles.metaPill,
+                        )}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <IndustryPill
+                  caption={t('industry')}
+                  labels={profile.industryLabels}
+                  theme="dark"
+                />
               </div>
             )}
 
@@ -964,7 +1029,11 @@ export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfil
              * already-built `disabled:` treatment (`Button`'s `ghost`/`primaryOutline` variants
              * both ship one) rather than inventing a new one, plus a shared `disabled:opacity-50`
              * fallback for `.inviteButton`'s `!important` color overrides, which don't have a
-             * `disabled:` step of their own. */}
+             * `disabled:` step of their own.
+             *
+             * SUPERSEDED FOR THE OWNER (31.10): the owner no longer sees this pair at all — it is
+             * swapped for the single Share control (`ownerShare`), see the comment inside the row.
+             * The paragraph above still describes what every NON-owner viewer gets. */}
             {/* Placement differs by breakpoint, so the row keeps ONE DOM position and moves via
                 CSS `order` — the same "keep DOM order fixed, swap via CSS order" approach
                 `WhoIsMindsetterDialog`'s choice row and `MindsetterCongratsCtas` already use, and the
@@ -974,42 +1043,50 @@ export function MindsetterProfileView({ profile, shareUrl, t }: MindsetterProfil
                 The location and socials blocks carry the matching `lg:order-3`/`lg:order-4`;
                 everything above them keeps the default `order-0` and so stays first. */}
             <div className="flex flex-wrap items-center gap-3 lg:order-2 lg:mt-0">
-              {/* Disabled unconditionally, for two independent reasons that will NOT expire
-                  together: neither event invites nor session booking exists yet (hence
-                  `NotYetAvailable`), and separately a Mindsetter can never invite or book
-                  themselves — both hold for every viewer, so there is no owner/`variant` check
-                  here at all (see the CTA-row comment above, Release-1 G2). Whoever eventually
-                  wires up real booking/invites must still add a self-booking guard for the owner
-                  viewing their own page — just not via a `variant` prop, since this component no
-                  longer has one. */}
-              <NotYetAvailable feature="inviteToEvent" className="w-full lg:w-auto">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled
-                  className={cn(
-                    // Full-width on phones (each CTA gets its own line), auto-width from `lg` up
-                    // where they sit side by side.
-                    'h-14 w-full px-5 text-base font-bold disabled:opacity-50 lg:w-auto',
-                    memberStyles.inviteButton,
-                  )}
-                >
-                  <UserAddFillIcon className="size-4" aria-hidden="true" />
-                  {t('inviteToEvent')}
-                </Button>
-              </NotYetAvailable>
-              <NotYetAvailable feature="bookSession" className="w-full lg:w-auto">
-                <Button
-                  type="button"
-                  variant="primaryOutline"
-                  size="lg"
-                  disabled
-                  className="w-full lg:w-auto"
-                >
-                  <BookSessionIcon />
-                  {t('bookSession')}
-                </Button>
-              </NotYetAvailable>
+              {/* 31.10 ("Правки 3.0" П11 extended to Mindsetters, owner's ask): when the viewer IS
+                  this profile's owner, the two CTAs below are replaced by one square Share
+                  control (`ownerShare`) — the same component and 44x44 size the Member owner view
+                  uses. It supersedes the Release-1 G2 "show the owner exactly what a visitor sees,
+                  disabled" decision FOR THE OWNER ONLY; every other viewer (signed-in non-owner,
+                  staff, anonymous) still gets the pair exactly as before.
+
+                  For them the pair is disabled unconditionally, for two independent reasons that
+                  will NOT expire together: neither event invites nor session booking exists yet
+                  (hence `NotYetAvailable`), and a Mindsetter can never invite or book themselves.
+                  Whoever eventually wires up real booking/invites needs no self-booking guard on
+                  this row any more — the owner never reaches it. */}
+              {ownerShare ?? (
+                <>
+                  <NotYetAvailable feature="inviteToEvent" className="w-full lg:w-auto">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled
+                      className={cn(
+                        // Full-width on phones (each CTA gets its own line), auto-width from `lg`
+                        // up where they sit side by side.
+                        'h-14 w-full px-5 text-base font-bold disabled:opacity-50 lg:w-auto',
+                        memberStyles.inviteButton,
+                      )}
+                    >
+                      <UserAddFillIcon className="size-4" aria-hidden="true" />
+                      {t('inviteToEvent')}
+                    </Button>
+                  </NotYetAvailable>
+                  <NotYetAvailable feature="bookSession" className="w-full lg:w-auto">
+                    <Button
+                      type="button"
+                      variant="primaryOutline"
+                      size="lg"
+                      disabled
+                      className="w-full lg:w-auto"
+                    >
+                      <BookSessionIcon />
+                      {t('bookSession')}
+                    </Button>
+                  </NotYetAvailable>
+                </>
+              )}
 
               {/* Mobile-only twin of the "Intro about me" pill that sits on the photo from `lg`
                   up. Figma puts no such control on the mobile hero photo, so on phones it lives

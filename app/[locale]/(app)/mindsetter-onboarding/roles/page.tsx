@@ -24,8 +24,10 @@ export async function generateMetadata({ params }: RolesPageProps) {
  * `docs/mindsetter-extended-onboarding.md` section 2). Entered from the "Cool, I want to
  * become a Mindsetter" button in `WhoIsMindsetterDialog` (a signed-in Member). No step/progress
  * indicator anywhere in this flow (product decision D5 — Figma has none). Back sits in the
- * form's bottom row (`OnboardingBack`, client request 2026-09-29) and returns to `/welcome`,
- * where the Member chose to become a Mindsetter.
+ * form's pinned bottom row next to "Save and continue" (`OnboardingBack`, owner's call of
+ * 31.10.2026) and, this being the first step, leaves the wizard for the cabinet's profile page: the
+ * client's rule is that a Member can walk out of it at any point and stay a Member (Release-2 П4).
+ * It used to return to `/welcome`, which only made sense right after signup.
  *
  * `RolesForm`'s submit navigates to `/mindsetter-onboarding/superpowers`.
  *
@@ -59,8 +61,9 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
-          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
+          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
+          owner's call of 31.10.2026). */}
       <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
@@ -85,8 +88,7 @@ export default async function MindsetterOnboardingRolesPage({ params }: RolesPag
             {t('roles.rolesHeading')}
           </h2>
         </div>
-
-        <OnboardingBack href="/welcome">
+        <OnboardingBack href="/dashboard/profile">
           <RolesForm initialRoles={initialRoles} />
         </OnboardingBack>
       </div>

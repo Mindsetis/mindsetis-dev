@@ -257,7 +257,16 @@ export function Combobox({
           isTop ? 'rounded-b-none border-b-0' : 'rounded-t-none border-t-0',
           invalid ? 'border-destructive' : 'border-input-focus',
         )}
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        // SEARCHABLE: leave Radix's default open-autofocus alone. It moves focus to the first
+        // tabbable element in the content — the `CommandInput` — and selects its text, so the user
+        // can type straight away (client "Правки 3.0" П10: Country / City pickers). NOT searchable:
+        // there is no input to land on, so the default would park focus on the bare list container
+        // for no benefit; keep the original `preventDefault` and leave focus on the trigger.
+        // (The suppression came in with `searchable` itself, 2026-07-18, copied from
+        // `LanguagesMultiSelect` with no comment; search was off everywhere at the time.)
+        // MOBILE: focusing the input opens the on-screen keyboard immediately, which covers the
+        // lower part of the list; `CommandInput` is 16px on mobile so iOS does not zoom on focus.
+        onOpenAutoFocus={searchable ? undefined : (event) => event.preventDefault()}
       >
         <Command
           shouldFilter={shouldFilter}

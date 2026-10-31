@@ -213,13 +213,15 @@ import { HeroMapAvatar } from './HeroMapAvatar';
  * PRIMARY BUTTON STATE (Release-1 A4, added 2026-09-17)
  *   The primary CTA (was a bare `Link href="/join"`) now depends on the visitor's account state,
  *   resolved once by `lib/auth/cta-state.ts` and mapped to (label, action) HERE — the hero's own
- *   mapping differs from the header/`WhatIsMindsetis`'s: both signed-in Member states collapse to
- *   the same "Explore Community" popup here (only the header distinguishes "Edit Profile" vs.
- *   "Upgrade", since those are real navigations there), and a signed-in Mindsetter gets
- *   "Create Event", also a popup. No `NotYetAvailable` icon variant carries the button's own icon
- *   — `JoinIcon` stays `guest`-only per the task brief; the two popup states render with no icon,
- *   matching every other `NotYetAvailable`-wrapped CTA in this file's precedent
- *   (`TopMindsettersSection`, `WelcomeCtas`).
+ *   mapping differs from the header/`WhatIsMindsetis`'s: EVERY signed-in state (both Member
+ *   states, a Mindsetter, a Member mid-Mindsetter-onboarding) collapses to the same "Explore
+ *   Community" popup here (only the header distinguishes "Edit Profile" vs. "Upgrade" vs.
+ *   "Create Event", since those are real navigations there). A Mindsetter used to get "Create
+ *   Event" here, duplicating the header; "Правки 3.0" П7 (2026-10) moved it to the header only.
+ *   No `NotYetAvailable` icon variant carries the button's own icon — `JoinIcon` stays
+ *   `guest`-only per the task brief; the popup state renders with no icon, matching every other
+ *   `NotYetAvailable`-wrapped CTA in this file's precedent (`TopMindsettersSection`,
+ *   `WelcomeCtas`).
  */
 export async function HeroBand() {
   const t = await getTranslations('home.main.hero');
@@ -259,18 +261,14 @@ export async function HeroBand() {
             </Button>
           ) : null}
 
-          {ctaState === 'memberIncomplete' || ctaState === 'memberComplete' ? (
+          {ctaState !== 'guest' ? (
+            // Every signed-in state (Member either step, Mindsetter, Member mid-Mindsetter-
+            // onboarding) gets the same "Explore Community" → catalog popup; "Create Event" lives
+            // in the header only (client "Правки 3.0" П7, 2026-10). Written as "not a guest" so a
+            // new signed-in `CtaState` needs no edit here.
             <NotYetAvailable feature="exploreCommunity" className="w-full md:w-auto">
               <Button type="button" disabled size="default" className="w-full md:w-auto">
                 {tNav('exploreCommunity')}
-              </Button>
-            </NotYetAvailable>
-          ) : null}
-
-          {ctaState === 'mindsetter' ? (
-            <NotYetAvailable feature="createEvent" className="w-full md:w-auto">
-              <Button type="button" disabled size="default" className="w-full md:w-auto">
-                {tNav('createEvent')}
               </Button>
             </NotYetAvailable>
           ) : null}

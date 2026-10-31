@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { signUp } from '@/app/[locale]/(app)/(auth)/actions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,12 +15,17 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
-import { type SignUpInput, signUpSchema } from '@/lib/validation/auth';
+import { EMAIL_ALREADY_REGISTERED, type SignUpInput, signUpSchema } from '@/lib/validation/auth';
 
-import { applyFieldErrors } from './applyFieldErrors';
+import { applyActionFailure } from './applyFieldErrors';
+import { authErrorText } from './auth-errors';
+import { EmailAlreadyRegisteredMessage } from './EmailAlreadyRegisteredMessage';
 import { PasswordRequirements, PasswordToggle } from './password-field';
+import { startResendCooldown } from './resend-cooldown';
 
 type SignUpFormProps = {
   /** Prefilled from the homepage's quick-email-capture field, if the visitor came from there. */
@@ -31,7 +35,7 @@ type SignUpFormProps = {
 export function SignUpForm({ initialEmail }: SignUpFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -39,6 +43,8 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
   // the user picks a final, availability-checked handle during onboarding (avoids the
   // confusing silent-rename when a typed username collides).
   const form = useForm<SignUpInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(signUpSchema),
     mode: 'onChange',
     defaultValues: {
@@ -51,20 +57,35 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
   });
   const passwordValue = useWatch({ control: form.control, name: 'password' }) ?? '';
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
     const result = await signUp(values);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      // The banner keeps its translated sentence (`authErrorText`); `applyActionFailure` adds any
+      // server field error this form has no input for after it, and scrolls to the first field error.
+      const banner = applyActionFailure(
+        form,
+        { ...result.error, message: authErrorText(t, result.error) },
+        event,
+      );
+      // An already-registered address is explained under the email field itself (with a
+      // "Log in →" link) — a second, English banner on top of it would only repeat the news.
+      if (result.error.code !== 'conflict') {
+        setFormError(banner);
+      }
       return;
     }
     // signUp() no longer returns a session — the account is unconfirmed until the visitor
     // clicks the link in their inbox (see `(auth)/actions.ts#signUp`'s doc comment). Success
     // here just means the account was created; send them to the blocking verification step
     // (step 2) with the address so it can be displayed there.
+    //
+    // The confirmation mail has just gone out, so start the resend pause HERE: step 2 renders
+    // after this navigation and reads the same clock, which keeps its "Resend" button from
+    // sending a second mail seconds after the first (Release 2 Т1).
+    startResendCooldown('confirmation', values.email);
     router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
@@ -72,11 +93,7 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
           fields themselves keep their own tighter 12px mobile / 16px desktop rhythm in the
           wrapper below. */}
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <div className="flex flex-col gap-3 md:gap-4">
           {/* Figma's OAuth screen (`165:2853` / `387:1725`) has no email field — it assumes
@@ -89,7 +106,7 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
           <FormField
             control={form.control}
             name="email"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
                   <span className="inline-flex items-center gap-1">
@@ -99,7 +116,12 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
                 <FormControl>
                   <Input type="email" autoComplete="email" {...field} />
                 </FormControl>
-                <FormMessage />
+                {/* `FormMessage` prints plain text only; this one needs a link inside it. */}
+                {fieldState.error?.message === EMAIL_ALREADY_REGISTERED ? (
+                  <EmailAlreadyRegisteredMessage email={field.value} />
+                ) : (
+                  <FormMessage />
+                )}
               </FormItem>
             )}
           />

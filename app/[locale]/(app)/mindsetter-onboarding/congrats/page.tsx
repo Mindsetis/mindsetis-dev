@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { finalizeMindsetterOnboarding } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
-import { RegistrationBackLink } from '@/components/auth/RegistrationBackLink';
+import { StickyBackLink } from '@/components/auth/StickyBackLink';
 import { MindsetterCongratsCtas } from '@/components/mindsetter-onboarding/MindsetterCongratsCtas';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
@@ -63,11 +63,13 @@ function coreStepRedirectRoute(onboardingStep: number): string {
  * info modal, no dismiss/swap-after-confirm button; see `MindsetterCongratsCtas`'s own doc
  * comment.
  *
- * Keeps its top `RegistrationBackLink` (owner's call, 2026-09-29 — every other wizard step moved
- * Back into its bottom row) but points it at the previous STEP: the last picked block when blocks
- * were filled (`?blocks=` from `nextBlockHref`), otherwise the Shine picker. Going back is safe even though `account_type` has already
- * flipped to `'mindsetter'` by the time this page renders — every step's write path is idempotent,
- * so revisiting one doesn't undo the flip or duplicate anything.
+ * Keeps a top-left Back — there is no primary button here to carry it in a bottom row like the
+ * other wizard steps (owner's call, 31.10.2026) — and points it at the previous STEP: the last
+ * picked block when blocks were filled (`?blocks=` from `nextBlockHref`), otherwise the Shine
+ * picker. It is a `StickyBackLink` — it stays in view under the site header while the page
+ * scrolls, at every width (phones included). Going back is safe even though `account_type` has
+ * already flipped to `'mindsetter'` by the time this page renders — every step's write path is
+ * idempotent, so revisiting one doesn't undo the flip or duplicate anything.
  *
  * Figma: "Mindsetter profile 6/6 - 1440 px" (`400:5587`, desktop) / "Congrats screen"
  * (`261:4319`, mobile) — re-verified 2026-08-18 against a fresh selection (this frame family's
@@ -115,13 +117,9 @@ export default async function MindsetterOnboardingCongratsPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      <div className="relative mb-8 md:mb-[52px]">
-        <RegistrationBackLink
-          href={backHref}
-          label={tAuth('signUp.back')}
-          className="md:static md:translate-y-0"
-        />
-      </div>
+      {/* The only Back, sticky at every width; the box itself is the in-flow row (24px tall) and
+          carries the gap to the title. */}
+      <StickyBackLink href={backHref} label={tAuth('signUp.back')} className="mb-8 md:mb-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 md:gap-8">
         <h1 className="font-display text-h1 text-foreground md:text-h3">

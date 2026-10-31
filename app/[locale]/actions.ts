@@ -16,6 +16,7 @@ import { getLocale } from 'next-intl/server';
 import { localePath } from '@/i18n/routing';
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
+import { emailHasConfirmedAccount } from '@/lib/auth/account-lookup';
 import { siteUrl } from '@/lib/auth/site-url';
 import { enqueueEmail } from '@/lib/email';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
@@ -24,6 +25,7 @@ import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
   ACCOUNT_EXISTS_ERROR,
   ambassadorApplicationSchema,
+  ambassadorContactSchemaFor,
   ambassadorGuestContactSchema,
   MIN_AMBASSADOR_SUBMIT_ELAPSED_MS,
 } from '@/lib/validation/ambassador-application';
@@ -184,14 +186,29 @@ export const recordSignupIntent = createAction(
   { rateLimit: { key: 'marketing:signup-intent', limit: 5, window: '10 m' } },
 );
 
+/** Zod issues on the contact object → the `contact.<field>` keys the dialog maps back onto inputs. */
+function contactFieldErrors(
+  issues: ReadonlyArray<{ path: ReadonlyArray<string | number>; message: string }>,
+): Record<string, string[]> {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of issues) {
+    (fieldErrors[`contact.${issue.path.join('.')}`] ??= []).push(issue.message);
+  }
+  return fieldErrors;
+}
+
 /**
  * Submit the homepage "Apply for Ambassadorship" popup (`AmbassadorApplicationDialog`) into
  * `ambassador_applications`, then email the applicant a receipt.
  *
  * WHO IS APPLYING is decided here, never by the client:
- * - signed in → name, email and `user_id` come from the session + own `profiles` row, and
- *   `applicant_type` is that row's `account_type` (`member` / `mindsetter`). Any `contact` the
- *   client sent is ignored, so an application can't be filed under someone else's account.
+ * - signed in → email and `user_id` come from the session, name from the own `profiles` row
+ *   (`full_name` = first name, `last_name`), and `applicant_type` is that row's `account_type`
+ *   (`member` / `mindsetter`). Whatever `contact` the client sent is ignored for every field the
+ *   account already has, so an application can't be filed under someone else's identity. The one
+ *   exception: a name the profile LACKS is taken from `contact` (strictly validated, required) —
+ *   the dialog shows inputs for exactly those. `profiles` has no phone column, so there is no
+ *   other contact data to pull; email + first/last name is everything this form collects.
  * - no session → a guest; `contact` must pass `ambassadorGuestContactSchema`. The database links
  *   `user_id` by confirmed email — at insert if that address already has a confirmed account,
  *   otherwise once it registers and confirms (the `ambassador_applications` migrations' triggers)
@@ -205,8 +222,9 @@ export const recordSignupIntent = createAction(
  * write path as `homepage_waitlist`). The GUEST path is anonymous, so it carries the waitlist's
  * bot filters on top of the IP rate limit — honeypot (`website`) and minimum elapsed time — and
  * a trip returns a fake success without writing anything. They are NOT applied to a signed-in
- * applicant: that person is already authenticated and types nothing on the last step, so a fast
- * click-through could finish inside the 2s window and be silently dropped (code-review finding).
+ * applicant: that person is already authenticated and usually types nothing after the questions
+ * (the dialog submits straight from the third one), so a fast click-through could finish inside
+ * the 2s window and be silently dropped (code-review finding).
  *
  * The receipt email is best-effort: the application is already saved, so a failed enqueue is
  * logged and swallowed rather than turned into an error the applicant would retry (and so
@@ -259,26 +277,47 @@ export const submitAmbassadorApplication = createAction(
           'Could not submit your application right now. Please try again.',
         );
       }
+      // Name and email come from the account; the profile wins for every field it has. A name
+      // the profile LACKS (the last name can predate that column, a Google account can arrive
+      // without one) must come from the form instead — the dialog asks for exactly those fields
+      // — and is validated strictly here, never defaulted: the table requires a non-blank value.
+      // The email always comes from the session. Nothing typed is written back to the profile.
+      const profileFirstName = profile.full_name?.trim() ?? '';
+      const profileLastName = profile.last_name?.trim() ?? '';
+      let firstName = profileFirstName;
+      let lastName = profileLastName;
+      if (!profileFirstName || !profileLastName) {
+        // Keys the dialog has no reason to send default to '' — only the required ones must be
+        // there, so a request carrying just the missing name isn't rejected over the others.
+        const typed = ambassadorContactSchemaFor({
+          firstName: !profileFirstName,
+          lastName: !profileLastName,
+          email: false,
+        }).safeParse({ firstName: '', lastName: '', email: '', ...input.contact });
+        if (!typed.success) {
+          throw new ActionError(
+            'validation_error',
+            'Please check the form and try again.',
+            contactFieldErrors(typed.error.issues),
+          );
+        }
+        firstName = profileFirstName || typed.data.firstName;
+        lastName = profileLastName || typed.data.lastName;
+      }
       applicant = {
         userId: user.id,
         type: profile.account_type,
-        // A signed-in account always has a first name (sign-up requires it); the last name can
-        // predate that column, and the table requires one, so fall back to a dash.
-        firstName: profile.full_name?.trim() || '—',
-        lastName: profile.last_name?.trim() || '—',
+        firstName,
+        lastName,
         email: user.email.toLowerCase(),
       };
     } else {
       const contact = ambassadorGuestContactSchema.safeParse(input.contact ?? {});
       if (!contact.success) {
-        const fieldErrors: Record<string, string[]> = {};
-        for (const issue of contact.error.issues) {
-          (fieldErrors[`contact.${issue.path.join('.')}`] ??= []).push(issue.message);
-        }
         throw new ActionError(
           'validation_error',
           'Please check the form and try again.',
-          fieldErrors,
+          contactFieldErrors(contact.error.issues),
         );
       }
       applicant = { userId: null, type: 'guest', ...contact.data };
@@ -302,14 +341,12 @@ export const submitAmbassadorApplication = createAction(
     // to probe many addresses; sign-up already answers "an account with this email exists", so
     // it reveals nothing new. The RPC is executable by the service role only.
     if (applicant.type === 'guest') {
-      const { data: hasAccount, error: lookupError } = await service.rpc(
-        'email_has_confirmed_account',
-        { p_email: applicant.email },
-      );
-      if (lookupError) {
+      let hasAccount: boolean;
+      try {
+        hasAccount = await emailHasConfirmedAccount(applicant.email);
+      } catch (lookupError) {
         console.error('[marketing.submitAmbassadorApplication] account lookup failed:', {
-          code: lookupError.code,
-          message: lookupError.message,
+          message: lookupError instanceof Error ? lookupError.message : String(lookupError),
         });
         throw new ActionError(
           'internal_error',
@@ -349,14 +386,13 @@ export const submitAmbassadorApplication = createAction(
 
     try {
       const isGuest = applicant.type === 'guest';
-      const displayName = applicant.firstName === '—' ? undefined : applicant.firstName;
       await enqueueEmail({
         to: applicant.email,
-        toName: displayName,
+        toName: applicant.firstName,
         templateKey: 'ambassador_application',
         locale,
         props: {
-          userName: displayName,
+          userName: applicant.firstName,
           isGuest,
           ...(isGuest ? { signUpUrl: siteUrl(localePath(locale, '/sign-up')) } : {}),
         },

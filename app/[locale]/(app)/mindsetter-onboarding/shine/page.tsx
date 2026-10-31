@@ -65,9 +65,9 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
   ]);
 
   // `'mindsetter'` is passed explicitly rather than read from `profiles.account_type`: the caller
-  // is standing inside the Mindsetter wizard, but `account_type` only flips to `'mindsetter'` at
-  // `finalizeMindsetterOnboarding` (after the LAST core step), so reading it here would score this
-  // screen against the two-section Member set. The argument selects the section SET, not rights.
+  // is standing inside the Mindsetter wizard, but `account_type` only flips to `'mindsetter'` once
+  // this very step is saved (`saveShine`, Release-2 П4), so reading it here would score this screen
+  // against the two-section Member set. The argument selects the section SET, not rights.
   const completeness = computeProfileCompleteness(
     'mindsetter',
     {
@@ -102,8 +102,9 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
-          Back now lives in the picker's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
+          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
+          owner's call of 31.10.2026). */}
       <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
@@ -111,7 +112,6 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
           <h1 className="font-display text-h1 text-foreground md:text-h3">{t('shine.title')}</h1>
           <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
         </div>
-
         <OnboardingBack href="/mindsetter-onboarding/help">
           <ShineForm completeness={completeness} />
         </OnboardingBack>

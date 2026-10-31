@@ -4,6 +4,11 @@ import { type NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 
 import { localePath, routing } from '@/i18n/routing';
+import {
+  applyJoinOrigin,
+  CABINET_PATH,
+  resolveOnboardingDestination,
+} from '@/lib/auth/onboarding-progress';
 import { COMING_SOON_MODE } from '@/lib/config/coming-soon';
 import { updateSession } from '@/lib/supabase/middleware';
 
@@ -35,8 +40,9 @@ const PROTECTED_PREFIXES = [
   // `resolveOnboardingRedirect()`'s `/login` branch from ping-ponging against the AUTH_ONLY
   // bounce below (an anonymous caller never reaches the resolver at all).
   '/continue',
-  // `/join-applied` — the Release-1 A5 "you've already applied" modal, reached only via
-  // `/continue`'s `from=join` branch (see that page's doc comment). Deliberately named with a
+  // `/join-applied` — the Release-1 A5 "you've already applied" modal, reached only from the
+  // AUTH_ONLY `/join` bounce below (directly, or via `/continue`'s `from=join` branch when the
+  // middleware's own lookup failed — see that page's doc comment). Deliberately named with a
   // HYPHEN rather than nested at `/join/applied`: `/join` sits in `AUTH_ONLY_PREFIXES` below
   // with prefix matching (`matchesPrefix`), so a `/join/applied` child would itself match
   // `/join` and bounce straight back to `/continue` — the exact redirect loop this feature has
@@ -61,8 +67,8 @@ const PROTECTED_PREFIXES = [
  *
  * These used to bounce to `/`, which is the dead end the client reported: someone who started
  * the registration and didn't finish clicked "Apply to Join", landed on the homepage, and got
- * no hint that their application was half-done. They now bounce to `/continue`, which reads
- * their actual progress and forwards (Release-1 A1).
+ * no hint that their application was half-done. They now bounce to wherever their actual
+ * progress says they belong (Release-1 A1) — see "ONE HOP" below.
  *
  * `/join` is in this list because it is where every "Apply to Join" CTA actually points — the
  * header's, the hero band's and the "What is Mindsetis" one. It is an email-capture page for
@@ -75,16 +81,26 @@ const PROTECTED_PREFIXES = [
  *
  * RESOLVED for Release-1 A5: the client wants a modal ("You've already applied and logged in
  * as…") for a visitor whose profile is already COMPLETE, and a silent redirect for everyone
- * else. Solved by passing the origin to `/continue` (`?from=join`, set only when the matched
- * prefix is `/join` — see the bounce below) and letting `/continue` branch: a completed
- * profile arriving `from=join` is sent to `/join-applied` (a separate protected route, see
- * `PROTECTED_PREFIXES` above) instead of the cabinet; everyone else is unaffected. `/join`
+ * else. Solved by knowing the origin (the matched prefix is `/join` — see the bounce below) and
+ * branching on it: a completed profile coming from `/join` is sent to `/join-applied` (a
+ * separate protected route, see `PROTECTED_PREFIXES` above) instead of the cabinet; everyone
+ * else is unaffected (`applyJoinOrigin`, shared with `/continue`'s `?from=join`). `/join`
  * itself was deliberately NOT dropped from this list — that would reopen the dead end A1
  * closed (a half-finished visitor landing back in the funnel).
+ *
+ * ONE HOP, NOT A CHAIN: the bounce used to go to `/continue`, which read the profile and
+ * redirected again — to `/dashboard`, which redirected a third time to `/dashboard/profile`.
+ * The middleware now makes that profile read itself (`resolveOnboardingDestination`, the same
+ * function `/continue` uses) and redirects straight to the final page. The read happens only for
+ * a SIGNED-IN visitor on one of these four paths — rare, and exactly the visitor who would
+ * otherwise pay for the `/continue` round trip — so no other request gets slower.
  */
 const AUTH_ONLY_PREFIXES = ['/login', '/sign-up', '/forgot-password', '/join'];
 
-/** Where a signed-in visitor to an AUTH_ONLY path is sent instead. */
+/**
+ * Fallback target for an AUTH_ONLY bounce when the destination can't be resolved here (the
+ * profile read threw): `/continue` redoes the same decision on the server and forwards.
+ */
 const CONTINUE_PATH = '/continue';
 
 /**
@@ -95,13 +111,13 @@ const CONTINUE_PATH = '/continue';
  */
 const STAFF_PREFIXES = ['/admin'];
 
-/** True when `userId` has a row in `staff_roles` (admin or moderator). */
-async function isStaffUser(
-  request: NextRequest,
-  response: NextResponse,
-  userId: string,
-): Promise<boolean> {
-  const supabase = createServerClient(
+/**
+ * A Supabase client bound to this request's cookies, for the DB reads the middleware makes on a
+ * few rare paths (staff check, AUTH_ONLY destination). `updateSession` has already refreshed the
+ * token and written it back onto `request.cookies`, so these reads see the fresh session.
+ */
+function createRequestSupabase(request: NextRequest, response: NextResponse) {
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
@@ -117,6 +133,15 @@ async function isStaffUser(
       },
     },
   );
+}
+
+/** True when `userId` has a row in `staff_roles` (admin or moderator). */
+async function isStaffUser(
+  request: NextRequest,
+  response: NextResponse,
+  userId: string,
+): Promise<boolean> {
+  const supabase = createRequestSupabase(request, response);
   // RLS policy `staff_roles_read_own_or_staff` lets the signed-in user read their own row;
   // the explicit `.eq` keeps this a single-row lookup even for staff (whose policy branch
   // additionally allows reading *all* rows).
@@ -126,6 +151,20 @@ async function isStaffUser(
     .eq('user_id', userId)
     .maybeSingle();
   return Boolean(data);
+}
+
+/**
+ * A redirect that keeps what `updateSession` wrote onto `response` — a refreshed (rotated) auth
+ * token and next-intl's locale cookie. A bare `NextResponse.redirect` drops them: the browser
+ * keeps the old refresh token, which Supabase has already rotated out, and the visitor can be
+ * signed out on a later request.
+ */
+function redirectWithCookies(url: URL, response: NextResponse): NextResponse {
+  const redirect = NextResponse.redirect(url);
+  for (const cookie of response.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+  return redirect;
 }
 
 /** Split `/en/account/x` → `{ locale: 'en', rest: '/account/x' }`. */
@@ -139,6 +178,19 @@ function splitLocale(pathname: string): { locale: string; rest: string } {
 
 function matchesPrefix(path: string, prefixes: string[]): boolean {
   return prefixes.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+/**
+ * The `redirectTo` a visitor bounced off a protected path should come back to after signing in,
+ * or `null` for "none — let `signIn` pick". Two protected entries exist only to forward somewhere
+ * else, and returning to them would add a hop after the login: `/dashboard` (the cabinet index →
+ * its landing screen) maps to that screen directly, and `/continue` IS the destination resolver
+ * `signIn` already ran, so it asks for no return path at all.
+ */
+function loginReturnPath(rest: string): string | null {
+  if (rest === '/dashboard') return CABINET_PATH;
+  if (rest === CONTINUE_PATH) return null;
+  return rest;
 }
 
 /**
@@ -290,15 +342,16 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     const url = request.nextUrl.clone();
     url.pathname = localePath(locale, '/');
     url.search = '';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, response);
   }
 
   if (!user && matchesPrefix(rest, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
     url.pathname = localePath(locale, '/login');
     url.search = '';
-    url.searchParams.set('redirectTo', rest);
-    return NextResponse.redirect(url);
+    const returnTo = loginReturnPath(rest);
+    if (returnTo) url.searchParams.set('redirectTo', returnTo);
+    return redirectWithCookies(url, response);
   }
 
   // Defense-in-depth only: the real enforcement is `requireStaff()` (see
@@ -311,29 +364,39 @@ export default async function middleware(request: NextRequest): Promise<NextResp
       url.pathname = localePath(locale, '/login');
       url.search = '';
       url.searchParams.set('redirectTo', rest);
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url, response);
     }
     const isStaff = await isStaffUser(request, response, user.id);
     if (!isStaff) {
       const url = request.nextUrl.clone();
       url.pathname = localePath(locale, '/');
       url.search = '';
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url, response);
     }
   }
 
   if (user && matchesPrefix(rest, AUTH_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = localePath(locale, CONTINUE_PATH);
     url.search = '';
-    // Tag the origin so `/continue` can special-case A5's "already applied" modal for a
-    // completed profile without affecting the other three AUTH_ONLY paths (`/login`,
-    // `/sign-up`, `/forgot-password`), which have no equivalent modal and must keep landing in
-    // the cabinet like before.
-    if (matchesPrefix(rest, ['/join'])) {
-      url.searchParams.set('from', 'join');
+    // A5's "already applied" screen exists only for `/join`; the other three AUTH_ONLY paths
+    // (`/login`, `/sign-up`, `/forgot-password`) have no equivalent and land in the cabinet.
+    const fromJoin = matchesPrefix(rest, ['/join']);
+    try {
+      // The decision `/continue` would make, made here so the visitor goes straight to the final
+      // page in one hop (see the AUTH_ONLY_PREFIXES doc comment).
+      const destination = await resolveOnboardingDestination(
+        createRequestSupabase(request, response),
+        user,
+      );
+      url.pathname = localePath(locale, applyJoinOrigin(destination, fromJoin));
+    } catch {
+      // The profile read failed (network, not an RLS "no row" — that resolves normally). Don't
+      // turn a rare lookup into a 500 on `/login`: hand over to `/continue`, which redoes the
+      // same decision on the server, tagged with the origin so A5 still works.
+      url.pathname = localePath(locale, CONTINUE_PATH);
+      if (fromJoin) url.searchParams.set('from', 'join');
     }
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, response);
   }
 
   return response;

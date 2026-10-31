@@ -11,20 +11,12 @@ export type AuthScreenProps = {
   subtitle?: string;
   /**
    * `left` for the screens that lead into a form (Log in, Reset your password, Set a new
-   * password); `center` for the two confirmation screens (Check your email, Password changed).
+   * password); `center` for the confirmation screen (Check your email).
    * The frames use the same alignment at both breakpoints, so this isn't responsive.
    */
   align?: 'left' | 'center';
-  /** Renders the check disc above the title (the two confirmation screens). */
+  /** Renders the check disc above the title (the confirmation screen). */
   icon?: boolean;
-  /**
-   * Disc colour. Brand blue on "Check your email"; success green on "Password changed", at both
-   * breakpoints (2026-08-13 — the designer's own asset for that screen is `#08d6ad`, which
-   * settles the desktop-blue / mobile-green split the frames had).
-   */
-  iconTone?: 'primary' | 'success';
-  /** Smaller 24px heading — only "Password changed" shrinks its title on mobile. */
-  compactTitleOnMobile?: boolean;
   /** "← Back to log in", under everything else. */
   backToLogin?: string;
   children: ReactNode;
@@ -32,9 +24,10 @@ export type AuthScreenProps = {
 
 /**
  * Shared shell for the login + password-recovery screens (Figma `679:8779`, `679:8913`,
- * `680:8880`, `680:8987`, `680:9123` and their mobile twins).
+ * `680:8880`, `680:8987` and their mobile twins). The fifth frame of the set, "Password changed"
+ * (`680:9123`), is no longer built: the reset flow now signs the visitor straight in (Release 2 П3).
  *
- * All five are the same page: full-bleed on the black background under the ordinary site header,
+ * All of them are the same page: full-bleed on the black background under the ordinary site header,
  * one 639px column centred in the page, 24px between blocks. They deliberately do NOT use the old
  * `(auth)` route group, whose layout drew a bordered card and its own wordmark.
  *
@@ -46,8 +39,6 @@ export function AuthScreen({
   subtitle,
   align = 'left',
   icon = false,
-  iconTone = 'primary',
-  compactTitleOnMobile = false,
   backToLogin,
   children,
 }: AuthScreenProps) {
@@ -62,22 +53,10 @@ export function AuthScreen({
         <div className={cn('flex flex-col gap-2', align === 'center' && 'items-center gap-6')}>
           {/* 46px on the mobile frames, 52px on desktop. */}
           {icon ? (
-            <CheckCircleFillIcon
-              className={cn(
-                'size-[46px] lg:size-[52px]',
-                iconTone === 'success' ? 'text-success' : 'text-primary',
-              )}
-            />
+            <CheckCircleFillIcon className="size-[46px] text-primary lg:size-[52px]" />
           ) : null}
 
-          <h1
-            className={cn(
-              'font-display leading-none text-foreground',
-              compactTitleOnMobile ? 'text-[24px] lg:text-[32px]' : 'text-[32px]',
-            )}
-          >
-            {title}
-          </h1>
+          <h1 className="font-display text-[32px] leading-none text-foreground">{title}</h1>
 
           {subtitle ? <p className="text-base text-muted-foreground">{subtitle}</p> : null}
         </div>

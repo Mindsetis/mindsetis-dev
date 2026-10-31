@@ -1,8 +1,14 @@
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { localePath, routing } from '@/i18n/routing';
 import { resolveOnboardingRedirect } from '@/lib/auth/onboarding-redirect';
+import {
+  createRecoveryMarker,
+  RECOVERY_MARKER_COOKIE,
+  RECOVERY_MARKER_TTL_SECONDS,
+} from '@/lib/auth/recovery-marker';
 import { createClient } from '@/lib/supabase/server';
 import { safeRedirectPath } from '@/lib/validation/common';
 
@@ -31,13 +37,53 @@ import { safeRedirectPath } from '@/lib/validation/common';
  *   • `?token_hash=…&type=…`  → verifyOtp (recommended email-template style)
  *   • `?code=…`               → exchangeCodeForSession (PKCE / default ConfirmationURL)
  *
- * On success it redirects to `next` (a safe relative path). The link carries no locale, so
- * we resolve it against the default locale — which under `localePrefix: 'as-needed'` means
- * the bare, unprefixed path (`/member-profile`, not `/en/member-profile`).
+ * On success it redirects to `next` (a safe relative path), in the visitor's UI language —
+ * see `linkLocale()` for where that comes from. With no usable hint it is the default locale,
+ * which under `localePrefix: 'as-needed'` means the bare, unprefixed path (`/member-profile`,
+ * not `/en/member-profile`).
  */
 
-function localized(path: string, origin: string): URL {
-  return new URL(localePath(routing.defaultLocale, path), origin);
+/** The `type` values Supabase puts on email links; anything else is treated as absent. */
+const emailOtpTypeSchema = z.enum([
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+]) satisfies z.ZodType<EmailOtpType>;
+
+/** Cookie next-intl keeps the last-used locale in (its default name; `routing` doesn't rename it). */
+const LOCALE_COOKIE = 'NEXT_LOCALE';
+
+function isSupportedLocale(value: string | null | undefined): value is string {
+  return Boolean(value) && (routing.locales as readonly string[]).includes(value as string);
+}
+
+/**
+ * The language to answer in. This route lives under `/api`, outside `[locale]`, so nothing in the
+ * URL says which one the visitor was using — the email link is a bare `/api/auth/confirm?…`.
+ * Two hints, in order of reliability:
+ *
+ *   1. `?locale=` — written into the link by `confirmRedirectUrl()` (`lib/auth/confirm-link.ts`)
+ *      for every non-default UI language. Survives a different browser or device, and survives
+ *      Supabase's own `/auth/v1/verify` hop, which carries `redirect_to` through untouched.
+ *   2. The `NEXT_LOCALE` cookie. next-intl writes it only when the browser's `Accept-Language`
+ *      disagrees with the URL, so it is a fallback for older links, not a primary source.
+ *
+ * Neither is trusted blindly: both are checked against the supported locales, so a junk value
+ * degrades to the default instead of producing a `/xx/...` redirect.
+ */
+function linkLocale(request: NextRequest): string {
+  const fromLink = request.nextUrl.searchParams.get('locale');
+  if (isSupportedLocale(fromLink)) return fromLink;
+  const fromCookie = request.cookies.get(LOCALE_COOKIE)?.value;
+  if (isSupportedLocale(fromCookie)) return fromCookie;
+  return routing.defaultLocale;
+}
+
+function localized(path: string, origin: string, locale: string): URL {
+  return new URL(localePath(locale, path), origin);
 }
 
 /**
@@ -66,6 +112,25 @@ async function destinationFor(next: string): Promise<string> {
 
 /** What `/link-expired` should say happened. */
 type LinkFailureReason = 'expired' | 'invalid';
+
+/**
+ * Which email the dead link came from — decides whether `/link-expired` offers a new CONFIRMATION
+ * email or a new PASSWORD-RESET one (Release 2 П2). Before this the route read `type` and then
+ * forwarded only `reason`, so the screen always resent a signup confirmation: for a person who
+ * already has a confirmed account that sends nothing, and a lost password could not be recovered.
+ *
+ * `type=recovery` is the direct answer. It is missing in the one case that matters most for the
+ * default Supabase template — the dead link arrives via `/auth/v1/verify` with its detail in the
+ * URL fragment, so we get a bare request — but the recovery link's own `next=/reset-password`
+ * survives that hop, and nothing else in the product points at that path. Everything that is not
+ * recovery keeps the existing signup behaviour.
+ */
+type LinkKind = 'signup' | 'recovery';
+
+function linkKind(type: string | null, next: string): LinkKind {
+  if (type === 'recovery') return 'recovery';
+  return next === '/reset-password' || next.startsWith('/reset-password?') ? 'recovery' : 'signup';
+}
 
 /**
  * Sort a failed link into the two states we can actually tell apart.
@@ -100,8 +165,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams, origin } = request.nextUrl;
   const next = safeRedirectPath(searchParams.get('next'));
   const tokenHash = searchParams.get('token_hash');
-  const type = searchParams.get('type') as EmailOtpType | null;
+  const parsedType = emailOtpTypeSchema.safeParse(searchParams.get('type'));
+  const type: EmailOtpType | null = parsedType.success ? parsedType.data : null;
   const code = searchParams.get('code');
+  const locale = linkLocale(request);
 
   const supabase = await createClient();
 
@@ -118,16 +185,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let reason: LinkFailureReason | null = null;
   const errorCode = searchParams.get('error_code') ?? searchParams.get('error');
 
+  /**
+   * The verified-link redirect. A password-reset link also gets the signed recovery marker
+   * `updatePassword` insists on (`lib/auth/recovery-marker.ts`) — this is the only place a
+   * session is known to have come from one.
+   */
+  function succeed(destination: string, userId: string | undefined): NextResponse {
+    const response = NextResponse.redirect(localized(destination, origin, locale));
+    if (userId && linkKind(type, next) === 'recovery') {
+      response.cookies.set(RECOVERY_MARKER_COOKIE, createRecoveryMarker(userId), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: RECOVERY_MARKER_TTL_SECONDS,
+      });
+    }
+    return response;
+  }
+
   if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
-      return NextResponse.redirect(localized(await destinationFor(next), origin));
+      return succeed(await destinationFor(next), data.user?.id);
     }
     reason = classifyLinkFailure(error);
   } else if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(localized(await destinationFor(next), origin));
+      return succeed(await destinationFor(next), data.user?.id);
     }
     reason = classifyLinkFailure(error);
   } else if (errorCode) {
@@ -136,7 +222,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // A dead link gets its own screen now, not the sign-in page with a red banner pinned over
   // a "Welcome back" heading (Release-1 A2 — the client's complaint was exactly that).
-  const errorUrl = localized('/link-expired', origin);
+  const errorUrl = localized('/link-expired', origin, locale);
   if (reason) errorUrl.searchParams.set('reason', reason);
+  // Only the non-default kind is spelled out: a signup link keeps the URL it always had.
+  if (linkKind(type, next) === 'recovery') errorUrl.searchParams.set('type', 'recovery');
   return NextResponse.redirect(errorUrl);
 }

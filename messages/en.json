@@ -14,7 +14,8 @@
     "createEvent": "Create Event",
     "editProfile": "Edit Profile",
     "exploreCommunity": "Explore Community",
-    "exploreMindsetis": "Explore Mindsetis",
+    "continueRegistration": "Continue Registration",
+    "continueRegistrationShort": "Continue",
     "join": "Apply to Join",
     "joinShort": "Join",
     "login": "Log in",
@@ -23,24 +24,47 @@
     "upgrade": "Upgrade"
   },
   "footer": {
-    "columns": {
-      "one": {
-        "title": "Column One",
-        "links": ["Link One", "Link Two", "Link Three", "Link Four", "Link Five"]
-      },
-      "two": {
-        "title": "Column Two",
-        "links": ["Link Six", "Link Seven", "Link Eight", "Link Nine", "Link Ten"]
-      }
+    "comingSoon": {
+      "pageBody": "We're still putting this page together.",
+      "pageTitle": "{page} is on the way",
+      "socialBody": "We're still setting up our profile there.",
+      "socialTitle": "Our {network} page is on the way"
     },
     "legal": {
       "cookies": "Cookies Settings",
       "privacy": "Privacy Policy",
       "terms": "Terms of Service"
     },
+    "nav": {
+      "ariaLabel": "Footer",
+      "company": {
+        "items": {
+          "about": "About Us",
+          "contact": "Contact Us",
+          "faqs": "FAQs"
+        },
+        "title": "Company"
+      },
+      "membership": {
+        "items": {
+          "becomeMember": "Become a Member",
+          "becomeMindsetter": "Become a Mindsetter",
+          "guidelines": "Community Guidelines"
+        },
+        "title": "Membership"
+      },
+      "platform": {
+        "items": {
+          "catalog": "Catalog",
+          "events": "Events",
+          "home": "Home"
+        },
+        "title": "Platform"
+      }
+    },
     "newsletter": {
       "alreadySubscribed": "You're already subscribed — thanks for sticking around!",
-      "consent": "By subscribing you agree to our Privacy Policy and provide consent to receive updates from our company.",
+      "consent": "By clicking Subscribe, you agree to receive marketing updates from Mindsetis. You can unsubscribe at any time. Read our <link>Privacy Policy</link>.",
       "emailLabel": "Email address",
       "placeholder": "Enter your email",
       "subscribe": "Subscribe",
@@ -49,12 +73,10 @@
     },
     "rights": "All rights reserved.",
     "social": {
-      "facebook": "Facebook",
       "instagram": "Instagram",
       "linkedin": "LinkedIn",
-      "title": "Follow Us",
-      "x": "X",
-      "youtube": "Youtube"
+      "threads": "Threads",
+      "youtube": "YouTube"
     }
   },
   "cookies": {
@@ -128,7 +150,8 @@
         "eyebrow": "WHAT IS MINDSETIS",
         "title": "What you actually get here",
         "subtitle": "Real access to founders who’ve been there — 1:1 or peer-to-peer, whenever you need it.",
-        "watchLabel": "Click for watching"
+        "watchLabel": "Click for watching",
+        "catalogCta": "Meet People & Join Events"
       },
       "threeWays": {
         "title": "Three ways to start",
@@ -344,36 +367,35 @@
         "badgeLabel": "Ambassador",
         "application": {
           "close": "Close",
+          "stepLabel": "Step {current} of {total}",
           "intro": {
             "eyebrow": "MINDSETIS AMBASSADORS",
             "title": "Apply to moderate events and represent Mindsetis in your city or worldwide.",
             "subtitle": "Three quick questions and your contact details — about 5 minutes. We’ll follow up by email once we’ve reviewed your application.",
+            "subtitleSignedIn": "Three quick questions — about 5 minutes. We’ll follow up by email once we’ve reviewed your application.",
             "cta": "Get started"
           },
           "steps": [
             {
-              "stepLabel": "Step 1 of 4",
               "eyebrow": "MODERATION & EVENT EXPERIENCE",
               "question": "What experience do you have with organizing, hosting, or moderating events and group discussions?",
               "placeholder": "Share any relevant details, from small meetups to large formats..."
             },
             {
-              "stepLabel": "Step 2 of 4",
               "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
               "question": "Which business clubs or communities have you been a member of?",
               "placeholder": "Name the clubs or communities and your role in them..."
             },
             {
-              "stepLabel": "Step 3 of 4",
               "eyebrow": "COMMUNITY & BUSINESS CLUBS EXPERIENCE",
               "question": "What worked well there, and what would you do differently?",
               "placeholder": "Tell us what you loved and what you'd improve..."
             }
           ],
           "details": {
-            "stepLabel": "Step 4 of 4",
             "eyebrow": "YOUR DETAILS",
             "title": "Where should we send our reply?",
+            "signedInTitle": "Add the details missing from your profile",
             "firstName": {
               "label": "First name",
               "placeholder": "Your first name"
@@ -387,6 +409,7 @@
               "placeholder": "you@company.com"
             },
             "signedInAs": "We’ll send this application from your account: {name} ({email}).",
+            "signedInMissing": "These aren’t in your profile yet. We’ll reply to {email}.",
             "privacy": {
               "before": "By submitting, you agree to our ",
               "link": "Privacy Policy",
@@ -524,7 +547,7 @@
       "industries": {
         "counter": "{count}/{max}",
         "empty": "No industry found.",
-        "hint": "Your industries are not shown on your public profile — they're used to power search filters. You can select up to 3.",
+        "hint": "Your industries appear on your public profile and power search filters. You can select up to 3.",
         "label": "Industries",
         "other": {
           "hint": "Only you and our team can see this for now. It'll appear in search once our team reviews and approves it.",
@@ -546,11 +569,19 @@
       "resend": "Resend link",
       "resending": "Sending…",
       "resent": "Reset link sent again",
-      "subtitle": "We sent a reset link to {email}. It is valid for 1 hour.",
+      "subtitle": "If an account exists for {email}, a reset link is on its way. It is valid for 1 hour.",
       "title": "Check your email"
     },
     "errors": {
-      "formInvalid": "Please check the form and try again."
+      "formInvalid": "Please check the form and try again.",
+      "generic": "Something went wrong. Please try again.",
+      "rateLimited": "Too many attempts. Please wait a few minutes and try again."
+    },
+    "cooldown": {
+      "wait": "Resend in {time}"
+    },
+    "emailExists": {
+      "message": "This email is already registered. Please <login>Log in →</login> to access your account or finish your application."
     },
     "fields": {
       "confirmPassword": "Confirm password",
@@ -573,7 +604,17 @@
       "submitting": "Sending…",
       "success": "If that address still needs confirming, a new link is on its way.",
       "title": "Link expired",
-      "titleInvalid": "Confirmation link invalid"
+      "titleInvalid": "Confirmation link invalid",
+      "recovery": {
+        "body": "This password reset link has expired or has already been used. Enter your email to receive a new one.",
+        "bodyInvalid": "This password reset link is not valid. Enter your email to receive a new one.",
+        "loginCta": "Log in",
+        "loginPrompt": "Remembered your password?",
+        "submit": "Resend reset link",
+        "success": "Check your inbox. If this email is registered, a new reset link has been sent.",
+        "title": "Link expired",
+        "titleInvalid": "Reset link invalid"
+      }
     },
     "memberProfile": {
       "about": {
@@ -617,17 +658,23 @@
       "photo": {
         "crop": {
           "cancel": "Cancel",
-          "confirm": "Use photo",
-          "description": "Drag to reposition and use the slider to zoom. Your photo will be cropped to a square.",
+          "confirm": "Save",
+          "description": "Drag to reposition, use the slider to zoom. The round preview shows your avatar.",
           "error": "We couldn't process this photo. Please try again or choose a different file.",
-          "loadError": "This photo couldn't be opened. Please choose a different file.",
-          "title": "Adjust your photo",
+          "invalidFile": "Please choose a JPG or PNG image.",
+          "loadError": "This photo couldn't be opened. Please upload a different one.",
+          "loading": "Loading your photo…",
+          "originalUnavailable": "We couldn't load your original photo, so you're editing your current one. Saving will replace the stored original.",
+          "preview": "Preview",
+          "title": "Edit profile picture",
+          "uploadNew": "Upload new photo",
           "zoom": "Zoom"
         },
         "hint": "Only PNG or JPEG",
         "label": "Profile photo",
-        "replace": "Replace photo",
+        "replace": "Edit photo",
         "requirements": "Upload your profile photo. Formats: JPG, PNG. Profiles without photos will not appear in the catalog and have limited access to platform features.",
+        "saveError": "We couldn't upload your photo. Please check your connection and try again.",
         "upload": "Upload photo",
         "uploadTitle": "Upload profile photo",
         "uploaded": "uploaded"
@@ -652,17 +699,16 @@
       },
       "title": "Set your identity"
     },
-    "passwordChanged": {
-      "submit": "Log in",
-      "subtitle": "You can now log in with your new password.",
-      "title": "Password changed"
-    },
     "resetPassword": {
       "newPassword": "New password",
       "repeatPassword": "Repeat new password",
+      "requestNew": "Request a new link",
+      "samePassword": "Your new password must be different from your current one.",
+      "sessionExpired": "Your reset link is invalid or has expired. Please request a new one.",
       "submit": "Save new password",
       "submitting": "Saving…",
       "subtitle": "Choose a password you have not used on Mindsetis before.",
+      "success": "Password updated successfully!",
       "title": "Set a new password"
     },
     "signIn": {
@@ -672,7 +718,9 @@
       "submit": "Log in",
       "submitting": "Logging in…",
       "title": "Welcome back",
-      "emailNotConfirmed": "Your email {email} isn’t confirmed yet. Click the link we sent you when you signed up, or get a new one:"
+      "emailNotConfirmed": "Please confirm your email to log in. We sent the link to {email} when you signed up — or get a new one:",
+      "invalidCredentials": "Incorrect email or password.",
+      "resetLink": "Forgot password?"
     },
     "signUp": {
       "back": "Back",
@@ -1006,14 +1054,16 @@
         "addPhoto": "Add Photo",
         "errors": {
           "invalidType": "Only PNG or JPEG images are allowed.",
-          "tooLarge": "Image must be at most 5 MB."
+          "tooLarge": "Image must be at most 5 MB.",
+          "tooMany": "You can add up to {max} photos — the extra ones were not added."
         },
         "recommendedHint": "Add at least {count} photos to show this section on your profile — fewer is fine, it just stays hidden for now.",
         "removePhoto": "Remove photo",
         "reorderHint": "Hold and drag to change order.",
         "title": "Reel Life",
         "uploadHint": "PNG or JPEG · Max 5MB per<br></br>photo",
-        "uploadLabel": "Upload photo"
+        "uploadLabel": "Upload photo",
+        "uploadingHint": "Photos are still uploading — you can save once they finish."
       },
       "videoBlog": {
         "title": "Video blog",
@@ -1063,7 +1113,13 @@
     "aboutEyebrow": "ABOUT",
     "beyondBusinessEyebrow": "BEYOND BUSINESS",
     "beyondBusinessHeading": "What I care about beyond work",
+    "industry": "INDUSTRY",
     "inviteToEvent": "Invite to event",
+    "share": {
+      "ariaLabel": "Share this profile",
+      "copyFailed": "Could not copy the link. You can copy it from the address bar instead.",
+      "linkCopied": "Link copied to clipboard"
+    },
     "verified": "Verified",
     "website": "Website"
   },
@@ -1096,6 +1152,7 @@
       "eyebrow": "WHAT CAN I HELP WITH",
       "heading": "The challenges I help founders navigate"
     },
+    "industry": "INDUSTRY",
     "introVideo": "Intro about me",
     "inviteToEvent": "Invite to event",
     "microNav": {
@@ -1483,7 +1540,9 @@
         "dialogHint": "Pick one of your existing topics or type a new one.",
         "searchPlaceholder": "Search or type a topic",
         "suggested": "Suggested for you",
-        "addConfirm": "Add topic"
+        "addConfirm": "Add topic",
+        "customMax": "You can add up to {max} custom topics.",
+        "maxReached": "You've picked the maximum of {max} topics. Remove one to add another."
       },
       "availability": {
         "title": "Weekly availability",
@@ -1547,7 +1606,9 @@
     "statusBanner": {
       "title": "Your status: Member",
       "body": "Unlock Mindsetter tools to host events & share expertise.",
-      "cta": "Upgrade Now"
+      "cta": "Upgrade Now",
+      "inProgressBody": "You’ve started upgrading to Mindsetter. Complete all sections of your profile to create events and host 1:1 consultation sessions.",
+      "inProgressCta": "Continue Registration"
     }
   },
   "memberProfileReadyDialog": {
@@ -1561,6 +1622,7 @@
     "authorMax": "Author must be at most {max} characters.",
     "availabilityRequired": "Add availability for at least one day.",
     "avatarRequired": "Profile photo is required.",
+    "avatarSaveFailed": "Could not save your profile photo. Please try again.",
     "bioMax": "Short Bio must be at most {max} characters.",
     "bioRequired": "Short Bio is required.",
     "cityRequired": "Select your city from the list.",

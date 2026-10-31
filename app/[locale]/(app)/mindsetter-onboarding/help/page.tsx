@@ -60,8 +60,9 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
-          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
+      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
+          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
+          owner's call of 31.10.2026). */}
       <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
@@ -71,7 +72,6 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
             {t('help.title')}
           </h1>
         </div>
-
         <OnboardingBack href="/mindsetter-onboarding/superpowers">
           <HelpForm initialExpertise={initialExpertise} />
         </OnboardingBack>

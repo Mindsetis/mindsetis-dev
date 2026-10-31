@@ -7,6 +7,8 @@ import { MemberProfileReadyDialog } from '@/components/dashboard/MemberProfileRe
 import { MemberStatusBanner } from '@/components/dashboard/MemberStatusBanner';
 import { PhotoReminderBanner } from '@/components/dashboard/PhotoReminderBanner';
 import { redirect } from '@/i18n/navigation';
+import { getCurrentUser } from '@/lib/auth/guards';
+import { HOME_PATH, LOGIN_PATH } from '@/lib/auth/onboarding-progress';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
 
 type DashboardLayoutProps = {
@@ -38,7 +40,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   const cabinet = await loadCabinetProfile();
   if (!cabinet) {
-    redirect({ href: '/login', locale });
+    // No session → log in. A session WITHOUT a `profiles` row must not go to `/login`: the
+    // middleware bounces signed-in visitors off it straight back here, forever.
+    const user = await getCurrentUser();
+    redirect({ href: user ? HOME_PATH : LOGIN_PATH, locale });
     return null;
   }
 
@@ -104,7 +109,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           photoRequirementWaived={cabinet.photoRequirementWaived}
         />
 
-        <MemberStatusBanner accountType={cabinet.accountType} />
+        <MemberStatusBanner
+          accountType={cabinet.accountType}
+          wizardStep={cabinet.mindsetterOnboardingStep}
+        />
 
         {/* Release-1 C6 — mounted at the SHELL level (not the section-list page alone) so it
             fires no matter which cabinet screen a Member's `Save & Next` happens to land them on

@@ -2,11 +2,11 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SignInForm } from '@/components/auth/SignInForm';
 import { pageTitle } from '@/i18n/page-metadata';
-import { isSafeRedirectPath } from '@/lib/validation/common';
+import { emailSchema, isSafeRedirectPath } from '@/lib/validation/common';
 
 type LoginPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ redirectTo?: string }>;
+  searchParams: Promise<{ redirectTo?: string; email?: string }>;
 };
 
 export async function generateMetadata({ params }: LoginPageProps) {
@@ -30,8 +30,12 @@ export async function generateMetadata({ params }: LoginPageProps) {
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { redirectTo } = await searchParams;
+  const { redirectTo, email } = await searchParams;
   const t = await getTranslations('auth');
+  // `?email=` comes from the "already registered — Log in →" links (first `/join` screen,
+  // sign-up) and prefills the field. It is user-controlled input, so it goes through the same
+  // normalizing schema the form itself uses; anything that fails is ignored, not echoed.
+  const parsedEmail = emailSchema.safeParse(email);
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-6 pb-20 sm:px-6 lg:px-[70px] lg:pt-[120px] lg:pb-[150px]">
@@ -52,7 +56,10 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
             and a truthy `'/'` here overrides the server's "continue where you left off" answer
             for every visitor who simply opened /login — the dead end Release-1 A1 is about. An
             absent or unsafe value must arrive as `undefined` so the form asks the server. */}
-        <SignInForm redirectTo={isSafeRedirectPath(redirectTo) ? redirectTo : undefined} />
+        <SignInForm
+          redirectTo={isSafeRedirectPath(redirectTo) ? redirectTo : undefined}
+          initialEmail={parsedEmail.success ? parsedEmail.data : undefined}
+        />
       </div>
     </div>
   );

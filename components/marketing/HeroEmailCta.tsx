@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
+import { checkJoinEmail } from '@/app/[locale]/(app)/join/actions';
 import { recordSignupIntent } from '@/app/[locale]/actions';
+import { EmailAlreadyRegisteredMessage } from '@/components/auth/EmailAlreadyRegisteredMessage';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,11 +18,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
+import { EMAIL_ALREADY_REGISTERED } from '@/lib/validation/auth';
 import { type EmailCaptureInput, emailCaptureSchema } from '@/lib/validation/marketing';
 
 /**
  * Hero "quick start" email capture — Figma "Frame 276" (Welcome Screen, below the heading).
- * Validates the email client-side, best-effort records it as a "signup intent" lead
+ * Validates the email client-side, then asks the server whether it already belongs to a confirmed
+ * account (`checkJoinEmail`, Release 2 П1) — if so it stops here with an "already registered —
+ * Log in →" message instead of navigating. Otherwise best-effort records it as a "signup intent" lead
  * (`recordSignupIntent`, spec §5.2 reworked stage 1.7) via the unauthenticated Server Action
  * (the write itself runs as service-role — see that action's doc comment), then hands
  * the visitor into sign-up regardless of whether that best-effort call succeeded — carrying
@@ -52,6 +57,24 @@ export function HeroEmailCta() {
   });
 
   const onSubmit = form.handleSubmit(async ({ email }) => {
+    // Ask first whether this address already has a confirmed account (Release 2 П1). If it does
+    // the visitor stays here and is shown "already registered — Log in →" under the field,
+    // instead of being walked through a sign-up form that could only end in a conflict. Anything
+    // other than a clear "yes" — unknown address, unconfirmed address (signing up again just
+    // re-sends the confirmation mail), a tripped rate limit, a failed lookup — carries on to
+    // sign-up exactly as before; `signUp` has its own duplicate check as the backstop.
+    const check = await checkJoinEmail({ email });
+    if (check.ok && check.data.hasAccount) {
+      form.setError('email', { type: 'server', message: EMAIL_ALREADY_REGISTERED });
+      return;
+    }
+    if (!check.ok) {
+      console.warn(
+        '[HeroEmailCta] checkJoinEmail unavailable, continuing to sign-up:',
+        check.error,
+      );
+    }
+
     const result = await recordSignupIntent({ email });
     if (!result.ok) {
       console.error('[HeroEmailCta] recordSignupIntent failed:', result.error);
@@ -66,7 +89,7 @@ export function HeroEmailCta() {
           <FormField
             control={form.control}
             name="email"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
                   <span className="inline-flex items-center gap-1">
@@ -82,7 +105,12 @@ export function HeroEmailCta() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                {/* `FormMessage` prints plain text only; this one needs a link inside it. */}
+                {fieldState.error?.message === EMAIL_ALREADY_REGISTERED ? (
+                  <EmailAlreadyRegisteredMessage email={field.value} />
+                ) : (
+                  <FormMessage />
+                )}
               </FormItem>
             )}
           />

@@ -6,11 +6,10 @@ import { useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 
 import { saveVideoBlog } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Form,
   FormControl,
@@ -19,6 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
 import { type VideoBlogStepInput, videoBlogStepSchema } from '@/lib/validation/mindsetter';
@@ -46,9 +47,11 @@ export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlo
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const notifySaved = useCabinetSaved();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   const form: UseFormReturn<VideoBlogStepInput> = useForm<VideoBlogStepInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(videoBlogStepSchema),
     mode: 'onChange',
     defaultValues: {
@@ -62,13 +65,12 @@ export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlo
   // before dropping an edited step just like the cabinet's (see that hook's own doc comment).
   useSectionDirtyGuard(form.formState.isDirty);
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
 
     const result = await saveVideoBlog(values);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(applyActionFailure(form, result.error, event));
       return;
     }
 
@@ -79,16 +81,12 @@ export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlo
     }
 
     router.push(nextHref);
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <div className="flex flex-col gap-3 md:gap-4">
           <FormField

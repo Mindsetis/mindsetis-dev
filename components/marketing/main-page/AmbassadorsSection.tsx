@@ -6,6 +6,7 @@ import {
   type AmbassadorApplicationCopy,
   AmbassadorApplicationDialog,
   type AmbassadorApplicationViewer,
+  type AmbassadorApplicationViewerMissing,
 } from './AmbassadorApplicationDialog';
 import { type AmbassadorCard, AmbassadorsRegionCarousel } from './AmbassadorsRegionCarousel';
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
@@ -89,7 +90,9 @@ const PHOTOS = [
  * disabled stub every other unbuilt CTA on this page uses. Since 2026-09-29 it is a working
  * application: it saves into `ambassador_applications` and emails a receipt (see the dialog's
  * own doc comment and `submitAmbassadorApplication`), with `viewer` below deciding whether the
- * last step asks a guest for contact details or names the signed-in account. The trigger button
+ * flow ends with a contact-details step (a guest; or a signed-in applicant whose profile lacks a
+ * name) or submits straight from the third question (a signed-in applicant with a full profile).
+ * The trigger button
  * + dialog live together in one client component (parallel to `AmbassadorsRegionCarousel`'s own trigger-lives-with-its-state shape)
  * since this RSC has nowhere to hold `open` state itself; every string the dialog needs is
  * fetched here via `getTranslations` and passed down as `copy`, same as `tabs`/`cards` below.
@@ -99,9 +102,11 @@ const PHOTOS = [
  * framing of the rest of this page, not a feature being built here.
  */
 /**
- * The signed-in applicant for the popup's "Your details" step — name and email shown in its
- * "applying as …" line. Display only: `submitAmbassadorApplication` re-reads the session itself
- * and never trusts this. `null` for a visitor without a session (the guest form is shown).
+ * The signed-in applicant for the popup — name and email for its "applying as …" line, plus
+ * which name fields the PROFILE lacks, so the popup can drop its "Your details" step when there
+ * is nothing to ask (3 steps) or show inputs for just the missing ones. Display/UX only:
+ * `submitAmbassadorApplication` re-reads the session and profile itself and never trusts this.
+ * `null` for a visitor without a session (the guest form is shown).
  */
 async function resolveApplicationViewer(): Promise<AmbassadorApplicationViewer> {
   const supabase = await createClient();
@@ -115,11 +120,13 @@ async function resolveApplicationViewer(): Promise<AmbassadorApplicationViewer> 
     .select('full_name, last_name')
     .eq('id', user.id)
     .maybeSingle();
-  const name = [profile?.full_name, profile?.last_name]
-    .map((part) => part?.trim())
-    .filter(Boolean)
-    .join(' ');
-  return { name: name || user.email, email: user.email };
+  const firstName = profile?.full_name?.trim() ?? '';
+  const lastName = profile?.last_name?.trim() ?? '';
+  const missing: AmbassadorApplicationViewerMissing[] = [];
+  if (!firstName) missing.push('firstName');
+  if (!lastName) missing.push('lastName');
+  const name = [firstName, lastName].filter(Boolean).join(' ');
+  return { name: name || user.email, email: user.email, missing };
 }
 
 export async function AmbassadorsSection() {

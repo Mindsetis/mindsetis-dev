@@ -27,11 +27,11 @@ export async function generateMetadata({ params }: JoinAppliedPageProps) {
  * client's own copy: "you've already applied and logged in as [email]", a way back into the
  * existing profile, and a note that duplicate accounts get removed on review.
  *
- * REACHED ONLY VIA `/continue` — never linked to directly
- *   `middleware.ts` bounces a signed-in visitor off `/join` to `/continue?from=join`, and
- *   `/continue` sends a COMPLETE profile on here (see both files' doc comments). This keeps
- *   `/join` itself cheap and static for the anonymous visitors it exists for — no searchParams,
- *   no DB read added to that page.
+ * REACHED ONLY VIA THE `/join` BOUNCE — never linked to directly
+ *   `middleware.ts` bounces a signed-in visitor off `/join` and sends a COMPLETE profile straight
+ *   here (or via `/continue?from=join` when its own lookup failed — see both files' doc
+ *   comments). This keeps `/join` itself cheap and static for the anonymous visitors it exists
+ *   for — no searchParams, no DB read added to that page.
  *
  * WHY THIS PAGE RE-CHECKS COMPLETENESS ITSELF (no third definition of "complete")
  *   `/join-applied` is still a guessable URL, and the task is explicit that a URL flag alone
@@ -40,16 +40,18 @@ export async function generateMetadata({ params }: JoinAppliedPageProps) {
  *   Rather than duplicate the threshold, this calls the exact same `resolveOnboardingRedirect()`
  *   that `/continue` and every other entry point in the app already uses (`CABINET_PATH` is its
  *   one existing definition of "nothing left to finish" — see `lib/auth/onboarding-redirect.ts`).
- *   Anyone it does NOT resolve to `CABINET_PATH` — an unfinished Member wizard, an in-progress
- *   Mindsetter upgrade, even an unconfirmed email — is sent back to `/continue`, which forwards
- *   them to their real next step. That also means this route can never show the modal to the
- *   wrong person, no matter how it was reached.
+ *   Anyone it does NOT resolve to `CABINET_PATH` — an unfinished Member wizard, even an
+ *   unconfirmed email — is sent straight to the destination the resolver just returned (a Member
+ *   mid-way through the optional Mindsetter upgrade resolves to the cabinet since Release-2 П4,
+ *   so they see the modal). That also means this route can never show the modal to the wrong
+ *   person, no matter how it was reached.
  *
- * NO LOOP BACK TO `/join`
+ * NO LOOP BACK TO `/join`, NO CHAIN
  *   Neither branch of this page ever redirects to `/join` or `/continue?from=join` again, so
- *   there is no cycle: unauthenticated → `/login` (dead end, terminal); incomplete → `/continue`
- *   → forwarded to a wizard step or the cabinet (also terminal, since that step isn't `/join`);
- *   complete → renders the modal in place (no further redirect at all).
+ *   there is no cycle: unauthenticated → `/login` (dead end, terminal); incomplete → its wizard
+ *   step (terminal, since that step isn't `/join` and is a final page — redirecting via `/continue`
+ *   would cost a second hop for the same answer); complete → renders the modal in place (no
+ *   further redirect at all).
  */
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +61,7 @@ export default async function JoinAppliedPage({ params }: JoinAppliedPageProps) 
 
   const destination = await resolveOnboardingRedirect();
   if (destination !== CABINET_PATH) {
-    redirect({ href: '/continue', locale });
+    redirect({ href: destination, locale });
     return null;
   }
 

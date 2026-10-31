@@ -83,10 +83,13 @@ import { WhatIsMindsetisVideo } from './WhatIsMindsetisVideo';
  *    export/measurement details. This component no longer renders its own glow.
  *
  * BOTTOM BUTTON STATE (Release-1 A4, added 2026-09-17)
- *   Same `lib/auth/cta-state.ts` state as the header, but not the same labels: both Member
- *   states get `Explore Mindsetis` → the catalog `NotYetAvailable` popup here, not the header's
- *   `Edit Profile` / `Upgrade` (client request, 2026-09-29). Guest and Mindsetter follow the
- *   header (`Apply to Join`, `Create Event` → the `NotYetAvailable` popup). The fixed `lg:w-[302px]` width
+ *   Same `lib/auth/cta-state.ts` state as the header, but not the same labels: a guest gets
+ *   `Apply to Join` (as in the header); EVERY signed-in state — Member (either step), Mindsetter,
+ *   Member mid-Mindsetter-onboarding — gets one button, `Meet People & Join Events` → the catalog
+ *   `NotYetAvailable` popup, not the header's `Edit Profile` / `Upgrade` / `Create Event`. History:
+ *   Members got `Explore Mindsetis` (client request, 2026-09-29) while a Mindsetter still got
+ *   `Create Event`, which only duplicated the header; "Правки 3.0" П7 (2026-10) unified both under
+ *   the new label and left `Create Event` in the header alone. The fixed `lg:w-[302px]` width
  *   (measured off the Figma "Apply to Join" instance above) is kept for every state, not just
  *   `guest`: every label is short enough to fit it comfortably (this button has no icon
  *   competing for the space at any state, unlike the header's fixed 199px CTA), so there is no
@@ -141,28 +144,20 @@ export async function WhatIsMindsetis() {
           </Button>
         ) : null}
 
-        {ctaState === 'memberIncomplete' || ctaState === 'memberComplete' ? (
-          // Both Member states were "Edit Profile" → `/continue` / "Upgrade"; the client asked
-          // for "Explore Mindsetis" into the catalog instead (2026-09-29). The catalog screen
-          // isn't built yet, so it opens the same "catalog is on the way" dialog as the hero's
-          // "Explore Community" until it is.
+        {ctaState !== 'guest' ? (
+          // EVERY signed-in state (both Member states, a Mindsetter, a Member mid-way through the
+          // Mindsetter onboarding) gets the same button: the point after the video is the
+          // catalog (members, Mindsetters, events), and "Create Event" lives in the header only
+          // (client "Правки 3.0" П7, 2026-10). The catalog screen isn't built yet, so it opens
+          // the same "catalog is on the way" dialog as the hero's "Explore Community" until it
+          // is. Written as "not a guest" rather than a state list so a new signed-in `CtaState`
+          // lands here without touching this file.
           <NotYetAvailable
             feature="exploreCommunity"
             className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
           >
             <Button type="button" disabled size="default" className="w-full">
-              {tNav('exploreMindsetis')}
-            </Button>
-          </NotYetAvailable>
-        ) : null}
-
-        {ctaState === 'mindsetter' ? (
-          <NotYetAvailable
-            feature="createEvent"
-            className="-mt-4 w-full lg:mt-0 lg:w-[302px] lg:self-center"
-          >
-            <Button type="button" disabled size="default" className="w-full">
-              {tNav('createEvent')}
+              {t('catalogCta')}
             </Button>
           </NotYetAvailable>
         ) : null}

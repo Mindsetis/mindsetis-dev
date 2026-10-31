@@ -2,10 +2,18 @@
 
 import { Slot } from '@radix-ui/react-slot';
 import type { ComponentProps } from 'react';
-import { createContext, useContext, useId } from 'react';
+import { createContext, useContext, useEffect, useId } from 'react';
 import type { ControllerProps, FieldPath, FieldValues } from 'react-hook-form';
-import { Controller, FormProvider, useFormContext, useFormState, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  FormProvider,
+  get,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
+import { arrayErrorMessage } from '@/components/ui/form-errors';
 import { Label } from '@/components/ui/label';
 import { useValidationMessage } from '@/components/ui/use-validation-message';
 import { cn } from '@/lib/utils';
@@ -69,10 +77,21 @@ function useFormField() {
 
 function FormItem({ className, ...props }: ComponentProps<'div'>) {
   const id = useId();
+  // The item itself carries the error flag, so something that wants to bring the failing field
+  // into view (`revealFirstError`) can find it even when its control has no `aria-invalid` and
+  // renders no message of its own — the avatar dropzone draws its error inside the box.
+  const fieldContext = useContext(FormFieldContext);
+  const { errors } = useFormState({ name: fieldContext?.name });
+  const invalid = fieldContext ? Boolean(get(errors, fieldContext.name)) : false;
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div data-slot="form-item" className={cn('flex flex-col gap-1', className)} {...props} />
+      <div
+        data-slot="form-item"
+        data-invalid={invalid ? '' : undefined}
+        className={cn('flex flex-col gap-1', className)}
+        {...props}
+      />
     </FormItemContext.Provider>
   );
 }
@@ -205,8 +224,59 @@ function FormMessage({ className, children, latinOnly = true, ...props }: FormMe
   );
 }
 
+type FormArrayMessageProps = ComponentProps<'p'> & {
+  /** Dotted path of the ARRAY (or object) field whose own error this renders — `superpowers`,
+   * `roles`. Not an item's field: `roles.0.title` has a `FormMessage` of its own. */
+  name: string;
+};
+
+/**
+ * The error of a whole list, as opposed to one field in it.
+ *
+ * `FormMessage` can't show it: it belongs to a `FormField`, and a list-level rule ("add at least
+ * one superpower") isn't any one field's. React Hook Form also files it under `errors.<name>.root`
+ * rather than `.message` once the items are registered fields, so reading `.message` — as the
+ * Superpowers step did — finds nothing and the submit fails with no explanation. Place this after
+ * the list; `arrayErrorMessage` reads both spots.
+ *
+ * RHF never re-checks a `.root` error when one of the items changes (its per-field revalidation
+ * stops at the item), so left alone the message would stay up after the visitor had fixed what it
+ * says. Any edit under `name` therefore clears it; Save runs the full validation again and brings
+ * it back if the list is still wrong.
+ */
+function FormArrayMessage({ name, className, ...props }: FormArrayMessageProps) {
+  const { errors } = useFormState({ name });
+  const { watch, clearErrors } = useFormContext();
+  const tValidation = useValidationMessage();
+  const message = arrayErrorMessage(get(errors, name));
+
+  useEffect(() => {
+    const subscription = watch((_values, { name: changed }) => {
+      if (changed === name || changed?.startsWith(`${name}.`)) clearErrors(`${name}.root`);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, clearErrors, name]);
+
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p
+      data-slot="form-message"
+      role="alert"
+      className={cn('flex items-center gap-1 text-[12px] font-normal text-destructive', className)}
+      {...props}
+    >
+      <FormMessageIcon />
+      {tValidation(message)}
+    </p>
+  );
+}
+
 export {
   Form,
+  FormArrayMessage,
   FormControl,
   FormDescription,
   FormField,

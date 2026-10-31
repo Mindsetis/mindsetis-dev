@@ -2,9 +2,13 @@
 
 import { useRef, useState } from 'react';
 
-import { AvatarCropDialog } from '@/components/member-profile/AvatarCropDialog';
+import {
+  AvatarCropDialog,
+  type AvatarEditRequest,
+} from '@/components/member-profile/AvatarCropDialog';
 import { ImageOptimizeHint } from '@/components/ui/image-optimize-hint';
 import { useValidationMessage } from '@/components/ui/use-validation-message';
+import { getAvatarFraming, setAvatarFraming } from '@/lib/media/avatar-framing';
 import { cn } from '@/lib/utils';
 import { ACCEPTED_AVATAR_MIME_TYPES, MAX_AVATAR_SIZE_BYTES } from '@/lib/validation/member-profile';
 
@@ -15,7 +19,8 @@ type AvatarUploadProps = {
   onFileChange: (file: File | null) => void;
   /** Dropzone headline before a photo is picked (Figma: "Upload profile photo"). */
   triggerLabel: string;
-  /** Replaces the headline once a photo exists ("Replace photo"). */
+  /** Replaces the headline once a photo exists — the client's «Edit photo» (Release 2): the box
+   *  then reopens the editor on the photo instead of starting a blind re-upload. */
   replaceLabel: string;
   /**
    * Second line inside the box — the client's mandated copy (Release-1 F3): "Upload your profile
@@ -36,8 +41,9 @@ type AvatarUploadProps = {
   /**
    * The profile's already-saved `avatar_url` (editing an existing profile — see
    * `MemberProfileForm`'s `initialAvatarUrl` prop). Only its PRESENCE matters here: it puts the
-   * box in its Uploaded state. The image itself isn't rendered — the mock's Uploaded state shows
-   * file metadata, not a thumbnail.
+   * box in its Uploaded state and makes a click open the editor on the saved photo. The image
+   * itself isn't rendered — the mock's Uploaded state shows file metadata, not a thumbnail — and
+   * the editor fetches the original / current picture itself (`avatar-edit-source.ts`).
    */
   initialAvatarUrl?: string | null;
 };
@@ -87,24 +93,28 @@ function formatFileSize(bytes: number): string {
  * ALL THREE OF THE COMPONENT'S STATES ARE IMPLEMENTED, exactly as drawn — the geometry, glyph and
  * layout never change between them, only the border colour and the two text lines:
  *   - Empty    — dashed #747474 border, headline + requirements line (grey).
- *   - Uploaded — solid #08d6ad border, the FILE NAME as headline, "<size> · uploaded" (green).
+ *   - Uploaded — solid #08d6ad border, "Edit photo" as headline, "<file name> · <size> · uploaded"
+ *                (green).
  *   - Error    — solid #ff4c58 border, the validation message as headline, requirements (red).
  *
- * Two deliberate departures from the mock, both because the mock's copy belongs to the generic
- * document uploader it was drawn for:
+ * Three deliberate departures from the mock, the first two because the mock's copy belongs to the
+ * generic document uploader it was drawn for, the third by the client's request (Release 2):
  *   - The error text comes from this field's own Zod message (`error`), not the mock's hardcoded
  *     "File is too large / Maximum size is 10 MB" — our own limit is 5 MB
  *     (`MAX_AVATAR_SIZE_BYTES`, matching the bucket), so copying that number would lie.
  *   - A profile that ALREADY has a saved photo has no filename or size to show (it's a URL, not a
- *     File), so it uses the Uploaded border with "Replace photo" as the headline and a bare
- *     "uploaded" hint. The mock has no state for that case.
+ *     File), so it uses the Uploaded border with a bare "uploaded" hint. The mock has no state for
+ *     that case.
+ *   - Once a photo exists the headline is «Edit photo» rather than the file name: the box is now
+ *     the button that opens the editor, so it says so (the file name moved to the second line).
  *
  * The icon keeps this instance's own `text-primary` override in every state rather than the base
  * component's white — switching it to white only on error/success would read as a second, unasked
  * signal on top of the border colour.
  *
  * The real Storage upload still happens server-side in the Server Action; this only hands a `File`
- * up to the form (RHF field value).
+ * up to the form (RHF field value). The uncropped original used for later re-framing is carried
+ * alongside that `File` (`lib/media/avatar-framing.ts`) and uploaded by the form on submit.
  *
  * A picked/dropped file that LOOKS like an image (matches `ACCEPTED_AVATAR_MIME_TYPES`, size > 0)
  * is not handed straight to `onFileChange`: it first goes through `AvatarCropDialog` (Release-1
@@ -113,6 +123,11 @@ function formatFileSize(bytes: number): string {
  * zero bytes) skips the dialog and goes to `onFileChange` unchanged, so the existing Zod rule
  * still produces the right rejection message in this box's own Error state — cropping an
  * unopenable file would just fail silently instead.
+ *
+ * Click behaviour (Release 2, Facebook-style re-crop): with NO photo the box opens the file picker
+ * as before; WITH a photo (saved, or edited and not yet saved) it opens the editor on that photo —
+ * "Edit photo" — where the member can re-frame it or press "Upload new photo". Dropping a file
+ * onto the box always means "use this file", with or without a photo.
  */
 export function AvatarUpload({
   file,
@@ -127,9 +142,9 @@ export function AvatarUpload({
 }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  // The just-picked raw file, staged here while `AvatarCropDialog` is open — it only ever
-  // reaches `onFileChange` (the real form value) after the member confirms a crop.
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  // What `AvatarCropDialog` is currently open for (`null` = closed). Nothing here reaches
+  // `onFileChange` (the real form value) until the member presses Save in the dialog.
+  const [request, setRequest] = useState<AvatarEditRequest | null>(null);
   const errorText = useValidationMessage()(error);
 
   // Routes a newly picked/dropped file to the crop dialog when it's a plausible image; anything
@@ -140,7 +155,7 @@ export function AvatarUpload({
       selected.size > 0 &&
       (ACCEPTED_AVATAR_MIME_TYPES as readonly string[]).includes(selected.type);
     if (looksLikeImage) {
-      setPendingFile(selected);
+      setRequest({ kind: 'new', file: selected });
     } else {
       onFileChange(selected);
     }
@@ -155,11 +170,26 @@ export function AvatarUpload({
   // message text — the copy is translated, the byte count isn't.
   const isTooLarge = Boolean(error && file && file.size > MAX_AVATAR_SIZE_BYTES);
 
-  // Headline + supporting line per state, mirroring the component's own two text slots.
-  const title = error ? errorText : file ? file.name : hasPhoto ? replaceLabel : triggerLabel;
+  // "Edit photo" applies to a photo the editor can actually open: the saved one, or an unsaved
+  // file the editor itself produced (it carries framing). A file that bypassed the editor — wrong
+  // type / empty, sitting in the field only to show its Zod error — is not an editable photo, so
+  // the click falls back to the file picker to replace it.
+  const canEditPhoto = hasPhoto && (!file || Boolean(getAvatarFraming(file)));
+
+  function handleBoxClick() {
+    if (canEditPhoto) setRequest({ kind: 'existing', pending: file });
+    else inputRef.current?.click();
+  }
+
+  // Headline + supporting line per state, mirroring the component's own two text slots. With a
+  // photo the headline is the client's «Edit photo» (the call to action); the picked file's name
+  // and size move to the supporting line so that information isn't lost.
+  const title = error ? errorText : hasPhoto ? replaceLabel : triggerLabel;
   const subtitle =
     state === 'uploaded'
-      ? [file ? formatFileSize(file.size) : null, uploadedLabel].filter(Boolean).join(' · ')
+      ? [file?.name, file ? formatFileSize(file.size) : null, uploadedLabel]
+          .filter(Boolean)
+          .join(' · ')
       : hint;
 
   return (
@@ -172,7 +202,12 @@ export function AvatarUpload({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => inputRef.current?.click()}
+        // `data-invalid`, not `aria-invalid`: the ARIA spec doesn't allow the latter on a button
+        // (same call as `Combobox`/`LanguagesMultiSelect`), and the error text is this button's own
+        // headline, so it is already what assistive tech reads. The hook is what lets a failed
+        // submit find the box and scroll to it (`revealFirstError`).
+        data-invalid={state === 'error' ? '' : undefined}
+        onClick={handleBoxClick}
         // Drag-and-drop. `onDragOver` must preventDefault on EVERY move event, not just on enter —
         // without it the browser treats this as a non-drop target and shows the "no entry" cursor,
         // then navigates away to the file when released.
@@ -209,12 +244,14 @@ export function AvatarUpload({
       >
         <UploadIcon className="text-primary" />
 
-        {/* `break-all` because the headline can be a raw file name, which has no spaces to wrap on
-            and would otherwise blow out the box's width. */}
-        <span className="break-all text-base text-foreground">{title}</span>
+        {/* `wrap-anywhere`: the headline can be a raw file name, which has no spaces to wrap on and
+            would otherwise blow out the box's width — but ordinary words (an error sentence) still
+            wrap between words, which `break-all` did not do ("Profi|le"). */}
+        <span className="text-base wrap-anywhere text-foreground">{title}</span>
         <span
           className={cn(
-            'text-tiny',
+            // `wrap-anywhere`: in the Uploaded state this line carries the raw file name.
+            'text-tiny wrap-anywhere',
             state === 'uploaded' && 'text-success',
             state === 'error' && 'text-destructive',
             state === 'empty' && 'text-muted-foreground',
@@ -245,10 +282,14 @@ export function AvatarUpload({
       />
 
       <AvatarCropDialog
-        file={pendingFile}
-        onCancel={() => setPendingFile(null)}
-        onConfirm={(croppedFile) => {
-          setPendingFile(null);
+        request={request}
+        onCancel={() => setRequest(null)}
+        onConfirm={({ file: croppedFile, crop, original }) => {
+          setRequest(null);
+          // Framing is bound to the exact `File` BEFORE it becomes the field value, so the form
+          // can never see the file without it. Nothing is uploaded or saved yet — that happens
+          // when the surrounding form is submitted (`appendAvatarToFormData`).
+          setAvatarFraming(croppedFile, { crop, original });
           onFileChange(croppedFile);
         }}
       />

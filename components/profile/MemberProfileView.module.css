@@ -96,6 +96,9 @@
   color: #000000;
 }
 
+/* The INDUSTRY pill ("Правки 3.0" П9) moved to `IndustryPill.module.css` — it is shared with the
+   Mindsetter profile now. */
+
 .inviteButton {
   /* Figma: re-verified against the actual node (`401:6401` preview / `383:4693` public — see
      the JSX comment above for why the previously-cited `401:6377`/`401:6359` were wrong).

@@ -407,7 +407,9 @@ export const sessionStepSchema = z
      * than via a plain `.min()`, since "must be a positive number" only applies once
      * `sessionType === 'paid'` AND `acceptsBookings` is on.
      */
-    priceCents: z.number().int().positive().nullable(),
+    // Messages on the numeric rules too: the price input clamps nothing (`noValidate`), so a typed
+    // `-5` reaches `.positive()` — and its bare default is an untranslated English sentence.
+    priceCents: z.number().int(vmsg('priceRequired')).positive(vmsg('priceRequired')).nullable(),
     // A plain `z.union` of literals (not `z.number().refine(...)`) — `refine`'s type-guard
     // overload narrows the schema's *output* type without narrowing its *input* type, which
     // fights `zodResolver`'s inferred `Resolver<Input, Output>` typing against `useForm`'s own

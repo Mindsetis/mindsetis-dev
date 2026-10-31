@@ -5,10 +5,13 @@
  *
  * Who is applying decides which fields matter:
  * - a GUEST types First name / Last name / Email on the last step — `ambassadorGuestContactSchema`;
- * - a signed-in Member/Mindsetter sees no fields at all: the action takes name + email from their
- *   own account server-side and ignores anything the client sent, so it can't be spoofed.
- * The action therefore accepts `contact` as optional and only enforces the guest schema when
- * there is no session.
+ * - a signed-in Member/Mindsetter gets name + email from their own account server-side (profile
+ *   first/last name, auth email); anything the client sent for a field the account already has is
+ *   ignored, so an application can't be filed under a spoofed name. Only a name the PROFILE LACKS
+ *   is asked for (and then required): `ambassadorContactSchemaFor` validates just those fields,
+ *   in the dialog's form and again in the action.
+ * The action therefore accepts `contact` as optional and enforces the strict schema for exactly
+ * the fields it could not take from the session.
  */
 import { z } from 'zod';
 
@@ -28,10 +31,30 @@ const nameField = (requiredKey: 'firstNameRequired' | 'lastNameRequired') =>
     .min(1, vmsg(requiredKey))
     .max(MAX_AMBASSADOR_NAME_LENGTH, vmsg('nameMax', { max: MAX_AMBASSADOR_NAME_LENGTH }));
 
-export const ambassadorGuestContactSchema = z.object({
-  firstName: nameField('firstNameRequired'),
-  lastName: nameField('lastNameRequired'),
-  email: emailSchema,
+/** The three contact fields the details step can ask for. */
+export type AmbassadorContactField = 'firstName' | 'lastName' | 'email';
+
+/** Which contact fields are mandatory in a given situation (see `ambassadorContactSchemaFor`). */
+export type AmbassadorRequiredContact = Record<AmbassadorContactField, boolean>;
+
+/**
+ * Contact schema that enforces ONLY the fields in `required`; every other field passes through as
+ * a plain string (the caller doesn't use it). All three keys are always present, so the inferred
+ * type is the same `{ firstName; lastName; email }` for every variant and one React Hook Form
+ * type fits them all.
+ */
+export const ambassadorContactSchemaFor = (required: AmbassadorRequiredContact) =>
+  z.object({
+    firstName: required.firstName ? nameField('firstNameRequired') : z.string(),
+    lastName: required.lastName ? nameField('lastNameRequired') : z.string(),
+    email: required.email ? emailSchema : z.string(),
+  });
+
+/** A guest supplies everything. */
+export const ambassadorGuestContactSchema = ambassadorContactSchemaFor({
+  firstName: true,
+  lastName: true,
+  email: true,
 });
 export type AmbassadorGuestContactInput = z.infer<typeof ambassadorGuestContactSchema>;
 
@@ -46,7 +69,8 @@ export const ambassadorApplicationSchema = z.object({
   eventExperience: answerField,
   communities: answerField,
   communitiesFeedback: answerField,
-  /** Guest-only; see file header. Validated strictly by the action when there's no session. */
+  /** Guest, or a signed-in applicant whose profile lacks a name; see file header. Validated
+   *  strictly by the action, only for the fields it could not take from the session. */
   contact: z
     .object({
       firstName: z.string().max(MAX_AMBASSADOR_NAME_LENGTH).optional(),

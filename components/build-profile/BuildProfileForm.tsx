@@ -6,12 +6,10 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/(app)/build-profile/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
-import { OnboardingBackButton } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { WizardActionBar } from '@/components/mindsetter-onboarding/StepActions';
 import { FieldHint } from '@/components/ui/field-hint';
 import {
   Form,
@@ -21,6 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
 import type { IndustryValue } from '@/lib/constants/industries';
@@ -42,7 +42,7 @@ type BuildProfileFormProps = {
 
 /**
  * Registration wizard step 4/4 ("What do you build?") form — mirrors
- * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`). Company/Role
+ * `MemberProfileForm.tsx`'s structure (RHF + `zodResolver`, `applyActionFailure`). Company/Role
  * stay plain text; Industries (Release-1 E2/E3, `profiles.industry` → `profiles.industries
  * text[]` + `profiles.industry_custom`) is a MULTI-select capped at `MAX_INDUSTRIES`, reusing
  * `LanguagesMultiSelect` (`max` prop) rather than the old single-select `Combobox` — see that
@@ -57,11 +57,13 @@ export function BuildProfileForm({
 }: BuildProfileFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   const knownIndustryValues = new Set<string>(INDUSTRY_VALUES);
 
   const form = useForm<BuildProfileInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(buildProfileSchema),
     mode: 'onChange',
     defaultValues: {
@@ -78,20 +80,19 @@ export function BuildProfileForm({
     },
   });
 
-  // Arms the shared "unsaved changes" warning for this step's bottom Back (and the header links)
-  // while edits are pending — same guard the Mindsetter wizard and the cabinet use.
+  // Arms the shared "unsaved changes" warning for this step's Back (and the header links) while
+  // edits are pending — same guard the Mindsetter wizard and the cabinet use.
   useSectionDirtyGuard(form.formState.isDirty);
 
   const industriesValue = useWatch({ control: form.control, name: 'industries' }) ?? [];
   const hasOtherIndustry = industriesValue.includes(OTHER_INDUSTRY_VALUE);
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
 
     const result = await saveBuildProfile(values);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(applyActionFailure(form, result.error, event));
       return;
     }
 
@@ -100,18 +101,14 @@ export function BuildProfileForm({
     // the Congrats screen, not back to verification. `saveBuildProfile`'s welcome-email send is
     // unrelated to navigation here — it's a fire-and-forget informational email, not a gate.
     router.push('/welcome');
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
       {/* Same spacing rhythm as `SignUpForm.tsx`/`MemberProfileForm.tsx`: 16px/24px
           (mobile/desktop) from the field block to the submit button. */}
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <div className="flex flex-col gap-3">
           <FormField
@@ -234,24 +231,15 @@ export function BuildProfileForm({
           )}
         </div>
 
-        {/* Back → step 3 sits beside Continue, like the cabinet's Back + Save row (client request,
-            2026-09-29: the top-left Back link is gone from the wizard steps). */}
-        <div className="flex flex-row gap-3">
-          <OnboardingBackButton
-            href="/member-profile"
-            disabled={form.formState.isSubmitting}
-            className="flex-1"
-          />
-          <Button
-            type="submit"
-            variant="primaryOutline"
-            size="lg"
-            loading={form.formState.isSubmitting}
-            className="flex-1"
-          >
-            {form.formState.isSubmitting ? t('signUp.submitting') : t('signUp.submit')}
-          </Button>
-        </div>
+        {/* Back → step 3 beside Continue, in the very same pinned `[Back | primary]` bar the
+            Mindsetter wizard uses (owner's call, 31.10.2026), so the two wizards behave alike. A
+            direct child of the `<form>`, as in the Mindsetter forms, so the bar can pin. */}
+        <WizardActionBar
+          backHref="/member-profile"
+          isSubmitting={form.formState.isSubmitting}
+          label={t('signUp.submit')}
+          pendingLabel={t('signUp.submitting')}
+        />
       </form>
     </Form>
   );

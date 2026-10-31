@@ -6,12 +6,11 @@ import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { saveMemberProfile } from '@/app/[locale]/(app)/member-profile/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { CityCombobox, type CitySelection } from '@/components/geo/CityCombobox';
 import { AvatarUpload } from '@/components/member-profile/AvatarUpload';
 import { InterestsPicker } from '@/components/member-profile/InterestsPicker';
 import { LanguagesMultiSelect } from '@/components/member-profile/LanguagesMultiSelect';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { FieldHint } from '@/components/ui/field-hint';
@@ -23,6 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
@@ -33,6 +34,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '@/lib/constants/languages';
 import type { CountryOption } from '@/lib/geo/countries';
+import { appendAvatarToFormData } from '@/lib/media/avatar-framing';
 import {
   createMemberProfileSchema,
   MAX_ABOUT_LENGTH,
@@ -102,7 +104,7 @@ export function MemberProfileForm({
 }: MemberProfileFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   // A photo is only mandatory the first time through this step — once `profiles.avatar_url`
   // is already set, resubmitting shouldn't force picking a new file (see
@@ -110,6 +112,8 @@ export function MemberProfileForm({
   const hasExistingAvatar = Boolean(initialAvatarUrl);
 
   const form = useForm<MemberProfileInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(createMemberProfileSchema({ avatarRequired: !hasExistingAvatar })),
     mode: 'onChange',
     defaultValues: {
@@ -161,7 +165,7 @@ export function MemberProfileForm({
     [countries],
   );
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
 
     const formData = new FormData();
@@ -173,8 +177,13 @@ export function MemberProfileForm({
     if (values.about) formData.append('about', values.about);
     // Omitted entirely when the caller didn't pick a new file — the Server Action then
     // reuses the existing `profiles.avatar_url` (see `saveMemberProfile`) instead of
-    // requiring a re-upload on every resubmission of this step.
-    if (values.avatar) formData.append('avatar', values.avatar);
+    // requiring a re-upload on every resubmission of this step. When the photo was edited in the
+    // re-crop editor this also uploads the uncropped original (straight to Storage, it's too big
+    // for the action body) and adds the frame; `false` = that upload failed, nothing was sent.
+    if (!(await appendAvatarToFormData(formData, values.avatar))) {
+      setFormError(t('memberProfile.photo.saveError'));
+      return;
+    }
     for (const id of values.interestIds) formData.append('interestIds', id);
     formData.append('website', values.website);
     for (const field of OPTIONAL_SOCIAL_FIELDS) {
@@ -184,25 +193,20 @@ export function MemberProfileForm({
 
     const result = await saveMemberProfile(formData);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(applyActionFailure(form, result.error, event));
       return;
     }
 
     // Step 4/4 — "What do you build?" (stage 1.5 registration-wizard renumbering).
     router.push('/build-profile');
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
       {/* Same spacing rhythm as `SignUpForm.tsx`: 16px/24px (mobile/desktop) from the field
           block to the submit button, 12px/16px between individual fields. */}
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <div className="flex flex-col gap-3 md:gap-4">
           <FormField

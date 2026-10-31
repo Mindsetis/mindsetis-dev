@@ -49,7 +49,12 @@ export async function generateMetadata({ params }: VerifyEmailPageProps) {
  *
  * Stage 1.6: the "Back to log in" tertiary link (added in stage 1.5 as an escape hatch for a
  * visitor with no session at all landing here) was removed per the user's copy tweaks — the
- * "Wrong email? Change it" link back to `/sign-up` remains the only way out of this step.
+ * "Wrong email? Change it" link back to `/sign-up` remained the only way out of this step.
+ *
+ * No Back link (owner's call, 31.10.2026 — Release 2 П6). The account already exists once this
+ * step renders, and resubmitting step 1 for it changes nothing: Supabase keeps the FIRST password
+ * and names of an unconfirmed user and only re-sends the mail, so a Back that invites people to
+ * "fix" those fields would leave them unable to log in with the password they typed last.
  */
 export default async function VerifyEmailPage({ params, searchParams }: VerifyEmailPageProps) {
   const { locale } = await params;

@@ -4,10 +4,6 @@ import { cn } from '@/lib/utils';
 type RegistrationBackLinkProps = {
   href: string;
   label: string;
-  /** Overrides the default `md:absolute` centering trick — the mindsetter-onboarding flow's
-   * Back-link wrapper has no sibling progress bar to center against (unlike the 4-step Member
-   * wizard's `RegistrationStepHeader`), so those callers pass `md:static md:translate-y-0` here
-   * instead, letting the link sit in normal flow. */
   className?: string;
 };
 
@@ -28,13 +24,18 @@ function BackArrowIcon() {
  * extracted here since the custom arrow SVG isn't worth re-pasting four times. `href`/`label`
  * stay caller-supplied (same pattern as `RegistrationProgress`'s `label` prop) since each step
  * points at a different previous step and this has no internal state.
+ *
+ * It is only rendered by `StickyBackLink` (the screens without a primary button to carry the Back,
+ * `/welcome` and the Mindsetter congrats, keep it in view while the page scrolls) — that component
+ * owns where the link sits. `w-fit`: the link is a block-level flex box and would otherwise be
+ * clickable across the whole row.
  */
 export function RegistrationBackLink({ href, label, className }: RegistrationBackLinkProps) {
   return (
     <Link
       href={href}
       className={cn(
-        'flex shrink-0 items-center gap-1 text-base font-bold text-foreground hover:text-muted-foreground md:absolute md:top-1/2 md:left-0 md:-translate-y-1/2',
+        'flex w-fit shrink-0 items-center gap-1 text-base font-bold text-foreground hover:text-muted-foreground',
         className,
       )}
     >

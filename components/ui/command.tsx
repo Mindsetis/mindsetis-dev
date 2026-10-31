@@ -61,7 +61,9 @@ function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrim
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          'flex h-11 w-full rounded-md bg-transparent py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+          // `text-base md:text-sm`: iOS Safari zooms the page when it focuses an input under 16px,
+          // and a searchable `Combobox` now focuses this input as soon as it opens.
+          'flex h-11 w-full rounded-md bg-transparent py-3 text-base text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
           className,
         )}
         {...props}

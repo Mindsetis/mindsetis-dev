@@ -20,7 +20,12 @@
  *   extended wizard's `finalize` step runs (`app/[locale]/(app)/mindsetter-onboarding/
  *   actions.ts`), independent of verification too — so reading `account_type` directly (already
  *   fetched by every caller for other reasons — `AccountMenu`, `requireMindsetter`, etc.) is both
- *   correct per the matrix and requires no extra `mindsetter_profiles` lookup.
+ *   correct per the matrix and requires no extra lookup for that split.
+ *
+ *   The wizard's own progress matters for one thing only (Release-2 П5, call of 28.10.2026): a
+ *   Member who STARTED it gets "Continue Registration" instead of "Upgrade", so the button
+ *   resumes their wizard rather than pitching the upgrade again. That needs to know whether a
+ *   `mindsetter_profiles` row exists, which callers look up only for a complete Member.
  *
  * WHY TWO EXPORTS
  *   `Header` already runs its own `profiles` query for `AccountMenu` (username/account_type/
@@ -32,10 +37,13 @@
  */
 import 'server-only';
 
-import { MEMBER_COMPLETE } from '@/lib/auth/onboarding-redirect';
+import { cache } from 'react';
+
+import { fetchMindsetterOnboardingStep, MEMBER_COMPLETE } from '@/lib/auth/onboarding-redirect';
 import { createClient } from '@/lib/supabase/server';
 
-export type CtaState = 'guest' | 'memberIncomplete' | 'memberComplete' | 'mindsetter';
+export type CtaState =
+  'guest' | 'memberIncomplete' | 'memberComplete' | 'mindsetterInProgress' | 'mindsetter';
 
 /** The two `profiles` columns the decision needs — a subset any caller's own select can add to. */
 export interface CtaProfileFields {
@@ -50,32 +58,51 @@ export interface CtaProfileFields {
  * `profile: null` while `signedIn` is a defensive-only branch (mirrors `resolveOnboardingRedirect`'s
  * "no `profiles` row" case, an anomaly rather than a state the wizard resumes from): it degrades
  * to `memberIncomplete` rather than crashing the header, since that's the state that still leads
- * somewhere sane (`/continue`).
+ * somewhere sane (the Member wizard).
+ *
+ * `mindsetterStep` is `mindsetter_profiles.onboarding_step`, `null` when the caller never started
+ * the Mindsetter wizard (see `fetchMindsetterOnboardingStep`). Only consulted for a complete
+ * Member, so callers may skip the lookup in every other case.
  */
-export function ctaStateFromProfile(signedIn: boolean, profile: CtaProfileFields | null): CtaState {
+export function ctaStateFromProfile(
+  signedIn: boolean,
+  profile: CtaProfileFields | null,
+  mindsetterStep: number | null = null,
+): CtaState {
   if (!signedIn) return 'guest';
   if (profile?.account_type === 'mindsetter') return 'mindsetter';
 
   const step = profile?.onboarding_step ?? 0;
-  return step >= MEMBER_COMPLETE ? 'memberComplete' : 'memberIncomplete';
+  if (step < MEMBER_COMPLETE) return 'memberIncomplete';
+  return mindsetterStep === null ? 'memberComplete' : 'mindsetterInProgress';
+}
+
+/** Whether `ctaStateFromProfile` will need `mindsetterStep` for this profile. */
+export function needsMindsetterStep(profile: CtaProfileFields | null): boolean {
+  return profile?.account_type === 'member' && (profile.onboarding_step ?? 0) >= MEMBER_COMPLETE;
 }
 
 /**
  * Fetches its own `profiles` row and resolves the state — for callers with no profile query of
- * their own yet (`HeroBand`, `WhatIsMindsetis`).
+ * their own yet (`HeroBand`, `WhatIsMindsetis`). Both render on the same page, so the lookup is
+ * memoized per request (`cache`) instead of running twice.
  */
-export async function resolveCtaState(): Promise<CtaState> {
+export const resolveCtaState = cache(async (): Promise<CtaState> => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return 'guest';
 
-  const { data: profile } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select('account_type, onboarding_step')
     .eq('id', user.id)
     .maybeSingle();
+  const profile = data as CtaProfileFields | null;
 
-  return ctaStateFromProfile(true, profile as CtaProfileFields | null);
-}
+  const mindsetterStep = needsMindsetterStep(profile)
+    ? await fetchMindsetterOnboardingStep(supabase, user.id)
+    : null;
+  return ctaStateFromProfile(true, profile, mindsetterStep);
+});

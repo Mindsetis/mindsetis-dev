@@ -22,8 +22,11 @@ import { fileURLToPath } from 'node:url';
 
 const OUT_DIR = dirname(fileURLToPath(import.meta.url));
 
+// There is deliberately NO page-background token: since P12.2 (client request, 2026-10-30) the
+// area around the card is transparent, so the reader's own mail background shows through (white in
+// a light client, dark in a dark one). Only the card is painted. `card` is the site's real
+// `--color-card` (app/styles/tokens/colors.css), not the #14181D the client gave as an example.
 const c = {
-  background: '#000000',
   card: '#1a1a1a',
   foreground: '#ffffff',
   muted: '#a5a5a5',
@@ -33,6 +36,20 @@ const c = {
 };
 
 const FONT = 'Manrope, Helvetica, Arial, sans-serif';
+
+/** Card width cap. 600 is the usual email ceiling (Outlook reading pane, Gmail column). */
+const CARD_WIDTH = 600;
+
+/**
+ * Colour + a same-colour gradient layer, as an inline-style fragment. Gmail's iOS/Android dark
+ * mode rewrites `background-color` on emails it thinks need darkening but leaves
+ * `background-image` alone, so the flat gradient keeps the brand colour pinned. Clients without
+ * gradient support (Outlook desktop's Word engine) skip the second property and use the plain
+ * colour (the card table also carries a `bgcolor` attribute for them). Not guaranteed in every
+ * client - see README.md for what still needs a manual look.
+ */
+const pinned = (color) =>
+  `background-color:${color};background-image:linear-gradient(${color},${color});`;
 
 /** Support address shown in every footer. Change here, rebuild, re-paste all five. */
 const SUPPORT_EMAIL = 'support@mindsetis.com';
@@ -75,7 +92,7 @@ function button(url, label) {
     '              </v:roundrect>',
     '              <![endif]-->',
     '              <!--[if !mso]><!-- -->',
-    `              <a href="${url}" style="background-color:${c.primary};border-radius:999px;color:${c.primaryForeground};display:inline-block;font-family:${FONT};font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;">${label}</a>`,
+    `              <a href="${url}" style="${pinned(c.primary)}border-radius:999px;color:${c.primaryForeground};display:inline-block;font-family:${FONT};font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;">${label}</a>`,
     '              <!--<![endif]-->',
   ].join('\n');
 }
@@ -129,9 +146,11 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="x-apple-disable-message-reformatting" />
-    <!-- This email is dark by design; tell clients so they do not invert it a second time. -->
-    <meta name="color-scheme" content="dark" />
-    <meta name="supported-color-schemes" content="dark" />
+    <!-- The card is dark in every theme; the page around it is the client's own. "light dark"
+         tells clients the email copes with both themes, so they should not recolour it. (A
+         "dark"-only value would ask Apple Mail for a dark canvas even in light mode.) -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <title>${title}</title>
     <!--[if mso]>
       <noscript>
@@ -145,8 +164,8 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
     <style>
       /* Only ever an enhancement - every rule that matters is also inline, because
          Gmail's webmail strips <style> in forwarded mail and Outlook.com rewrites it. */
+      :root { color-scheme: light dark; supported-color-schemes: light dark; }
       body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-      table { border-collapse: collapse; }
       img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
       a { color: ${c.primary}; }
       @media only screen and (max-width: 520px) {
@@ -155,17 +174,25 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
       }
     </style>
   </head>
-  <body style="background-color:${c.background};margin:0;padding:0;width:100%;">
+  <body style="margin:0;padding:0;width:100%;">
     <div style="display:none;font-size:1px;color:${c.card};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
       ${preheader}${preheaderPad}
     </div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${c.background};">
+    <!-- No background on <body> or this wrapper: the area around the card is transparent. -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
       <tr>
-        <td class="m-wrap" align="center" style="padding:32px 16px;">
-          <table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" style="background-color:${c.card};border-radius:12px;max-width:480px;width:100%;">
+        <td class="m-wrap" align="center" style="padding:24px 16px;">
+          <!-- THE CARD. The width ATTRIBUTE is what Outlook (Word engine) obeys, since it
+               ignores max-width; every other client takes width:100% capped by max-width.
+               border-collapse:separate is needed for border-radius on a table to show.
+               bgcolor + background-color + same-colour gradient: see pinned() in build.mjs. -->
+          <table role="presentation" width="${CARD_WIDTH}" cellpadding="0" cellspacing="0" border="0" bgcolor="${c.card}" style="width:100%;max-width:${CARD_WIDTH}px;margin:0 auto;border-collapse:separate;border-spacing:0;border:1px solid ${c.border};border-radius:12px;${pinned(c.card)}">
             <tr>
-              <td class="m-pad" style="padding:40px 32px;">
-                <!-- BRAND HEADER (task I4).
+              <!-- radius 11 = the table's 12 minus its 1px border, so this cell's own
+                   background does not poke past the rounded inner edge. -->
+              <td class="m-pad" align="left" style="padding:40px 32px;border-radius:11px;${pinned(c.card)}">
+                <!-- BRAND HEADER (task I4). The PNG has a transparent background (checked
+                     2026-10-30: RGBA, corners alpha 0), so it sits cleanly on the dark card.
                      width/height are set as ATTRIBUTES as well as CSS because Outlook
                      ignores the CSS; without them it reserves the file's full 600px and the
                      card blows out. The alt text is styled to look like the wordmark it

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { Control } from 'react-hook-form';
 import { useController } from 'react-hook-form';
 
+import { arrayErrorMessage } from '@/components/ui/form-errors';
 import {
   Select,
   SelectContent,
@@ -36,18 +37,44 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
 
 const DEFAULT_RANGE: TimeRange = { from: '09:00', to: '18:00' };
 
+/**
+ * The window "Add range" appends: one hour starting where the day's latest window ends (touching
+ * windows are allowed), so the new row doesn't open already red with an overlap error. Falls
+ * back to the default only when the day has no room left after its last window.
+ */
+function nextRange(ranges: TimeRange[]): TimeRange {
+  if (ranges.length === 0) return DEFAULT_RANGE;
+  const latestEnd = ranges.reduce((latest, range) => (range.to > latest ? range.to : latest), '');
+  const start = TIME_OPTIONS.indexOf(latestEnd);
+  const end = TIME_OPTIONS[start + 2] ?? TIME_OPTIONS[start + 1];
+  return start >= 0 && end ? { from: latestEnd, to: end } : DEFAULT_RANGE;
+}
+
+/** What RHF keeps under `errors.weeklyAvailability`: the schema reports a bad window at its own
+ * path (`mon.0.to` for "ends before it starts", `mon.1.from` for an overlap), so the error is a
+ * tree, not a message. */
+type AvailabilityErrors = Partial<
+  Record<Weekday, Array<{ from?: { message?: string }; to?: { message?: string } } | undefined>>
+>;
+
 function TimeSelect({
   value,
   onChange,
   label,
+  invalid,
 }: {
   value: string;
   onChange: (value: string) => void;
   label: string;
+  invalid?: boolean;
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger aria-label={label} className="h-12 w-[110px] rounded-xl bg-[#242424]">
+      <SelectTrigger
+        aria-label={label}
+        aria-invalid={invalid || undefined}
+        className="h-12 w-[110px] rounded-xl bg-[#242424]"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -82,6 +109,7 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
   const tValidation = useValidationMessage();
 
   const availability = field.value;
+  const rangeErrors = fieldState.error as unknown as AvailabilityErrors | undefined;
 
   function setRanges(day: Weekday, ranges: TimeRange[]) {
     field.onChange({ ...availability, [day]: ranges });
@@ -97,6 +125,8 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
         {WEEKDAYS.map((day) => {
           const ranges = availability[day];
           const enabled = ranges.length > 0;
+          // The day-level rule (more windows than allowed) lands on the day's array itself.
+          const dayError = arrayErrorMessage(rangeErrors?.[day]);
 
           return (
             <div key={day} className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
@@ -113,58 +143,82 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
 
               {enabled ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  {ranges.map((range, index) => (
-                    <div key={index} className="flex flex-wrap items-center gap-2">
-                      <TimeSelect
-                        value={range.from}
-                        label={t('fromLabel')}
-                        onChange={(value) =>
-                          setRanges(
-                            day,
-                            ranges.map((item, i) =>
-                              i === index ? { ...item, from: value } : item,
-                            ),
-                          )
-                        }
-                      />
-                      <span aria-hidden="true" className="text-muted-foreground">
-                        —
-                      </span>
-                      <TimeSelect
-                        value={range.to}
-                        label={t('toLabel')}
-                        onChange={(value) =>
-                          setRanges(
-                            day,
-                            ranges.map((item, i) => (i === index ? { ...item, to: value } : item)),
-                          )
-                        }
-                      />
-                      {/* The frame shows the bin only from the SECOND range on — the first one is
-                          removed by switching the day off, which is the same outcome with a
-                          clearer meaning. */}
-                      {index > 0 ? (
-                        <button
-                          type="button"
-                          aria-label={t('removeRange')}
-                          onClick={() =>
+                  {ranges.map((range, index) => {
+                    const rangeError = rangeErrors?.[day]?.[index];
+                    const rangeMessage = rangeError?.to?.message ?? rangeError?.from?.message;
+
+                    return (
+                      <div key={index} className="flex flex-wrap items-center gap-2">
+                        <TimeSelect
+                          value={range.from}
+                          label={t('fromLabel')}
+                          invalid={!!rangeError?.from}
+                          onChange={(value) =>
                             setRanges(
                               day,
-                              ranges.filter((_, i) => i !== index),
+                              ranges.map((item, i) =>
+                                i === index ? { ...item, from: value } : item,
+                              ),
                             )
                           }
-                          className="cursor-pointer text-destructive transition-opacity hover:opacity-70"
-                        >
-                          <Trash2 className="size-[18px]" aria-hidden="true" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
+                        />
+                        <span aria-hidden="true" className="text-muted-foreground">
+                          —
+                        </span>
+                        <TimeSelect
+                          value={range.to}
+                          label={t('toLabel')}
+                          invalid={!!rangeError?.to}
+                          onChange={(value) =>
+                            setRanges(
+                              day,
+                              ranges.map((item, i) =>
+                                i === index ? { ...item, to: value } : item,
+                              ),
+                            )
+                          }
+                        />
+                        {/* The frame shows the bin only from the SECOND range on — the first one is
+                          removed by switching the day off, which is the same outcome with a
+                          clearer meaning. */}
+                        {index > 0 ? (
+                          <button
+                            type="button"
+                            aria-label={t('removeRange')}
+                            onClick={() =>
+                              setRanges(
+                                day,
+                                ranges.filter((_, i) => i !== index),
+                              )
+                            }
+                            className="cursor-pointer text-destructive transition-opacity hover:opacity-70"
+                          >
+                            <Trash2 className="size-[18px]" aria-hidden="true" />
+                          </button>
+                        ) : null}
+                        {rangeMessage ? (
+                          <p
+                            data-slot="form-message"
+                            role="alert"
+                            className="basis-full text-tiny text-destructive"
+                          >
+                            {tValidation(rangeMessage)}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+
+                  {dayError ? (
+                    <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+                      {tValidation(dayError)}
+                    </p>
+                  ) : null}
 
                   {ranges.length < MAX_RANGES_PER_DAY ? (
                     <button
                       type="button"
-                      onClick={() => setRanges(day, [...ranges, DEFAULT_RANGE])}
+                      onClick={() => setRanges(day, [...ranges, nextRange(ranges)])}
                       className="inline-flex w-fit cursor-pointer items-center gap-1 text-tiny font-medium text-primary transition-colors hover:text-primary-hover"
                     >
                       <Plus className="size-4" aria-hidden="true" />
@@ -181,7 +235,9 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
       </div>
 
       {fieldState.error?.message ? (
-        <p className="text-tiny text-destructive">{tValidation(fieldState.error.message)}</p>
+        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+          {tValidation(fieldState.error.message)}
+        </p>
       ) : null}
     </div>
   );
