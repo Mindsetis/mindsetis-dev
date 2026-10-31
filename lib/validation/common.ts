@@ -73,18 +73,33 @@ export function isLatinOnly(value: string): boolean {
   return !NON_LATIN_PATTERN.test(value);
 }
 
+/** Control characters, whitespace and backslashes — none belong in a redirect path we hand out. */
+// eslint-disable-next-line no-control-regex
+const UNSAFE_REDIRECT_CHARS = /[\x00-\x20\x7f\\]/;
+
 /**
  * True for a safe same-origin relative redirect path (`/foo`), rejecting absolute URLs and
  * protocol-relative (`//host`) / backslash tricks that could escape the app (open redirect).
  * Single source of truth reused by the login page, the auth callback, and `signInSchema`.
+ *
+ * Prefix checks alone are not enough: the URL parser drops tabs and newlines, so `/\t/evil.com`
+ * passes them and still resolves to `https://evil.com/` (security audit, 30.10.2026). So such
+ * characters are refused outright, and the path must also resolve to the origin it started from.
  */
 export function isSafeRedirectPath(value: string | undefined | null): value is string {
-  return (
-    typeof value === 'string' &&
-    value.startsWith('/') &&
-    !value.startsWith('//') &&
-    !value.startsWith('/\\')
-  );
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    UNSAFE_REDIRECT_CHARS.test(value)
+  ) {
+    return false;
+  }
+  try {
+    return new URL(value, 'http://same-origin.invalid').origin === 'http://same-origin.invalid';
+  } catch {
+    return false;
+  }
 }
 
 /** Normalize a candidate redirect to a safe relative path, falling back to `fallback`. */

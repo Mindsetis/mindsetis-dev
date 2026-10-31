@@ -21,6 +21,24 @@ the design tokens here are copied from `lib/email/templates/base-layout.tsx`.
 `build.mjs` generates all five. **Edit `build.mjs`, never the `.html` files** — they are
 build output and the next `node supabase/templates/build.mjs` overwrites them.
 
+## Look (P12.2, 2026-10-30)
+
+Same layout as the Resend emails in `lib/email/templates/base-layout.tsx` — change both together.
+
+- Dark card only: `#1a1a1a` (the site's `--color-card`), max 600 px (`width="600"` attribute for
+  Outlook, `width:100%;max-width:600px` for everyone else), 12 px radius, 1 px `#333` border.
+  **No background around the card** — the reader's mail client shows through (white in a light
+  client, dark in a dark one).
+- Pinned against Gmail dark-mode recolouring: `background-color` **plus**
+  `background-image: linear-gradient(c, c)` on the card and the button, `bgcolor` on the card
+  table, `color-scheme: light dark` meta. Best effort — not every client honours it.
+- Text, button and footer are HTML. The only image is the logo PNG (RGBA, transparent
+  background) with alt text.
+- Table layout only (`role="presentation"`), inline styles, no flex/grid.
+- Not testable without real clients, so check by hand after pasting: Gmail (iOS, Android, web)
+  and Apple Mail (iOS, macOS) in light **and** dark theme, Outlook desktop (Windows: square
+  corners, no gradient — expected), Outlook.com / Outlook mobile in dark mode.
+
 ## Prerequisite: custom SMTP must be on
 
 With Supabase's default shared sender the template bodies are **not editable** — the
@@ -102,7 +120,11 @@ back to `{{ .SiteURL }}` plus an explicit `next=`.
 - **Postal address.** `POSTAL_ADDRESS` in `build.mjs` is deliberately `null`. Not strictly
   required for transactional mail, but good for deliverability and mandatory the moment
   any of it turns promotional. Needs the client's registered address.
-- **Logo (task I4).** The header is a text wordmark until Albina delivers the file. The
-  swap point is commented in `build.mjs` — absolute HTTPS URL, light variant, ≤600px.
+- **Logo (task I4).** Delivered 2026-09-23 and hosted in Supabase Storage
+  (`brand-assets/email/logo-<hash>.png`, 600×81, transparent). The swap point is the `LOGO`
+  constant in `build.mjs` — a new artwork needs a new filename (mail proxies cache hard).
+- **Pasting after a design change.** The dashboard keeps its own copy of each template, so
+  after `node supabase/templates/build.mjs` the five files must be re-pasted into **both**
+  the dev and the prod project by hand (nothing deploys them).
 - **Localisation.** Supabase templates are single-language, so these are English-only,
   consistent with the English-first rule. The `lib/email/` pipeline stays localised.

@@ -5,9 +5,12 @@ import { RegistrationProgress } from '@/components/auth/RegistrationProgress';
 import { cn } from '@/lib/utils';
 
 type RegistrationStepHeaderProps = {
-  /** Top-left Back link. Only `/welcome` passes it now (→ the previous step, `/build-profile`):
-   * since 2026-09-29 the wizard steps have no top Back — `/build-profile` carries it in its
-   * bottom row instead, and the first three steps have none at all (client request). */
+  /** Top-left Back link. Passed by `/welcome` (→ the previous step, `/build-profile`) and, since
+   * Release 2 П6, by `/verify-email` (→ `/sign-up?email=…`, only for a visitor without a
+   * session). Since 2026-09-29 the other wizard steps have none: `/build-profile` carries it in
+   * its bottom row instead, `/sign-up` has nothing before it, and `/member-profile` is
+   * deliberately without one (its previous step, "check your inbox", is meaningless once the
+   * address is confirmed, and `/sign-up` is closed to signed-in visitors). */
   backHref?: string;
   step: number;
   total: number;

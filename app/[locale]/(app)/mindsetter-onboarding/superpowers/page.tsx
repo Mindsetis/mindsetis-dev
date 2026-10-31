@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { SuperpowersSectionIcon } from '@/components/icons/onboarding-section-icons';
-import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
+import { OnboardingTopBack } from '@/components/mindsetter-onboarding/OnboardingTopBack';
 import { SuperpowersForm } from '@/components/mindsetter-onboarding/SuperpowersForm';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
@@ -55,9 +55,8 @@ export default async function MindsetterOnboardingSuperpowersPage({
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
-          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
-      <div aria-hidden="true" className="h-14 md:h-[52px]" />
+      {/* Top-left Back (call of 28.10.2026, Release-2 П6). */}
+      <OnboardingTopBack href="/mindsetter-onboarding/roles" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <div className="mb-4 flex items-center gap-2 md:mb-8 md:gap-4">
@@ -66,10 +65,7 @@ export default async function MindsetterOnboardingSuperpowersPage({
             {t('superpowers.title')}
           </h1>
         </div>
-
-        <OnboardingBack href="/mindsetter-onboarding/roles">
-          <SuperpowersForm initialSuperpowers={initialSuperpowers} />
-        </OnboardingBack>
+        <SuperpowersForm initialSuperpowers={initialSuperpowers} />
       </div>
     </div>
   );

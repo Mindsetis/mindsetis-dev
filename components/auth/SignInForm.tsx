@@ -22,6 +22,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { SIGN_IN_EMAIL_NOT_CONFIRMED, type SignInInput, signInSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
+import { authErrorText } from './auth-errors';
 import { PasswordToggle } from './password-field';
 
 type SignInFormProps = {
@@ -35,6 +36,11 @@ type SignInFormProps = {
    * about: everyone landed on the homepage no matter how far their registration had got.
    */
   redirectTo?: string;
+  /**
+   * Address to prefill, from `/login?email=…` (the "already registered — Log in →" link on the
+   * first `/join` screen and on sign-up). Already validated by the page; absent otherwise.
+   */
+  initialEmail?: string;
 };
 
 /**
@@ -50,32 +56,42 @@ type SignInFormProps = {
  *    left-aligned, the mobile one below, centered. That is done with flex `order` rather than
  *    rendering the link twice.
  */
-export function SignInForm({ redirectTo }: SignInFormProps) {
+export function SignInForm({ redirectTo, initialEmail }: SignInFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   // The address that signed in with the right password but was never confirmed — drives the
   // "confirm your email first" hint + resend button instead of a generic error.
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  // The address that was refused ("Incorrect email or password.") — kept so the Forgot-password
+  // link in that banner can carry it over to the reset form.
+  const [rejectedEmail, setRejectedEmail] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: initialEmail ?? '', password: '' },
   });
 
   const onSubmit = form.handleSubmit(
     async (values) => {
       setFormError(null);
       setUnconfirmedEmail(null);
+      setRejectedEmail(null);
       const result = await signIn(values);
       if (!result.ok) {
         if (result.error.fieldErrors?._form?.[0] === SIGN_IN_EMAIL_NOT_CONFIRMED) {
           setUnconfirmedEmail(values.email);
           return;
         }
+        // Wrong password and unknown address are one answer on purpose (enumeration), so this
+        // is the whole "can't log in" case. The sentence is ours, localized — not the server's.
+        if (result.error.code === 'unauthenticated') {
+          setRejectedEmail(values.email);
+          return;
+        }
         applyFieldErrors(form.setError, result.error.fieldErrors);
-        setFormError(result.error.message);
+        setFormError(authErrorText(t, result.error));
         return;
       }
       // An explicit `redirectTo` (set by the middleware when it intercepted a deep link) wins —
@@ -99,6 +115,20 @@ export function SignInForm({ redirectTo }: SignInFormProps) {
         {formError ? (
           <Alert variant="destructive">
             <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {rejectedEmail ? (
+          <Alert variant="destructive">
+            <AlertDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>{t('signIn.invalidCredentials')}</span>
+              <Link
+                href={`/forgot-password?email=${encodeURIComponent(rejectedEmail)}`}
+                className="font-bold underline underline-offset-2 hover:text-primary"
+              >
+                {t('signIn.resetLink')}
+              </Link>
+            </AlertDescription>
           </Alert>
         ) : null}
 

@@ -10,10 +10,7 @@ import {
   ShineOptionCheckedIcon,
   ShineOptionUncheckedIcon,
 } from '@/components/icons/shine-block-icons';
-import {
-  OnboardingBackButton,
-  useOnboardingBackHref,
-} from '@/components/mindsetter-onboarding/StepActions';
+import { StickyActionBar } from '@/components/mindsetter-onboarding/StepActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
@@ -68,7 +65,6 @@ function ContinueFillIcon() {
  */
 export function ShineForm({ completeness }: ShineFormProps) {
   const t = useTranslations('mindsetterOnboarding');
-  const backHref = useOnboardingBackHref();
   const router = useRouter();
   const [selected, setSelected] = useState<ReadonlySet<BlockSlug>>(new Set());
   const [formError, setFormError] = useState<string | null>(null);
@@ -173,11 +169,9 @@ export function ShineForm({ completeness }: ShineFormProps) {
         </div>
       </div>
 
-      {/* `flex-col-reverse` on mobile: Continue on top, then Skip, then Back at the bottom. */}
-      <div className="mt-6 flex flex-col-reverse gap-3 md:flex-row">
-        {backHref ? (
-          <OnboardingBackButton href={backHref} disabled={pending} className="md:flex-1" />
-        ) : null}
+      {/* `flex-col-reverse` on mobile: Continue on top, then Skip. Pinned to the bottom of the
+          screen like every wizard step's "Save & Continue"; Back is top-left (call of 28.10.2026). */}
+      <StickyActionBar surface="page" className="mt-6 flex-col-reverse md:flex-row">
         <Button
           type="button"
           variant="outline"
@@ -202,7 +196,7 @@ export function ShineForm({ completeness }: ShineFormProps) {
             {pending ? t('common.saving') : t('shine.continueFill', { count: selectedCount })}
           </Button>
         ) : null}
-      </div>
+      </StickyActionBar>
     </div>
   );
 }

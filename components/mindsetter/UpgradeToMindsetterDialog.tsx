@@ -164,7 +164,9 @@ export function UpgradeToMindsetterDialog({
             onClick={() => {
               onOpenChange(false);
               requestAnimationFrame(() => {
-                guard(() => router.push('/mindsetter-onboarding/roles'));
+                // The wizard's entry route, not `/roles`: it resumes a Member who already
+                // started at their next unsaved step (Release-2 П5).
+                guard(() => router.push('/mindsetter-onboarding'));
               });
             }}
           >

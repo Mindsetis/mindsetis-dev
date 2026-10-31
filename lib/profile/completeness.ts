@@ -106,6 +106,21 @@ function hasEntries(value: Json | null): boolean {
   return Array.isArray(value) && value.length > 0;
 }
 
+/** The Mindsetter wizard's data-carrying required steps, in wizard order. */
+const REQUIRED_MINDSETTER_STEPS = ['roles', 'superpowers', 'helpWith'] as const;
+
+/**
+ * The first of the Mindsetter wizard's required steps (Roles, Superpowers, Help) that has nothing
+ * saved, or `null` when all three are — judged the same way as their cabinet cards below. The
+ * server-side condition for promoting a Member to Mindsetter (Release-2 П4), alongside the step
+ * counter, which alone can be advanced past them by calling the Shine action directly.
+ */
+export function firstMissingMindsetterStep(
+  mindsetter: Pick<MindsetterProfileSnapshot, (typeof REQUIRED_MINDSETTER_STEPS)[number]>,
+): (typeof REQUIRED_MINDSETTER_STEPS)[number] | null {
+  return REQUIRED_MINDSETTER_STEPS.find((key) => !hasEntries(mindsetter[key])) ?? null;
+}
+
 function hasText(value: string | null): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }

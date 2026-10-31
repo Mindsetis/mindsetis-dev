@@ -65,8 +65,9 @@ export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => 
 
       <div className="flex flex-col gap-4">
         <Button asChild variant="primary" size="lg" className="w-full">
-          {/* Extended Mindsetter onboarding, step 1/5 "Your roles" (ROADMAP stage 1.9). */}
-          <Link href="/mindsetter-onboarding/roles">{t('ctas.applyForMindsetter')}</Link>
+          {/* Extended Mindsetter onboarding (ROADMAP stage 1.9) via its entry route, which
+              resumes at the next unsaved step for someone who already started (Release-2 П5). */}
+          <Link href="/mindsetter-onboarding">{t('ctas.applyForMindsetter')}</Link>
         </Button>
 
         {/* `md:grid-cols-2`, NOT `md:flex-row` + `flex-1` on each: the two are structurally

@@ -9,16 +9,19 @@
  * Google OAuth is deferred: add a `signInWithGoogle` action + provider config later without
  * touching this file's structure.
  */
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
+import { confirmRedirectUrl } from '@/lib/auth/confirm-link';
 import { resolveOnboardingRedirect } from '@/lib/auth/onboarding-redirect';
-import { siteUrl } from '@/lib/auth/site-url';
+import { isValidRecoveryMarker, RECOVERY_MARKER_COOKIE } from '@/lib/auth/recovery-marker';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
+  EMAIL_ALREADY_REGISTERED,
   forgotPasswordSchema,
   resetPasswordSchema,
   SIGN_IN_EMAIL_NOT_CONFIRMED,
@@ -86,7 +89,10 @@ export const signUp = createAction(
         // `safeRedirectPath()` falls back to, so behaviour is identical to both earlier
         // versions — it just stops printing a 22-character promise the handler never keeps, in
         // a URL the email shows in full as its copy-paste fallback.
-        emailRedirectTo: siteUrl('/api/auth/confirm?next=/'),
+        //
+        // Built by `confirmRedirectUrl`, which adds `&locale=…` for a non-default UI language so
+        // the confirmation lands back in it (Release 2 П2). English stays exactly as above.
+        emailRedirectTo: await confirmRedirectUrl('/'),
         data: {
           ...(username ? { username } : {}),
           full_name: fullName,
@@ -126,7 +132,9 @@ export const signUp = createAction(
         error.code === 'email_exists' ||
         /already registered|already exists/i.test(error.message)
       ) {
-        throw new ActionError('conflict', 'An account with this email already exists.');
+        throw new ActionError('conflict', 'An account with this email already exists.', {
+          email: [EMAIL_ALREADY_REGISTERED],
+        });
       }
       throw new ActionError('internal_error', 'Could not create your account. Please try again.');
     }
@@ -140,7 +148,9 @@ export const signUp = createAction(
     // above handles (matches this project's existing signup UX, which never treated "email
     // already registered" as an enumeration concern the way password-reset does).
     if (data.user && data.user.identities && data.user.identities.length === 0) {
-      throw new ActionError('conflict', 'An account with this email already exists.');
+      throw new ActionError('conflict', 'An account with this email already exists.', {
+        email: [EMAIL_ALREADY_REGISTERED],
+      });
     }
 
     // Best-effort: flip the matching `leads` row (spec §5.2, reworked stage 1.7 — homepage
@@ -196,8 +206,11 @@ export const signIn = createAction(
           _form: [SIGN_IN_EMAIL_NOT_CONFIRMED],
         });
       }
-      // Don't distinguish "wrong password" from "no such user" (enumeration).
-      throw new ActionError('unauthenticated', 'Invalid email or password.');
+      // Don't distinguish "wrong password" from "no such user" (enumeration). The sentence here
+      // is only a server-side fallback: `SignInForm` recognises the `unauthenticated` code and
+      // shows its own localized copy ("Incorrect email or password.") plus a Forgot-password link
+      // (Release 2 Т2, variant A — the same wording for an unregistered address).
+      throw new ActionError('unauthenticated', 'Incorrect email or password.');
     }
     // The session cookie is set on `supabase` above, so this resolver — which calls
     // `getUser()` on a fresh server client reading the same cookie jar — sees the user that
@@ -217,6 +230,11 @@ export const signOut = createAction(z.object({}), async () => {
 /**
  * Request a password-reset email. Always succeeds from the caller's POV — we never reveal
  * whether an account exists for the address (enumeration protection).
+ *
+ * That neutrality is for the VISITOR. The server log still gets the real reason when Supabase
+ * refuses (Release 2 П2): before this the error was dropped on the floor, so a hit on the
+ * project's email-send limit looked exactly like a delivered mail and nobody could tell why a
+ * reset never arrived. No address is logged — only Supabase's own status/code/message.
  */
 export const requestPasswordReset = createAction(
   forgotPasswordSchema,
@@ -228,9 +246,16 @@ export const requestPasswordReset = createAction(
     });
 
     const supabase = await createClient();
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: siteUrl('/api/auth/confirm?next=/reset-password'),
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: await confirmRedirectUrl('/reset-password'),
     });
+    if (error) {
+      console.error('[auth.requestPasswordReset] resetPasswordForEmail failed:', {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
     return null;
   },
   { rateLimit: { key: 'auth:reset-request', limit: 5, window: '15 m' } },
@@ -238,23 +263,19 @@ export const requestPasswordReset = createAction(
 
 /**
  * Set a new password. Requires the recovery session established by clicking the reset link
- * (the `/api/auth/confirm` handler exchanges the token before redirecting here).
+ * (the `/api/auth/confirm` handler exchanges the token before redirecting here). Returns
+ * `{ next }` — the locale-less path the form should navigate to; the session is kept (see the end
+ * of the handler).
  *
- * Also resets the caller's 14-day verification clock (`profiles.verification_deadline`) and
- * clears `access_restricted` if set. This predates stage 1.5's real-verification rework (it
- * used to mitigate signup's old auto-confirm-with-zero-proof-of-ownership tradeoff — see
- * `signUp()`'s doc comment history); now that `signUp()` requires a clicked confirmation link
- * before a session ever exists, session/account-takeover via email squatting is gone (an
- * attacker can never obtain a session for an email they don't own). That said, this doesn't
- * fully close the door on the underlying scenario: `handle_new_user()` is an `AFTER INSERT on
- * auth.users` trigger that still fires at `signUp()` time, before any confirmation, inserting a
- * `profiles` row from attacker-supplied `full_name`/`last_name` metadata — and that row is
- * publicly readable pre-confirmation per the existing `profiles_read` RLS policy. That's a
- * separate, still-open, pre-existing consideration this action isn't trying to fix. Left in
- * place anyway as harmless defense-in-depth: a completed password-reset is still a strong "you
- * actually control this inbox" proof (Supabase's own recovery-link flow), so restarting the
- * clock here rather than leaving it dated to account-creation time is still a reasonable
- * courtesy for someone reclaiming/recovering access.
+ * A session alone is not enough: it must carry the signed recovery marker `/api/auth/confirm`
+ * issues only for a verified reset link (`lib/auth/recovery-marker.ts`). Otherwise any signed-in
+ * session could set a new password without the old one — the cabinet's "Change password" asks for
+ * it on purpose (security audit, 30.10.2026).
+ *
+ * It used to also restart the 14-day verification clock and clear `access_restricted` through the
+ * service-role client — a courtesy left over from the old auto-confirm signup. Removed in the same
+ * audit: those columns change only through staff paths, and a reset link let anyone lift a staff
+ * restriction or push their own deadline back indefinitely.
  */
 export const updatePassword = createAction(
   resetPasswordSchema,
@@ -263,40 +284,46 @@ export const updatePassword = createAction(
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
+    const cookieStore = await cookies();
+    if (!user || !isValidRecoveryMarker(cookieStore.get(RECOVERY_MARKER_COOKIE)?.value, user.id)) {
       throw new ActionError(
         'unauthenticated',
         'Your reset link is invalid or has expired. Please request a new one.',
       );
     }
     const { error } = await supabase.auth.updateUser({ password });
+    if (error?.code === 'same_password') {
+      // Supabase refuses to "change" a password to itself; say so instead of a generic failure.
+      throw new ActionError(
+        'conflict',
+        'Your new password must be different from your current one.',
+      );
+    }
     if (error) {
       throw new ActionError('internal_error', 'Could not update your password. Please try again.');
     }
 
-    // `access_restricted` is staff-/service-role-only (`guard_profiles_protected_columns()`),
-    // so this reset needs the service-role client — narrow and justified here: it only ever
-    // touches the caller's own row (`user.id`), resolved from their own just-verified recovery
-    // session, never arbitrary input.
-    const service = createServiceClient();
-    const { error: profileError } = await service
-      .from('profiles')
-      .update({
-        verification_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        access_restricted: false,
-      })
-      .eq('id', user.id);
-    if (profileError) {
-      // Non-fatal: the password change itself already succeeded — don't fail the whole action
-      // over this courtesy reset.
-      console.error('[auth.updatePassword] verification_deadline reset failed:', profileError);
+    // One reset link, one password change.
+    cookieStore.delete(RECOVERY_MARKER_COOKIE);
+
+    // Release 2 П3 (replaces the Release-1 decision): the caller STAYS signed in. The recovery
+    // link already proved they own the inbox, so making them type the password they just chose
+    // into a login form added nothing. What does still matter is that someone who reset because
+    // the account may be compromised must not leave an old session alive elsewhere — so every
+    // OTHER session is revoked (`scope: 'others'` keeps the one making this request). A failure
+    // here is logged but does not undo the password change that already succeeded.
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'others' });
+    if (signOutError) {
+      console.error('[auth.updatePassword] revoking other sessions failed:', {
+        status: signOutError.status,
+        code: signOutError.code,
+        message: signOutError.message,
+      });
     }
 
-    // End the temporary recovery session so the user must sign in with the new password.
-    // This also lets the client land on /login (an auth-only route) to show the success
-    // banner — otherwise the middleware auth-gate would bounce a still-signed-in user to /.
-    await supabase.auth.signOut();
-    return null;
+    // Where this person belongs now — the cabinet, or the wizard step they never finished.
+    // Same resolver the sign-in and email-confirmation paths use.
+    return { next: await resolveOnboardingRedirect() };
   },
   { rateLimit: { key: 'auth:reset-update', limit: 10, window: '15 m' } },
 );

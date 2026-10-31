@@ -58,7 +58,42 @@ const MINDSETTER_STEP_ROUTES = [
   '/mindsetter-onboarding/shine',
 ] as const;
 
-const MINDSETTER_COMPLETE = MINDSETTER_STEP_ROUTES.length;
+/** `mindsetter_profiles.onboarding_step` once every required step is saved. */
+export const MINDSETTER_COMPLETE = MINDSETTER_STEP_ROUTES.length;
+
+/**
+ * End of the core wizard. Rendering it runs `finalizeMindsetterOnboarding`, which promotes a
+ * caller who saved every required step but is still a Member — see `mindsetterResumePath`.
+ */
+const MINDSETTER_CONGRATS_PATH = '/mindsetter-onboarding/congrats';
+
+/**
+ * Where a Member picks the Mindsetter wizard back up: the next unsaved required step, or
+ * `/congrats` once all of them are saved (a caller promoted at `saveShine` never asks — they are
+ * a Mindsetter already; this only catches someone who finished before that promotion existed).
+ * `null` means "never started" (no `mindsetter_profiles` row yet) and resolves to the first step.
+ */
+export function mindsetterResumePath(step: number | null): string {
+  const saved = step ?? 0;
+  if (saved >= MINDSETTER_COMPLETE) return MINDSETTER_CONGRATS_PATH;
+  return MINDSETTER_STEP_ROUTES[saved] ?? MINDSETTER_STEP_ROUTES[0];
+}
+
+/**
+ * The caller's `mindsetter_profiles.onboarding_step`, or `null` when they never started the
+ * wizard — the row only exists once `/roles` is first saved, so "row exists" is "started".
+ */
+export async function fetchMindsetterOnboardingStep(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('mindsetter_profiles')
+    .select('onboarding_step')
+    .eq('id', userId)
+    .maybeSingle();
+  return data ? (data.onboarding_step ?? 0) : null;
+}
 
 /** The signed-in user's home base once there is nothing left to finish. */
 export const CABINET_PATH = '/dashboard';
@@ -98,7 +133,7 @@ export async function resolveOnboardingRedirect(): Promise<string> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_step')
+    .select('onboarding_step, account_type')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -113,20 +148,19 @@ export async function resolveOnboardingRedirect(): Promise<string> {
 
   // Member profile is complete. The Mindsetter track is OPTIONAL — the client settled this on
   // 15.09.2026: a Member is invited to upgrade (the header's `Upgrade` button, A4), never
-  // shoved into the extended wizard. So we resume that track only for someone who actually
-  // started it, which is exactly "a `mindsetter_profiles` row exists" (the first save in
-  // `/roles` upserts it).
-  const { data: mindsetter } = await supabase
-    .from('mindsetter_profiles')
-    .select('onboarding_step')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (!mindsetter) return CABINET_PATH;
-
-  const mindsetterStep = mindsetter.onboarding_step ?? 0;
-  if (mindsetterStep < MINDSETTER_COMPLETE) {
-    return MINDSETTER_STEP_ROUTES[mindsetterStep] ?? MINDSETTER_STEP_ROUTES[0];
+  // shoved into the extended wizard. Since the 28.10.2026 call (Release-2 П4) that holds for an
+  // UNFINISHED wizard too: someone who started it stays a Member, lands in the cabinet and picks
+  // it back up from "Continue Registration" whenever they choose — it used to pull them back
+  // into the form on every sign-in, with no way to see their own profile in between.
+  //
+  // The one exception is a Member who saved every required step but was never promoted: before
+  // П4 the promotion ran only when `/congrats` rendered, so closing the tab during the optional
+  // blocks left them a Member for good. `/congrats` finalizes idempotently, so one visit fixes it.
+  if (profile.account_type === 'member') {
+    const mindsetterStep = await fetchMindsetterOnboardingStep(supabase, user.id);
+    if (mindsetterStep !== null && mindsetterStep >= MINDSETTER_COMPLETE) {
+      return MINDSETTER_CONGRATS_PATH;
+    }
   }
 
   return CABINET_PATH;

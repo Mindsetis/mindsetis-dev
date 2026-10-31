@@ -21,7 +21,7 @@
  */
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
-import { siteUrl } from '@/lib/auth/site-url';
+import { confirmRedirectUrl } from '@/lib/auth/confirm-link';
 import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { resendConfirmationEmailSchema } from '@/lib/validation/auth';
@@ -44,9 +44,10 @@ export const resendConfirmationEmail = createAction(
       // Same destination as `signUp()` (`(auth)/actions.ts`) — the "Confirm signup" template
       // builds its link from `{{ .RedirectTo }}`, i.e. from this value, so a resent email must
       // carry it too or the confirmation lands on the Site URL root instead of our
-      // `/api/auth/confirm` handler. Kept byte-identical to `signUp()`'s, including the
-      // `?next=/` that looks redundant but is not — read the note there before touching either.
-      options: { emailRedirectTo: siteUrl('/api/auth/confirm?next=/') },
+      // `/api/auth/confirm` handler. Both call the same builder, so they cannot drift apart —
+      // including the `?next=/` that looks redundant but is not (read the note in `signUp()`
+      // before touching it) and the `&locale=…` that keeps the UI language (Release 2 П2).
+      options: { emailRedirectTo: await confirmRedirectUrl('/') },
     });
     if (error) {
       // Log for observability, but never surface the specific reason to the caller — an

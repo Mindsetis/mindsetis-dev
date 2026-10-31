@@ -70,6 +70,21 @@ export type SignInInput = z.infer<typeof signInSchema>;
  */
 export const SIGN_IN_EMAIL_NOT_CONFIRMED = 'auth:email-not-confirmed';
 
+/**
+ * Marker `signUp` returns as the `email` field error when the address already belongs to a
+ * confirmed account (Release 2 П1). Like `SIGN_IN_EMAIL_NOT_CONFIRMED` it is not display text:
+ * the forms recognise it and render the localized "already registered — Log in →" message
+ * (`EmailAlreadyRegisteredMessage`) in its place, because that sentence needs a link inside it
+ * and a plain Zod/field-error string cannot carry one.
+ */
+export const EMAIL_ALREADY_REGISTERED = 'auth:email-already-registered';
+
+/** Input for `checkJoinEmail` (`/join`, the first email screen) — email only, no session. */
+export const joinEmailCheckSchema = z.object({
+  email: emailSchema,
+});
+export type JoinEmailCheckInput = z.infer<typeof joinEmailCheckSchema>;
+
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });

@@ -104,7 +104,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
           photoRequirementWaived={cabinet.photoRequirementWaived}
         />
 
-        <MemberStatusBanner accountType={cabinet.accountType} />
+        <MemberStatusBanner
+          accountType={cabinet.accountType}
+          wizardStarted={cabinet.mindsetterWizardStarted}
+        />
 
         {/* Release-1 C6 — mounted at the SHELL level (not the section-list page alone) so it
             fires no matter which cabinet screen a Member's `Save & Next` happens to land them on

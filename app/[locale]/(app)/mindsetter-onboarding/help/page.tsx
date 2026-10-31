@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { HelpSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { HelpForm } from '@/components/mindsetter-onboarding/HelpForm';
-import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
+import { OnboardingTopBack } from '@/components/mindsetter-onboarding/OnboardingTopBack';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -60,9 +60,8 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Where the top-left Back link used to sit — kept as a spacer so the heading doesn't move.
-          Back now lives in the form's bottom row (`OnboardingBack`, client request 2026-09-29). */}
-      <div aria-hidden="true" className="h-14 md:h-[52px]" />
+      {/* Top-left Back (call of 28.10.2026, Release-2 П6). */}
+      <OnboardingTopBack href="/mindsetter-onboarding/superpowers" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <div className="mb-4 flex items-center gap-2 md:mb-8 md:gap-4">
@@ -71,10 +70,7 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
             {t('help.title')}
           </h1>
         </div>
-
-        <OnboardingBack href="/mindsetter-onboarding/superpowers">
-          <HelpForm initialExpertise={initialExpertise} />
-        </OnboardingBack>
+        <HelpForm initialExpertise={initialExpertise} />
       </div>
     </div>
   );

@@ -96,6 +96,23 @@
   color: #000000;
 }
 
+/* "Правки 3.0" П9 — the INDUSTRY pill (Figma `1642:23098` "Frame 785" in the desktop Member
+   Profile, `1747:33844` in the preview frame; the three variants A/B/C live in `1747:33853`,
+   A "label inside the plate" is the one applied in the profile). White plate, cornerRadius 12,
+   1px stroke filled with the shared "gradient / brand" paint style — whose stops (#C3E4FA →
+   #79B9E3 → #21B8E6) are this app's own `--gradient-primary`, so the token is reused instead of
+   repeating the hex triplet. A gradient BORDER needs the two-background trick: the white plate
+   is painted into the padding box and the gradient into the border box, showing through the
+   transparent 1px border. */
+.industryPill {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    var(--gradient-primary) border-box;
+  color: #000000;
+}
+
 .inviteButton {
   /* Figma: re-verified against the actual node (`401:6401` preview / `383:4693` public — see
      the JSX comment above for why the previously-cited `401:6377`/`401:6359` were wrong).

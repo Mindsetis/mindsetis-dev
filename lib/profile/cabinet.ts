@@ -42,6 +42,9 @@ export type CabinetProfile = {
    * `supabase/migrations/20260920101855_profiles_photo_requirement_waiver.sql`. Drives the
    * cabinet's persistent no-photo reminder banner (hidden once `avatarUrl` or this is set). */
   photoRequirementWaived: boolean;
+  /** A Member who started the Mindsetter wizard (their `mindsetter_profiles` row exists) — the
+   * status banner offers "Continue Registration" instead of "Upgrade Now" (Release-2 П5). */
+  mindsetterWizardStarted: boolean;
   completeness: ProfileCompleteness;
   /** Keyed by `ProfileSectionKey`; missing keys mean "nothing to summarize" (Hero/Social links,
    * whose cards show a static field list instead — see `ProfileSectionCard`). */
@@ -171,6 +174,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     avatarUrl: profile.avatar_url,
     isVerified: session.profile.verification_status === 'verified',
     photoRequirementWaived: profile.photo_requirement_waived,
+    mindsetterWizardStarted: mindsetterProfile !== null,
     completeness,
     summaries,
   };

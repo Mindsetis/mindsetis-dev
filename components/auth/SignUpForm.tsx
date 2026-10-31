@@ -18,10 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
-import { type SignUpInput, signUpSchema } from '@/lib/validation/auth';
+import { EMAIL_ALREADY_REGISTERED, type SignUpInput, signUpSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
+import { authErrorText } from './auth-errors';
+import { EmailAlreadyRegisteredMessage } from './EmailAlreadyRegisteredMessage';
 import { PasswordRequirements, PasswordToggle } from './password-field';
+import { startResendCooldown } from './resend-cooldown';
 
 type SignUpFormProps = {
   /** Prefilled from the homepage's quick-email-capture field, if the visitor came from there. */
@@ -56,13 +59,22 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
     const result = await signUp(values);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      // An already-registered address is explained under the email field itself (with a
+      // "Log in →" link) — a second, English banner on top of it would only repeat the news.
+      if (result.error.code !== 'conflict') {
+        setFormError(authErrorText(t, result.error));
+      }
       return;
     }
     // signUp() no longer returns a session — the account is unconfirmed until the visitor
     // clicks the link in their inbox (see `(auth)/actions.ts#signUp`'s doc comment). Success
     // here just means the account was created; send them to the blocking verification step
     // (step 2) with the address so it can be displayed there.
+    //
+    // The confirmation mail has just gone out, so start the resend pause HERE: step 2 renders
+    // after this navigation and reads the same clock, which keeps its "Resend" button from
+    // sending a second mail seconds after the first (Release 2 Т1).
+    startResendCooldown('confirmation', values.email);
     router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
   });
 
@@ -89,7 +101,7 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
           <FormField
             control={form.control}
             name="email"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>
                   <span className="inline-flex items-center gap-1">
@@ -99,7 +111,12 @@ export function SignUpForm({ initialEmail }: SignUpFormProps) {
                 <FormControl>
                   <Input type="email" autoComplete="email" {...field} />
                 </FormControl>
-                <FormMessage />
+                {/* `FormMessage` prints plain text only; this one needs a link inside it. */}
+                {fieldState.error?.message === EMAIL_ALREADY_REGISTERED ? (
+                  <EmailAlreadyRegisteredMessage email={field.value} />
+                ) : (
+                  <FormMessage />
+                )}
               </FormItem>
             )}
           />

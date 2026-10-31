@@ -40,8 +40,9 @@ export async function generateMetadata({ params }: JoinAppliedPageProps) {
  *   Rather than duplicate the threshold, this calls the exact same `resolveOnboardingRedirect()`
  *   that `/continue` and every other entry point in the app already uses (`CABINET_PATH` is its
  *   one existing definition of "nothing left to finish" — see `lib/auth/onboarding-redirect.ts`).
- *   Anyone it does NOT resolve to `CABINET_PATH` — an unfinished Member wizard, an in-progress
- *   Mindsetter upgrade, even an unconfirmed email — is sent back to `/continue`, which forwards
+ *   Anyone it does NOT resolve to `CABINET_PATH` — an unfinished Member wizard, even an
+ *   unconfirmed email — is sent back to `/continue`, which forwards (a Member mid-way through the
+ *   optional Mindsetter upgrade resolves to the cabinet since Release-2 П4, so they see the modal)
  *   them to their real next step. That also means this route can never show the modal to the
  *   wrong person, no matter how it was reached.
  *

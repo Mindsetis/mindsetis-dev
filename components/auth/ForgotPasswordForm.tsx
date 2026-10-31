@@ -21,6 +21,16 @@ import { useRouter } from '@/i18n/navigation';
 import { type ForgotPasswordInput, forgotPasswordSchema } from '@/lib/validation/auth';
 
 import { applyFieldErrors } from './applyFieldErrors';
+import { authErrorText } from './auth-errors';
+import { startResendCooldown } from './resend-cooldown';
+
+type ForgotPasswordFormProps = {
+  /**
+   * Address to prefill, from `/forgot-password?email=…` (the Forgot-password link on a failed
+   * log-in carries the address that was just refused). Already validated by the page.
+   */
+  initialEmail?: string;
+};
 
 /**
  * "Reset your password" form — Figma `679:8913`.
@@ -33,14 +43,14 @@ import { applyFieldErrors } from './applyFieldErrors';
  *
  * The action itself is unchanged and still never reveals whether the address exists.
  */
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ initialEmail }: ForgotPasswordFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: initialEmail ?? '' },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -48,9 +58,12 @@ export function ForgotPasswordForm() {
     const result = await requestPasswordReset(values);
     if (!result.ok) {
       applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(authErrorText(t, result.error));
       return;
     }
+    // The mail has just been requested: start the resend pause now, so the "Resend link" button
+    // on the next screen does not offer an instant second mail (Release 2 Т1).
+    startResendCooldown('reset', values.email);
     router.push(`/forgot-password/sent?email=${encodeURIComponent(values.email)}`);
   });
 

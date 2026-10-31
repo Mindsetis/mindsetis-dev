@@ -11,7 +11,8 @@ type RegistrationBackLinkProps = {
   className?: string;
 };
 
-function BackArrowIcon() {
+/** Also the Mindsetter wizard's top-left Back (`OnboardingTopBack`), so both read the same. */
+export function BackArrowIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path

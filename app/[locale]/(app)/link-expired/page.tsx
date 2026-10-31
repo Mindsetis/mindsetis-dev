@@ -7,26 +7,38 @@ import { Link } from '@/i18n/navigation';
 
 type LinkExpiredPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ reason?: string }>;
+  searchParams: Promise<{ reason?: string; type?: string }>;
 };
 
+/** Message-key prefix for the two kinds of dead link — see the page's doc comment. */
+function copyPrefix(type: string | undefined): 'linkExpired.recovery' | 'linkExpired' {
+  return type === 'recovery' ? 'linkExpired.recovery' : 'linkExpired';
+}
+
 // Mirrors the page component's own `isInvalid` branch below, so the tab title always matches
-// whichever of the two headings actually renders instead of defaulting to one of them.
+// whichever of the headings actually renders instead of defaulting to one of them.
 export async function generateMetadata({ params, searchParams }: LinkExpiredPageProps) {
   const { locale } = await params;
-  const { reason } = await searchParams;
+  const { reason, type } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'auth' });
-  return { title: reason === 'invalid' ? t('linkExpired.titleInvalid') : t('linkExpired.title') };
+  const prefix = copyPrefix(type);
+  return { title: t(reason === 'invalid' ? `${prefix}.titleInvalid` : `${prefix}.title`) };
 }
 
 /**
- * `/link-expired` — the screen a dead confirmation link lands on.
+ * `/link-expired` — the screen a dead email link lands on.
  *
  * Before this existed, `/api/auth/confirm` sent every failure to `/login?error=invalid_link`:
  * the visitor got the ordinary sign-in screen, greeted with "Welcome back" and a red error on
  * top, in the middle of a registration they had not finished. The client called that out
  * directly — "Welcome Back якось не дуже логічно" — and she is right: it is the wrong screen,
  * the wrong greeting, and it offers no way to get a working link (Release-1 A2).
+ *
+ * TWO KINDS OF LINK (Release 2 П2). `?type=recovery` — set by `/api/auth/confirm` when the dead
+ * link was a PASSWORD-RESET one — switches the whole screen to the reset wording ("This password
+ * reset link has expired or has already been used…", "Resend reset link") and makes the form
+ * request a new reset email. Without it the screen is the original confirmation-link one, byte
+ * for byte: that is what every existing signup link and bookmark still gets.
  *
  * WHY ONLY TWO REASONS, NOT THREE
  *   The task asks to tell apart expired / already-used / invalid. The first two are not
@@ -51,26 +63,28 @@ export async function generateMetadata({ params, searchParams }: LinkExpiredPage
 export default async function LinkExpiredPage({ params, searchParams }: LinkExpiredPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { reason } = await searchParams;
+  const { reason, type } = await searchParams;
   const t = await getTranslations('auth');
 
   const isInvalid = reason === 'invalid';
+  const isRecovery = type === 'recovery';
+  const prefix = copyPrefix(type);
 
   return (
     <AuthScreen
-      title={isInvalid ? t('linkExpired.titleInvalid') : t('linkExpired.title')}
-      subtitle={isInvalid ? t('linkExpired.bodyInvalid') : t('linkExpired.body')}
+      title={isInvalid ? t(`${prefix}.titleInvalid`) : t(`${prefix}.title`)}
+      subtitle={isInvalid ? t(`${prefix}.bodyInvalid`) : t(`${prefix}.body`)}
     >
       <LinkExpiredHashReason />
-      <LinkExpiredForm />
+      <LinkExpiredForm variant={isRecovery ? 'recovery' : 'signup'} />
 
       {/* The client's own second exit: someone whose account is already active doesn't need a
           new link at all, they just need the sign-in screen — which is exactly what they were
           wrongly dumped onto before, except now it's a choice instead of a dead end. */}
       <p className="text-center text-sm text-muted-foreground">
-        {t('linkExpired.loginPrompt')}{' '}
+        {t(`${prefix}.loginPrompt`)}{' '}
         <Link href="/login" className="text-primary underline underline-offset-4">
-          {t('linkExpired.loginCta')}
+          {t(`${prefix}.loginCta`)}
         </Link>
       </p>
     </AuthScreen>

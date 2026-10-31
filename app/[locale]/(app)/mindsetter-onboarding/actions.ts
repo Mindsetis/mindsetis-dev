@@ -19,6 +19,7 @@ import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
 import { fetchLinkPreview, type LinkPreview } from '@/lib/link-preview';
+import { firstMissingMindsetterStep } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
@@ -61,6 +62,13 @@ const ROLES_STEP_ONBOARDING_STEP = 1;
 const SUPERPOWERS_STEP_ONBOARDING_STEP = 2;
 const HELP_STEP_ONBOARDING_STEP = 3;
 const SHINE_STEP_ONBOARDING_STEP = 4;
+
+/** Each data-carrying required step's counter value, keyed like `firstMissingMindsetterStep`. */
+const REQUIRED_STEP_COUNTERS = {
+  roles: ROLES_STEP_ONBOARDING_STEP,
+  superpowers: SUPERPOWERS_STEP_ONBOARDING_STEP,
+  helpWith: HELP_STEP_ONBOARDING_STEP,
+} as const;
 
 /**
  * Shared "only advance `mindsetter_profiles.onboarding_step`" tail, factored out once three
@@ -199,12 +207,18 @@ export const saveHelp = createAction(helpStepSchema, async (input) => {
  * `mindsetter_profiles.onboarding_step` to 4, run for BOTH the "Continue fill" and "Skip" paths
  * (`ShineForm.tsx`), since reaching/leaving this step either way means the picker itself is done,
  * regardless of which (if any) optional blocks were picked.
+ *
+ * It is also where the caller becomes a Mindsetter (Release-2 П4, call of 28.10.2026: "the
+ * status changes once the required fields are filled"). Every required step is saved by now, so
+ * the promotion runs here instead of waiting for `/congrats` to render — before, closing the tab
+ * during the optional blocks left someone who finished everything a Member.
  */
 export const saveShine = createAction(shineStepSchema, async () => {
   const user = await requireUser();
   const supabase = await createClient();
 
   await advanceOnboardingStep(supabase, user.id, SHINE_STEP_ONBOARDING_STEP);
+  await promoteIfCoreWizardDone(user.id);
 
   return {};
 });
@@ -243,64 +257,93 @@ export type FinalizeMindsetterOnboardingResult = {
  *
  * Idempotent: a caller who is already `'mindsetter'` (e.g. revisits `/congrats` later) gets
  * `{ finalized: true, ... }` back with no further write — never errors on a repeat call.
+ *
+ * Since Release-2 П4 the promotion normally happens earlier, in `saveShine`, through the same
+ * `promoteIfCoreWizardDone`; this action stays as the `/congrats` safety net (and the repair path
+ * `resolveOnboardingRedirect` sends a not-yet-promoted finisher down).
  */
 export const finalizeMindsetterOnboarding = createAction(
   finalizeMindsetterOnboardingSchema,
   async (): Promise<FinalizeMindsetterOnboardingResult> => {
     const user = await requireUser();
-    const supabase = await createClient();
-
-    const [
-      { data: mindsetterProfile, error: mindsetterProfileReadError },
-      { data: profile, error: profileReadError },
-    ] = await Promise.all([
-      supabase
-        .from('mindsetter_profiles')
-        .select('onboarding_step')
-        .eq('id', user.id)
-        .maybeSingle(),
-      supabase.from('profiles').select('account_type').eq('id', user.id).maybeSingle(),
-    ]);
-
-    if (mindsetterProfileReadError || profileReadError) {
-      console.error(
-        '[mindsetter-onboarding] finalize: profile read failed:',
-        mindsetterProfileReadError ?? profileReadError,
-      );
-      throw new ActionError(
-        'internal_error',
-        'Could not finalize your Mindsetter profile. Please try again.',
-      );
-    }
-
-    const onboardingStep = mindsetterProfile?.onboarding_step ?? 0;
-    if (onboardingStep < SHINE_STEP_ONBOARDING_STEP) {
-      return { finalized: false, onboardingStep };
-    }
-
-    if (profile?.account_type === 'mindsetter') {
-      return { finalized: true, onboardingStep };
-    }
-
-    // Narrow, one-off service-role write — see the doc comment above for why this can't go
-    // through the normal server client, and why it's safe (own row, server-derived id, guarded).
-    const service = createServiceClient();
-    const { error: flipError } = await service
-      .from('profiles')
-      .update({ account_type: 'mindsetter' })
-      .eq('id', user.id);
-
-    if (flipError) {
-      console.error('[mindsetter-onboarding] finalize: account_type flip failed:', flipError);
-      throw new ActionError(
-        'internal_error',
-        'Could not finalize your Mindsetter profile. Please try again.',
-      );
-    }
-
-    return { finalized: true, onboardingStep };
+    return promoteIfCoreWizardDone(user.id);
   },
 );
+
+/**
+ * The guarded `account_type` flip shared by `saveShine` and `finalizeMindsetterOnboarding` —
+ * see the latter's doc comment for why it is safe. `userId` must come from `requireUser()`,
+ * never from client input.
+ */
+async function promoteIfCoreWizardDone(
+  userId: string,
+): Promise<FinalizeMindsetterOnboardingResult> {
+  const supabase = await createClient();
+
+  const [
+    { data: mindsetterProfile, error: mindsetterProfileReadError },
+    { data: profile, error: profileReadError },
+  ] = await Promise.all([
+    supabase
+      .from('mindsetter_profiles')
+      .select('onboarding_step, roles, superpowers, help_with')
+      .eq('id', userId)
+      .maybeSingle(),
+    supabase.from('profiles').select('account_type').eq('id', userId).maybeSingle(),
+  ]);
+
+  if (mindsetterProfileReadError || profileReadError) {
+    console.error(
+      '[mindsetter-onboarding] finalize: profile read failed:',
+      mindsetterProfileReadError ?? profileReadError,
+    );
+    throw new ActionError(
+      'internal_error',
+      'Could not finalize your Mindsetter profile. Please try again.',
+    );
+  }
+
+  const onboardingStep = mindsetterProfile?.onboarding_step ?? 0;
+  if (onboardingStep < SHINE_STEP_ONBOARDING_STEP) {
+    return { finalized: false, onboardingStep };
+  }
+
+  if (profile?.account_type === 'mindsetter') {
+    return { finalized: true, onboardingStep };
+  }
+
+  // The counter alone is not proof: `saveShine` raises it to 4 for whoever calls it, so promote
+  // only when the three data-carrying required steps are actually saved (Release-2 П4 — "the
+  // status changes once the required fields are filled"). Otherwise report the steps saved before
+  // the first missing one as `onboardingStep`, so `/congrats` sends the caller back to it.
+  const missingStep = firstMissingMindsetterStep({
+    roles: mindsetterProfile?.roles ?? null,
+    superpowers: mindsetterProfile?.superpowers ?? null,
+    helpWith: mindsetterProfile?.help_with ?? null,
+  });
+  if (missingStep) {
+    return { finalized: false, onboardingStep: REQUIRED_STEP_COUNTERS[missingStep] - 1 };
+  }
+
+  // Narrow, one-off service-role write — see `finalizeMindsetterOnboarding`'s doc comment for
+  // why this can't go through the normal server client, and why it's safe (own row, server-derived
+  // id, guarded).
+  const service = createServiceClient();
+  const { error: flipError } = await service
+    .from('profiles')
+    .update({ account_type: 'mindsetter' })
+    .eq('id', userId);
+
+  if (flipError) {
+    console.error('[mindsetter-onboarding] finalize: account_type flip failed:', flipError);
+    throw new ActionError(
+      'internal_error',
+      'Could not finalize your Mindsetter profile. Please try again.',
+    );
+  }
+
+  return { finalized: true, onboardingStep };
+}
 
 // -----------------------------------------------------------------------------------------
 // Optional blocks (onboarding doc section 7). Unlike every step above, none of these advance

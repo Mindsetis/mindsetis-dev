@@ -60,6 +60,14 @@ function getLimiter(redis: Redis, rule: RateLimitRule): Ratelimit {
 }
 
 /**
+ * Whether limits are actually enforced here, i.e. Upstash is configured. Callers whose whole
+ * safety rests on a limit (an account-existence lookup) check this and stand down instead.
+ */
+export function isRateLimitEnforced(): boolean {
+  return getRedis() !== null;
+}
+
+/**
  * Check a rate limit. Returns `{ success: true }` (allowed) when Upstash isn't configured.
  *
  * @param identifier stable bucket key, e.g. `'auth:sign-in:203.0.113.4'`.

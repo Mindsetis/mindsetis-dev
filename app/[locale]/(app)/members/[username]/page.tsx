@@ -2,10 +2,11 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
-import { MemberProfileView } from '@/components/profile/MemberProfileView';
+import { MemberProfileView, resolveIndustryLabels } from '@/components/profile/MemberProfileView';
 import { UpgradeProfileWidget } from '@/components/profile/UpgradeProfileWidget';
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
+import { siteUrl } from '@/lib/auth/site-url';
 import { createClient } from '@/lib/supabase/server';
 
 type PublicProfilePageProps = {
@@ -25,21 +26,38 @@ export const dynamic = 'force-dynamic';
  * power the `.eq` filter, stripped before the row is handed to the caller. `id` and
  * `account_type` are selected for the owner check / Mindsetter redirect below and are likewise
  * stripped before the row reaches `MemberProfileView` (they're not part of `MemberProfile`).
+ *
+ * INDUSTRY ("Правки 3.0" П9 — reverses Release-1 E5, which removed it from public profiles):
+ * `industries`, `industry_custom` and `industry_custom_status` ARE selected now, but only to be
+ * collapsed right here into `industryLabels` by `resolveIndustryLabels` — which shows the
+ * free-text `industry_custom` ONLY when staff moderation marked it `'approved'`. The three raw
+ * columns are destructured OUT of the row, so an unapproved (pending/rejected) custom value
+ * never leaves this function: it can't reach `MemberProfileView`, let alone the client. Keep it
+ * that way — don't spread the raw row into props.
  */
 const getProfileByUsername = cache(async (username: string) => {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, company, country, city, region_name, languages, interests, socials, verification_status, is_blocked',
+      'id, account_type, username, full_name, last_name, avatar_url, bio, about, role, company, country, city, region_name, languages, interests, socials, verification_status, industries, industry_custom, industry_custom_status, is_blocked',
     )
     .eq('username', username)
     .eq('is_blocked', false)
     .maybeSingle();
 
   if (!profile) return null;
-  const { is_blocked: _isBlocked, ...renderedProfile } = profile;
-  return renderedProfile;
+  const {
+    is_blocked: _isBlocked,
+    industries,
+    industry_custom: industryCustom,
+    industry_custom_status: industryCustomStatus,
+    ...renderedProfile
+  } = profile;
+  return {
+    ...renderedProfile,
+    industryLabels: resolveIndustryLabels({ industries, industryCustom, industryCustomStatus }),
+  };
 });
 
 /**
@@ -120,11 +138,13 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
  * This used to also render a `variant="preview"` top bar ("Public view / Edit Profile / Share
  * Profile") for that case, the same way `/mindsetters/[username]` resolved `preview` vs `public`
  * from the viewer — Release-1 G1 (2026-09-20) removed that bar entirely (client's explicit ask),
- * and with it the `variant` prop `MemberProfileView` used to take: this screen renders IDENTICALLY
- * for the owner and for any other visitor now, so there is nothing left to resolve per-viewer
- * here. Edit access for the owner still exists via the account menu's "Edit Profile" entry;
- * Member profiles get no Share control at all (Release-1 G3 — only the Mindsetter profile's hero
- * does).
+ * and with it the `variant` prop `MemberProfileView` used to take. Edit access for the owner
+ * still exists via the account menu's "Edit Profile" entry.
+ *
+ * "Правки 3.0" П11 reverses the Release-1 G3 "no Share on Member profiles" rule for the owner
+ * only: the page resolves `isOwner` (+ the absolute `shareUrl`) and the view swaps its "Invite to
+ * event" slot for a working `ShareProfileButton` on the viewer's own profile. Everyone else still
+ * sees "Invite to event".
  */
 export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
   const { locale, username } = await params;
@@ -161,19 +181,30 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   // them, so they're dropped rather than spread into the component's props.
   const { id: _id, account_type: _accountType, ...renderedProfile } = profile;
 
+  // "Правки 3.0" П11: canonical absolute public URL for the owner's Share control — built
+  // server-side (same as `mindsetters/[username]/page.tsx`), and only for the owner so a
+  // misconfigured `NEXT_PUBLIC_SITE_URL` can't break everyone else's view of a profile.
+  const shareUrl = isOwner ? siteUrl(localePath(locale, `/members/${username}`)) : null;
+
   return (
     <>
       <MemberProfileView
         // `region_name` (snake_case, straight from Postgres) is remapped to the component's
         // camelCase `regionName`; everything else already matches column-for-column.
         profile={{ ...renderedProfile, regionName: profile.region_name }}
+        isOwner={isOwner}
+        shareUrl={shareUrl}
         labels={{
+          industry: t('industry'),
           verified: t('verified'),
           inviteToEvent: t('inviteToEvent'),
           aboutEyebrow: t('aboutEyebrow'),
           beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
           beyondBusinessHeading: t('beyondBusinessHeading'),
           website: t('website'),
+          shareAriaLabel: t('share.ariaLabel'),
+          shareLinkCopied: t('share.linkCopied'),
+          shareCopyFailed: t('share.copyFailed'),
         }}
       />
       {/* Release-1 C8 — owner-only, Member-only. `profile.account_type` is read straight off the
