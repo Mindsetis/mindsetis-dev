@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { type Control, useController, useForm, useWatch } from 'react-hook-form';
 
 import { saveSessionSettings } from '@/app/[locale]/(app)/dashboard/sessions/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { WeeklyAvailabilityField } from '@/components/dashboard/WeeklyAvailabilityField';
@@ -17,7 +17,6 @@ import {
   ShineOptionUncheckedIcon,
 } from '@/components/icons/shine-block-icons';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
 import {
@@ -29,6 +28,8 @@ import {
 } from '@/components/ui/dialog';
 import { FieldHint } from '@/components/ui/field-hint';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { firstErrorMessage, revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -108,6 +109,7 @@ function DurationsField({ control }: { control: Control<SessionStepInput> }) {
   const { field, fieldState } = useController({ control, name: 'durations' });
   const tValidation = useValidationMessage();
   const selected = field.value;
+  const durationsError = firstErrorMessage(fieldState.error);
 
   return (
     <div className="flex flex-col gap-3">
@@ -144,8 +146,10 @@ function DurationsField({ control }: { control: Control<SessionStepInput> }) {
           );
         })}
       </div>
-      {fieldState.error?.message ? (
-        <p className="text-tiny text-destructive">{tValidation(fieldState.error.message)}</p>
+      {durationsError ? (
+        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+          {tValidation(durationsError)}
+        </p>
       ) : null}
     </div>
   );
@@ -277,6 +281,10 @@ function TopicsField({
   const tValidation = useValidationMessage();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  // Why the dialog refused to take the topic — a refusal that closes nothing and says nothing reads
+  // as a dead button.
+  const [dialogError, setDialogError] = useState<string | null>(null);
+  const topicsError = firstErrorMessage(fieldState.error);
 
   const selected = field.value;
   const atMax = selected.length >= MAX_SESSION_TOPICS;
@@ -298,9 +306,18 @@ function TopicsField({
 
   function add(topic: string) {
     const trimmed = topic.trim();
-    if (!trimmed || selected.includes(trimmed) || atMax) return;
+    if (!trimmed || atMax) return;
+    // Already picked: nothing to add, and the result the visitor asked for is already on screen.
+    if (selected.includes(trimmed)) {
+      setDraft('');
+      setOpen(false);
+      return;
+    }
     if (!isLatinOnly(trimmed)) return;
-    if (!options.includes(trimmed) && customCount >= MAX_CUSTOM_SESSION_TOPICS) return;
+    if (!options.includes(trimmed) && customCount >= MAX_CUSTOM_SESSION_TOPICS) {
+      setDialogError(t('customMax', { max: MAX_CUSTOM_SESSION_TOPICS }));
+      return;
+    }
     field.onChange([...selected, trimmed]);
     setDraft('');
     setOpen(false);
@@ -350,11 +367,25 @@ function TopicsField({
         </button>
       </div>
 
-      {fieldState.error?.message ? (
-        <p className="text-tiny text-destructive">{tValidation(fieldState.error.message)}</p>
+      {atMax ? (
+        <p className="text-tiny text-muted-foreground">
+          {t('maxReached', { max: MAX_SESSION_TOPICS })}
+        </p>
       ) : null}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {topicsError ? (
+        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+          {tValidation(topicsError)}
+        </p>
+      ) : null}
+
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setDialogError(null);
+        }}
+      >
         <DialogContent className="max-w-[620px]">
           <DialogHeader>
             <DialogTitle>{t('dialogTitle')}</DialogTitle>
@@ -366,7 +397,10 @@ function TopicsField({
             maxLength={MAX_TOPIC_LENGTH}
             value={draft}
             placeholder={t('searchPlaceholder')}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setDialogError(null);
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault();
@@ -378,6 +412,12 @@ function TopicsField({
           {draftHasNonLatin ? (
             <p role="alert" className="text-tiny text-destructive">
               {tValidation(LATIN_ONLY_MESSAGE)}
+            </p>
+          ) : null}
+
+          {dialogError ? (
+            <p role="alert" className="text-tiny text-destructive">
+              {dialogError}
             </p>
           ) : null}
 
@@ -433,7 +473,8 @@ function timezoneLabel(zone: string): string {
 /** IANA timezone picker, auto-detected on first use. */
 function TimezoneField({ control }: { control: Control<SessionStepInput> }) {
   const t = useTranslations('mindsetterOnboarding.session');
-  const { field } = useController({ control, name: 'timezone' });
+  const { field, fieldState } = useController({ control, name: 'timezone' });
+  const tValidation = useValidationMessage();
 
   const options = useMemo<ComboboxOption[]>(() => {
     let zones: string[] = [];
@@ -465,7 +506,15 @@ function TimezoneField({ control }: { control: Control<SessionStepInput> }) {
         placeholder={t('timezonePlaceholder')}
         searchPlaceholder={t('timezoneSearchPlaceholder')}
         emptyLabel={t('timezoneEmpty')}
+        invalid={!!fieldState.error}
       />
+      {/* Auto-detection can come back empty (`Intl` unavailable, a locked-down browser) and the
+          schema then refuses the save with "Timezone is required." — which had no place to show. */}
+      {fieldState.error?.message ? (
+        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+          {tValidation(fieldState.error.message)}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -546,7 +595,7 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
   const tCabinet = useTranslations('dashboard.profile');
   const router = useRouter();
   const notifySaved = useCabinetSaved();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   const defaultValues: SessionStepInput = {
     acceptsBookings: initialSettings?.acceptsBookings ?? true,
@@ -562,6 +611,8 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
   };
 
   const form = useForm<SessionStepInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(sessionStepSchema),
     mode: 'onChange',
     defaultValues,
@@ -602,12 +653,11 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
   // the thirteen profile-section forms there's no `editMode` gate to apply here.
   useSectionDirtyGuard(form.formState.isDirty);
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
     const result = await saveSessionSettings(values);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(applyActionFailure(form, result.error, event));
       return;
     }
     // `reset(values)` rebases the form so `formState.isDirty` reads clean right after a save —
@@ -615,17 +665,13 @@ export function SessionsSetupForm({ topicOptions, initialSettings }: SessionsSet
     // changes" guard armed by `useSectionDirtyGuard` above.
     form.reset(values);
     notifySaved();
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
       {/* 12px between cards on a phone, 20px from `lg` (2026-08-13 request). */}
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3 lg:gap-5">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <SettingsCard title={t('accepting.title')} description={t('accepting.description')}>
           <FormField

@@ -5,7 +5,6 @@ import { ResendConfirmationEmailButton } from '@/components/auth/ResendConfirmat
 import { Link } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getCurrentUser } from '@/lib/auth/guards';
-import { emailSchema } from '@/lib/validation/common';
 
 type VerifyEmailPageProps = {
   params: Promise<{ locale: string }>;
@@ -51,10 +50,11 @@ export async function generateMetadata({ params }: VerifyEmailPageProps) {
  * Stage 1.6: the "Back to log in" tertiary link (added in stage 1.5 as an escape hatch for a
  * visitor with no session at all landing here) was removed per the user's copy tweaks — the
  * "Wrong email? Change it" link back to `/sign-up` remained the only way out of this step.
- * Release 2 П6 adds the top-left Back to step 1 (`/sign-up?email=…`) next to it, for visitors
- * without a session. The next step, `/member-profile`, deliberately has none: its previous step
- * is this "check your inbox" screen, which is meaningless for someone whose address is already
- * confirmed, and `/sign-up` is closed to signed-in visitors by the middleware.
+ *
+ * No Back link (owner's call, 31.10.2026 — Release 2 П6). The account already exists once this
+ * step renders, and resubmitting step 1 for it changes nothing: Supabase keeps the FIRST password
+ * and names of an unconfirmed user and only re-sends the mail, so a Back that invites people to
+ * "fix" those fields would leave them unable to log in with the password they typed last.
  */
 export default async function VerifyEmailPage({ params, searchParams }: VerifyEmailPageProps) {
   const { locale } = await params;
@@ -65,22 +65,9 @@ export default async function VerifyEmailPage({ params, searchParams }: VerifyEm
   const user = await getCurrentUser();
   const resolvedEmail = user?.email ?? email;
 
-  // Back to step 1 with the address carried over, so it is not retyped (Release 2 П6). Only for a
-  // visitor WITHOUT a session — the normal case here. A signed-in visitor (browser Back after
-  // confirming) cannot use `/sign-up`: the middleware bounces them to `/continue`, which would
-  // push them forward again, so a Back link would be a lie. `email` is echoed from the query
-  // string, so it is validated before it goes back into a URL.
-  const parsedEmail = emailSchema.safeParse(email);
-  const backHref = user
-    ? undefined
-    : parsedEmail.success
-      ? `/sign-up?email=${encodeURIComponent(parsedEmail.data)}`
-      : '/sign-up';
-
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
       <RegistrationStepHeader
-        backHref={backHref}
         step={2}
         total={TOTAL_STEPS}
         label={t('signUp.stepLabel', { step: 2, total: TOTAL_STEPS })}

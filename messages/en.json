@@ -658,17 +658,23 @@
       "photo": {
         "crop": {
           "cancel": "Cancel",
-          "confirm": "Use photo",
-          "description": "Drag to reposition and use the slider to zoom. Your photo will be cropped to a square.",
+          "confirm": "Save",
+          "description": "Drag to reposition, use the slider to zoom. The round preview shows your avatar.",
           "error": "We couldn't process this photo. Please try again or choose a different file.",
-          "loadError": "This photo couldn't be opened. Please choose a different file.",
-          "title": "Adjust your photo",
+          "invalidFile": "Please choose a JPG or PNG image.",
+          "loadError": "This photo couldn't be opened. Please upload a different one.",
+          "loading": "Loading your photo…",
+          "originalUnavailable": "We couldn't load your original photo, so you're editing your current one. Saving will replace the stored original.",
+          "preview": "Preview",
+          "title": "Edit profile picture",
+          "uploadNew": "Upload new photo",
           "zoom": "Zoom"
         },
         "hint": "Only PNG or JPEG",
         "label": "Profile photo",
-        "replace": "Replace photo",
+        "replace": "Edit photo",
         "requirements": "Upload your profile photo. Formats: JPG, PNG. Profiles without photos will not appear in the catalog and have limited access to platform features.",
+        "saveError": "We couldn't upload your photo. Please check your connection and try again.",
         "upload": "Upload photo",
         "uploadTitle": "Upload profile photo",
         "uploaded": "uploaded"
@@ -1048,14 +1054,16 @@
         "addPhoto": "Add Photo",
         "errors": {
           "invalidType": "Only PNG or JPEG images are allowed.",
-          "tooLarge": "Image must be at most 5 MB."
+          "tooLarge": "Image must be at most 5 MB.",
+          "tooMany": "You can add up to {max} photos — the extra ones were not added."
         },
         "recommendedHint": "Add at least {count} photos to show this section on your profile — fewer is fine, it just stays hidden for now.",
         "removePhoto": "Remove photo",
         "reorderHint": "Hold and drag to change order.",
         "title": "Reel Life",
         "uploadHint": "PNG or JPEG · Max 5MB per<br></br>photo",
-        "uploadLabel": "Upload photo"
+        "uploadLabel": "Upload photo",
+        "uploadingHint": "Photos are still uploading — you can save once they finish."
       },
       "videoBlog": {
         "title": "Video blog",
@@ -1144,6 +1152,7 @@
       "eyebrow": "WHAT CAN I HELP WITH",
       "heading": "The challenges I help founders navigate"
     },
+    "industry": "INDUSTRY",
     "introVideo": "Intro about me",
     "inviteToEvent": "Invite to event",
     "microNav": {
@@ -1531,7 +1540,9 @@
         "dialogHint": "Pick one of your existing topics or type a new one.",
         "searchPlaceholder": "Search or type a topic",
         "suggested": "Suggested for you",
-        "addConfirm": "Add topic"
+        "addConfirm": "Add topic",
+        "customMax": "You can add up to {max} custom topics.",
+        "maxReached": "You've picked the maximum of {max} topics. Remove one to add another."
       },
       "availability": {
         "title": "Weekly availability",
@@ -1611,6 +1622,7 @@
     "authorMax": "Author must be at most {max} characters.",
     "availabilityRequired": "Add availability for at least one day.",
     "avatarRequired": "Profile photo is required.",
+    "avatarSaveFailed": "Could not save your profile photo. Please try again.",
     "bioMax": "Short Bio must be at most {max} characters.",
     "bioRequired": "Short Bio is required.",
     "cityRequired": "Select your city from the list.",

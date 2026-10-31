@@ -14,22 +14,24 @@ import {
 
 import { saveNumbersSection } from '@/app/[locale]/(app)/dashboard/profile/actions';
 import { saveNumbers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormArrayMessage,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
 import {
@@ -89,6 +91,7 @@ function NumberCard({ control, index, onRemove, id, draggable }: NumberCardProps
       reorderLabel={t('common.reorder')}
       id={id}
       draggable={draggable}
+      errorPath={`numbers.${index}`}
       collapsedSummary={
         <div className="flex flex-col gap-1">
           <p className="truncate text-base font-bold tracking-[0.3em] text-foreground uppercase">
@@ -182,13 +185,15 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const notifySaved = useCabinetSaved();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   // Cabinet mode relaxes the wizard's "at least one" rule so this optional section can be saved
   // EMPTY — that empty save is how it gets cleared again. It also starts with zero rows when
   // nothing is saved yet (the wizard seeds one blank row, which here would force the caller to
   // fill something just to close the section). See `numbersCabinetSchema`'s doc comment.
   const form: UseFormReturn<NumbersStepInput> = useForm<NumbersStepInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(editMode ? numbersCabinetSchema : numbersStepSchema),
     mode: 'onChange',
     defaultValues: {
@@ -206,13 +211,12 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
   // before dropping an edited step just like the cabinet's (see that hook's own doc comment).
   useSectionDirtyGuard(form.formState.isDirty);
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values, event) => {
     setFormError(null);
 
     const result = editMode ? await saveNumbersSection(values) : await saveNumbers(values);
     if (!result.ok) {
-      applyFieldErrors(form.setError, result.error.fieldErrors);
-      setFormError(result.error.message);
+      setFormError(applyActionFailure(form, result.error, event));
       return;
     }
 
@@ -223,16 +227,12 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
     }
 
     router.push(nextHref);
-  });
+  }, revealOnInvalid);
 
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <SortableList ids={fields.map((field) => field.id)} onReorder={move}>
           <div className="flex flex-col gap-3 md:gap-4">
@@ -250,6 +250,8 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
             ))}
           </div>
         </SortableList>
+
+        <FormArrayMessage name="numbers" />
 
         {fields.length < MAX_NUMBERS ? (
           <Button type="button" variant="outline" size="lg" onClick={() => append(EMPTY_NUMBER)}>

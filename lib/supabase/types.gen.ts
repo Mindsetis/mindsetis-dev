@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -622,6 +622,8 @@ export type Database = {
           about: string | null
           access_restricted: boolean
           account_type: string
+          avatar_crop: Json | null
+          avatar_original_path: string | null
           avatar_url: string | null
           bio: string | null
           city: string | null
@@ -659,6 +661,8 @@ export type Database = {
           about?: string | null
           access_restricted?: boolean
           account_type?: string
+          avatar_crop?: Json | null
+          avatar_original_path?: string | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -696,6 +700,8 @@ export type Database = {
           about?: string | null
           access_restricted?: boolean
           account_type?: string
+          avatar_crop?: Json | null
+          avatar_original_path?: string | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -898,6 +904,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      avatar_crop_valid: { Args: { c: Json }; Returns: boolean }
       claim_due_email_messages: {
         Args: { p_limit?: number }
         Returns: {

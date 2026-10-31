@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { OnboardingTopBack } from '@/components/mindsetter-onboarding/OnboardingTopBack';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -102,15 +102,19 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Top-left Back (call of 28.10.2026, Release-2 П6). */}
-      <OnboardingTopBack href="/mindsetter-onboarding/help" />
+      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
+          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
+          owner's call of 31.10.2026). */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
         <div className="flex flex-col gap-1 md:gap-4">
           <h1 className="font-display text-h1 text-foreground md:text-h3">{t('shine.title')}</h1>
           <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
         </div>
-        <ShineForm completeness={completeness} />
+        <OnboardingBack href="/mindsetter-onboarding/help">
+          <ShineForm completeness={completeness} />
+        </OnboardingBack>
       </div>
     </div>
   );

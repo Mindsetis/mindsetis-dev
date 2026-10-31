@@ -82,6 +82,12 @@ npm run db:push
 Verify in **Dashboard → Database → Extensions** that `vector` and `pg_cron` are **enabled**,
 and in **Dashboard → Storage** that the `avatars` and `covers` buckets exist.
 
+> **Deleting a user does not delete their files.** `auth.admin.deleteUser()` cascades the
+> Postgres rows but leaves Storage objects behind. Any account removal (test wipes today, account
+> deletion later) must explicitly remove the user's `{uid}/` folder in **every** user bucket:
+> `avatars`, `avatar-originals` (private — the uncropped photo kept for re-cropping, the most
+> sensitive copy; `…_avatar_originals_recrop.sql`), `reel-life` and `promo-video`.
+
 ---
 
 ## 3. Auth configuration (in the dashboard)

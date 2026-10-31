@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { HelpSectionIcon } from '@/components/icons/onboarding-section-icons';
 import { HelpForm } from '@/components/mindsetter-onboarding/HelpForm';
-import { OnboardingTopBack } from '@/components/mindsetter-onboarding/OnboardingTopBack';
+import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
@@ -60,8 +60,10 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* Top-left Back (call of 28.10.2026, Release-2 П6). */}
-      <OnboardingTopBack href="/mindsetter-onboarding/superpowers" />
+      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
+          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
+          owner's call of 31.10.2026). */}
+      <div aria-hidden="true" className="h-14 md:h-[52px]" />
 
       <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <div className="mb-4 flex items-center gap-2 md:mb-8 md:gap-4">
@@ -70,7 +72,9 @@ export default async function MindsetterOnboardingHelpPage({ params }: HelpPageP
             {t('help.title')}
           </h1>
         </div>
-        <HelpForm initialExpertise={initialExpertise} />
+        <OnboardingBack href="/mindsetter-onboarding/superpowers">
+          <HelpForm initialExpertise={initialExpertise} />
+        </OnboardingBack>
       </div>
     </div>
   );

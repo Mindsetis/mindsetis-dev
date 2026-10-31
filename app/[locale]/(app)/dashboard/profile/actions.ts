@@ -17,7 +17,9 @@
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
+import { resolveAvatarFraming, withAvatarCacheBuster } from '@/lib/profile/avatar-persist';
 import { createClient } from '@/lib/supabase/server';
+import { avatarCropActionFields } from '@/lib/validation/avatar-crop';
 import { heroActionSchema, socialLinksActionSchema } from '@/lib/validation/dashboard-profile';
 import {
   fckupsCabinetSchema,
@@ -30,6 +32,10 @@ function extensionForMimeType(mimeType: string): string {
   return mimeType === 'image/png' ? 'png' : 'jpg';
 }
 
+// `avatarCrop` (the re-crop frame, Release 2) is composed on here rather than added to the shared
+// form shape — see `avatarCropActionFields` for why.
+const heroWithCropSchema = heroActionSchema.and(avatarCropActionFields);
+
 /**
  * Hero — names, nickname, location, languages, bio/about, interests, company/role/industries
  * (+ the optional free-text "Other" industry), photo.
@@ -39,9 +45,18 @@ function extensionForMimeType(mimeType: string): string {
  * exactly as the wizard's own action does. Changing it does break previously-shared links to
  * `/members/{old}` — the form warns about that; there is no redirect/alias table in MVP.
  */
-export const saveHeroSection = createAction(heroActionSchema, async (input) => {
+export const saveHeroSection = createAction(heroWithCropSchema, async (input) => {
   const user = await requireUser();
   const supabase = await createClient();
+
+  // Photo re-crop bookkeeping (original path + frame) — checked BEFORE the cropped avatar is
+  // uploaded; `null` = this submission doesn't touch the photo. See `saveMemberProfile`.
+  const avatarFraming = await resolveAvatarFraming({
+    supabase,
+    userId: user.id,
+    hasNewAvatar: Boolean(input.avatar),
+    crop: input.avatarCrop,
+  });
 
   // Avatar: a newly-picked file replaces the stored object at the caller's stable path; no file
   // means "keep what's on record", verified against the real row rather than a client flag —
@@ -63,7 +78,8 @@ export const saveHeroSection = createAction(heroActionSchema, async (input) => {
     const {
       data: { publicUrl },
     } = supabase.storage.from('avatars').getPublicUrl(path);
-    avatarUrl = publicUrl;
+    // Same in-place rewrite as the wizard: bust the cache so a re-framed photo shows immediately.
+    avatarUrl = withAvatarCacheBuster(publicUrl);
   } else {
     const { data: existingProfile } = await supabase
       .from('profiles')
@@ -143,6 +159,8 @@ export const saveHeroSection = createAction(heroActionSchema, async (input) => {
       bio: input.bio,
       about: input.about?.trim() || null,
       avatar_url: avatarUrl,
+      // Same update as `avatar_url` (DB: `avatar_crop` ⇒ `avatar_original_path`).
+      ...(avatarFraming ?? {}),
       company: input.company,
       role: input.role,
       industries: input.industries,

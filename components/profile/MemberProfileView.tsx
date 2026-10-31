@@ -2,7 +2,6 @@ import { CheckCircle2, User } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
-import { BriefcaseFillIcon } from '@/components/icons/briefcase-fill-icon';
 import {
   ChatAiFillIcon,
   LanguageBubbleIcon,
@@ -18,10 +17,10 @@ import {
   TiktokIcon,
   YoutubeIcon,
 } from '@/components/icons/social-icons';
-import { ShareProfileButton } from '@/components/profile/ShareProfileButton';
+import { IndustryPill } from '@/components/profile/IndustryPill';
+import { OwnerShareButton } from '@/components/profile/OwnerShareButton';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
-import { INDUSTRIES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
 import { languageDisplayCode, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
@@ -63,7 +62,8 @@ export interface MemberProfile {
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
   /**
    * Display labels of the member's industries, ALREADY MODERATION-FILTERED by the page via
-   * `resolveIndustryLabels` — the only industry data this component ever receives. The raw
+   * `resolveIndustryLabels` (`lib/profile/industry-labels.ts`) — the only industry data this
+   * component ever receives. The raw
    * `industries` slugs, `industry_custom` and `industry_custom_status` deliberately do NOT cross
    * this boundary: an unapproved free-text value must never reach a component that renders it.
    * Empty = nothing to show, the pill is hidden.
@@ -260,42 +260,6 @@ export function resolveLanguageText(profile: { languages: string[] | null }): st
   return codes.length > 0 ? codes.join(' / ') : null;
 }
 
-/** Catalog slug → display label (`lib/constants/industries.ts`; same catalog the wizard uses). */
-const INDUSTRY_LABEL_BY_VALUE = new Map<string, string>(
-  INDUSTRIES.map((industry) => [industry.value, industry.label]),
-);
-
-/**
- * `profiles.industries` (+ the free-text "Other") → the labels shown in the INDUSTRY pill, in the
- * order the member picked them.
- *
- * MODERATION RULE — this is the gate, keep it the only way industry reaches the page. A member's
- * free-text `industry_custom` is user-submitted and staff-moderated (`industry_custom_status`:
- * 'pending' | 'approved' | 'rejected'); it may be shown to other people ONLY once it is
- * `'approved'`. The `other` slug is therefore replaced by that text when approved, and simply
- * DROPPED otherwise (a bare "Other" tells the reader nothing, and a pending/rejected value must
- * not leak). The page calls this server-side BEFORE building the component's props, so the raw
- * custom text and its status never enter `MemberProfileView` at all.
- *
- * A slug no longer present in the catalog (renamed/removed after the profile saved it) is
- * silently skipped, same defensive precedent as `groupInterestsByCategory`. Returns `[]` when
- * there is nothing to show.
- */
-export function resolveIndustryLabels(profile: {
-  industries: string[] | null;
-  industryCustom: string | null;
-  industryCustomStatus: string | null;
-}): string[] {
-  const customText =
-    profile.industryCustomStatus === 'approved' ? (profile.industryCustom?.trim() ?? '') : '';
-
-  return (profile.industries ?? [])
-    .map((value) =>
-      value === OTHER_INDUSTRY_VALUE ? customText : (INDUSTRY_LABEL_BY_VALUE.get(value) ?? ''),
-    )
-    .filter((label) => label.length > 0);
-}
-
 /**
  * Shared presentational component for the "Member Profile" view. It used to back two routes
  * (a `/dashboard/profile` self-view + this public one), which the 2026-08-10 "one profile page
@@ -417,39 +381,23 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
                   </div>
                 )}
 
-                {industryLabels.length > 0 && (
-                  // Figma `1642:23098` (desktop, 14px values) / `1751:38850` (the mobile variant of
-                  // the same pill — drawn only on the dark Mindsetter mobile frames, values 12px;
-                  // the Member MOBILE frames `48:567`/`401:8282` predate it, so the mobile size is
-                  // taken from that variant): 24px tall, radius 12, 12px side padding, 10px between
-                  // the caption, the 1x12 divider and the icon+values group. Caption: 11px bold,
-                  // 30% letter-spacing, `secondary text` #a5a5a5 (= `text-muted-foreground`).
-                  // `min-h-6` + `py-0.5` rather than a fixed height so three long values wrap onto a
-                  // second line on a narrow screen instead of overflowing or being truncated.
-                  <span
-                    className={cn(
-                      'inline-flex min-h-6 max-w-full items-center gap-2.5 px-3 py-0.5',
-                      styles.industryPill,
-                    )}
-                  >
-                    <span className="shrink-0 text-[11px] leading-[1.2] font-bold tracking-[0.3em] text-muted-foreground uppercase">
-                      {labels.industry}
-                    </span>
-                    <span aria-hidden="true" className="h-3 w-px shrink-0 bg-muted-foreground" />
-                    {/* `leading-4`: `text-tiny`'s own 1.4 line-height made the pill 25.6px tall at
-                        desktop, 1.6px taller than the 24px company/role pills beside it. */}
-                    <span className="inline-flex min-w-0 items-center gap-1 text-tiny leading-4">
-                      <BriefcaseFillIcon className="size-3.5 shrink-0 text-primary" />
-                      <span className="min-w-0">{industryLabels.join(', ')}</span>
-                    </span>
-                  </span>
-                )}
+                {/* Shared with the Mindsetter profile (see `IndustryPill` for the Figma nodes).
+                    Figma `1642:23098` desktop; the Member MOBILE frames `48:567`/`401:8282`
+                    predate the pill, so mobile takes the mobile variant `1751:38850` (12px
+                    values). Renders nothing when there are no labels. */}
+                <IndustryPill caption={labels.industry} labels={industryLabels} theme="light" />
               </div>
             )}
 
             {/* Static per this stage's scope — no `onClick`/`href`. Figma: "Invite to event"
                 doesn't exist anywhere on either mobile "Verified Member Profile" frame
-                (401:8282 preview, 48:567 public) — desktop-only. Re-verified the actual node:
+                (401:8282 preview, 48:567 public) — re-checked 31.10: still absent there. "Правки
+                3.0" П11 (owner, 31.10) asks for it on phones anyway, so the mobile placement is a
+                DEVELOPER DECISION, not a Figma one: it keeps its desktop slot — after the
+                company/role/industry pills, before the location/language row — and goes
+                full-width (`w-full`, like the Mindsetter hero's phone CTAs, `401:7614`) with the
+                same 56px height; 188px wide from `md` up as drawn. Replace once Albina draws the
+                mobile frame. Re-verified the actual node:
                 `401:6377`/`401:6359` (the pair previously cited here) are, respectively, the
                 site's own "Header PC" instance and the desktop Share Profile button — NEITHER
                 is this button. The real node is the "Primary" instance `401:6401` (preview) /
@@ -465,40 +413,38 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
             {isOwner && shareUrl ? (
               // "Правки 3.0" П11 (reverses Release-1 G3 for Members): on your OWN profile this slot
               // is a working Share control instead of "Invite to event". The same
-              // `ShareProfileButton` as the Mindsetter hero's, in the light-gray bordered box this
-              // screen's social icons use (`socialIconButton`).
+              // `OwnerShareButton` (shared with the Mindsetter owner view, which owns the 44px
+              // shape — see that file) in the light-gray bordered box this screen's social icons
+              // use (`socialIconButton`).
               //
               // NOT FROM THE DESIGN: Figma has no Share control on ANY Member profile frame —
               // neither desktop (`383:4667` own profile shows no button at all, `401:6375` the
               // preview shows only "Invite to event") nor mobile (`48:567`/`401:8282`), so the
-              // placement (the Invite slot), the all-breakpoints visibility (Invite is
-              // `hidden md:inline-flex`) and the size are developer decisions, to be replaced once
+              // placement (the Invite slot, which is visible at every breakpoint since П11 put
+              // Invite on phones too) and the size are developer decisions, to be replaced once
               // Albina draws it. Size: 44x44 (`size-11`) — the 32px box used in the Mindsetter hero
               // is below the 44px touch target a primary, tapped-on-mobile action needs (live
               // tester finding); the 20px glyph (`[&_svg]:size-5`) overrides the button's own
               // `size-4` so it doesn't look lost in the bigger box.
-              <ShareProfileButton
+              <OwnerShareButton
                 url={shareUrl}
                 ariaLabel={labels.shareAriaLabel}
                 copiedMessage={labels.shareLinkCopied}
                 errorMessage={labels.shareCopyFailed}
                 shareTitle={displayName}
-                className={cn(
-                  'flex size-11 items-center justify-center self-start rounded-lg [&_svg]:size-5',
-                  styles.socialIconButton,
-                )}
+                className={cn('self-start', styles.socialIconButton)}
               />
             ) : (
               // Event invites are unbuilt — same treatment as every other unbuilt control across
               // the app (see `components/ui/not-yet-available.tsx`). Rendered for everyone who is
-              // NOT looking at their own profile.
-              <NotYetAvailable feature="inviteToEvent" className="hidden md:inline-flex">
+              // NOT looking at their own profile — at every breakpoint, phones included.
+              <NotYetAvailable feature="inviteToEvent" className="w-full md:w-auto">
                 <Button
                   type="button"
                   variant="ghost"
                   disabled
                   className={cn(
-                    'h-14 w-[188px] px-5 py-[15px] text-base font-bold disabled:opacity-50',
+                    'h-14 w-full px-5 py-[15px] text-base font-bold disabled:opacity-50 md:w-[188px]',
                     styles.inviteButton,
                   )}
                 >

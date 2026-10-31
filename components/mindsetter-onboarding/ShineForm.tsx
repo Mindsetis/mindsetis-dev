@@ -10,9 +10,13 @@ import {
   ShineOptionCheckedIcon,
   ShineOptionUncheckedIcon,
 } from '@/components/icons/shine-block-icons';
-import { StickyActionBar } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  OnboardingBackButton,
+  StickyActionBar,
+  useOnboardingBackHref,
+} from '@/components/mindsetter-onboarding/StepActions';
 import { Button } from '@/components/ui/button';
+import { FormErrorAlert } from '@/components/ui/form-error-alert';
 import { useRouter } from '@/i18n/navigation';
 import {
   BLOCK_SLUGS,
@@ -21,6 +25,7 @@ import {
   CONGRATS_ROUTE,
 } from '@/lib/mindsetter-onboarding/blocks';
 import type { CompletenessTier } from '@/lib/profile/completeness';
+import { cn } from '@/lib/utils';
 
 type ShineFormProps = {
   completeness: {
@@ -49,6 +54,11 @@ function ContinueFillIcon() {
   );
 }
 
+/** Skip / Continue in the pinned bar: the text may wrap on a phone (320px, Spanish — see the bar's
+ * comment), never on `md` and up; 12px side padding on a phone, 20px from `md`. */
+const SHINE_BUTTON_CLASS =
+  'h-auto min-h-14 px-3 py-2 whitespace-normal md:flex-1 md:px-5 md:whitespace-nowrap';
+
 /**
  * "Make your profile shine" picker (step 4/5 — Personal session moved to the last core step,
  * product decision D9 — onboarding doc section 6). Manages the optional-
@@ -66,6 +76,7 @@ function ContinueFillIcon() {
 export function ShineForm({ completeness }: ShineFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
+  const backHref = useOnboardingBackHref();
   const [selected, setSelected] = useState<ReadonlySet<BlockSlug>>(new Set());
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -114,11 +125,9 @@ export function ShineForm({ completeness }: ShineFormProps) {
 
   return (
     <div className="flex flex-col">
-      {formError ? (
-        <Alert variant="destructive" className="mb-6">
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      ) : null}
+      {/* Sits above a long list while the pinned bar is at the bottom of the screen, so the banner
+          scrolls itself into view — a failed `saveShine` otherwise looked like a dead button. */}
+      <FormErrorAlert className="mb-6" messages={formError} />
 
       <div className="flex items-center gap-3 rounded-[16px] border border-border bg-card p-4">
         <CompletenessIcon />
@@ -169,16 +178,43 @@ export function ShineForm({ completeness }: ShineFormProps) {
         </div>
       </div>
 
-      {/* `flex-col-reverse` on mobile: Continue on top, then Skip. Pinned to the bottom of the
-          screen like every wizard step's "Save & Continue"; Back is top-left (call of 28.10.2026). */}
-      <StickyActionBar surface="page" className="mt-6 flex-col-reverse md:flex-row">
+      {/* Back, Skip and Continue in ONE pinned bar, like every wizard step's `[Back | primary]`
+          pair (owner's call, 31.10.2026). DOM order is the desktop reading order (Back, Skip,
+          Continue); the phone grid re-orders it.
+          Label widths (Manrope Bold 16px): "Back" 37px, "Skip — fill later from cabinet" 214px,
+          "Continue fill (3 sections)" 193px + 28px icon (Spanish: 41px / 342px / 294px).
+          - md and up: one row. With 20px side padding the three need 620px of the 640px column,
+            so in English they fit with 20px to spare. Spanish does not fit: Continue wraps onto a
+            second full-width row (`flex-wrap` + nowrap labels) instead of overflowing.
+          - phone: `[Back | Continue]` on the first row, Skip full-width on the second.
+            `auto 1fr` keeps Back at its label floor (62px), which leaves Continue 254px at 360px
+            wide (a 328px row) for its 245px, and 269px at 375px. With nothing picked there is no
+            Continue and Skip takes its place beside Back (253px for 240px at 360px). So in
+            English no label wraps down to 360px. At 320px, and in Spanish at any phone width
+            (Skip 342px, Continue 294px + icon), the text wraps inside its button
+            (`whitespace-normal` + `min-h-14`) rather than overflowing the row. */}
+      <StickyActionBar
+        surface="page"
+        className="mt-6 grid grid-cols-[auto_1fr] md:flex md:flex-wrap"
+      >
+        {backHref ? (
+          <OnboardingBackButton
+            href={backHref}
+            disabled={pending}
+            className="h-auto min-h-14 px-3 md:flex-1 md:px-5"
+          />
+        ) : null}
+
         <Button
           type="button"
           variant="outline"
           size="lg"
           disabled={pending}
           onClick={handleSkip}
-          className="md:flex-1"
+          className={cn(
+            SHINE_BUTTON_CLASS,
+            selectedCount > 0 && 'order-3 col-span-2 md:order-none',
+          )}
         >
           {t('shine.skip')}
         </Button>
@@ -190,7 +226,7 @@ export function ShineForm({ completeness }: ShineFormProps) {
             size="lg"
             loading={pending}
             onClick={handleContinue}
-            className="md:flex-1"
+            className={SHINE_BUTTON_CLASS}
           >
             <ContinueFillIcon />
             {pending ? t('common.saving') : t('shine.continueFill', { count: selectedCount })}

@@ -43,8 +43,10 @@ export async function generateMetadata({ params }: WelcomePageProps) {
  * deliberate deviation for consistency with the other three steps rather than one extra
  * mobile-only special case; see that component's own doc comment for the reuse rationale.
  * `backHref="/build-profile"`: the previous wizard step (owner's call, 2026-09-29 — Back steps
- * through the wizard; it used to go home). This is also the one wizard screen that keeps its
- * top-left Back: the other steps moved it into their bottom row or dropped it.
+ * through the wizard; it used to go home). This is a screen with no primary button to carry a
+ * bottom-row Back, so it keeps the top-left one (owner's call, 31.10.2026); it
+ * stays in view under the site header while the page scrolls, at every width (`StickyBackLink`,
+ * via `RegistrationStepHeader`).
  *
  */
 export default async function WelcomePage({ params }: WelcomePageProps) {

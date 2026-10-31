@@ -58,7 +58,7 @@ export interface CtaProfileFields {
  * `profile: null` while `signedIn` is a defensive-only branch (mirrors `resolveOnboardingRedirect`'s
  * "no `profiles` row" case, an anomaly rather than a state the wizard resumes from): it degrades
  * to `memberIncomplete` rather than crashing the header, since that's the state that still leads
- * somewhere sane (`/continue`).
+ * somewhere sane (the Member wizard).
  *
  * `mindsetterStep` is `mindsetter_profiles.onboarding_step`, `null` when the caller never started
  * the Mindsetter wizard (see `fetchMindsetterOnboardingStep`). Only consulted for a complete

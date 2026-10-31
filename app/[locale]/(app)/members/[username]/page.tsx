@@ -2,11 +2,12 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 
-import { MemberProfileView, resolveIndustryLabels } from '@/components/profile/MemberProfileView';
+import { MemberProfileView } from '@/components/profile/MemberProfileView';
 import { UpgradeProfileWidget } from '@/components/profile/UpgradeProfileWidget';
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { siteUrl } from '@/lib/auth/site-url';
+import { resolveIndustryLabels } from '@/lib/profile/industry-labels';
 import { createClient } from '@/lib/supabase/server';
 
 type PublicProfilePageProps = {

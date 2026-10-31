@@ -11,16 +11,32 @@
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
+import { resolveAvatarFraming, withAvatarCacheBuster } from '@/lib/profile/avatar-persist';
 import { createClient } from '@/lib/supabase/server';
+import { avatarCropActionFields } from '@/lib/validation/avatar-crop';
 import { memberProfileActionSchema } from '@/lib/validation/member-profile';
 
 function extensionForMimeType(mimeType: string): string {
   return mimeType === 'image/png' ? 'png' : 'jpg';
 }
 
-export const saveMemberProfile = createAction(memberProfileActionSchema, async (input) => {
+// `avatarCrop` (the re-crop frame, Release 2) is composed on here rather than added to the shared
+// form shape — see `avatarCropActionFields` for why.
+const memberProfileWithCropSchema = memberProfileActionSchema.and(avatarCropActionFields);
+
+export const saveMemberProfile = createAction(memberProfileWithCropSchema, async (input) => {
   const user = await requireUser();
   const supabase = await createClient();
+
+  // 0. Photo re-crop bookkeeping (original path + frame). Checked BEFORE the cropped avatar is
+  //    uploaded so a rejected frame can't leave a replaced avatar object behind an untouched
+  //    profile row. `null` = this submission doesn't touch the photo (columns stay as they are).
+  const avatarFraming = await resolveAvatarFraming({
+    supabase,
+    userId: user.id,
+    hasNewAvatar: Boolean(input.avatar),
+    crop: input.avatarCrop,
+  });
 
   // 1. Resolve the avatar URL to store. A new file was picked -> upload it (as before). No
   //    new file was picked (`input.avatar` is `undefined` — schema-level allowed, see
@@ -53,7 +69,9 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
     const {
       data: { publicUrl },
     } = supabase.storage.from('avatars').getPublicUrl(path);
-    avatarUrl = publicUrl;
+    // The object is rewritten in place, so its URL alone never changes — a cache-buster makes a
+    // re-framed photo show up immediately (see `withAvatarCacheBuster`).
+    avatarUrl = withAvatarCacheBuster(publicUrl);
   } else {
     const { data: existingProfile } = await supabase
       .from('profiles')
@@ -164,6 +182,9 @@ export const saveMemberProfile = createAction(memberProfileActionSchema, async (
       bio: input.bio,
       about: input.about?.trim() || null,
       avatar_url: avatarUrl,
+      // Written in the SAME update as `avatar_url`: the DB requires `avatar_crop` ⇒
+      // `avatar_original_path`, and a frame must never outlive the photo it was cut from.
+      ...(avatarFraming ?? {}),
       socials,
       onboarding_step: nextOnboardingStep,
     })

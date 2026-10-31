@@ -5,11 +5,15 @@ import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { mindsetterResumePath } from '@/lib/auth/onboarding-redirect';
 
 export type MemberStatusBannerProps = {
   accountType: 'member' | 'mindsetter';
-  /** The Member already started the Mindsetter wizard (Release-2 П5). */
-  wizardStarted: boolean;
+  /**
+   * `mindsetter_profiles.onboarding_step`, or `null` when the Member never started the Mindsetter
+   * wizard (Release-2 П5). A number means "started" — and says where to resume.
+   */
+  wizardStep: number | null;
 };
 
 /**
@@ -27,14 +31,17 @@ export type MemberStatusBannerProps = {
  * `UpgradeToMindsetterTrigger` island, not a direct link to `/mindsetter-onboarding/roles` — same
  * destination-behind-a-confirmation change applied to the header and landing-page "Upgrade" CTAs.
  *
- * Once the Member has started the wizard (`wizardStarted`, Release-2 П5 — call of 28.10.2026) the
- * pitch is replaced by a reminder and "Continue Registration", which goes straight to the
- * wizard's entry route and resumes at the next unsaved step — no upgrade dialog in front of it.
+ * Once the Member has started the wizard (`wizardStep` set, Release-2 П5 — call of 28.10.2026) the
+ * pitch is replaced by a reminder and "Continue Registration", which links straight to the next
+ * unsaved step — no upgrade dialog in front of it, and no hop through the wizard's entry route
+ * (`/mindsetter-onboarding` computes the same `mindsetterResumePath` and redirects to it; the cabinet
+ * already holds the step, so it skips that).
  */
-export async function MemberStatusBanner({ accountType, wizardStarted }: MemberStatusBannerProps) {
+export async function MemberStatusBanner({ accountType, wizardStep }: MemberStatusBannerProps) {
   if (accountType !== 'member') return null;
 
   const t = await getTranslations('dashboard.statusBanner');
+  const wizardStarted = wizardStep !== null;
 
   return (
     <Alert>
@@ -45,7 +52,9 @@ export async function MemberStatusBanner({ accountType, wizardStarted }: MemberS
           <>
             <p>{t('inProgressBody')}</p>
             <Button asChild size="sm" className="mt-2">
-              <GuardedLink href="/mindsetter-onboarding">{t('inProgressCta')}</GuardedLink>
+              <GuardedLink href={mindsetterResumePath(wizardStep)}>
+                {t('inProgressCta')}
+              </GuardedLink>
             </Button>
           </>
         ) : (

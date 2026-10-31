@@ -1,0 +1,62 @@
+/**
+ * The INDUSTRY pill shared by both public profile views ("Правки 3.0" П9). One shape, two
+ * themes — the Member profile is a deliberate white section, the Mindsetter profile is the
+ * dark Masterclass/Netflix page, and Figma draws the pill for each (see `IndustryPill.tsx` for
+ * the node ids).
+ *
+ * Both themes share the 1px brand-gradient outline and cornerRadius 12. The Figma "gradient /
+ * brand" paint style's stops (#C3E4FA → #79B9E3 → #21B8E6) are this app's own
+ * `--gradient-primary`, so the token is reused instead of repeating the hex triplet.
+ */
+
+.pill {
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+/* ---- Light (Member profile) -------------------------------------------------------------
+   Figma `1642:23098` "Frame 785" / `1747:33844` in the preview frame; the three variants A/B/C
+   live in `1747:33853`, A "label inside the plate" is the one applied in the profile. White
+   plate with a gradient BORDER: that needs the two-background trick — the white plate is painted
+   into the padding box and the gradient into the border box, showing through the transparent
+   1px border. */
+.light {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    var(--gradient-primary) border-box;
+  color: #000000;
+}
+
+/* ---- Dark (Mindsetter profile) ----------------------------------------------------------
+   Figma `1750:33840` (desktop frames, 14px values) / `1751:38858` (mobile `401:7567` and the old
+   `187:4294`, 12px values), both read from a literal SVG export: NO fill, 1px stroke painted with
+   the gradient above, white values, caption `#a5a5a5`, divider `#a5a5a5` at 50% opacity.
+   There is no fill because the pill sits straight on the page — which is why the light
+   variant's two-background trick can't be reused here: its padding-box layer has to be opaque,
+   and would paint a plate over whatever is behind the pill. The ring is a masked pseudo-element
+   instead (same technique as `.introButton::before` in `MindsetterProfileView.module.css`),
+   which leaves the interior genuinely transparent. `inset: -1px` stretches it over the host's
+   own 1px transparent border, so the ring lands on the outer edge exactly as in the light
+   variant and both themes measure the same. */
+.dark {
+  position: relative;
+  background-color: transparent;
+  color: var(--color-foreground);
+}
+.dark::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--gradient-primary);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}

@@ -42,9 +42,11 @@ export type CabinetProfile = {
    * `supabase/migrations/20260920101855_profiles_photo_requirement_waiver.sql`. Drives the
    * cabinet's persistent no-photo reminder banner (hidden once `avatarUrl` or this is set). */
   photoRequirementWaived: boolean;
-  /** A Member who started the Mindsetter wizard (their `mindsetter_profiles` row exists) — the
-   * status banner offers "Continue Registration" instead of "Upgrade Now" (Release-2 П5). */
-  mindsetterWizardStarted: boolean;
+  /** `mindsetter_profiles.onboarding_step`, or `null` when the caller never started the Mindsetter
+   * wizard (no row). A Member who started it gets "Continue Registration" instead of "Upgrade
+   * Now" in the status banner (Release-2 П5), and the step lets that button link straight to the
+   * next unsaved screen (`mindsetterResumePath`) instead of through `/mindsetter-onboarding`. */
+  mindsetterOnboardingStep: number | null;
   completeness: ProfileCompleteness;
   /** Keyed by `ProfileSectionKey`; missing keys mean "nothing to summarize" (Hero/Social links,
    * whose cards show a static field list instead — see `ProfileSectionCard`). */
@@ -107,7 +109,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     supabase
       .from('mindsetter_profiles')
       .select(
-        'roles, superpowers, help_with, promo_video, numbers, reel_life, wins, my_way, fckups, philosophy, video_blog',
+        'onboarding_step, roles, superpowers, help_with, promo_video, numbers, reel_life, wins, my_way, fckups, philosophy, video_blog',
       )
       .eq('id', session.user.id)
       .maybeSingle(),
@@ -174,7 +176,7 @@ export const loadCabinetProfile = cache(async (): Promise<CabinetProfile | null>
     avatarUrl: profile.avatar_url,
     isVerified: session.profile.verification_status === 'verified',
     photoRequirementWaived: profile.photo_requirement_waived,
-    mindsetterWizardStarted: mindsetterProfile !== null,
+    mindsetterOnboardingStep: mindsetterProfile ? (mindsetterProfile.onboarding_step ?? 0) : null,
     completeness,
     summaries,
   };

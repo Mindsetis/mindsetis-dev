@@ -1,8 +1,9 @@
 import type { SVGProps } from 'react';
 
 /**
- * "briefcase-fill" — the glyph inside the INDUSTRY pill on the Member profile (Figma `1642:23100`,
- * exported straight from the design as SVG; native `viewBox="0 0 14 14"`).
+ * "briefcase-fill" — the glyph inside the INDUSTRY pill (`IndustryPill`) on the Member profile
+ * (Figma `1642:23100`, exported straight from the design as SVG; native `viewBox="0 0 14 14"`) and
+ * on the Mindsetter profile (`1750:33844` — the same path).
  *
  * The source hardcodes `fill="#79B9E3"`; that hex IS `--color-primary`, so this renders
  * `currentColor` and the call site sets `text-primary` instead of stating the value twice (same

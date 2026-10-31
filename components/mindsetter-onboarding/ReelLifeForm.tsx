@@ -15,8 +15,8 @@ import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldHint } from '@/components/ui/field-hint';
+import { FormErrorAlert } from '@/components/ui/form-error-alert';
 import { ImageOptimizeHint } from '@/components/ui/image-optimize-hint';
 import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
@@ -319,16 +319,20 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
 
     const remainingSlots = Math.max(0, MAX_REEL_LIFE_PHOTOS - items.length);
     const files = Array.from(fileList).slice(0, remainingSlots);
+    const skipped = fileList.length - files.length;
+    let hadFileError = false;
 
     for (const file of files) {
       if (!(ACCEPTED_REEL_LIFE_MIME_TYPES as readonly string[]).includes(file.type)) {
         setFileError(t('blocks.reelLife.errors.invalidType'));
         setFileErrorIsSize(false);
+        hadFileError = true;
         continue;
       }
       if (file.size > MAX_REEL_LIFE_PHOTO_SIZE_BYTES) {
         setFileError(t('blocks.reelLife.errors.tooLarge'));
         setFileErrorIsSize(true);
+        hadFileError = true;
         continue;
       }
 
@@ -347,10 +351,19 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
       if (!result.ok) {
         setFileError(result.error.message);
         setItems((previous) => previous.filter((item) => item.id !== id));
+        hadFileError = true;
         continue;
       }
 
       replaceItem(id, { id, status: 'ready', path: result.data.path, url: result.data.url });
+    }
+
+    // Photos past the cap used to be dropped without a word. A more specific error from the loop
+    // above (wrong type, too large, upload failed) is the more useful one to keep, so this only
+    // fills the gap.
+    if (skipped > 0 && !hadFileError) {
+      setFileError(t('blocks.reelLife.errors.tooMany', { max: MAX_REEL_LIFE_PHOTOS }));
+      setFileErrorIsSize(false);
     }
   }
 
@@ -398,16 +411,10 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      {formError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      ) : null}
+      <FormErrorAlert messages={formError} />
       {fileError ? (
         <div className="flex flex-col gap-3">
-          <Alert variant="destructive">
-            <AlertDescription>{fileError}</AlertDescription>
-          </Alert>
+          <FormErrorAlert messages={fileError} />
           {fileErrorIsSize ? (
             <ImageOptimizeHint maxSizeMb={MAX_REEL_LIFE_PHOTO_SIZE_BYTES / (1024 * 1024)} />
           ) : null}
@@ -499,6 +506,10 @@ export function ReelLifeForm({ initialPhotos, nextHref, editMode }: ReelLifeForm
           {t('blocks.reelLife.recommendedHint', { count: MIN_REEL_LIFE_PHOTOS_TO_DISPLAY })}
         </FieldHint>
       ) : null}
+
+      {/* "Save and continue" is disabled while a photo is still going up (below) — say so, instead
+          of leaving a greyed-out button that gives no reason. */}
+      {isUploading ? <FieldHint centerIcon>{t('blocks.reelLife.uploadingHint')}</FieldHint> : null}
 
       <input
         ref={inputRef}

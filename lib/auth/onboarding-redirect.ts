@@ -11,113 +11,45 @@
  *   1-4, `docs/release-1-tasks.md` → A1).
  *
  *   So progress lives in the DB; this module is the one function that turns it into a route,
- *   and the four entry points (email confirmation, sign-in, post-password-change sign-in, and
- *   the "Apply to Join" bounce via `/continue`) all call it instead of guessing.
+ *   and the entry points (email confirmation, sign-in, post-password-change sign-in, and the
+ *   "Apply to Join" bounce via `/continue` or the middleware) all call it instead of guessing.
  *
- * TWO SEPARATE COUNTERS, DELIBERATELY
- *   `profiles.onboarding_step` is the Member registration wizard's counter;
- *   `mindsetter_profiles.onboarding_step` is the extended Mindsetter wizard's. They were split
- *   by the stage-1.9 review loop precisely so the two flows can't stomp on each other — see
- *   `supabase/migrations/20260718172922_mindsetter_onboarding_review_fixes.sql`. Read both,
- *   never conflate them.
+ * WHERE THE LOGIC LIVES
+ *   The decision itself — the thresholds, the routes, `resolveOnboardingDestination(supabase,
+ *   user)` — is in `./onboarding-progress.ts`, written against a Supabase client passed in so the
+ *   Edge middleware can run it too (it has no `cookies()`). This file is its server-side front
+ *   door: it supplies the cookie-bound client and re-exports the whole module, so server code has
+ *   a single import path. Import `./onboarding-progress` directly only from the middleware.
  */
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
 
-/**
- * Values the Member wizard writes into `profiles.onboarding_step`. The column starts at 0 and
- * only two steps write to it — `/sign-up` and `/verify-email` have nothing of their own to
- * save, which is why the numbering looks sparse:
- *
- *   0 → account created, nothing filled in yet        → continue at `/member-profile` (3/4)
- *   2 → `/member-profile` saved                       → continue at `/build-profile`  (4/4)
- *   3 → `/build-profile` saved, Member profile done   → the cabinet
- */
-const MEMBER_DETAILS_SAVED = 2;
-/**
- * Also the threshold `lib/auth/cta-state.ts` (Release-1 A4) uses to decide "Edit Profile" vs.
- * "Upgrade" for the header/hero/"What is Mindsetis" beacon button — exported so that decision
- * can't drift from this module's own definition of "the Member wizard is done".
- */
-export const MEMBER_COMPLETE = 3;
+import { CABINET_PATH, LOGIN_PATH, resolveOnboardingDestination } from './onboarding-progress';
 
-/**
- * `mindsetter_profiles.onboarding_step` → where to continue. The index IS the stored value:
- * the column holds "how many required steps are saved", so `MINDSETTER_STEP_ROUTES[step]` is
- * the next unfinished one. Values come from the `*_STEP_ONBOARDING_STEP` constants in
- * `app/[locale]/(app)/mindsetter-onboarding/actions.ts` — keep the two in sync.
- *
- * The optional blocks (`/blocks/*`) are intentionally absent: they are optional, so someone
- * who finished `shine` is "done" for routing purposes and belongs in the cabinet.
- */
-const MINDSETTER_STEP_ROUTES = [
-  '/mindsetter-onboarding/roles',
-  '/mindsetter-onboarding/superpowers',
-  '/mindsetter-onboarding/help',
-  '/mindsetter-onboarding/shine',
-] as const;
-
-/** `mindsetter_profiles.onboarding_step` once every required step is saved. */
-export const MINDSETTER_COMPLETE = MINDSETTER_STEP_ROUTES.length;
-
-/**
- * End of the core wizard. Rendering it runs `finalizeMindsetterOnboarding`, which promotes a
- * caller who saved every required step but is still a Member — see `mindsetterResumePath`.
- */
-const MINDSETTER_CONGRATS_PATH = '/mindsetter-onboarding/congrats';
-
-/**
- * Where a Member picks the Mindsetter wizard back up: the next unsaved required step, or
- * `/congrats` once all of them are saved (a caller promoted at `saveShine` never asks — they are
- * a Mindsetter already; this only catches someone who finished before that promotion existed).
- * `null` means "never started" (no `mindsetter_profiles` row yet) and resolves to the first step.
- */
-export function mindsetterResumePath(step: number | null): string {
-  const saved = step ?? 0;
-  if (saved >= MINDSETTER_COMPLETE) return MINDSETTER_CONGRATS_PATH;
-  return MINDSETTER_STEP_ROUTES[saved] ?? MINDSETTER_STEP_ROUTES[0];
-}
-
-/**
- * The caller's `mindsetter_profiles.onboarding_step`, or `null` when they never started the
- * wizard — the row only exists once `/roles` is first saved, so "row exists" is "started".
- */
-export async function fetchMindsetterOnboardingStep(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<number | null> {
-  const { data } = await supabase
-    .from('mindsetter_profiles')
-    .select('onboarding_step')
-    .eq('id', userId)
-    .maybeSingle();
-  return data ? (data.onboarding_step ?? 0) : null;
-}
-
-/** The signed-in user's home base once there is nothing left to finish. */
-export const CABINET_PATH = '/dashboard';
-
-/** First Member wizard step that actually collects something. */
-export const MEMBER_DETAILS_PATH = '/member-profile';
-
-/** Last Member wizard step. */
-export const MEMBER_BUSINESS_PATH = '/build-profile';
-
-/** The blocking "check your inbox" gate (step 2/4) — public, reached without a session. */
-export const VERIFY_EMAIL_PATH = '/verify-email';
-
-/** Where an anonymous caller goes. */
-export const LOGIN_PATH = '/login';
+export {
+  applyJoinOrigin,
+  CABINET_PATH,
+  fetchMindsetterOnboardingStep,
+  JOIN_APPLIED_PATH,
+  LOGIN_PATH,
+  MEMBER_BUSINESS_PATH,
+  MEMBER_COMPLETE,
+  MEMBER_DETAILS_PATH,
+  memberWizardPath,
+  MINDSETTER_COMPLETE,
+  mindsetterResumePath,
+  resolveOnboardingDestination,
+  VERIFY_EMAIL_PATH,
+} from './onboarding-progress';
 
 /**
  * The locale-less path this caller should be sent to, decided from their stored progress.
  *
  * Returns `/login` ONLY when there is no user at all. This is load-bearing: the middleware
- * bounces a signed-in visitor off `/login` and `/sign-up` to `/continue`, which calls this
- * function — so returning `/login` for a caller who *does* have a session would ping-pong
- * between the two forever. Every signed-in branch below therefore ends somewhere that accepts
- * a signed-in user, including the degenerate "no profile row" case.
+ * bounces a signed-in visitor off `/login` and `/sign-up`, so returning `/login` for a caller who
+ * *does* have a session would ping-pong between the two forever. Every signed-in branch
+ * (`resolveOnboardingDestination`) therefore ends somewhere that accepts a signed-in user.
  */
 export async function resolveOnboardingRedirect(): Promise<string> {
   const supabase = await createClient();
@@ -127,41 +59,12 @@ export async function resolveOnboardingRedirect(): Promise<string> {
 
   if (!user) return LOGIN_PATH;
 
-  // Confirmation is a real gate (stage 1.5): normally there is no session before the link is
-  // clicked, so this is a defensive branch rather than the common path.
-  if (!user.email_confirmed_at) return VERIFY_EMAIL_PATH;
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('onboarding_step, account_type')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  // No `profiles` row means the `on_auth_user_created` trigger didn't run — an anomaly, not a
-  // state the wizard can resume from. The cabinet degrades gracefully; `/member-profile` would
-  // bounce this caller straight back to `/login` and into the loop described above.
-  if (!profile) return CABINET_PATH;
-
-  const memberStep = profile.onboarding_step ?? 0;
-  if (memberStep < MEMBER_DETAILS_SAVED) return MEMBER_DETAILS_PATH;
-  if (memberStep < MEMBER_COMPLETE) return MEMBER_BUSINESS_PATH;
-
-  // Member profile is complete. The Mindsetter track is OPTIONAL — the client settled this on
-  // 15.09.2026: a Member is invited to upgrade (the header's `Upgrade` button, A4), never
-  // shoved into the extended wizard. Since the 28.10.2026 call (Release-2 П4) that holds for an
-  // UNFINISHED wizard too: someone who started it stays a Member, lands in the cabinet and picks
-  // it back up from "Continue Registration" whenever they choose — it used to pull them back
-  // into the form on every sign-in, with no way to see their own profile in between.
-  //
-  // The one exception is a Member who saved every required step but was never promoted: before
-  // П4 the promotion ran only when `/congrats` rendered, so closing the tab during the optional
-  // blocks left them a Member for good. `/congrats` finalizes idempotently, so one visit fixes it.
-  if (profile.account_type === 'member') {
-    const mindsetterStep = await fetchMindsetterOnboardingStep(supabase, user.id);
-    if (mindsetterStep !== null && mindsetterStep >= MINDSETTER_COMPLETE) {
-      return MINDSETTER_CONGRATS_PATH;
-    }
+  try {
+    return await resolveOnboardingDestination(supabase, user);
+  } catch (error) {
+    // A failed profile read (network/DB). `/continue` and `/api/auth/confirm` have no better
+    // fallback than the cabinet — the same place they went before the resolver surfaced errors.
+    console.error('[onboarding-redirect] could not resolve destination:', error);
+    return CABINET_PATH;
   }
-
-  return CABINET_PATH;
 }

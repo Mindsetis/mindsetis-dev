@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { get, useFormState } from 'react-hook-form';
 
 import { Card } from '@/components/ui/card';
 import { cn, mergeRefs } from '@/lib/utils';
@@ -84,6 +85,16 @@ export type CollapsibleCardProps = {
    * to reorder). The drag listeners attach only to the collapsed grip handle; touch/mouse/keyboard
    * all work via `SortableList`'s sensors. */
   draggable?: boolean;
+  /**
+   * Dotted path of THIS card's item in the form (`roles.0`, `superpowers.2`). When anything under it
+   * has a validation error the card opens itself and stays open until the error is fixed.
+   *
+   * Without it a FILLED card could hide its own problem: the outside click that collapses it is
+   * often the click on Save, and a card collapsed over a bad link URL, a non-Latin title or a
+   * reversed year range left the submit refused with nothing on screen to say why. Required in
+   * practice for every list form; optional only so the type stays usable outside one.
+   */
+  errorPath?: string;
   className?: string;
 };
 
@@ -119,6 +130,7 @@ export function CollapsibleCard({
   reorderLabel,
   id,
   draggable = false,
+  errorPath,
   className,
 }: CollapsibleCardProps) {
   // Lazy initializer — only evaluated once, at mount. A brand-new card (`EMPTY_ROLE` etc.) is
@@ -127,6 +139,20 @@ export function CollapsibleCard({
   // NOT reactively re-run this — only the outside-click effect below is allowed to collapse.
   const [expanded, setExpanded] = useState(() => !isFilled);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // A validation error anywhere inside this card forces it open. Done as a state adjustment during
+  // render (the pattern React documents for "reset state when a value changes") rather than an
+  // effect: the card is already open in the same commit that shows the error, so the submit's
+  // scroll-to-error (`revealFirstError`) finds the field there. It is edge-triggered on purpose —
+  // fixing the error does NOT snap the card shut under the cursor mid-typing; it collapses on the
+  // next outside click like any filled card.
+  const { errors } = useFormState({ name: errorPath });
+  const invalid = Boolean(errorPath && get(errors, errorPath));
+  const [wasInvalid, setWasInvalid] = useState(false);
+  if (invalid !== wasInvalid) {
+    setWasInvalid(invalid);
+    if (invalid) setExpanded(true);
+  }
 
   // Drag-to-reorder (mouse/touch/keyboard via `SortableList`'s sensors). Only pickable when
   // draggable AND collapsed — an expanded card has no grip handle to grab; it stays droppable so
@@ -141,7 +167,7 @@ export function CollapsibleCard({
   };
 
   useEffect(() => {
-    if (!expanded || !isFilled) return;
+    if (!expanded || !isFilled || invalid) return;
 
     // Collapse on an outside CLICK (not `mousedown`). `mousedown` fired mid-gesture and collapsed
     // this card before the click completed — the resulting layout reflow (this card shrinking)
@@ -171,7 +197,7 @@ export function CollapsibleCard({
 
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
-  }, [expanded, isFilled]);
+  }, [expanded, isFilled, invalid]);
 
   function handleDelete() {
     onDelete?.();

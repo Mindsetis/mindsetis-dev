@@ -15,10 +15,11 @@ type MindsetterOnboardingEntryPageProps = {
 };
 
 /**
- * Single entry into the Mindsetter wizard (Release-2 П4/П5, call of 28.10.2026). Every
- * "become a Mindsetter" control — the Upgrade dialog, the header's "Continue Registration", the
- * cabinet status banner, `/welcome` — points here instead of at `/roles`, so a Member who already
- * started resumes at their next unsaved step rather than at the first one. Nothing is rendered:
+ * Single entry into the Mindsetter wizard (Release-2 П4/П5, call of 28.10.2026) for the controls
+ * that don't know the caller's progress — the Upgrade dialog and `/welcome` point here instead of
+ * at `/roles`, so a Member who already started resumes at their next unsaved step rather than at
+ * the first one. (The header's "Continue Registration" and the cabinet status banner already read
+ * the step, so they link straight to `mindsetterResumePath` and skip this hop.) Nothing is rendered:
  * the destination is decided from stored progress (`mindsetterResumePath`), the same way
  * `/continue` does it for the Member wizard. A Mindsetter has nothing left to resume.
  */

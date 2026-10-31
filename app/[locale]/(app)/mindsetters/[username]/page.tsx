@@ -6,6 +6,7 @@ import { MindsetterProfileView } from '@/components/profile/MindsetterProfileVie
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { siteUrl } from '@/lib/auth/site-url';
+import { resolveIndustryLabels } from '@/lib/profile/industry-labels';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import type { Expertise } from '@/lib/validation/mindsetter';
@@ -38,9 +39,11 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  * else — or a nonexistent username, or a profile that isn't (yet) a Mindsetter at all —
  * resolves to `null` → `notFound()`.
  *
- * `isOwner` no longer changes what gets RENDERED once past this gate (Release-1 G1/G2 removed
- * the owner-only preview banner and the owner-only hidden CTAs, the two things that used to
- * differ) — it's still computed and used here only to decide WHETHER this gate passes.
+ * `isOwner` is computed here from the session (server-side) and used for two things: deciding
+ * WHETHER this gate passes, and — since 31.10 ("Правки 3.0" П11 extended to Mindsetters) — being
+ * handed to the view so the owner's Invite / Book CTAs are swapped for a Share control, as on the
+ * Member profile. Release-1 G1/G2 had removed every owner-vs-visitor difference; this is the one
+ * that came back.
  *
  * Since the 2026-08-10 "one profile page per account" pass this is the CANONICAL page for every
  * `account_type = 'mindsetter'` account: `/members/[username]` redirects here rather than
@@ -55,17 +58,33 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  */
 const loadMindsetterProfile = cache(async (username: string) => {
   const supabase = await createClient();
-  const { data: profile } = await supabase
+  const { data: rawProfile } = await supabase
     .from('profiles')
     .select(
-      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, country, city, region_name, languages, interests, socials, verification_status, account_type, is_blocked',
+      'id, username, full_name, last_name, avatar_url, bio, tagline, company, role, country, city, region_name, languages, interests, socials, verification_status, industries, industry_custom, industry_custom_status, account_type, is_blocked',
     )
     .eq('username', username)
     .maybeSingle();
 
   // Not a Mindsetter at all (never onboarded, or still a plain Member) — this route never
   // renders a Member's profile (that's `/members/[username]`), regardless of viewer.
-  if (!profile || profile.account_type !== 'mindsetter') return null;
+  if (!rawProfile || rawProfile.account_type !== 'mindsetter') return null;
+
+  // INDUSTRY ("Правки 3.0" П9): the three raw industry columns are collapsed into display labels
+  // right here and destructured OUT of the row, so a free-text `industry_custom` that staff have
+  // not approved (pending/rejected) can never travel past this function into the view — the same
+  // gate, and the same helper, as `/members/[username]`. Keep it that way: don't spread the raw
+  // row into props.
+  const {
+    industries,
+    industry_custom: industryCustom,
+    industry_custom_status: industryCustomStatus,
+    ...rest
+  } = rawProfile;
+  const profile = {
+    ...rest,
+    industryLabels: resolveIndustryLabels({ industries, industryCustom, industryCustomStatus }),
+  };
 
   const session = await getSessionContext();
   const isOwner = session?.user.id === profile.id;
@@ -93,6 +112,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
     profile,
     mindsetterProfile,
     sessionSettings,
+    isOwner,
   };
 });
 
@@ -180,7 +200,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
     notFound();
   }
 
-  const { profile, mindsetterProfile, sessionSettings } = data;
+  const { profile, mindsetterProfile, sessionSettings, isOwner } = data;
 
   // Release-1 G3: canonical, absolute, locale-prefixed public URL for this profile — the one
   // string `ShareProfileButton` (Web Share API / clipboard fallback) needs. Built server-side
@@ -229,6 +249,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
   return (
     <MindsetterProfileView
       shareUrl={shareUrl}
+      isOwner={isOwner}
       t={t}
       profile={{
         username: profile.username,
@@ -246,6 +267,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
         interests: profile.interests,
         socials: profile.socials,
         verification_status: profile.verification_status,
+        industryLabels: profile.industryLabels,
         roles,
         superpowers,
         promoVideo,

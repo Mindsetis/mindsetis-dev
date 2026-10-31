@@ -7,21 +7,23 @@ import { useState } from 'react';
 import { type Control, useForm, type UseFormReturn, useWatch } from 'react-hook-form';
 
 import { saveSuperpowers } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
-import { applyFieldErrors } from '@/components/auth/applyFieldErrors';
+import { applyActionFailure } from '@/components/auth/applyFieldErrors';
 import { useSectionDirtyGuard } from '@/components/dashboard/unsaved-changes';
 import { useCabinetSaved } from '@/components/dashboard/use-cabinet-saved';
 import { CollapsibleCard, DeleteIcon } from '@/components/mindsetter-onboarding/CollapsibleCard';
 import { SortableList } from '@/components/mindsetter-onboarding/SortableList';
 import { StepActions } from '@/components/mindsetter-onboarding/StepActions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Form,
+  FormArrayMessage,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-alert';
+import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
@@ -89,6 +91,7 @@ function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCa
       reorderLabel={t('common.reorder')}
       id={id}
       draggable={draggable}
+      errorPath={`superpowers.${index}`}
       collapsedSummary={
         <div className="flex flex-col gap-1">
           <p className="truncate text-base font-bold tracking-[0.3em] text-foreground uppercase">
@@ -194,13 +197,15 @@ function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCa
 export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: SuperpowersFormProps) {
   const router = useRouter();
   const notifySaved = useCabinetSaved();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<FormBanner>(null);
 
   const paddedInitial: Superpower[] = Array.from({ length: MAX_SUPERPOWERS }, (_, i) => ({
     ...(initialSuperpowers?.[i] ?? EMPTY_SUPERPOWER),
   }));
 
   const form: UseFormReturn<SuperpowersStepInput> = useForm<SuperpowersStepInput>({
+    // `revealOnInvalid` focuses the first error in page order; RHF's own focus would fight it.
+    shouldFocusError: false,
     resolver: zodResolver(superpowersStepSchema),
     mode: 'onChange',
     defaultValues: { superpowers: paddedInitial },
@@ -212,15 +217,14 @@ export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: Supe
   useSectionDirtyGuard(form.formState.isDirty);
 
   const onSubmit = form.handleSubmit(
-    async (values) => {
+    async (values, event) => {
       setFormError(null);
 
       const filled = values.superpowers.filter(isSuperpowerFilled);
 
       const result = await saveSuperpowers({ superpowers: filled });
       if (!result.ok) {
-        applyFieldErrors(form.setError, result.error.fieldErrors);
-        setFormError(result.error.message);
+        setFormError(applyActionFailure(form, result.error, event));
         return;
       }
 
@@ -235,13 +239,11 @@ export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: Supe
       router.push('/mindsetter-onboarding/help');
     },
     // A fully-empty form (all 3 slots blank) fails `superpowersStepSchema`'s top-level
-    // "at least `MIN_SUPERPOWERS` filled" check with an error on the array field itself
-    // (`superpowers`, not any one card's title/description) — there's no per-card `FormMessage`
-    // for that, so surface it via the same banner a server error uses instead of failing silently.
-    (errors) => {
-      const rootMessage = errors.superpowers?.message;
-      if (rootMessage) setFormError(rootMessage);
-    },
+    // "at least `MIN_SUPERPOWERS` filled" check with an error on the array itself (`superpowers`,
+    // not any one card's title/description). The resolver files that under `errors.superpowers.root`
+    // — not `.message`, which this handler used to read, and found empty — so it is rendered by
+    // the `FormArrayMessage` below the cards; all that is left to do here is take the visitor to it.
+    revealOnInvalid,
   );
 
   const handleClear = (index: number) => {
@@ -267,11 +269,7 @@ export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: Supe
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
-        {formError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormErrorAlert messages={formError} />
 
         <SortableList ids={rowIds} onReorder={handleReorder}>
           <div className="flex flex-col gap-3 md:gap-4">
@@ -287,6 +285,8 @@ export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: Supe
             ))}
           </div>
         </SortableList>
+
+        <FormArrayMessage name="superpowers" />
 
         <StepActions
           onCancel={() => router.push('/dashboard/profile')}
