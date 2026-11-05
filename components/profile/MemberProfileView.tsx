@@ -81,8 +81,8 @@ export interface MemberProfileViewLabels {
   beyondBusinessEyebrow: string;
   beyondBusinessHeading: string;
   website: string;
-  /** Accessible name of the owner-only icon-only Share control. */
-  shareAriaLabel: string;
+  /** Visible text (and accessible name) of the owner-only "Share profile" button. */
+  shareLabel: string;
   /** Toast shown after the clipboard-copy fallback succeeds. */
   shareLinkCopied: string;
   /** Toast shown when both Web Share and the clipboard fallback are unavailable. */
@@ -413,9 +413,9 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
             {isOwner && shareUrl ? (
               // "Правки 3.0" П11 (reverses Release-1 G3 for Members): on your OWN profile this slot
               // is a working Share control instead of "Invite to event". The same
-              // `OwnerShareButton` (shared with the Mindsetter owner view, which owns the 44px
-              // shape — see that file) in the light-gray bordered box this screen's social icons
-              // use (`socialIconButton`).
+              // `OwnerShareButton` (shared with the Mindsetter owner view) — since 03.11 a LABELLED
+              // "Share profile" button wearing exactly the Invite button's look and size
+              // (`inviteButton`, 56px, full-width on phones, 188px from `md`), client's request.
               //
               // NOT FROM THE DESIGN: Figma has no Share control on ANY Member profile frame —
               // neither desktop (`383:4667` own profile shows no button at all, `401:6375` the
@@ -428,11 +428,11 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
               // `size-4` so it doesn't look lost in the bigger box.
               <OwnerShareButton
                 url={shareUrl}
-                ariaLabel={labels.shareAriaLabel}
+                label={labels.shareLabel}
                 copiedMessage={labels.shareLinkCopied}
                 errorMessage={labels.shareCopyFailed}
                 shareTitle={displayName}
-                className={cn('self-start', styles.socialIconButton)}
+                className={cn('h-14 w-full px-5 md:w-[188px]', styles.inviteButton)}
               />
             ) : (
               // Event invites are unbuilt — same treatment as every other unbuilt control across

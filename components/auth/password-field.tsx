@@ -39,7 +39,7 @@ function PasswordHintIcon() {
  *
  * Color states: neutral `text-foreground` (white) before the visitor has typed anything —
  * nothing has been checked yet, so nothing should read as failing. Once `password` is
- * non-empty, each hint switches to `text-success`/`text-destructive` per whether it's met.
+ * non-empty, each hint switches to `text-success`/`text-error` per whether it's met.
  */
 export function PasswordRequirements({ password }: { password: string }) {
   const t = useTranslations('auth');
@@ -57,9 +57,9 @@ export function PasswordRequirements({ password }: { password: string }) {
         <li
           key={key}
           className={cn(
-            'flex items-center gap-1 text-tiny font-normal',
+            'flex items-center gap-1 text-sm font-normal',
             !isChecking && 'text-foreground',
-            isChecking && (met ? 'text-success' : 'text-destructive'),
+            isChecking && (met ? 'text-success' : 'text-error'),
           )}
         >
           <PasswordHintIcon />

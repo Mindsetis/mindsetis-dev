@@ -63,7 +63,7 @@ function Textarea({ className, valid, autoGrow, ref, ...props }: TextareaProps) 
         'flex w-full rounded-lg border border-input bg-transparent p-4 text-base font-medium text-foreground outline-none transition-colors',
         'placeholder:text-muted-foreground',
         'focus-visible:border-input-focus',
-        'aria-invalid:border-destructive',
+        'aria-invalid:border-error',
         'disabled:cursor-not-allowed disabled:opacity-60',
         autoGrow ? 'min-h-14 resize-none overflow-hidden' : 'min-h-14',
         valid && 'border-input-focus',

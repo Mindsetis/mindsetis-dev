@@ -34,7 +34,7 @@ function SelectTrigger({
         'flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-input bg-transparent text-foreground outline-none transition-colors',
         'data-[placeholder]:text-muted-foreground',
         'focus-visible:border-input-focus',
-        'aria-invalid:border-destructive',
+        'aria-invalid:border-error',
         'disabled:cursor-not-allowed disabled:opacity-60',
         // Default matches the shared 56px/16px-padding input standard; `sm` keeps its
         // original compact sizing (not part of the Figma input spec).

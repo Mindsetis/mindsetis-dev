@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/navigation';
 
 type UnsavedChangesContextValue = {
@@ -339,8 +340,15 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
             <AlertDialogDescription>{t('description')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('stay')}</AlertDialogCancel>
+            {/* "Stay" is the primary (blue) choice: it is the safe one, and what Esc and an overlay
+                click do. Radix focuses the Cancel part on open, so Enter on open also means Stay.
+                "Leave" is the quiet grey outline. Both use `asChild` so the shared `Button`
+                variants style them instead of the alert-dialog defaults. */}
+            <AlertDialogCancel asChild>
+              <Button variant="primary">{t('stay')}</Button>
+            </AlertDialogCancel>
             <AlertDialogAction
+              asChild
               onClick={() => {
                 const action = pendingActionRef.current;
                 setPending(null);
@@ -352,7 +360,7 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
                 action?.();
               }}
             >
-              {t('leave')}
+              <Button variant="outline">{t('leave')}</Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

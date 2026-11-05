@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useRouter } from '@/i18n/navigation';
+import { MINDSETTER_FIRST_STEP_PATH } from '@/lib/auth/onboarding-progress';
 
 /**
  * Bullet order and meaning both come from the Figma frame (2026-09-21 copy decision, see the
@@ -164,9 +165,10 @@ export function UpgradeToMindsetterDialog({
             onClick={() => {
               onOpenChange(false);
               requestAnimationFrame(() => {
-                // The wizard's entry route, not `/roles`: it resumes a Member who already
-                // started at their next unsaved step (Release-2 П5).
-                guard(() => router.push('/mindsetter-onboarding'));
+                // Straight to the first step: this dialog only opens for a Member who hasn't
+                // started the wizard (`memberComplete` — an in-progress one sees "Continue
+                // Registration" instead), so the entry route would only add a redirect.
+                guard(() => router.push(MINDSETTER_FIRST_STEP_PATH));
               });
             }}
           >

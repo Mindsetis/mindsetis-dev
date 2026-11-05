@@ -14,7 +14,7 @@ import { Link } from '@/i18n/navigation';
  * It is a component rather than a string because the sentence contains a link, which neither a
  * Zod message nor `FormMessage` (plain text only) can carry. The caller swaps it in for
  * `FormMessage` when the field error equals `EMAIL_ALREADY_REGISTERED`. Same look as
- * `FormMessage`: 12px, destructive colour, `role="alert"`.
+ * `FormMessage`: 14px, `text-error` coral, `role="alert"`.
  *
  * The link goes to `/login?email=…`, which prefills the field; after signing in, the existing
  * `resolveOnboardingRedirect()` returns the visitor to whatever step of the application they
@@ -26,7 +26,7 @@ export function EmailAlreadyRegisteredMessage({ email }: { email: string }) {
   const normalized = email.trim().toLowerCase();
 
   return (
-    <p role="alert" className="text-[12px] font-normal text-destructive">
+    <p role="alert" className="text-sm font-normal text-error">
       {t.rich('message', {
         login: (chunks) => (
           <Link

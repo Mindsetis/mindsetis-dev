@@ -200,7 +200,7 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
                           <p
                             data-slot="form-message"
                             role="alert"
-                            className="basis-full text-tiny text-destructive"
+                            className="basis-full text-sm text-error"
                           >
                             {tValidation(rangeMessage)}
                           </p>
@@ -210,7 +210,7 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
                   })}
 
                   {dayError ? (
-                    <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+                    <p data-slot="form-message" role="alert" className="text-sm text-error">
                       {tValidation(dayError)}
                     </p>
                   ) : null}
@@ -235,7 +235,7 @@ export function WeeklyAvailabilityField({ control }: { control: Control<SessionS
       </div>
 
       {fieldState.error?.message ? (
-        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+        <p data-slot="form-message" role="alert" className="text-sm text-error">
           {tValidation(fieldState.error.message)}
         </p>
       ) : null}

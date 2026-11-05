@@ -1,9 +1,12 @@
 import 'server-only';
 
-import { Heading, Text } from '@react-email/components';
-
 import { getEmailTranslator } from '@/lib/email/i18n';
-import { BaseLayout, EmailButton, textStyles } from '@/lib/email/templates/base-layout';
+import {
+  BaseLayout,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+} from '@/lib/email/templates/base-layout';
 import type { AmbassadorApplicationEmailProps, EmailLocale } from '@/lib/validation/email';
 
 export type AmbassadorApplicationEmailComponentProps = AmbassadorApplicationEmailProps & {
@@ -18,6 +21,8 @@ export type AmbassadorApplicationEmailComponentProps = AmbassadorApplicationEmai
  * additionally gets the requirement the client asked for: an Ambassador must have an account, so
  * they are told to register with THIS email — that is what lets the database link the
  * application to their profile once the address is confirmed (see the migration's trigger).
+ * `isGuest` means "has no account yet": a signed-out applicant whose address is already
+ * registered gets the short version too (the action decides, 05.11.2026).
  */
 export function AmbassadorApplicationEmail({
   userName,
@@ -28,18 +33,16 @@ export function AmbassadorApplicationEmail({
   const t = getEmailTranslator(locale);
   return (
     <BaseLayout previewText={t('ambassadorApplication.heading')} t={t}>
-      <Heading as="h1" style={textStyles.heading}>
-        {t('ambassadorApplication.heading')}
-      </Heading>
-      <Text style={textStyles.body}>
+      <EmailHeading>{t('ambassadorApplication.heading')}</EmailHeading>
+      <EmailText>
         {userName
           ? t('ambassadorApplication.greeting', { name: userName })
           : t('ambassadorApplication.greetingGeneric')}
-      </Text>
-      <Text style={textStyles.body}>{t('ambassadorApplication.body')}</Text>
+      </EmailText>
+      <EmailText>{t('ambassadorApplication.body')}</EmailText>
       {isGuest ? (
         <>
-          <Text style={textStyles.body}>{t('ambassadorApplication.guestRegister')}</Text>
+          <EmailText>{t('ambassadorApplication.guestRegister')}</EmailText>
           {signUpUrl ? (
             <EmailButton href={signUpUrl}>{t('ambassadorApplication.guestCta')}</EmailButton>
           ) : null}

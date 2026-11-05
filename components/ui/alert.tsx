@@ -10,8 +10,10 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: 'border-border bg-card text-card-foreground [&>svg]:text-foreground',
-        destructive:
-          'border-destructive/40 bg-destructive/10 text-destructive [&>svg]:text-destructive',
+        // Every `destructive` alert in the app is a form/error banner, so it follows the field
+        // error standard (coral `--color-error`, owner's call 05.11.2026) rather than the
+        // darker `--color-destructive` that destructive buttons and menu items keep.
+        destructive: 'border-error/40 bg-error/10 text-error [&>svg]:text-error',
         success: 'border-success/40 bg-success/10 text-success [&>svg]:text-success',
       },
     },

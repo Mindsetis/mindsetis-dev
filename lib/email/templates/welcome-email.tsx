@@ -1,9 +1,12 @@
 import 'server-only';
 
-import { Heading, Text } from '@react-email/components';
-
 import { getEmailTranslator } from '@/lib/email/i18n';
-import { BaseLayout, EmailButton, textStyles } from '@/lib/email/templates/base-layout';
+import {
+  BaseLayout,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+} from '@/lib/email/templates/base-layout';
 import type { EmailLocale, WelcomeEmailProps } from '@/lib/validation/email';
 
 export type WelcomeEmailComponentProps = WelcomeEmailProps & { locale: EmailLocale };
@@ -23,13 +26,11 @@ export function WelcomeEmail({ actionUrl, userName, locale }: WelcomeEmailCompon
   const t = getEmailTranslator(locale);
   return (
     <BaseLayout previewText={t('welcome.heading')} t={t}>
-      <Heading as="h1" style={textStyles.heading}>
-        {t('welcome.heading')}
-      </Heading>
-      <Text style={textStyles.body}>
+      <EmailHeading>{t('welcome.heading')}</EmailHeading>
+      <EmailText>
         {userName ? t('welcome.greeting', { name: userName }) : t('welcome.greetingGeneric')}
-      </Text>
-      <Text style={textStyles.body}>{t('welcome.body')}</Text>
+      </EmailText>
+      <EmailText>{t('welcome.body')}</EmailText>
       <EmailButton href={actionUrl}>{t('welcome.cta')}</EmailButton>
     </BaseLayout>
   );

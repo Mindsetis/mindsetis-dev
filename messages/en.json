@@ -21,7 +21,8 @@
     "login": "Log in",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "wizardStep": "Step {current} of {total}"
   },
   "footer": {
     "comingSoon": {
@@ -147,14 +148,14 @@
         "avatarMapAlt": "Mindsetters and members from around the world"
       },
       "whatIsMindsetis": {
-        "eyebrow": "WHAT IS MINDSETIS",
+        "eyebrow": "INSIDE MINDSETIS",
         "title": "What you actually get here",
-        "subtitle": "Real access to founders who’ve been there — 1:1 or peer-to-peer, whenever you need it.",
+        "subtitle": "Meaningful networking with founders worldwide — real conversations, practical insights, and new opportunities.",
         "watchLabel": "Click for watching",
         "catalogCta": "Meet People & Join Events"
       },
       "threeWays": {
-        "title": "Three ways to start",
+        "title": "Three ways to network & learn",
         "cards": [
           {
             "title": "Become a Mindsetter",
@@ -168,7 +169,24 @@
             "title": "Join Mindsetis Events",
             "description": "Peer-to-peer formats for meaningful conversations about what’s on your mind"
           }
-        ]
+        ],
+        "popups": {
+          "gotIt": "Got it",
+          "applyToJoin": "Apply to join",
+          "close": "Close",
+          "directory": {
+            "title": "Mindsetter Directory is coming soon",
+            "body": "Soon, you’ll be able to explore Mindsetters on the platform, book 1:1 sessions, and invite them to your own peer-to-peer events.",
+            "signedIn": "We’ll email you at your registered address as soon as the directory is live.",
+            "guest": "Apply to join, and we’ll notify you when the directory is ready."
+          },
+          "events": {
+            "title": "Mindsetis Events are coming soon",
+            "body": "Soon, you’ll be able to explore and join peer-to-peer events, including masterminds, brainstorming sessions, business case discussions, and Sensessions. As a Mindsetter, you’ll also be able to create and host your own events.",
+            "signedIn": "We’ll email you at your registered address as soon as Mindsetis Events go live.",
+            "guest": "Apply to join, and we’ll notify you when Mindsetis Events are ready."
+          }
+        }
       },
       "aiSearch": {
         "eyebrow": "AI search",
@@ -414,11 +432,6 @@
               "before": "By submitting, you agree to our ",
               "link": "Privacy Policy",
               "after": "."
-            },
-            "accountExists": {
-              "before": "This email already has an account. ",
-              "link": "Log in",
-              "after": " to apply."
             }
           },
           "back": "Back",
@@ -1117,6 +1130,7 @@
     "inviteToEvent": "Invite to event",
     "share": {
       "ariaLabel": "Share this profile",
+      "label": "Share profile",
       "copyFailed": "Could not copy the link. You can copy it from the address bar instead.",
       "linkCopied": "Link copied to clipboard"
     },
@@ -1234,6 +1248,7 @@
     "sessionPricePaid": "Session price: {price}",
     "share": {
       "ariaLabel": "Share this profile",
+      "label": "Share profile",
       "copyFailed": "Could not copy the link. You can copy it from the address bar instead.",
       "linkCopied": "Link copied to clipboard"
     },

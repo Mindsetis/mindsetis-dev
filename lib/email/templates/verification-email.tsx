@@ -1,9 +1,12 @@
 import 'server-only';
 
-import { Heading, Text } from '@react-email/components';
-
 import { getEmailTranslator } from '@/lib/email/i18n';
-import { BaseLayout, EmailButton, textStyles } from '@/lib/email/templates/base-layout';
+import {
+  BaseLayout,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+} from '@/lib/email/templates/base-layout';
 import type { EmailLocale, VerificationEmailProps } from '@/lib/validation/email';
 
 export type VerificationEmailComponentProps = VerificationEmailProps & { locale: EmailLocale };
@@ -24,17 +27,15 @@ export function VerificationEmail({
   const t = getEmailTranslator(locale);
   return (
     <BaseLayout previewText={t('verification.heading')} t={t}>
-      <Heading as="h1" style={textStyles.heading}>
-        {t('verification.heading')}
-      </Heading>
-      <Text style={textStyles.body}>
+      <EmailHeading>{t('verification.heading')}</EmailHeading>
+      <EmailText>
         {userName
           ? t('verification.greeting', { name: userName })
           : t('verification.greetingGeneric')}
-      </Text>
-      <Text style={textStyles.body}>{t('verification.body')}</Text>
+      </EmailText>
+      <EmailText>{t('verification.body')}</EmailText>
       <EmailButton href={actionUrl}>{t('verification.cta')}</EmailButton>
-      <Text style={textStyles.fine}>{t('verification.expiry')}</Text>
+      <EmailText variant="fine">{t('verification.expiry')}</EmailText>
     </BaseLayout>
   );
 }

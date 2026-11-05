@@ -695,11 +695,11 @@ export function MindsetterProfileView({
   const ownerShare = isOwner ? (
     <OwnerShareButton
       url={shareUrl}
-      ariaLabel={t('share.ariaLabel')}
+      label={t('share.label')}
       copiedMessage={t('share.linkCopied')}
       errorMessage={t('share.copyFailed')}
       shareTitle={displayName}
-      className={styles.socialIconButton}
+      className={cn('h-14 w-full px-5 lg:w-auto', memberStyles.inviteButton)}
     />
   ) : null;
   const locationText = resolveLocationText(profile);

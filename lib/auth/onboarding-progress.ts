@@ -63,6 +63,13 @@ const MINDSETTER_STEP_ROUTES = [
 export const MINDSETTER_COMPLETE = MINDSETTER_STEP_ROUTES.length;
 
 /**
+ * Where a Member who has NOT started the wizard goes — every "Upgrade" / "Become a Mindsetter"
+ * control shown in that state links here directly. Going through `/mindsetter-onboarding` would
+ * cost a visible extra redirect (owner's test, 05.11.2026) to compute this same answer.
+ */
+export const MINDSETTER_FIRST_STEP_PATH = MINDSETTER_STEP_ROUTES[0];
+
+/**
  * End of the core wizard. Rendering it runs `finalizeMindsetterOnboarding`, which promotes a
  * caller who saved every required step but is still a Member — see `mindsetterResumePath`.
  */

@@ -392,7 +392,7 @@ function AvatarCropStage({ request, onCancel, onConfirm, onPickNew }: StageProps
         {loadError ? (
           <p
             role="alert"
-            className="flex h-full items-center justify-center px-6 text-center text-tiny text-destructive"
+            className="flex h-full items-center justify-center px-6 text-center text-sm text-error"
           >
             {t('loadError')}
           </p>
@@ -471,7 +471,7 @@ function AvatarCropStage({ request, onCancel, onConfirm, onPickNew }: StageProps
       </div>
 
       {error ? (
-        <p role="alert" className="text-tiny text-destructive">
+        <p role="alert" className="text-sm text-error">
           {error}
         </p>
       ) : null}

@@ -51,6 +51,21 @@ const CARD_WIDTH = 600;
 const pinned = (color) =>
   `background-color:${color};background-image:linear-gradient(${color},${color});`;
 
+/**
+ * Gmail iOS/Android dark-mode fix (client request, 2026-11-03: body text invisible - dark on our
+ * dark card). Gmail recolours TEXT but keeps our pinned card background, so white text turns
+ * near-black. Remi Parmentier's blend trick, scoped to Gmail by the `u + .body` selector (Gmail
+ * rewrites <body class="body"> and inserts a <u> before it; no other client matches): text sits in
+ * `.gmail-blend-screen > .gmail-blend-difference`. Gmail also inverts those black backgrounds to
+ * white, so the inner `difference` layer (white minus the inverted text colour) recovers the
+ * authored colour, and the outer `screen` layer is neutral for the black box over the card. With
+ * no inversion (Gmail light mode) both layers are an identity. Clients without mix-blend-mode or
+ * without the `u + .body` match ignore it and show the plain inline colour.
+ * Keep in sync with `Blend` in lib/email/templates/base-layout.tsx.
+ */
+const blend = (inner) =>
+  `<span class="gmail-blend-screen"><span class="gmail-blend-difference">${inner}</span></span>`;
+
 /** Support address shown in every footer. Change here, rebuild, re-paste all five. */
 const SUPPORT_EMAIL = 'support@mindsetis.com';
 
@@ -66,12 +81,12 @@ const SUPPORT_EMAIL = 'support@mindsetis.com';
  * a logo edited in place would keep showing the old artwork in inboxes for months. A new file
  * means a new URL means a new cache key — swap this constant, rebuild, re-paste, done.
  *
- * The asset is 600×81 and rendered at 300 wide: 2× so it stays sharp on retina displays.
+ * The asset is 600×108 and rendered at 300 wide: 2× so it stays sharp on retina displays.
  */
 const LOGO = {
-  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png',
+  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-4df59990.png',
   width: 300,
-  height: 41,
+  height: 54,
 };
 
 /**
@@ -83,6 +98,16 @@ const LOGO = {
  */
 const POSTAL_ADDRESS = null; // e.g. 'Mindsetis OU, Some street 1, Tallinn, Estonia'
 
+/**
+ * Black-on-blue label everywhere except Gmail. Gmail's dark mode recolours a dark label on the
+ * pinned blue too (a "blue minus blue = black" blend came out purple on iPhone, 05.11.2026), so in
+ * Gmail — light and dark alike, it can't tell them apart — the button turns into the site's outline
+ * style (dark fill, blue border; `u + .body .dm-btn` below) with a WHITE label inside the same
+ * screen/difference wrapper as the body text, which Gmail renders correctly.
+ */
+const buttonLabel = (label) =>
+  `<span class="gmail-blend-screen"><span class="gmail-blend-difference"><span class="gmail-btn-label dm-btn-text" style="color:${c.primaryForeground};">${label}</span></span></span>`;
+
 function button(url, label) {
   return [
     '              <!--[if mso]>',
@@ -92,7 +117,7 @@ function button(url, label) {
     '              </v:roundrect>',
     '              <![endif]-->',
     '              <!--[if !mso]><!-- -->',
-    `              <a href="${url}" style="${pinned(c.primary)}border-radius:999px;color:${c.primaryForeground};display:inline-block;font-family:${FONT};font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;">${label}</a>`,
+    `              <a href="${url}" style="${pinned(c.primary)}border-radius:999px;color:${c.primaryForeground};display:inline-block;font-family:${FONT};font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;" class="dm-btn">${buttonLabel(label)}</a>`,
     '              <!--<![endif]-->',
   ].join('\n');
 }
@@ -107,11 +132,11 @@ function button(url, label) {
  */
 function fallbackLink(url) {
   return [
-    `            <p style="color:${c.muted};font-family:${FONT};font-size:13px;line-height:20px;margin:24px 0 0;">`,
-    '              Button not working? Copy and paste this link into your browser:',
+    `            <p class="dm-muted" style="color:${c.muted};font-family:${FONT};font-size:13px;line-height:20px;margin:24px 0 0;">`,
+    `              ${blend('Button not working? Copy and paste this link into your browser:')}`,
     '            </p>',
     '            <p style="margin:8px 0 0;">',
-    `              <a href="${url}" style="color:${c.primary};font-family:${FONT};font-size:13px;line-height:20px;text-decoration:underline;word-break:break-all;">${url}</a>`,
+    `              ${blend(`<a href="${url}" class="dm-link" style="color:${c.primary};font-family:${FONT};font-size:13px;line-height:20px;text-decoration:underline;word-break:break-all;">${url}</a>`)}`,
     '            </p>',
   ].join('\n');
 }
@@ -120,9 +145,8 @@ function footer() {
   const address = POSTAL_ADDRESS ? `${POSTAL_ADDRESS} &middot; ` : '';
   return [
     `            <hr style="border:0;border-top:1px solid ${c.border};margin:32px 0 16px;" />`,
-    `            <p style="color:${c.muted};font-family:${FONT};font-size:12px;line-height:18px;margin:0;">`,
-    `              Mindsetis Community &middot; ${address}Need help? Write to`,
-    `              <a href="mailto:${SUPPORT_EMAIL}" style="color:${c.muted};text-decoration:underline;">${SUPPORT_EMAIL}</a>.`,
+    `            <p class="dm-muted" style="color:${c.muted};font-family:${FONT};font-size:12px;line-height:18px;margin:0;">`,
+    `              ${blend(`Mindsetis Community &middot; ${address}Need help? Write to <a href="mailto:${SUPPORT_EMAIL}" class="dm-muted" style="color:${c.muted};text-decoration:underline;">${SUPPORT_EMAIL}</a>.`)}`,
     '            </p>',
   ].join('\n');
 }
@@ -131,7 +155,7 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
   const body = paragraphs
     .map(
       (p) =>
-        `                <p style="color:${c.foreground};font-family:${FONT};font-size:16px;line-height:24px;margin:0 0 16px;">${p}</p>`,
+        `                <p class="dm-fg" style="color:${c.foreground};font-family:${FONT};font-size:16px;line-height:24px;margin:0 0 16px;">${blend(p)}</p>`,
     )
     .join('\n');
 
@@ -172,9 +196,30 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
         .m-pad { padding: 28px 20px !important; }
         .m-wrap { padding: 16px 8px !important; }
       }
+      /* Gmail iOS/Android dark mode (see blend() in build.mjs). the u + .body selector only matches Gmail. */
+      u + .body .gmail-blend-screen { background: #000; mix-blend-mode: screen; }
+      u + .body .gmail-blend-difference { background: #000; mix-blend-mode: difference; }
+      u + .body .dm-btn { background-color: ${c.card} !important; background-image: linear-gradient(${c.card}, ${c.card}) !important; border: 2px solid ${c.primary} !important; padding: 12px 30px !important; }
+      u + .body .gmail-btn-label { color: ${c.foreground} !important; }
+      /* Apple Mail dark */
+      @media (prefers-color-scheme: dark) {
+        .dm-card { background-color: ${c.card} !important; }
+        .dm-fg { color: ${c.foreground} !important; }
+        .dm-muted { color: ${c.muted} !important; }
+        .dm-link { color: ${c.primary} !important; }
+        .dm-btn { background-color: ${c.primary} !important; }
+        .dm-btn-text { color: ${c.primaryForeground} !important; }
+      }
+      /* Outlook.com dark (ogsc = text colour, ogsb = background colour) */
+      [data-ogsb] .dm-card { background-color: ${c.card} !important; }
+      [data-ogsc] .dm-fg { color: ${c.foreground} !important; }
+      [data-ogsc] .dm-muted { color: ${c.muted} !important; }
+      [data-ogsc] .dm-link { color: ${c.primary} !important; }
+      [data-ogsb] .dm-btn { background-color: ${c.primary} !important; }
+      [data-ogsc] .dm-btn-text { color: ${c.primaryForeground} !important; }
     </style>
   </head>
-  <body style="margin:0;padding:0;width:100%;">
+  <body class="body" style="margin:0;padding:0;width:100%;">
     <div style="display:none;font-size:1px;color:${c.card};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
       ${preheader}${preheaderPad}
     </div>
@@ -186,7 +231,7 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
                ignores max-width; every other client takes width:100% capped by max-width.
                border-collapse:separate is needed for border-radius on a table to show.
                bgcolor + background-color + same-colour gradient: see pinned() in build.mjs. -->
-          <table role="presentation" width="${CARD_WIDTH}" cellpadding="0" cellspacing="0" border="0" bgcolor="${c.card}" style="width:100%;max-width:${CARD_WIDTH}px;margin:0 auto;border-collapse:separate;border-spacing:0;border:1px solid ${c.border};border-radius:12px;${pinned(c.card)}">
+          <table role="presentation" width="${CARD_WIDTH}" cellpadding="0" cellspacing="0" border="0" bgcolor="${c.card}" class="dm-card" style="width:100%;max-width:${CARD_WIDTH}px;margin:0 auto;border-collapse:separate;border-spacing:0;border:1px solid ${c.border};border-radius:12px;${pinned(c.card)}">
             <tr>
               <!-- radius 11 = the table's 12 minus its 1px border, so this cell's own
                    background does not poke past the rounded inner edge. -->
@@ -207,8 +252,8 @@ function buildDocument({ title, preheader, heading, paragraphs, ctaLabel, url, f
                   style="display:block;border:0;outline:none;text-decoration:none;width:${LOGO.width}px;height:auto;max-width:100%;margin:0 0 32px;color:${c.primary};font-family:${FONT};font-size:20px;font-weight:700;letter-spacing:0.5px;"
                 />
 
-                <h1 style="color:${c.foreground};font-family:${FONT};font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
-                  ${heading}
+                <h1 class="dm-fg" style="color:${c.foreground};font-family:${FONT};font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
+                  ${blend(heading)}
                 </h1>
 
 ${body}
@@ -223,8 +268,8 @@ ${button(url, ctaLabel)}
 
 ${fallbackLink(url)}
 
-            <p style="color:${c.muted};font-family:${FONT};font-size:13px;line-height:20px;margin:24px 0 0;">
-              ${finePrint}
+            <p class="dm-muted" style="color:${c.muted};font-family:${FONT};font-size:13px;line-height:20px;margin:24px 0 0;">
+              ${blend(finePrint)}
             </p>
 
 ${footer()}

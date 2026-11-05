@@ -6,6 +6,7 @@ import { WelcomeMindsetterPitchCard } from '@/components/auth/WelcomeMindsetterP
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
+import { MINDSETTER_FIRST_STEP_PATH } from '@/lib/auth/onboarding-progress';
 
 /**
  * Congrats-screen ("/welcome") body — Figma "Congrats screen" `387:3000` (desktop) /
@@ -67,7 +68,7 @@ export function WelcomeCtas({ onContinueAsMember }: { onContinueAsMember: () => 
         <Button asChild variant="primary" size="lg" className="w-full">
           {/* Extended Mindsetter onboarding (ROADMAP stage 1.9) via its entry route, which
               resumes at the next unsaved step for someone who already started (Release-2 П5). */}
-          <Link href="/mindsetter-onboarding">{t('ctas.applyForMindsetter')}</Link>
+          <Link href={MINDSETTER_FIRST_STEP_PATH}>{t('ctas.applyForMindsetter')}</Link>
         </Button>
 
         {/* `md:grid-cols-2`, NOT `md:flex-row` + `flex-1` on each: the two are structurally

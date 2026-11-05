@@ -166,12 +166,12 @@ export function Combobox({
   const hasValue = !!selectedOption;
 
   const borderColorClass = invalid
-    ? 'border-destructive'
+    ? 'border-error'
     : open || hasValue
       ? 'border-input-focus'
       : 'border-input';
   const chevronColorClass = invalid
-    ? 'text-destructive'
+    ? 'text-error'
     : open || hasValue
       ? 'text-input-focus'
       : 'text-input';
@@ -255,7 +255,7 @@ export function Combobox({
         className={cn(
           'w-[var(--radix-popover-trigger-width)] bg-background p-0 shadow-none',
           isTop ? 'rounded-b-none border-b-0' : 'rounded-t-none border-t-0',
-          invalid ? 'border-destructive' : 'border-input-focus',
+          invalid ? 'border-error' : 'border-input-focus',
         )}
         // SEARCHABLE: leave Radix's default open-autofocus alone. It moves focus to the first
         // tabbable element in the content — the `CommandInput` — and selects its text, so the user

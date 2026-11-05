@@ -1,6 +1,17 @@
 import 'server-only';
 
-import { Body, Button, Head, Hr, Html, Img, Link, Preview, Text } from '@react-email/components';
+import {
+  Body,
+  Button,
+  Head,
+  Heading,
+  Hr,
+  Html,
+  Img,
+  Link,
+  Preview,
+  Text,
+} from '@react-email/components';
 import type { ReactNode } from 'react';
 
 import type { EmailTranslator } from '@/lib/email/i18n';
@@ -63,7 +74,42 @@ body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
   .m-wrap { padding: 16px 8px !important; }
   .m-pad { padding: 28px 20px !important; }
 }
+u + .body .gmail-blend-screen { background: #000; mix-blend-mode: screen; }
+u + .body .gmail-blend-difference { background: #000; mix-blend-mode: difference; }
+u + .body .dm-btn { background-color: ${colors.card} !important; background-image: linear-gradient(${colors.card}, ${colors.card}) !important; border: 2px solid ${colors.primary} !important; padding: 12px 30px !important; }
+u + .body .gmail-btn-label { color: ${colors.foreground} !important; }
+@media (prefers-color-scheme: dark) {
+  .dm-card { background-color: ${colors.card} !important; }
+  .dm-fg { color: ${colors.foreground} !important; }
+  .dm-muted { color: ${colors.muted} !important; }
+  .dm-btn { background-color: ${colors.primary} !important; }
+  .dm-btn-text { color: ${colors.primaryForeground} !important; }
+}
+[data-ogsb] .dm-card { background-color: ${colors.card} !important; }
+[data-ogsc] .dm-fg { color: ${colors.foreground} !important; }
+[data-ogsc] .dm-muted { color: ${colors.muted} !important; }
+[data-ogsb] .dm-btn { background-color: ${colors.primary} !important; }
+[data-ogsc] .dm-btn-text { color: ${colors.primaryForeground} !important; }
 `;
+
+/**
+ * Gmail iOS/Android dark-mode fix (client request, 2026-11-03: body text invisible - dark on our
+ * dark card). Gmail recolours TEXT but keeps our pinned card background, so white text turns
+ * near-black. Remi Parmentier's blend trick, scoped to Gmail by `u + .body` (Gmail rewrites
+ * <body class="body"> and inserts a <u> before it; no other client matches): text sits in
+ * `.gmail-blend-screen > .gmail-blend-difference`. Gmail also inverts those black backgrounds to
+ * white, so the inner `difference` layer (white minus the inverted text colour) recovers the
+ * authored colour, and the outer `screen` layer is neutral for the black box over the card. With
+ * no inversion (Gmail light mode) both layers are an identity. Clients without mix-blend-mode or
+ * without the `u + .body` match ignore it and show the plain inline colour.
+ */
+function Blend({ children }: { children: ReactNode }) {
+  return (
+    <span className="gmail-blend-screen">
+      <span className="gmail-blend-difference">{children}</span>
+    </span>
+  );
+}
 
 /**
  * Brand chrome shared with the Supabase Auth emails (`supabase/templates/build.mjs`, which keeps
@@ -72,13 +118,13 @@ body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
  * wordmark and a different footer after the auth ones got the logo).
  *
  * The logo lives in Supabase Storage with a content-hashed name: an email image needs a public
- * absolute URL, and mail proxies cache hard, so a new artwork means a new filename. 600×81 file
+ * absolute URL, and mail proxies cache hard, so a new artwork means a new filename. 600×108 file
  * rendered at 300 wide (2× for retina).
  */
 const LOGO = {
-  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png',
+  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-4df59990.png',
   width: 300,
-  height: 41,
+  height: 54,
 } as const;
 const SUPPORT_EMAIL = 'support@mindsetis.com';
 
@@ -108,7 +154,8 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
       </Head>
       <Preview>{previewText}</Preview>
       {/* No background on <body> or the wrapper: the area around the card is transparent. */}
-      <Body style={{ margin: 0, padding: 0, width: '100%', fontFamily: FONT }}>
+      {/* className="body" is the hook for the Gmail-only `u + .body` selector (see Blend). */}
+      <Body className="body" style={{ margin: 0, padding: 0, width: '100%', fontFamily: FONT }}>
         <table
           role="presentation"
           width="100%"
@@ -131,6 +178,7 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
                   cellSpacing={0}
                   border={0}
                   bgcolor={colors.card}
+                  className="dm-card"
                   style={{
                     width: '100%',
                     maxWidth: CARD_WIDTH,
@@ -182,6 +230,7 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
 
                         <Hr style={{ borderColor: colors.border, margin: '32px 0 16px' }} />
                         <Text
+                          className="dm-muted"
                           style={{
                             color: colors.muted,
                             fontSize: 12,
@@ -189,14 +238,17 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
                             margin: 0,
                           }}
                         >
-                          {t('footer.brand')} · {t('footer.help')}{' '}
-                          <Link
-                            href={`mailto:${SUPPORT_EMAIL}`}
-                            style={{ color: colors.muted, textDecoration: 'underline' }}
-                          >
-                            {SUPPORT_EMAIL}
-                          </Link>
-                          .
+                          <Blend>
+                            {t('footer.brand')} · {t('footer.help')}{' '}
+                            <Link
+                              href={`mailto:${SUPPORT_EMAIL}`}
+                              className="dm-muted"
+                              style={{ color: colors.muted, textDecoration: 'underline' }}
+                            >
+                              {SUPPORT_EMAIL}
+                            </Link>
+                            .
+                          </Blend>
                         </Text>
                       </td>
                     </tr>
@@ -216,6 +268,7 @@ export function EmailButton({ href, children }: { href: string; children: ReactN
   return (
     <Button
       href={href}
+      className="dm-btn"
       style={{
         // Same pinning as the card, so Gmail dark mode does not recolour the button.
         ...pinnedBackground(colors.primary),
@@ -228,8 +281,44 @@ export function EmailButton({ href, children }: { href: string; children: ReactN
         display: 'inline-block',
       }}
     >
-      {children}
+      {/* Label: black on blue everywhere except Gmail. Gmail's dark mode recolours a dark label on
+          the pinned blue too (a "blue minus blue = black" blend came out purple on iPhone,
+          05.11.2026), so in Gmail — light and dark alike, it can't tell them apart — the button
+          becomes the site's outline style (dark fill, blue border, see HEAD_CSS) with a WHITE
+          label in the same screen/difference wrapper the body text uses, which Gmail renders
+          correctly. */}
+      <span className="gmail-blend-screen">
+        <span className="gmail-blend-difference">
+          <span className="gmail-btn-label dm-btn-text" style={{ color: colors.primaryForeground }}>
+            {children}
+          </span>
+        </span>
+      </span>
     </Button>
+  );
+}
+
+/** Heading with the Gmail dark-mode blend wrapper; use instead of a bare `<Heading>`. */
+export function EmailHeading({ children }: { children: ReactNode }) {
+  return (
+    <Heading as="h1" className="dm-fg" style={textStyles.heading}>
+      <Blend>{children}</Blend>
+    </Heading>
+  );
+}
+
+/** Body / fine-print paragraph with the Gmail dark-mode blend wrapper; use instead of `<Text>`. */
+export function EmailText({
+  variant = 'body',
+  children,
+}: {
+  variant?: 'body' | 'fine';
+  children: ReactNode;
+}) {
+  return (
+    <Text className={variant === 'fine' ? 'dm-muted' : 'dm-fg'} style={textStyles[variant]}>
+      <Blend>{children}</Blend>
+    </Text>
   );
 }
 

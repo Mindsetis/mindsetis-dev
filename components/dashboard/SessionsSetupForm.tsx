@@ -147,7 +147,7 @@ function DurationsField({ control }: { control: Control<SessionStepInput> }) {
         })}
       </div>
       {durationsError ? (
-        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+        <p data-slot="form-message" role="alert" className="text-sm text-error">
           {tValidation(durationsError)}
         </p>
       ) : null}
@@ -374,7 +374,7 @@ function TopicsField({
       ) : null}
 
       {topicsError ? (
-        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+        <p data-slot="form-message" role="alert" className="text-sm text-error">
           {tValidation(topicsError)}
         </p>
       ) : null}
@@ -410,13 +410,13 @@ function TopicsField({
           />
 
           {draftHasNonLatin ? (
-            <p role="alert" className="text-tiny text-destructive">
+            <p role="alert" className="text-sm text-error">
               {tValidation(LATIN_ONLY_MESSAGE)}
             </p>
           ) : null}
 
           {dialogError ? (
-            <p role="alert" className="text-tiny text-destructive">
+            <p role="alert" className="text-sm text-error">
               {dialogError}
             </p>
           ) : null}
@@ -511,7 +511,7 @@ function TimezoneField({ control }: { control: Control<SessionStepInput> }) {
       {/* Auto-detection can come back empty (`Intl` unavailable, a locked-down browser) and the
           schema then refuses the save with "Timezone is required." — which had no place to show. */}
       {fieldState.error?.message ? (
-        <p data-slot="form-message" role="alert" className="text-tiny text-destructive">
+        <p data-slot="form-message" role="alert" className="text-sm text-error">
           {tValidation(fieldState.error.message)}
         </p>
       ) : null}

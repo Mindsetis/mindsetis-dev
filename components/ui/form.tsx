@@ -215,7 +215,7 @@ function FormMessage({ className, children, latinOnly = true, ...props }: FormMe
       data-slot="form-message"
       id={formMessageId}
       role="alert"
-      className={cn('flex items-center gap-1 text-[12px] font-normal text-destructive', className)}
+      className={cn('flex items-center gap-1 text-sm font-normal text-error', className)}
       {...props}
     >
       <FormMessageIcon />
@@ -265,7 +265,7 @@ function FormArrayMessage({ name, className, ...props }: FormArrayMessageProps) 
     <p
       data-slot="form-message"
       role="alert"
-      className={cn('flex items-center gap-1 text-[12px] font-normal text-destructive', className)}
+      className={cn('flex items-center gap-1 text-sm font-normal text-error', className)}
       {...props}
     >
       <FormMessageIcon />

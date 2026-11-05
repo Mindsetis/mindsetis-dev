@@ -5,7 +5,6 @@ import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { submitAmbassadorApplication } from '@/app/[locale]/actions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogCloseButton, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -21,7 +20,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import {
-  ACCOUNT_EXISTS_ERROR,
   type AmbassadorContactField,
   ambassadorContactSchemaFor,
   type AmbassadorGuestContactInput,
@@ -67,8 +65,6 @@ export type AmbassadorApplicationCopy = {
     /** Signed-in applicant with a missing name, ICU-free: `{email}` is substituted here. */
     signedInMissing: string;
     privacy: { before: string; link: string; after: string };
-    /** Guest typed an address that already has a confirmed account — "Log in" is a link. */
-    accountExists: { before: string; link: string; after: string };
   };
   back: string;
   next: string;
@@ -292,9 +288,9 @@ export function AmbassadorApplicationDialog({
     : null;
 
   const errorAlert = formError ? (
-    <Alert variant="destructive">
-      <AlertDescription>{formError}</AlertDescription>
-    </Alert>
+    <p role="alert" className="text-sm text-error">
+      {formError}
+    </p>
   ) : null;
 
   return (
@@ -391,7 +387,7 @@ export function AmbassadorApplicationDialog({
                   key={name}
                   control={contactForm.control}
                   name={name}
-                  render={({ field, fieldState }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>
                         <span className="inline-flex items-center gap-1">
@@ -412,22 +408,7 @@ export function AmbassadorApplicationDialog({
                           {...field}
                         />
                       </FormControl>
-                      {fieldState.error?.message === ACCOUNT_EXISTS_ERROR ? (
-                        // Same look as `FormMessage`, which can only print a plain string —
-                        // this one needs the "Log in" link inline.
-                        <p role="alert" className="text-[12px] text-destructive">
-                          {copy.details.accountExists.before}
-                          <Link
-                            href="/login"
-                            className="font-bold underline underline-offset-2 hover:text-primary"
-                          >
-                            {copy.details.accountExists.link}
-                          </Link>
-                          {copy.details.accountExists.after}
-                        </p>
-                      ) : (
-                        <FormMessage />
-                      )}
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

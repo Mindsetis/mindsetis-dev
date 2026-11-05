@@ -203,7 +203,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           beyondBusinessEyebrow: t('beyondBusinessEyebrow'),
           beyondBusinessHeading: t('beyondBusinessHeading'),
           website: t('website'),
-          shareAriaLabel: t('share.ariaLabel'),
+          shareLabel: t('share.label'),
           shareLinkCopied: t('share.linkCopied'),
           shareCopyFailed: t('share.copyFailed'),
         }}

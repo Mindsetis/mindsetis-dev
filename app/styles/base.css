@@ -13,6 +13,66 @@ body {
 }
 
 /**
+ * Pointer cursor on every interactive control (client edit 03.11.2026). Tailwind 4's preflight no
+ * longer gives `<button>` `cursor: pointer`, so without this a bare button, a Radix trigger
+ * (`role="combobox"`, `role="tab"`, ...) or a label shows the arrow.
+ *
+ * Inside `@layer base` ON PURPOSE: unlayered rules beat every Tailwind utility, which would make
+ * `cursor-not-allowed` / `cursor-default` / `cursor-text` on a component silently lose to this
+ * block. Layered, any utility a component sets still wins and these are only the fallback.
+ *
+ * Text inputs, textareas and date/number fields are deliberately absent: they keep the I-beam.
+ * Disabled controls get `not-allowed`; `NotYetAvailable` wraps its disabled child in a
+ * `<span role="button">` and `Button` is `disabled:pointer-events-none`, so there the wrapper's
+ * pointer shows through. The last rule makes that true for any disabled control inside a
+ * `role="button"` wrapper, not only for `Button`.
+ */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  [role='option'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='radio'],
+  [role='combobox']:not(input),
+  summary,
+  label[for],
+  label:has(input[type='checkbox']:not(:disabled), input[type='radio']:not(:disabled)),
+  select:not(:disabled),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  input[type='file']:not(:disabled),
+  input[type='range']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='button']:not(:disabled),
+  a[href]:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input[type='checkbox']:disabled,
+  input[type='radio']:disabled,
+  input[type='file']:disabled,
+  input[type='range']:disabled,
+  input[type='submit']:disabled,
+  input[type='button']:disabled,
+  [aria-disabled='true'],
+  [role='option'][data-disabled],
+  [role='menuitem'][data-disabled] {
+    cursor: not-allowed;
+  }
+
+  [role='button'] :disabled {
+    pointer-events: none;
+  }
+}
+
+/**
  * Cabinet footer corner fix — pages built on the `/dashboard` shell (marked via
  * `data-cabinet-shell` on `app/[locale]/dashboard/layout.tsx`'s root wrapper) run a full-bleed
  * #1a1a1a panel behind their left sidebar column, flush all the way down to the site Footer's

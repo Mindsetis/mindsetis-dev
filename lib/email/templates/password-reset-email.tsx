@@ -1,9 +1,12 @@
 import 'server-only';
 
-import { Heading, Text } from '@react-email/components';
-
 import { getEmailTranslator } from '@/lib/email/i18n';
-import { BaseLayout, EmailButton, textStyles } from '@/lib/email/templates/base-layout';
+import {
+  BaseLayout,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+} from '@/lib/email/templates/base-layout';
 import type { EmailLocale, PasswordResetEmailProps } from '@/lib/validation/email';
 
 export type PasswordResetEmailComponentProps = PasswordResetEmailProps & { locale: EmailLocale };
@@ -24,17 +27,15 @@ export function PasswordResetEmail({
   const t = getEmailTranslator(locale);
   return (
     <BaseLayout previewText={t('passwordReset.heading')} t={t}>
-      <Heading as="h1" style={textStyles.heading}>
-        {t('passwordReset.heading')}
-      </Heading>
-      <Text style={textStyles.body}>
+      <EmailHeading>{t('passwordReset.heading')}</EmailHeading>
+      <EmailText>
         {userName
           ? t('passwordReset.greeting', { name: userName })
           : t('passwordReset.greetingGeneric')}
-      </Text>
-      <Text style={textStyles.body}>{t('passwordReset.body')}</Text>
+      </EmailText>
+      <EmailText>{t('passwordReset.body')}</EmailText>
       <EmailButton href={actionUrl}>{t('passwordReset.cta')}</EmailButton>
-      <Text style={textStyles.fine}>{t('passwordReset.expiry')}</Text>
+      <EmailText variant="fine">{t('passwordReset.expiry')}</EmailText>
     </BaseLayout>
   );
 }

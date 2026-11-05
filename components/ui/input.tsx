@@ -37,7 +37,7 @@ function Input({ className, type, valid, ...props }: InputProps) {
           'placeholder:text-muted-foreground',
           'file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
           'focus-visible:border-input-focus',
-          'aria-invalid:border-destructive',
+          'aria-invalid:border-error',
           'disabled:cursor-not-allowed disabled:opacity-60',
           valid && 'border-input-focus pr-10 text-foreground',
           className,
