@@ -189,7 +189,7 @@ function LinkPreviewCard({
           // flips between reading and editing.
           className={cn(
             'min-w-0 flex-1 bg-transparent text-[12px] font-medium outline-none',
-            draftHasNonLatin ? 'text-destructive' : 'text-foreground',
+            draftHasNonLatin ? 'text-error' : 'text-foreground',
           )}
         />
       ) : (

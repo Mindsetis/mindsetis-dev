@@ -151,12 +151,12 @@ export function LanguagesMultiSelect({
   // White border/chevron once there's at least one selected chip — not just while `open` —
   // per the 2026-07-17 follow-up, matching `Combobox`'s "has a value" rule.
   const borderColorClass = invalid
-    ? 'border-destructive'
+    ? 'border-error'
     : open || hasValue
       ? 'border-input-focus'
       : 'border-input';
   const chevronColorClass = invalid
-    ? 'text-destructive'
+    ? 'text-error'
     : open || hasValue
       ? 'text-input-focus'
       : 'text-input';
@@ -251,7 +251,7 @@ export function LanguagesMultiSelect({
         className={cn(
           'w-[var(--radix-popover-trigger-width)] bg-background p-0 shadow-none',
           isTop ? 'rounded-b-none border-b-0' : 'rounded-t-none border-t-0',
-          invalid ? 'border-destructive' : 'border-input-focus',
+          invalid ? 'border-error' : 'border-input-focus',
         )}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >

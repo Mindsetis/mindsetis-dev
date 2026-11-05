@@ -177,11 +177,11 @@ export default async function Footer({ variant = 'full', className }: FooterProp
               className="mb-6 inline-flex self-start xl:mb-8"
             >
               {/* Figma `1706:32075` "Frame 842", exported as SVG (text outlined, gradient kept) —
-                  the icon mark + gradient wordmark, 176x32 at both sizes. */}
+                  the icon mark + gradient wordmark, 178.5x32 at both sizes; icon rescaled to the "M" cap height (client edit 03.11.2026). */}
               <Image
-                src="/images/footer/mindsetis-logo.svg"
+                src="/images/brand/mindsetis-logo.svg"
                 alt=""
-                width={176}
+                width={179}
                 height={32}
                 className="h-8 w-auto"
               />

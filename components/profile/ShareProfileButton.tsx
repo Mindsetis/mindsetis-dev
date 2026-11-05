@@ -14,9 +14,12 @@ export interface ShareProfileButtonProps {
    * regardless of which internal path happened to render this component.
    */
   url: string;
-  /** Accessible name for this icon-only control — there's no visible label, so `aria-label`
-   * carries the whole accessible name. */
-  ariaLabel: string;
+  /** Accessible name for the ICON-ONLY variant (no `label`) — `aria-label` carries the whole
+   * accessible name. Ignored when `label` is set (the visible text is the name). */
+  ariaLabel?: string;
+  /** Visible text next to the icon (owner's "Share profile" button). When set, no `aria-label`
+   * is rendered, so the accessible name is exactly the visible text. */
+  label?: string;
   /**
    * Announced when the clipboard-copy fallback fires (`toast.success`, `components/ui/sonner`,
    * mounted once near the app root). Sonner's own toast region is `aria-live`, so this reaches
@@ -61,6 +64,7 @@ export interface ShareProfileButtonProps {
 export function ShareProfileButton({
   url,
   ariaLabel,
+  label,
   copiedMessage,
   errorMessage,
   shareTitle,
@@ -95,8 +99,14 @@ export function ShareProfileButton({
   }
 
   return (
-    <button type="button" onClick={handleShare} aria-label={ariaLabel} className={cn(className)}>
+    <button
+      type="button"
+      onClick={handleShare}
+      aria-label={label ? undefined : ariaLabel}
+      className={cn('cursor-pointer', className)}
+    >
       <Share2 className="size-4" aria-hidden="true" />
+      {label}
     </button>
   );
 }

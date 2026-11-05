@@ -1,9 +1,12 @@
 import 'server-only';
 
-import { Heading, Text } from '@react-email/components';
-
 import { getEmailTranslator } from '@/lib/email/i18n';
-import { BaseLayout, EmailButton, textStyles } from '@/lib/email/templates/base-layout';
+import {
+  BaseLayout,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+} from '@/lib/email/templates/base-layout';
 import type { EmailLocale, GenericEmailProps } from '@/lib/validation/email';
 
 export type GenericEmailComponentProps = GenericEmailProps & { locale: EmailLocale };
@@ -24,10 +27,8 @@ export function GenericEmail({
   const t = getEmailTranslator(locale);
   return (
     <BaseLayout previewText={heading} t={t}>
-      <Heading as="h1" style={textStyles.heading}>
-        {heading}
-      </Heading>
-      <Text style={textStyles.body}>{body}</Text>
+      <EmailHeading>{heading}</EmailHeading>
+      <EmailText>{body}</EmailText>
       {actionUrl && actionLabel ? <EmailButton href={actionUrl}>{actionLabel}</EmailButton> : null}
     </BaseLayout>
   );

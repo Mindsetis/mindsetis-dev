@@ -1,9 +1,11 @@
+import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { LocaleSwitcher } from '@/components/i18n/LocaleSwitcher';
 import { JoinIcon } from '@/components/icons/join-icon';
 import { AccountMenu } from '@/components/layout/AccountMenu';
+import { MindsetterWizardHeaderSlot } from '@/components/layout/MindsetterWizardHeaderSlot';
 import { UpgradeToMindsetterTrigger } from '@/components/mindsetter/UpgradeToMindsetterTrigger';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
@@ -52,11 +54,15 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
     return (
       <header className="sticky top-0 z-40 bg-card">
         <div className="mx-auto flex h-[70px] max-w-[1440px] items-center justify-center px-4 sm:px-6 lg:h-[88px] lg:px-[70px]">
-          <GuardedLink
-            href="/"
-            className="font-display text-[1.5rem] leading-none font-normal text-primary lg:text-[2rem]"
-          >
-            {t('brand')}
+          <GuardedLink href="/" aria-label={t('brand')} className="inline-flex">
+            <Image
+              src="/images/brand/mindsetis-logo.svg"
+              alt=""
+              width={179}
+              height={32}
+              priority
+              className="h-[18px] w-auto sm:h-6 lg:h-8"
+            />
           </GuardedLink>
         </div>
       </header>
@@ -104,11 +110,15 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
         {/* `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): the header
             (including this logo) stays mounted on every cabinet section editor, so every link in
             it is a real exit path an unsaved edit needs to guard. */}
-        <GuardedLink
-          href="/"
-          className="font-display text-[1.5rem] leading-none font-normal text-primary lg:text-[2rem]"
-        >
-          {t('brand')}
+        <GuardedLink href="/" aria-label={t('brand')} className="inline-flex shrink-0">
+          <Image
+            src="/images/brand/mindsetis-logo.svg"
+            alt=""
+            width={179}
+            height={32}
+            priority
+            className="h-[18px] w-auto sm:h-6 lg:h-8"
+          />
         </GuardedLink>
 
         <div className="flex items-center gap-3 lg:gap-8">
@@ -186,12 +196,17 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 // `WhoIsMindsetterDialog.tsx`'s own "Become a Mindsetter" actions); it now opens
                 // the `UpgradeToMindsetterDialog` confirmation first, and the dialog's own
                 // "Continue" button carries the visitor onward from there.
-                <UpgradeToMindsetterTrigger
-                  size="sm"
-                  className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
-                >
-                  {t('upgrade')}
-                </UpgradeToMindsetterTrigger>
+                // Wrapped in the wizard slot too: a Member on `/roles` who hasn't saved it yet is
+                // still `memberComplete`, and inside the wizard they get "Step 1 of 4" like
+                // everyone else rather than an "Upgrade" that would restart what they're doing.
+                <MindsetterWizardHeaderSlot>
+                  <UpgradeToMindsetterTrigger
+                    size="sm"
+                    className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                  >
+                    {t('upgrade')}
+                  </UpgradeToMindsetterTrigger>
+                </MindsetterWizardHeaderSlot>
               ) : null}
 
               {ctaState === 'mindsetterInProgress' ? (
@@ -201,32 +216,41 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 // not via the wizard's entry route, which would compute the same path and
                 // redirect to it. Shortened below `lg` so it fits the 375px row like the other
                 // states.
-                <Button
-                  asChild
-                  size="sm"
-                  className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
-                >
-                  <GuardedLink
-                    href={mindsetterResumePath(mindsetterStep)}
-                    aria-label={t('continueRegistration')}
-                  >
-                    <span className="lg:hidden">{t('continueRegistrationShort')}</span>
-                    <span className="hidden lg:inline">{t('continueRegistration')}</span>
-                  </GuardedLink>
-                </Button>
-              ) : null}
-
-              {ctaState === 'mindsetter' ? (
-                <NotYetAvailable feature="createEvent">
+                // Inside `/mindsetter-onboarding/*` the slot swaps the button for a "Step X of N"
+                // label (client, 03.11.2026); everywhere else it renders the button as-is.
+                <MindsetterWizardHeaderSlot>
                   <Button
-                    type="button"
-                    disabled
+                    asChild
                     size="sm"
                     className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
                   >
-                    {t('createEvent')}
+                    <GuardedLink
+                      href={mindsetterResumePath(mindsetterStep)}
+                      aria-label={t('continueRegistration')}
+                    >
+                      <span className="lg:hidden">{t('continueRegistrationShort')}</span>
+                      <span className="hidden lg:inline">{t('continueRegistration')}</span>
+                    </GuardedLink>
                   </Button>
-                </NotYetAvailable>
+                </MindsetterWizardHeaderSlot>
+              ) : null}
+
+              {ctaState === 'mindsetter' ? (
+                // In the wizard slot as well: saving Shine promotes the Member to Mindsetter, so the
+                // optional blocks after it — and any step revisited with Back — are walked as a
+                // Mindsetter and must keep showing "Step X of N", not "Create Event".
+                <MindsetterWizardHeaderSlot>
+                  <NotYetAvailable feature="createEvent">
+                    <Button
+                      type="button"
+                      disabled
+                      size="sm"
+                      className="rounded-[8px] px-3 text-sm lg:h-14 lg:rounded-lg lg:px-5 lg:text-base"
+                    >
+                      {t('createEvent')}
+                    </Button>
+                  </NotYetAvailable>
+                </MindsetterWizardHeaderSlot>
               ) : null}
             </div>
           ) : null}

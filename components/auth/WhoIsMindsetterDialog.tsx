@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { labelVariants } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
+import { MINDSETTER_FIRST_STEP_PATH } from '@/lib/auth/onboarding-progress';
 
 const CHECKLIST_KEYS = ['owner', 'verified', 'experience'] as const;
 const FEATURE_KEYS = ['site', 'earn', 'brand'] as const;
@@ -167,7 +168,7 @@ export function WhoIsMindsetterDialog({ open, onOpenChange }: WhoIsMindsetterDia
             {/* Extended Mindsetter onboarding (ROADMAP stage 1.9) via its entry route, which
                 resumes at the next unsaved step (Release-2 П5) — previously a placeholder `/`
                 link (stage 1.6). */}
-            <Link href="/mindsetter-onboarding">{t('becomeMindsetter')}</Link>
+            <Link href={MINDSETTER_FIRST_STEP_PATH}>{t('becomeMindsetter')}</Link>
           </Button>
           <DialogClose asChild>
             <Button

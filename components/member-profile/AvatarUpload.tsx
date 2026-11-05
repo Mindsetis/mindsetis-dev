@@ -234,7 +234,7 @@ export function AvatarUpload({
           'flex w-full flex-col items-center gap-2 rounded-[14px] border bg-background px-6 py-7 transition-colors [&>*]:pointer-events-none',
           state === 'empty' && 'border-dashed border-[#747474]',
           state === 'uploaded' && 'border-success',
-          state === 'error' && 'border-destructive',
+          state === 'error' && 'border-error',
           disabled
             ? 'cursor-not-allowed opacity-60'
             : cn('cursor-pointer', state === 'empty' && 'hover:border-primary'),
@@ -253,7 +253,7 @@ export function AvatarUpload({
             // `wrap-anywhere`: in the Uploaded state this line carries the raw file name.
             'text-tiny wrap-anywhere',
             state === 'uploaded' && 'text-success',
-            state === 'error' && 'text-destructive',
+            state === 'error' && 'text-sm text-error',
             state === 'empty' && 'text-muted-foreground',
           )}
         >

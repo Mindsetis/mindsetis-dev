@@ -84,10 +84,3 @@ export const ambassadorApplicationSchema = z.object({
   formLoadedAt: z.number().int().positive().optional(),
 });
 export type AmbassadorApplicationInput = z.infer<typeof ambassadorApplicationSchema>;
-
-/**
- * Field-error marker the action returns on `contact.email` when a guest's address already has a
- * confirmed account. Not a user-facing string: the dialog swaps it for its own localized
- * "already has an account" line plus a "Log in" link.
- */
-export const ACCOUNT_EXISTS_ERROR = 'ambassador:account-exists';

@@ -31,9 +31,30 @@
         .m-pad { padding: 28px 20px !important; }
         .m-wrap { padding: 16px 8px !important; }
       }
+      /* Gmail iOS/Android dark mode (see blend() in build.mjs). the u + .body selector only matches Gmail. */
+      u + .body .gmail-blend-screen { background: #000; mix-blend-mode: screen; }
+      u + .body .gmail-blend-difference { background: #000; mix-blend-mode: difference; }
+      u + .body .dm-btn { background-color: #1a1a1a !important; background-image: linear-gradient(#1a1a1a, #1a1a1a) !important; border: 2px solid #79b9e3 !important; padding: 12px 30px !important; }
+      u + .body .gmail-btn-label { color: #ffffff !important; }
+      /* Apple Mail dark */
+      @media (prefers-color-scheme: dark) {
+        .dm-card { background-color: #1a1a1a !important; }
+        .dm-fg { color: #ffffff !important; }
+        .dm-muted { color: #a5a5a5 !important; }
+        .dm-link { color: #79b9e3 !important; }
+        .dm-btn { background-color: #79b9e3 !important; }
+        .dm-btn-text { color: #000000 !important; }
+      }
+      /* Outlook.com dark (ogsc = text colour, ogsb = background colour) */
+      [data-ogsb] .dm-card { background-color: #1a1a1a !important; }
+      [data-ogsc] .dm-fg { color: #ffffff !important; }
+      [data-ogsc] .dm-muted { color: #a5a5a5 !important; }
+      [data-ogsc] .dm-link { color: #79b9e3 !important; }
+      [data-ogsb] .dm-btn { background-color: #79b9e3 !important; }
+      [data-ogsc] .dm-btn-text { color: #000000 !important; }
     </style>
   </head>
-  <body style="margin:0;padding:0;width:100%;">
+  <body class="body" style="margin:0;padding:0;width:100%;">
     <div style="display:none;font-size:1px;color:#1a1a1a;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
       Your single-use link to sign in to Mindsetis Community.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
     </div>
@@ -45,7 +66,7 @@
                ignores max-width; every other client takes width:100% capped by max-width.
                border-collapse:separate is needed for border-radius on a table to show.
                bgcolor + background-color + same-colour gradient: see pinned() in build.mjs. -->
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a1a1a" style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;border-spacing:0;border:1px solid #333333;border-radius:12px;background-color:#1a1a1a;background-image:linear-gradient(#1a1a1a,#1a1a1a);">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#1a1a1a" class="dm-card" style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;border-spacing:0;border:1px solid #333333;border-radius:12px;background-color:#1a1a1a;background-image:linear-gradient(#1a1a1a,#1a1a1a);">
             <tr>
               <!-- radius 11 = the table's 12 minus its 1px border, so this cell's own
                    background does not poke past the rounded inner edge. -->
@@ -59,18 +80,18 @@
                      them this line IS the header, so it should still read as Mindsetis rather
                      than as a broken-image caption. -->
                 <img
-                  src="https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-25386c4b.png"
+                  src="https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-4df59990.png"
                   width="300"
-                  height="41"
+                  height="54"
                   alt="Mindsetis"
                   style="display:block;border:0;outline:none;text-decoration:none;width:300px;height:auto;max-width:100%;margin:0 0 32px;color:#79b9e3;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:20px;font-weight:700;letter-spacing:0.5px;"
                 />
 
-                <h1 style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
-                  Sign in to Mindsetis Community
+                <h1 class="dm-fg" style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:24px;font-weight:400;line-height:32px;margin:0 0 16px;">
+                  <span class="gmail-blend-screen"><span class="gmail-blend-difference">Sign in to Mindsetis Community</span></span>
                 </h1>
 
-                <p style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;margin:0 0 16px;">Click the button below to sign in. No password needed.</p>
+                <p class="dm-fg" style="color:#ffffff;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;margin:0 0 16px;"><span class="gmail-blend-screen"><span class="gmail-blend-difference">Click the button below to sign in. No password needed.</span></span></p>
 
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 0;">
                   <tr>
@@ -82,27 +103,26 @@
               </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard" style="background-color:#79b9e3;background-image:linear-gradient(#79b9e3,#79b9e3);border-radius:999px;color:#000000;display:inline-block;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;">Sign in</a>
+              <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard" style="background-color:#79b9e3;background-image:linear-gradient(#79b9e3,#79b9e3);border-radius:999px;color:#000000;display:inline-block;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;line-height:22px;padding:14px 32px;text-decoration:none;mso-hide:all;" class="dm-btn"><span class="gmail-blend-screen"><span class="gmail-blend-difference"><span class="gmail-btn-label dm-btn-text" style="color:#000000;">Sign in</span></span></span></a>
               <!--<![endif]-->
                     </td>
                   </tr>
                 </table>
 
-            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
-              Button not working? Copy and paste this link into your browser:
+            <p class="dm-muted" style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
+              <span class="gmail-blend-screen"><span class="gmail-blend-difference">Button not working? Copy and paste this link into your browser:</span></span>
             </p>
             <p style="margin:8px 0 0;">
-              <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard" style="color:#79b9e3;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;text-decoration:underline;word-break:break-all;">{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard</a>
+              <span class="gmail-blend-screen"><span class="gmail-blend-difference"><a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard" class="dm-link" style="color:#79b9e3;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;text-decoration:underline;word-break:break-all;">{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/dashboard</a></span></span>
             </p>
 
-            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
-              This link can be used once and expires in 1 hour. If you did not try to sign in, you can safely ignore this email.
+            <p class="dm-muted" style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;margin:24px 0 0;">
+              <span class="gmail-blend-screen"><span class="gmail-blend-difference">This link can be used once and expires in 1 hour. If you did not try to sign in, you can safely ignore this email.</span></span>
             </p>
 
             <hr style="border:0;border-top:1px solid #333333;margin:32px 0 16px;" />
-            <p style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:12px;line-height:18px;margin:0;">
-              Mindsetis Community &middot; Need help? Write to
-              <a href="mailto:support@mindsetis.com" style="color:#a5a5a5;text-decoration:underline;">support@mindsetis.com</a>.
+            <p class="dm-muted" style="color:#a5a5a5;font-family:Manrope, Helvetica, Arial, sans-serif;font-size:12px;line-height:18px;margin:0;">
+              <span class="gmail-blend-screen"><span class="gmail-blend-difference">Mindsetis Community &middot; Need help? Write to <a href="mailto:support@mindsetis.com" class="dm-muted" style="color:#a5a5a5;text-decoration:underline;">support@mindsetis.com</a>.</span></span>
             </p>
               </td>
             </tr>

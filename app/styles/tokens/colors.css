@@ -35,6 +35,10 @@
   /* ---- Semantic status --------------------------------------------------*/
   --color-destructive: #ff4c58;
   --color-destructive-foreground: #ffffff;
+  /* Field-level error copy and the invalid-field border (client standard, 03.11.2026: 14px,
+   * coral). Lighter than `--color-destructive`, which read poorly as small text on black;
+   * ~7:1 contrast on #000. Destructive BUTTONS/alerts keep `--color-destructive`. */
+  --color-error: #ff6b6b;
   --color-success: #08d6ad;
   --color-success-foreground: #000000;
 

@@ -83,7 +83,7 @@ export function NewsletterForm() {
         </Button>
       </div>
       {errors.email ? (
-        <p role="alert" className="text-tiny font-medium text-destructive">
+        <p role="alert" className="text-sm font-medium text-error">
           {tValidation(errors.email.message)}
         </p>
       ) : null}

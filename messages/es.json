@@ -21,7 +21,8 @@
     "login": "Entrar",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
-    "upgrade": "Mejorar cuenta"
+    "upgrade": "Mejorar cuenta",
+    "wizardStep": "Paso {current} de {total}"
   },
   "footer": {
     "comingSoon": {
@@ -147,14 +148,14 @@
         "avatarMapAlt": "Mindsetters y miembros de todo el mundo"
       },
       "whatIsMindsetis": {
-        "eyebrow": "QUÉ ES MINDSETIS",
+        "eyebrow": "DENTRO DE MINDSETIS",
         "title": "Lo que realmente obtienes aquí",
-        "subtitle": "Acceso real a fundadores que ya pasaron por ahí: 1:1 o peer-to-peer, cuando lo necesites.",
+        "subtitle": "Networking con sentido entre fundadores de todo el mundo: conversaciones reales, aprendizajes prácticos y nuevas oportunidades.",
         "watchLabel": "Haz clic para ver",
         "catalogCta": "Conoce gente y únete a eventos"
       },
       "threeWays": {
-        "title": "Tres formas de empezar",
+        "title": "Tres formas de hacer networking y aprender",
         "cards": [
           {
             "title": "Conviértete en Mindsetter",
@@ -168,7 +169,24 @@
             "title": "Únete a los eventos de Mindsetis",
             "description": "Formatos peer-to-peer para conversaciones con sentido sobre lo que tienes en mente"
           }
-        ]
+        ],
+        "popups": {
+          "gotIt": "Entendido",
+          "applyToJoin": "Solicitar unirse",
+          "close": "Cerrar",
+          "directory": {
+            "title": "El directorio de Mindsetters llegará pronto",
+            "body": "Muy pronto podrás explorar Mindsetters en la plataforma, reservar sesiones 1:1 e invitarlos a tus propios eventos peer-to-peer.",
+            "signedIn": "Te escribiremos a tu correo registrado en cuanto el directorio esté disponible.",
+            "guest": "Solicita unirte y te avisaremos cuando el directorio esté listo."
+          },
+          "events": {
+            "title": "Los eventos de Mindsetis llegarán pronto",
+            "body": "Muy pronto podrás explorar y unirte a eventos peer-to-peer, como masterminds, sesiones de brainstorming, debates de casos de negocio y Sensessions. Como Mindsetter, también podrás crear y organizar tus propios eventos.",
+            "signedIn": "Te escribiremos a tu correo registrado en cuanto los eventos de Mindsetis estén en marcha.",
+            "guest": "Solicita unirte y te avisaremos cuando los eventos de Mindsetis estén listos."
+          }
+        }
       },
       "aiSearch": {
         "eyebrow": "Búsqueda con IA",
@@ -414,11 +432,6 @@
               "before": "Al enviar, aceptas nuestra ",
               "link": "Política de privacidad",
               "after": "."
-            },
-            "accountExists": {
-              "before": "Este email ya tiene una cuenta. ",
-              "link": "Inicia sesión",
-              "after": " para postularte."
             }
           },
           "back": "Atrás",
@@ -1117,6 +1130,7 @@
     "inviteToEvent": "Invitar a un evento",
     "share": {
       "ariaLabel": "Comparte este perfil",
+      "label": "Compartir perfil",
       "copyFailed": "No pudimos copiar el enlace. Puedes copiarlo desde la barra de direcciones.",
       "linkCopied": "Enlace copiado al portapapeles"
     },
@@ -1234,6 +1248,7 @@
     "sessionPricePaid": "Precio de la sesión: {price}",
     "share": {
       "ariaLabel": "Comparte este perfil",
+      "label": "Compartir perfil",
       "copyFailed": "No pudimos copiar el enlace. Puedes copiarlo desde la barra de direcciones.",
       "linkCopied": "Enlace copiado al portapapeles"
     },

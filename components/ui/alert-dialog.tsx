@@ -117,12 +117,16 @@ function AlertDialogDescription({
 
 function AlertDialogAction({
   className,
+  asChild,
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Action>) {
   return (
     <AlertDialogPrimitive.Action
       data-slot="alert-dialog-action"
-      className={cn(buttonVariants({ variant: 'primary' }), className)}
+      asChild={asChild}
+      // With `asChild` the caller's own `Button` carries the look; adding the default variant here
+      // would merge a second variant's classes onto it.
+      className={asChild ? className : cn(buttonVariants({ variant: 'primary' }), className)}
       {...props}
     />
   );
@@ -130,12 +134,14 @@ function AlertDialogAction({
 
 function AlertDialogCancel({
   className,
+  asChild,
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
   return (
     <AlertDialogPrimitive.Cancel
       data-slot="alert-dialog-cancel"
-      className={cn(buttonVariants({ variant: 'outline' }), className)}
+      asChild={asChild}
+      className={asChild ? className : cn(buttonVariants({ variant: 'outline' }), className)}
       {...props}
     />
   );

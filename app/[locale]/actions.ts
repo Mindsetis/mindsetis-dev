@@ -23,7 +23,6 @@ import { assertWithinRateLimit, emailBucket } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
 import {
-  ACCOUNT_EXISTS_ERROR,
   ambassadorApplicationSchema,
   ambassadorContactSchemaFor,
   ambassadorGuestContactSchema,
@@ -210,9 +209,10 @@ function contactFieldErrors(
  *   the dialog shows inputs for exactly those. `profiles` has no phone column, so there is no
  *   other contact data to pull; email + first/last name is everything this form collects.
  * - no session → a guest; `contact` must pass `ambassadorGuestContactSchema`. The database links
- *   `user_id` by confirmed email — at insert if that address already has a confirmed account,
- *   otherwise once it registers and confirms (the `ambassador_applications` migrations' triggers)
- *   — and the application reads as that Member/Mindsetter from then on.
+ *   `user_id` by confirmed email — at insert if that address already has a confirmed account
+ *   (BEFORE INSERT trigger), otherwise once it registers and confirms (auth.users triggers).
+ *   A guest under a registered address is accepted like any other guest with the same response —
+ *   no account lookup here, so the form can't be used to probe which addresses are registered.
  *
  * Repeat applications from one email are allowed on purpose (product decision) — no unique
  * index, the back office groups them by email instead. A per-address daily ceiling still stops
@@ -334,31 +334,9 @@ export const submitAmbassadorApplication = createAction(
 
     const service = createServiceClient();
 
-    // A guest may not apply under an address that already has a confirmed account — they're
-    // asked to log in instead (client decision, 2026-09-29). Otherwise anyone could file an
-    // application with made-up details that then links to that real person's profile
-    // (security-auditor finding). Runs after the per-address limit above, so this can't be used
-    // to probe many addresses; sign-up already answers "an account with this email exists", so
-    // it reveals nothing new. The RPC is executable by the service role only.
-    if (applicant.type === 'guest') {
-      let hasAccount: boolean;
-      try {
-        hasAccount = await emailHasConfirmedAccount(applicant.email);
-      } catch (lookupError) {
-        console.error('[marketing.submitAmbassadorApplication] account lookup failed:', {
-          message: lookupError instanceof Error ? lookupError.message : String(lookupError),
-        });
-        throw new ActionError(
-          'internal_error',
-          'Could not submit your application right now. Please try again.',
-        );
-      }
-      if (hasAccount) {
-        throw new ActionError('conflict', 'This email already has an account. Log in to apply.', {
-          'contact.email': [ACCOUNT_EXISTS_ERROR],
-        });
-      }
-    }
+    // No "does this email have an account" check here (client edit 2026-11-03: anyone can apply,
+    // no login required). A guest under a registered address is stored as a guest row and the
+    // BEFORE INSERT trigger links user_id by confirmed email; the response is identical either way.
 
     const { error } = await service.from('ambassador_applications').insert({
       user_id: applicant.userId,
@@ -385,7 +363,17 @@ export const submitAmbassadorApplication = createAction(
     }
 
     try {
-      const isGuest = applicant.type === 'guest';
+      // The receipt's "please sign up with this email" step is for people WITHOUT an account. A
+      // guest submission from an address that already has a confirmed account (registered, just
+      // not signed in) gets the short receipt instead. Safe to branch on here: the difference is
+      // only inside the email, which goes to the owner of that address — the form's response
+      // stays identical. Looked up for every guest, so timing doesn't depend on the answer; a
+      // failed lookup falls back to the sign-up version, which is merely redundant, never wrong.
+      const hasAccount =
+        applicant.type === 'guest'
+          ? await emailHasConfirmedAccount(applicant.email).catch(() => false)
+          : true;
+      const isGuest = !hasAccount;
       await enqueueEmail({
         to: applicant.email,
         toName: applicant.firstName,

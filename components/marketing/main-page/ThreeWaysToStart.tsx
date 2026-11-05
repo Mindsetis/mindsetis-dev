@@ -1,10 +1,17 @@
 import { getTranslations } from 'next-intl/server';
 
 import { QuestionFillIcon } from '@/components/icons/main-page-icons';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
+import { resolveBecomeMindsetterHref } from './become-mindsetter-href';
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
 import { SectionEyebrow } from './SectionEyebrow';
+import { ThreeWaysPopupCard } from './ThreeWaysPopupCard';
+
+/** Hover / focus / press affordances shared by the link card (the popup cards inline the same). */
+const CARD_INTERACTIVE_CLASSNAME =
+  'cursor-pointer outline-none transition-[filter,transform] duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]';
 
 /**
  * "Three ways to start" — Figma `572:5520` ("Frame 538"). Three cards, each a genuinely
@@ -50,7 +57,10 @@ export async function ThreeWaysToStart() {
   // section above it — read from that section's own translation key rather than duplicating the
   // string under a second key.
   const tEyebrow = await getTranslations('home.main.whatIsMindsetis');
+  const tPopups = await getTranslations('home.main.threeWays.popups');
   const cards = t.raw('cards') as { title: string; description: string }[];
+  const [ctaState, becomeMindsetterHref] = await resolveBecomeMindsetterHref();
+  const isGuest = ctaState === 'guest';
 
   const cardBackgroundStyles = [
     'bg-[linear-gradient(0.47deg,#1A1A1A_21.39%,#79B9E3_99.35%)] text-white md:bg-[linear-gradient(358.93deg,#1A1A1A_1.47%,#79B9E3_99.68%)]',
@@ -78,29 +88,63 @@ export async function ThreeWaysToStart() {
       </h2>
 
       <div className="mt-8 grid grid-cols-1 gap-4 md:mt-[50px] md:grid-cols-3 md:gap-5">
-        {cards.map((card, index) => (
-          <div
-            key={card.title}
-            className={cn(
-              'flex min-h-[180px] flex-col justify-between gap-12 rounded-lg p-4 md:min-h-[300px] md:rounded-3xl md:p-8',
-              cardBackgroundStyles[index],
-            )}
-          >
-            <span
-              className={cn('text-tiny font-bold tracking-[0.3em]', cardNumberColorStyles[index])}
+        {cards.map((card, index) => {
+          const surface = cn(
+            'flex min-h-[180px] flex-col justify-between gap-12 rounded-lg p-4 md:min-h-[300px] md:rounded-3xl md:p-8',
+            cardBackgroundStyles[index],
+          );
+          // Phrasing content only (`span`s styled as blocks): cards 2 and 3 are `<button>`s, which
+          // may not contain `div`/`h3`/`p` — and a heading inside a button is read as one label.
+          const face = (
+            <>
+              <span
+                className={cn('text-tiny font-bold tracking-[0.3em]', cardNumberColorStyles[index])}
+              >
+                {index + 1}
+              </span>
+              <span className="flex flex-col gap-2 md:gap-4">
+                <span className="block font-display text-[24px] leading-[24px] font-normal md:text-[32px] md:leading-[42px]">
+                  {card.title}
+                </span>
+                <span className="block text-body font-medium leading-[22px] md:font-normal">
+                  {card.description}
+                </span>
+              </span>
+            </>
+          );
+
+          // Card 1: a real link, destination computed on the server for this viewer.
+          if (index === 0) {
+            return (
+              <Link
+                key={card.title}
+                href={becomeMindsetterHref}
+                className={cn(surface, CARD_INTERACTIVE_CLASSNAME)}
+              >
+                {face}
+              </Link>
+            );
+          }
+
+          // Cards 2 and 3: "coming soon" popups (client edit 03.11.2026). At launch swap them
+          // for plain links to the real directory / events pages (see `ThreeWaysPopupCard`).
+          const popup = index === 1 ? 'directory' : 'events';
+          return (
+            <ThreeWaysPopupCard
+              key={card.title}
+              className={surface}
+              title={tPopups(`${popup}.title`)}
+              body={tPopups(`${popup}.body`)}
+              extra={tPopups(isGuest ? `${popup}.guest` : `${popup}.signedIn`)}
+              isGuest={isGuest}
+              gotItLabel={tPopups('gotIt')}
+              applyLabel={tPopups('applyToJoin')}
+              closeLabel={tPopups('close')}
             >
-              {index + 1}
-            </span>
-            <div className="flex flex-col gap-2 md:gap-4">
-              <h3 className="font-display text-[24px] leading-[24px] font-normal md:text-[32px] md:leading-[42px]">
-                {card.title}
-              </h3>
-              <p className="text-body font-medium leading-[22px] md:font-normal">
-                {card.description}
-              </p>
-            </div>
-          </div>
-        ))}
+              {face}
+            </ThreeWaysPopupCard>
+          );
+        })}
       </div>
     </section>
   );
