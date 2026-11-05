@@ -100,10 +100,15 @@ import { WhatIsMindsetis } from './main-page/WhatIsMindsetis';
  *   y≈130 of 498, mobile similarly) is bright enough to keep the black eyebrow/heading/subtitle
  *   in `WhatIsMindsetis` at roughly 5–10:1 contrast, comfortably past WCAG AA — re-verified after
  *   this positioning fix, not just the original crop.
- * - A `mask-image` fades ONLY the bottom ~8% to transparent (a soft guard against a hard seam
- *   where the layer ends inside "Three ways to start"'s card row); the top is intentionally left
- *   fully opaque from 0% — that's the wavy edge this fix exists to make visible, so nothing should
- *   fade it out.
+ * - A `mask-image` fades the bottom ~8% to transparent (a soft guard against a hard seam where
+ *   the layer ends inside "Three ways to start"'s card row). On DESKTOP it also fades the top 5%
+ *   in from transparent: the PNG's first rows are not pure black at the far left/right (sampled
+ *   `rgb(7,21,26)` at x0/y0, brightening fast downward), so the layer's top edge drew a hard
+ *   horizontal step against `HeroBand`'s black. At 1440 that corner is ~100px wide; above 1440
+ *   the layer stretches horizontally and the step grows with it (≈180px on a 2560 QHD screen),
+ *   which read as "the gradient is cut off". 5% of the layer (~85px, PNG rows 0–25) is still
+ *   above the wavy edge itself (rows ~30–100), so the visible wave is unchanged. Mobile keeps the
+ *   bottom-only mask — its layer has no such seam.
  *
  * Scoped to `WhatIsMindsetis` + `ThreeWaysToStart` only (`HeroBand` itself is off-limits to edit,
  * so it can't own part of the layer — the negative `top` above is what lets the layer visually
@@ -136,8 +141,10 @@ export function MainPageSection() {
             backgroundImage: 'url(/images/main-page/glow-desktop.png)',
             backgroundSize: '100% 100%',
             backgroundRepeat: 'no-repeat',
-            maskImage: 'linear-gradient(to bottom, black 0%, black 92%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 92%, transparent 100%)',
+            maskImage:
+              'linear-gradient(to bottom, transparent 0%, black 5%, black 92%, transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, transparent 0%, black 5%, black 92%, transparent 100%)',
           }}
         />
         <WhatIsMindsetis />
