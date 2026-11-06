@@ -6,10 +6,13 @@
  * static, code-defined catalog rather than a DB seed table.
  *
  * `value` is one of the up-to-3 slugs stored in `profiles.industries` (`text[]`); `label` is
- * the display string. Not run through next-intl — a catalog value, not translated UI copy,
- * same convention as `SUPPORTED_LANGUAGES`/`INTERESTS`.
+ * the ENGLISH display string (source/fallback). What the viewer sees is translated through the
+ * `catalog.industries.<value>` next-intl keys (`messages/*.json`) — see
+ * `getIndustryOptions` / `getIndustryLabelMap` in `lib/constants/catalog-labels.ts`. Stored
+ * slugs never change with the locale.
  *
- * Kept in alphabetical order by `label` (Release-1 E2 requirement) — including `other`, which
+ * Kept in alphabetical order by displayed label (Release-1 E2 requirement; this array is the
+ * English order, `getIndustryOptions` re-sorts per locale) — including `other`, which
  * therefore sits wherever "Other" falls alphabetically rather than pinned last. Selecting
  * `other` reveals the free-text `industryCustom` field (see `lib/validation/build-profile.ts`);
  * that value is staff-moderated (`profiles.industry_custom_status`) before it can ever appear

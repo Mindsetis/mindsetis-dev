@@ -214,8 +214,8 @@
         "nextCta": "Siguiente mindsetter",
         "sample": {
           "name": "Anastasia Kondratska",
-          "title": "CEO, TechFlow Agency, Event Industry",
-          "location": "Tulum, Mexico",
+          "title": "CEO, TechFlow Agency, industria de eventos",
+          "location": "Tulum, México",
           "languages": "EN / UA"
         }
       },
@@ -290,7 +290,7 @@
           },
           {
             "id": "usa",
-            "label": "USA"
+            "label": "EE. UU."
           },
           {
             "id": "europe",
@@ -312,63 +312,63 @@
         "cards": [
           {
             "name": "Tatiana Pichota",
-            "title": "CEO, TechFlow Agency, Event Industry",
-            "location": "USA, Miami",
+            "title": "CEO, TechFlow Agency, industria de eventos",
+            "location": "EE. UU., Miami",
             "languages": "EN / ES / FR / IT / UKR",
             "regions": ["usa", "northAmerica"],
             "countryCode": "us"
           },
           {
             "name": "Elena Voss",
-            "title": "Founder, Nordic Growth Collective",
-            "location": "Berlin, Germany",
+            "title": "Fundadora, Nordic Growth Collective",
+            "location": "Berlín, Alemania",
             "languages": "EN / DE / FR",
             "regions": ["europe"],
             "countryCode": "de"
           },
           {
             "name": "Diego Alvarez",
-            "title": "Co-Founder, LatAm Ventures Hub",
-            "location": "São Paulo, Brazil",
+            "title": "Cofundador, LatAm Ventures Hub",
+            "location": "São Paulo, Brasil",
             "languages": "EN / ES / PT",
             "regions": ["latam"],
             "countryCode": "br"
           },
           {
             "name": "Mei Tanaka",
-            "title": "Head of Partnerships, Asia Founders Circle",
-            "location": "Singapore",
+            "title": "Directora de alianzas, Asia Founders Circle",
+            "location": "Singapur",
             "languages": "EN / JA / ZH",
             "regions": ["asia"],
             "countryCode": "sg"
           },
           {
             "name": "Jordan Blake",
-            "title": "Founder, Northline Studio, SaaS",
-            "location": "USA, Austin",
+            "title": "Fundador, Northline Studio, SaaS",
+            "location": "EE. UU., Austin",
             "languages": "EN / ES",
             "regions": ["usa", "northAmerica"],
             "countryCode": "us"
           },
           {
             "name": "Marcus Reed",
-            "title": "Managing Partner, Harbourline, Fintech",
-            "location": "Canada, Toronto",
+            "title": "Socio director, Harbourline, fintech",
+            "location": "Canadá, Toronto",
             "languages": "EN / FR",
             "regions": ["northAmerica"],
             "countryCode": "ca"
           },
           {
             "name": "Sofia Almeida",
-            "title": "Co-founder, Atlas Collective, Design",
-            "location": "Portugal, Lisbon",
+            "title": "Cofundadora, Atlas Collective, diseño",
+            "location": "Portugal, Lisboa",
             "languages": "EN / PT / ES",
             "regions": ["europe"],
             "countryCode": "pt"
           },
           {
             "name": "Camila Rojas",
-            "title": "CEO, Ruta Verde, Sustainability",
+            "title": "CEO, Ruta Verde, sostenibilidad",
             "location": "Colombia, Bogotá",
             "languages": "ES / EN",
             "regions": ["latam"],
@@ -376,8 +376,8 @@
           },
           {
             "name": "Arjun Mehta",
-            "title": "Founder, Kite Labs, Deep Tech",
-            "location": "India, Mumbai",
+            "title": "Fundador, Kite Labs, deep tech",
+            "location": "India, Bombay",
             "languages": "EN / HI",
             "regions": ["asia"],
             "countryCode": "in"
@@ -450,7 +450,7 @@
         }
       },
       "faq": {
-        "title": "FAQ",
+        "title": "Preguntas frecuentes",
         "items": [
           {
             "question": "¿Quién puede unirse a Mindsetis?",
@@ -984,7 +984,7 @@
         },
         "video-blog": {
           "description": "Enlaza tu entrevista de BUILT NOT BURN.",
-          "name": "Video blog"
+          "name": "Videoblog"
         },
         "wins": {
           "description": "Logros clave como tarjetas de colores.",
@@ -1092,7 +1092,7 @@
         "uploadingHint": "Las fotos aún se están subiendo: podrás guardar cuando terminen."
       },
       "videoBlog": {
-        "title": "Video blog",
+        "title": "Videoblog",
         "vimeoLabel": "URL de Vimeo",
         "vimeoPlaceholder": "vimeo.com/123456789",
         "youtubeLabel": "URL de Youtube",
@@ -1747,378 +1747,378 @@
       "title": "Política de Privacidad",
       "lastUpdated": "Última actualización: 13 de agosto de 2026 · FOP Kondratska",
       "intro": [
-        "This Privacy Policy explains how Mindsetis collects, uses, shares, and protects your personal data when you use our website, mobile applications, and related services (collectively, the \"Platform\")."
+        "Esta Política de Privacidad explica cómo Mindsetis recopila, utiliza, comparte y protege tus datos personales cuando utilizas nuestro sitio web, nuestras aplicaciones móviles y los servicios relacionados (en conjunto, la \"Plataforma\")."
       ],
       "sections": [
         {
-          "heading": "Who We Are & Data Controller",
+          "heading": "Quiénes somos y responsable del tratamiento",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Mindsetis is a registered trademark owned by Anastasiia Kondratska (an individual). The Platform is operated, and data processing is managed, by Sole Proprietor (FOP) Kondratska, registered under the laws of Ukraine. Sole Proprietor Kondratska acts as the Data Controller (or \"Business\" under U.S. laws) for your personal data."
+              "text": "Mindsetis es una marca registrada propiedad de Anastasiia Kondratska (persona física). La Plataforma la opera, y el tratamiento de datos lo gestiona, la empresaria individual (FOP) Kondratska, registrada conforme a la legislación de Ucrania. La empresaria individual Kondratska actúa como Responsable del tratamiento (o \"Business\" según la legislación de EE. UU.) de tus datos personales."
             },
             {
               "type": "paragraph",
-              "text": "For any privacy-related inquiries, data requests, or to exercise your rights, please contact our Privacy Officer at privacy@mindsetis.com."
+              "text": "Para cualquier consulta sobre privacidad, solicitud relativa a tus datos o para ejercer tus derechos, ponte en contacto con nuestro Responsable de Privacidad en privacy@mindsetis.com."
             }
           ]
         },
         {
-          "heading": "Information We Collect",
+          "heading": "Información que recopilamos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We collect personal information directly from you, automatically through your device, and from select third parties:"
+              "text": "Recopilamos información personal directamente de ti, de forma automática a través de tu dispositivo y de determinados terceros:"
             },
             {
               "type": "list",
               "items": [
-                "Account Data: Name, email address, password hash, language preferences, and timezone.",
-                "Profile & Public Data: Profile photo, professional role, company, location, and any information you voluntarily publish in your profile.",
-                "Verification Data: Identity verification is conducted by our third-party verification providers. We only receive and store the verification result (e.g., \"verified\"), never your identity documents.",
-                "Booking & Interaction Data: Details of sessions, events, requests, and messages sent through the Platform.",
-                "Payment Data: Payment transactions are processed securely by independent payment processors (e.g., Stripe, PayPal). We do not collect, store, or process complete credit card numbers.",
-                "Technical & Usage Data: IP address, device type, operating system, browser settings, and cookie data as specified in our Cookies Policy."
+                "Datos de la cuenta: nombre, dirección de correo electrónico, hash de la contraseña, preferencias de idioma y zona horaria.",
+                "Datos del perfil y datos públicos: foto de perfil, cargo profesional, empresa, ubicación y cualquier información que publiques voluntariamente en tu perfil.",
+                "Datos de verificación: la verificación de identidad la realizan nuestros proveedores externos de verificación. Solo recibimos y almacenamos el resultado de la verificación (por ejemplo, \"verificado\"), nunca tus documentos de identidad.",
+                "Datos de reservas e interacciones: detalles de las sesiones, eventos, solicitudes y mensajes enviados a través de la Plataforma.",
+                "Datos de pago: las transacciones de pago las procesan de forma segura procesadores de pago independientes (por ejemplo, Stripe o PayPal). No recopilamos, almacenamos ni procesamos números completos de tarjetas de crédito.",
+                "Datos técnicos y de uso: dirección IP, tipo de dispositivo, sistema operativo, configuración del navegador y datos de cookies, según se detalla en nuestra Política de Cookies."
               ]
             }
           ]
         },
         {
-          "heading": "Legal Bases for Processing & How We Use Data",
+          "heading": "Bases legales del tratamiento y uso de los datos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We process your personal data for the following purposes:"
+              "text": "Tratamos tus datos personales con los siguientes fines:"
             },
             {
               "type": "list",
               "items": [
-                "Contractual Necessity: To create and manage your account, facilitate bookings, process transactions, and provide Platform functionality.",
-                "Legitimate Interests: To ensure Platform security, verify real users, prevent fraud, improve our services, and analyze usage trends.",
-                "Consent: To send marketing communications, conduct non-essential analytics, or deploy non-essential cookies. You can withdraw your consent at any time.",
-                "Legal Compliance: To comply with applicable tax, accounting, and legal obligations."
+                "Necesidad contractual: crear y gestionar tu cuenta, facilitar reservas, procesar transacciones y ofrecer las funciones de la Plataforma.",
+                "Intereses legítimos: garantizar la seguridad de la Plataforma, verificar que los usuarios son reales, prevenir el fraude, mejorar nuestros servicios y analizar tendencias de uso.",
+                "Consentimiento: enviarte comunicaciones de marketing, realizar analíticas no esenciales o utilizar cookies no esenciales. Puedes retirar tu consentimiento en cualquier momento.",
+                "Cumplimiento legal: cumplir las obligaciones fiscales, contables y legales aplicables."
               ]
             }
           ]
         },
         {
-          "heading": "Data Sharing & Third-Party Processors",
+          "heading": "Comunicación de datos y proveedores externos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We do not sell your personal information. We share data only with authorized Service Providers bound by strict data protection agreements:"
+              "text": "No vendemos tu información personal. Solo compartimos datos con proveedores de servicios autorizados, sujetos a estrictos acuerdos de protección de datos:"
             },
             {
               "type": "list",
               "items": [
-                "Infrastructure & Hosting: Cloud servers and technical infrastructure.",
-                "Communication & Calls: Google Meet, Zoom, or email notification providers.",
-                "Payment & Verification: Payment gateways (Stripe) and identity verification partners.",
-                "Analytics: Privacy-compliant analytics providers (subject to your cookie preferences)."
+                "Infraestructura y alojamiento: servidores en la nube e infraestructura técnica.",
+                "Comunicaciones y llamadas: Google Meet, Zoom o proveedores de notificaciones por correo electrónico.",
+                "Pagos y verificación: pasarelas de pago (Stripe) y socios de verificación de identidad.",
+                "Analítica: proveedores de analítica respetuosos con la privacidad (según tus preferencias de cookies)."
               ]
             }
           ]
         },
         {
-          "heading": "International Data Transfers",
+          "heading": "Transferencias internacionales de datos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Because our operations and service providers are located globally, your personal data may be transferred to, and stored in, countries outside your state, province, or country of residence (including Ukraine, the United States, and the EEA)."
+              "text": "Como nuestras operaciones y nuestros proveedores de servicios están repartidos por todo el mundo, tus datos personales pueden transferirse a países distintos de tu estado, provincia o país de residencia (incluidos Ucrania, Estados Unidos y el EEE) y almacenarse en ellos."
             },
             {
               "type": "paragraph",
-              "text": "Where required by applicable law (e.g., GDPR, UK GDPR), we ensure international transfers are protected by standard contractual safeguards, including Standard Contractual Clauses (SCCs) adopted by the European Commission or adequacy decisions."
+              "text": "Cuando lo exija la legislación aplicable (por ejemplo, el RGPD o el RGPD del Reino Unido), garantizamos que las transferencias internacionales estén protegidas mediante garantías contractuales estándar, incluidas las Cláusulas Contractuales Tipo (CCT) adoptadas por la Comisión Europea, o mediante decisiones de adecuación."
             }
           ]
         },
         {
-          "heading": "Data Retention & Deletion",
+          "heading": "Conservación y eliminación de datos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We retain your personal information only as long as necessary to fulfill the purposes outlined in this Policy or as required by law:"
+              "text": "Conservamos tu información personal solo durante el tiempo necesario para cumplir los fines descritos en esta Política o el que exija la ley:"
             },
             {
               "type": "list",
               "items": [
-                "Active Accounts: Data is kept for the duration of your active account.",
-                "Account Deletion: Upon account deletion, personal profile and account data are purged from our active systems within 30 days.",
-                "Legal Obligations: Financial and transactional records are retained for the statutory period required for tax, accounting, and anti-fraud purposes (typically 3–5 years)."
+                "Cuentas activas: los datos se conservan mientras tu cuenta esté activa.",
+                "Eliminación de la cuenta: tras eliminar la cuenta, los datos personales del perfil y de la cuenta se borran de nuestros sistemas activos en un plazo de 30 días.",
+                "Obligaciones legales: los registros financieros y de transacciones se conservan durante el plazo legal exigido a efectos fiscales, contables y de prevención del fraude (normalmente, de 3 a 5 años)."
               ]
             }
           ]
         },
         {
-          "heading": "Your Privacy Rights",
+          "heading": "Tus derechos de privacidad",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Depending on your place of residence, you may have the following legal rights regarding your personal data:"
+              "text": "Según tu lugar de residencia, puedes tener los siguientes derechos legales sobre tus datos personales:"
             },
             {
               "type": "subheading",
-              "text": "A. European Economic Area (EEA), UK & Swiss Residents (GDPR / UK GDPR)"
+              "text": "A. Residentes en el Espacio Económico Europeo (EEE), el Reino Unido y Suiza (RGPD / RGPD del Reino Unido)"
             },
             {
               "type": "list",
               "items": [
-                "Access, Rectification & Erasure: The right to request access to, correction of, or deletion of your personal data (\"Right to be Forgotten\").",
-                "Portability & Restriction: The right to request a copy of your data in a structured format or restrict its processing.",
-                "Withdrawal of Consent & Objection: The right to withdraw consent at any time or object to processing based on legitimate interests.",
-                "Supervisory Authority: The right to lodge a complaint with your local Data Protection Authority (DPA)."
-              ]
-            },
-            {
-              "type": "subheading",
-              "text": "B. United States Residents (CCPA / CPRA & State Privacy Laws)"
-            },
-            {
-              "type": "list",
-              "items": [
-                "Right to Know & Access: Request details regarding the categories and specific pieces of personal information collected.",
-                "No Sale / No Sharing of Personal Data: We do not sell or share your personal information for cross-context behavioral advertising as defined by the CCPA/CPRA.",
-                "Non-Discrimination: We will not discriminate against you for exercising any of your privacy rights."
+                "Acceso, rectificación y supresión: el derecho a solicitar el acceso a tus datos personales, su corrección o su eliminación (\"derecho al olvido\").",
+                "Portabilidad y limitación: el derecho a solicitar una copia de tus datos en un formato estructurado o a limitar su tratamiento.",
+                "Retirada del consentimiento y oposición: el derecho a retirar tu consentimiento en cualquier momento o a oponerte al tratamiento basado en intereses legítimos.",
+                "Autoridad de control: el derecho a presentar una reclamación ante tu autoridad local de protección de datos."
               ]
             },
             {
               "type": "subheading",
-              "text": "C. Canadian Residents (PIPEDA)"
+              "text": "B. Residentes en Estados Unidos (CCPA / CPRA y leyes estatales de privacidad)"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Derecho a saber y a acceder: solicitar información sobre las categorías y los datos concretos de información personal recopilados.",
+                "Sin venta ni cesión de datos personales: no vendemos ni compartimos tu información personal para publicidad comportamental entre contextos, según la definición de la CCPA/CPRA.",
+                "No discriminación: no te discriminaremos por ejercer cualquiera de tus derechos de privacidad."
+              ]
+            },
+            {
+              "type": "subheading",
+              "text": "C. Residentes en Canadá (PIPEDA)"
             },
             {
               "type": "paragraph",
-              "text": "You have the right to access your personal data, challenge its accuracy, and withdraw consent for data collection or processing at any time."
+              "text": "Tienes derecho a acceder a tus datos personales, a impugnar su exactitud y a retirar en cualquier momento tu consentimiento para su recopilación o tratamiento."
             },
             {
               "type": "paragraph",
-              "text": "How to Exercise Your Rights: To exercise any of these rights, please email us at privacy@mindsetis.com. We will respond to verified requests within statutory timeframes (30 days for GDPR, 45 days for CCPA)."
+              "text": "Cómo ejercer tus derechos: para ejercer cualquiera de estos derechos, escríbenos a privacy@mindsetis.com. Responderemos a las solicitudes verificadas dentro de los plazos legales (30 días según el RGPD, 45 días según la CCPA)."
             }
           ]
         },
         {
-          "heading": "Children's Privacy",
+          "heading": "Privacidad de los menores",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The Platform is not directed to individuals under the age of 18 (or the age of legal majority in your jurisdiction). We do not knowingly collect personal data from children. If we learn that we have collected personal data from a minor without parental consent, we will delete it immediately."
+              "text": "La Plataforma no está dirigida a menores de 18 años (o de la mayoría de edad legal en tu jurisdicción). No recopilamos a sabiendas datos personales de menores. Si descubrimos que hemos recopilado datos personales de un menor sin el consentimiento de sus padres o tutores, los eliminaremos de inmediato."
             }
           ]
         },
         {
-          "heading": "Security Measures",
+          "heading": "Medidas de seguridad",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We implement industry-standard technical, organizational, and physical security measures to protect your personal data against unauthorized access, loss, alteration, or disclosure. However, no internet transmission is 100% secure."
+              "text": "Aplicamos medidas de seguridad técnicas, organizativas y físicas conformes a los estándares del sector para proteger tus datos personales frente a accesos no autorizados, pérdida, alteración o divulgación. Sin embargo, ninguna transmisión por internet es 100 % segura."
             }
           ]
         },
         {
-          "heading": "Changes to This Privacy Policy",
+          "heading": "Cambios en esta Política de Privacidad",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We may update this Privacy Policy from time to time to reflect legal or operational changes. If we make material updates, we will notify you by email or via a notice on the Platform at least 14 days before the changes take effect."
+              "text": "Podemos actualizar esta Política de Privacidad periódicamente para reflejar cambios legales u operativos. Si realizamos cambios sustanciales, te lo notificaremos por correo electrónico o mediante un aviso en la Plataforma al menos 14 días antes de que entren en vigor."
             }
           ]
         }
       ],
       "contact": {
-        "heading": "Contact Us",
-        "body": "If you have any questions, concerns, or complaints regarding this Privacy Policy, please contact our Legal & Data Protection team:\nEmail: legal@mindsetis.com / privacy@mindsetis.com\nData Controller: Sole Proprietor (FOP) Kondratska, Ukraine."
+        "heading": "Contacto",
+        "body": "Si tienes preguntas, inquietudes o reclamaciones sobre esta Política de Privacidad, ponte en contacto con nuestro equipo Legal y de Protección de Datos:\nCorreo electrónico: legal@mindsetis.com / privacy@mindsetis.com\nResponsable del tratamiento: empresaria individual (FOP) Kondratska, Ucrania."
       }
     },
     "termsOfUse": {
       "title": "Términos de Uso",
       "lastUpdated": "Última actualización: 14 de agosto de 2026 · Empresaria individual (FOP) Kondratska",
       "intro": [
-        "Welcome to Mindsetis! These Terms of Service (\"Terms\") govern your access to and use of the website, applications, and services provided by Mindsetis (collectively, the \"Platform\").",
-        "Please read these Terms carefully. By clicking \"Continue\", registering, or submitting an application to join Mindsetis, you agree to be bound by these Terms. If you do not agree, you must not access or use the Platform."
+        "¡Te damos la bienvenida a Mindsetis! Estos Términos de Servicio (los \"Términos\") regulan tu acceso al sitio web, las aplicaciones y los servicios que ofrece Mindsetis (en conjunto, la \"Plataforma\") y el uso que hagas de ellos.",
+        "Lee estos Términos con atención. Al hacer clic en \"Continuar\", registrarte o enviar una solicitud para unirte a Mindsetis, aceptas cumplir estos Términos. Si no estás de acuerdo, no debes acceder a la Plataforma ni utilizarla."
       ],
       "sections": [
         {
-          "heading": "Ownership & Operator",
+          "heading": "Titularidad y operador",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Mindsetis is a registered trademark owned by Anastasiia Kondratska. The Platform is operated and owned by Sole Proprietor (FOP) Kondratska, registered under the laws of Ukraine (\"Company\", \"we\", \"us\", or \"our\")."
+              "text": "Mindsetis es una marca registrada propiedad de Anastasiia Kondratska. La Plataforma es propiedad de la empresaria individual (FOP) Kondratska, registrada conforme a la legislación de Ucrania, que también la opera (la \"Empresa\", \"nosotros\" o \"nuestro\")."
             }
           ]
         },
         {
-          "heading": "Eligibility & Application",
+          "heading": "Requisitos y solicitud",
           "blocks": [
             {
               "type": "list",
               "items": [
-                "Curated Community: Mindsetis is an exclusive, curated network for entrepreneurs, founders, CEOs, and executives.",
-                "Verification & Approval: Access requires an application and approval process. We reserve the right to accept, reject, or revoke membership for any applicant or user at our sole discretion, without justification, to maintain community standards.",
-                "Accuracy: You warrant that all information provided during registration and profile creation is truthful, accurate, and kept up to date."
+                "Comunidad seleccionada: Mindsetis es una red exclusiva y seleccionada de emprendedores, fundadores, CEO y altos directivos.",
+                "Verificación y aprobación: el acceso requiere un proceso de solicitud y aprobación. Nos reservamos el derecho de aceptar, rechazar o revocar la membresía de cualquier solicitante o usuario a nuestra entera discreción, sin necesidad de justificarlo, para mantener los estándares de la comunidad.",
+                "Veracidad: garantizas que toda la información que proporcionas durante el registro y la creación del perfil es veraz, exacta y se mantiene actualizada."
               ]
             }
           ]
         },
         {
-          "heading": "Account Access & Security",
+          "heading": "Acceso a la cuenta y seguridad",
           "blocks": [
             {
               "type": "list",
               "items": [
-                "Authentication: Access to your account is provided via secure sign-in links (\"Magic Links\") or authorized third-party authentication.",
-                "Account Responsibility: You are responsible for the confidentiality of your access link and account. Notify us immediately at info@mindsetis.com if you suspect unauthorized access."
+                "Autenticación: el acceso a tu cuenta se realiza mediante enlaces de inicio de sesión seguros (\"Magic Links\") o mediante una autenticación autorizada de terceros.",
+                "Responsabilidad sobre la cuenta: eres responsable de la confidencialidad de tu enlace de acceso y de tu cuenta. Avísanos de inmediato en info@mindsetis.com si sospechas que alguien ha accedido sin autorización."
               ]
             }
           ]
         },
         {
-          "heading": "Community Guidelines & Code of Conduct",
+          "heading": "Normas de la comunidad y código de conducta",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "As a member of Mindsetis, you agree to foster a respectful, collaborative, and professional environment. You strictly agree NOT to:"
+              "text": "Como miembro de Mindsetis, te comprometes a fomentar un entorno respetuoso, colaborativo y profesional. Te comprometes expresamente a NO:"
             },
             {
               "type": "list",
               "items": [
-                "Unsolicited Pitching & Spam: Use 1:1 sessions, P2P events, or member lists for aggressive sales pitches, spam, or unsolicited mass commercial offers.",
-                "Breach of Confidentiality: Share, publish, or disclose private information, business secrets, or insights shared by other members without their explicit prior written consent.",
-                "No-Shows & Unprofessional Behavior: Repeatedly fail to show up for scheduled 1:1 sessions without prior cancellation or notice.",
-                "Harassment: Engage in hate speech, discrimination, harassment, defamation, or unethical behavior toward any member or staff."
+                "Propuestas comerciales no solicitadas y spam: usar las sesiones 1:1, los eventos P2P o las listas de miembros para presentaciones de venta agresivas, spam u ofertas comerciales masivas no solicitadas.",
+                "Incumplimiento de la confidencialidad: compartir, publicar o revelar información privada, secretos empresariales o ideas compartidas por otros miembros sin su consentimiento expreso, previo y por escrito.",
+                "Ausencias y comportamiento poco profesional: faltar reiteradamente a sesiones 1:1 programadas sin cancelarlas ni avisar con antelación.",
+                "Acoso: incurrir en discursos de odio, discriminación, acoso, difamación o conductas poco éticas hacia cualquier miembro o persona del equipo."
               ]
             },
             {
               "type": "paragraph",
-              "text": "Violation of these guidelines will result in immediate suspension or permanent deletion of your account without notice or refund."
+              "text": "El incumplimiento de estas normas conllevará la suspensión inmediata o la eliminación definitiva de tu cuenta, sin previo aviso ni reembolso."
             }
           ]
         },
         {
-          "heading": "1:1 Sessions and Peer-to-Peer (P2P) Events",
+          "heading": "Sesiones 1:1 y eventos entre pares (P2P)",
           "blocks": [
             {
               "type": "list",
               "items": [
-                "Platform Role: Mindsetis facilitates connections, scheduling, and networking. We do not participate in, control, or take responsibility for opinions, advice, or agreements made between members during sessions.",
-                "No Business Guarantee: Mindsetis makes no guarantees regarding specific business outcomes, funding, partnerships, or financial results arising from interactions on the Platform."
+                "Papel de la Plataforma: Mindsetis facilita las conexiones, la programación y el networking. No participamos en las opiniones, los consejos ni los acuerdos que surjan entre miembros durante las sesiones, ni los controlamos ni asumimos responsabilidad por ellos.",
+                "Sin garantía de resultados: Mindsetis no garantiza resultados empresariales concretos, financiación, alianzas ni resultados económicos derivados de las interacciones en la Plataforma."
               ]
             }
           ]
         },
         {
-          "heading": "Intellectual Property & User Content",
+          "heading": "Propiedad intelectual y contenido del usuario",
           "blocks": [
             {
               "type": "list",
               "items": [
-                "Your Content: You retain full ownership of all text, images, logos, case studies, and media you upload to your personal Mindsetis profile (\"User Content\").",
-                "License to Mindsetis: By posting User Content, you grant Mindsetis a non-exclusive, worldwide, royalty-free license to display, host, and distribute your content strictly within the Platform.",
-                "Mindsetis IP: All software, design layouts, branding, algorithms, and Platform materials are the exclusive property of Sole Proprietor Kondratska, protected by international copyright and trademark laws."
+                "Tu contenido: conservas la plena titularidad de todos los textos, imágenes, logotipos, casos de estudio y archivos multimedia que subas a tu perfil personal de Mindsetis (el \"Contenido del usuario\").",
+                "Licencia a Mindsetis: al publicar Contenido del usuario, concedes a Mindsetis una licencia no exclusiva, mundial y libre de regalías para mostrar, alojar y distribuir tu contenido exclusivamente dentro de la Plataforma.",
+                "Propiedad intelectual de Mindsetis: todo el software, los diseños, la marca, los algoritmos y los materiales de la Plataforma son propiedad exclusiva de la empresaria individual Kondratska y están protegidos por las leyes internacionales de derechos de autor y de marcas."
               ]
             }
           ]
         },
         {
-          "heading": "Account Termination",
+          "heading": "Cancelación de la cuenta",
           "blocks": [
             {
               "type": "list",
               "items": [
-                "Termination by You: You may request to delete your account at any time by contacting us at info@mindsetis.com.",
-                "Termination by Us: We may suspend or terminate your account immediately if you breach these Terms, violate Community Guidelines, or harm the reputation or security of Mindsetis."
+                "Cancelación por tu parte: puedes solicitar la eliminación de tu cuenta en cualquier momento escribiéndonos a info@mindsetis.com.",
+                "Cancelación por nuestra parte: podemos suspender o cancelar tu cuenta de inmediato si incumples estos Términos o las Normas de la comunidad, o si perjudicas la reputación o la seguridad de Mindsetis."
               ]
             }
           ]
         },
         {
-          "heading": "Disclaimer of Warranties",
+          "heading": "Exclusión de garantías",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "The Platform and all services are provided on an \"AS IS\" and \"AS AVAILABLE\" basis. Mindsetis explicitly disclaims all warranties of any kind, whether express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
+              "text": "La Plataforma y todos los servicios se ofrecen \"TAL CUAL\" y \"SEGÚN DISPONIBILIDAD\". Mindsetis rechaza expresamente cualquier garantía de cualquier tipo, expresa o implícita, incluidas, entre otras, las garantías implícitas de comerciabilidad, idoneidad para un fin determinado y no infracción."
             }
           ]
         },
         {
-          "heading": "Limitation of Liability",
+          "heading": "Limitación de responsabilidad",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "To the maximum extent permitted by applicable law, Sole Proprietor Kondratska, its founder, and service providers shall not be liable for any indirect, incidental, special, or consequential damages, including loss of profits, data, or business opportunities, arising from your use of the Platform or interactions with other members."
+              "text": "En la máxima medida permitida por la legislación aplicable, ni la empresaria individual Kondratska, ni su fundadora, ni sus proveedores de servicios serán responsables de daños indirectos, incidentales, especiales o consecuentes, incluida la pérdida de beneficios, datos u oportunidades de negocio, derivados del uso de la Plataforma o de las interacciones con otros miembros."
             }
           ]
         },
         {
-          "heading": "Governing Law & Dispute Resolution",
+          "heading": "Legislación aplicable y resolución de disputas",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "These Terms shall be governed by and construed in accordance with the laws of Ukraine. Any disputes arising out of or relating to these Terms or the Platform shall be resolved through negotiation, or, if unresolvable, submitted to the competent courts of Ukraine."
+              "text": "Estos Términos se rigen e interpretan de conformidad con la legislación de Ucrania. Cualquier disputa derivada de estos Términos o de la Plataforma, o relacionada con ellos, se resolverá mediante negociación o, si no fuera posible, se someterá a los tribunales competentes de Ucrania."
             }
           ]
         },
         {
-          "heading": "Changes to Terms",
+          "heading": "Cambios en los Términos",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "We reserve the right to modify these Terms at any time. If material changes are made, we will notify you by email or via a prominent notice on the Platform at least 14 days before the new terms take effect. Continued use of the Platform after such changes constitutes acceptance."
+              "text": "Nos reservamos el derecho de modificar estos Términos en cualquier momento. Si realizamos cambios sustanciales, te lo notificaremos por correo electrónico o mediante un aviso destacado en la Plataforma al menos 14 días antes de que los nuevos términos entren en vigor. El uso continuado de la Plataforma después de dichos cambios implica su aceptación."
             }
           ]
         }
       ],
       "contact": {
-        "heading": "Contact Us",
-        "body": "For legal questions or concerns regarding these Terms, please contact our Legal Team:\nEmail: info@mindsetis.com\nOperator: Sole Proprietor (FOP) Kondratska, Ukraine."
+        "heading": "Contacto",
+        "body": "Si tienes preguntas o inquietudes legales sobre estos Términos, ponte en contacto con nuestro equipo legal:\nCorreo electrónico: info@mindsetis.com\nOperador: empresaria individual (FOP) Kondratska, Ucrania."
       }
     },
     "cookiesPolicy": {
       "title": "Política de Cookies",
       "lastUpdated": "Última actualización: 12 de agosto de 2026 · Mindsetis OÜ",
       "intro": [
-        "This policy explains what cookies Mindsetis uses, what each of them does, and how you can change your choice at any time."
+        "Esta política explica qué cookies utiliza Mindsetis, para qué sirve cada una y cómo puedes cambiar tu elección en cualquier momento."
       ],
       "sections": [
         {
-          "heading": "What cookies are",
+          "heading": "Qué son las cookies",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "A cookie is a small file a website stores on your device. It lets the site remember you between visits — that you are logged in, which language you chose, what you already dismissed."
+              "text": "Una cookie es un pequeño archivo que un sitio web guarda en tu dispositivo. Permite que el sitio te recuerde entre una visita y otra (por ejemplo, que has iniciado sesión, qué idioma elegiste o qué avisos ya cerraste)."
             }
           ]
         },
         {
-          "heading": "Strictly necessary",
+          "heading": "Estrictamente necesarias",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "These keep the site working and cannot be switched off. They hold your session, protect forms from abuse and remember your cookie choice itself."
+              "text": "Mantienen el sitio en funcionamiento y no se pueden desactivar. Guardan tu sesión, protegen los formularios frente a abusos y recuerdan tu propia elección sobre las cookies."
             },
             {
               "type": "paragraph",
-              "text": "Legal basis: our legitimate interest in running a secure service. Consent is not required."
+              "text": "Base legal: nuestro interés legítimo en ofrecer un servicio seguro. No se requiere consentimiento."
             }
           ]
         },
         {
-          "heading": "Functional",
+          "heading": "Funcionales",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "These remember your preferences — interface language, timezone, whether a banner was closed. Turning them off means telling us the same things again on every visit."
+              "text": "Recuerdan tus preferencias, como el idioma de la interfaz, la zona horaria o si ya cerraste un aviso. Si las desactivas, tendrás que indicarnos lo mismo en cada visita."
             }
           ]
         },
         {
-          "heading": "Analytics",
+          "heading": "Analíticas",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "These tell us which pages people open and where they stop, so we can fix what does not work. The data is aggregated and never used to identify you personally."
+              "text": "Nos muestran qué páginas abren las personas y dónde se detienen, para que podamos corregir lo que no funciona. Los datos son agregados y nunca se utilizan para identificarte personalmente."
             },
             {
               "type": "paragraph",
-              "text": "Set only with your consent."
+              "text": "Solo se activan con tu consentimiento."
             }
           ]
         },
@@ -2127,44 +2127,44 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "These measure whether an ad brought someone to Mindsetis. We do not sell your data and we do not build advertising profiles."
+              "text": "Miden si un anuncio ha traído a alguien a Mindsetis. No vendemos tus datos ni creamos perfiles publicitarios."
             },
             {
               "type": "paragraph",
-              "text": "Set only with your consent."
+              "text": "Solo se activan con tu consentimiento."
             }
           ]
         },
         {
-          "heading": "Third parties",
+          "heading": "Terceros",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Some cookies come from services we rely on:"
+              "text": "Algunas cookies provienen de servicios en los que nos apoyamos:"
             },
             {
               "type": "list",
               "items": [
-                "Stripe — payment processing and fraud prevention.",
-                "Google — authentication and video calls.",
-                "Our analytics provider — aggregated usage statistics."
+                "Stripe — procesamiento de pagos y prevención del fraude.",
+                "Google — autenticación y videollamadas.",
+                "Nuestro proveedor de analítica — estadísticas de uso agregadas."
               ]
             }
           ]
         },
         {
-          "heading": "Changing your choice",
+          "heading": "Cómo cambiar tu elección",
           "blocks": [
             {
               "type": "paragraph",
-              "text": "Open Cookie settings in the footer at any time to change what you allow. You can also clear cookies in your browser, though that will log you out."
+              "text": "Abre la Configuración de cookies en el pie de página en cualquier momento para cambiar lo que permites. También puedes borrar las cookies en tu navegador, aunque así se cerrará tu sesión."
             }
           ]
         }
       ],
       "contact": {
-        "heading": "Questions about this document?",
-        "body": "Write to legal@mindsetis.com and we will answer within five working days."
+        "heading": "¿Tienes preguntas sobre este documento?",
+        "body": "Escribe a legal@mindsetis.com y te responderemos en un plazo de cinco días hábiles."
       }
     }
   },
@@ -2187,5 +2187,72 @@
     "cta": "Conviértete en Mindsetter",
     "seeExample": "Ver ejemplo",
     "close": "Cerrar"
+  },
+  "catalog": {
+    "industries": {
+      "consulting": "Consultoría",
+      "cybersecurity": "Ciberseguridad",
+      "e-commerce": "Comercio electrónico",
+      "education": "Educación",
+      "events": "Eventos",
+      "fashion": "Moda",
+      "finance": "Finanzas",
+      "healthcare": "Salud",
+      "hospitality": "Hostelería",
+      "investments": "Inversiones",
+      "logistics": "Logística",
+      "manufacturing": "Manufactura",
+      "marketing": "Marketing",
+      "media-entertainment": "Medios y entretenimiento",
+      "non-profit": "Sin ánimo de lucro",
+      "other": "Otro",
+      "real-estate": "Bienes raíces",
+      "retail": "Comercio minorista",
+      "technology": "Tecnología"
+    },
+    "interestCategories": {
+      "culture-art": "Cultura y arte",
+      "gastronomy": "Gastronomía",
+      "social-impact": "Social e impacto",
+      "sports-health": "Deporte y salud",
+      "travel-outdoors": "Viajes y aire libre"
+    },
+    "interests": {
+      "art-collecting": "Arte y coleccionismo",
+      "basketball": "Baloncesto",
+      "books": "Libros",
+      "bouldering": "Boulder",
+      "boxing": "Boxeo",
+      "charity": "Beneficencia",
+      "chess": "Ajedrez",
+      "cinema": "Cine",
+      "cooking": "Cocina",
+      "cycling": "Ciclismo",
+      "dance": "Baile",
+      "fine-dining": "Alta cocina",
+      "football": "Fútbol",
+      "golf": "Golf",
+      "gym-fitness": "Gimnasio y fitness",
+      "hiking": "Senderismo",
+      "investing": "Inversión",
+      "mentorship": "Mentoría",
+      "mindfulness": "Mindfulness",
+      "motorcycles": "Motos",
+      "padel": "Pádel",
+      "podcasting": "Podcasting",
+      "public-speaking": "Oratoria",
+      "road-trips": "Viajes por carretera",
+      "running": "Running",
+      "skiing-snowboarding": "Esquí y snowboard",
+      "swimming": "Natación",
+      "tea-coffee-culture": "Cultura del té y del café",
+      "tennis": "Tenis",
+      "theater": "Teatro",
+      "travel": "Viajes",
+      "volunteering": "Voluntariado",
+      "wine-spirits": "Vinos y licores",
+      "yachting": "Navegación a vela",
+      "yoga": "Yoga"
+    }
   }
 }

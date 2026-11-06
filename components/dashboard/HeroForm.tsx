@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
@@ -29,14 +29,11 @@ import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
+import { getIndustryOptions, getLanguageOptions } from '@/lib/constants/catalog-labels';
 import type { IndustryValue } from '@/lib/constants/industries';
-import { INDUSTRIES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
+import { OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
 import type { InterestValue } from '@/lib/constants/interests';
-import {
-  buildLanguageAliases,
-  type LanguageValue,
-  SUPPORTED_LANGUAGES,
-} from '@/lib/constants/languages';
+import { buildLanguageAliases, type LanguageValue } from '@/lib/constants/languages';
 import type { CountryOption } from '@/lib/geo/countries';
 import { appendAvatarToFormData } from '@/lib/media/avatar-framing';
 import { MAX_INDUSTRIES, MAX_INDUSTRY_CUSTOM_LENGTH } from '@/lib/validation/build-profile';
@@ -104,6 +101,8 @@ export function HeroForm({
 }: HeroFormProps) {
   const t = useTranslations('auth');
   const tCabinet = useTranslations('dashboard.profile');
+  const tCatalog = useTranslations('catalog');
+  const locale = useLocale();
   const router = useRouter();
   const notifySaved = useCabinetSaved();
   const [formError, setFormError] = useState<FormBanner>(null);
@@ -158,13 +157,19 @@ export function HeroForm({
 
   const languageOptions = useMemo(
     () =>
-      SUPPORTED_LANGUAGES.map((language) => ({
+      getLanguageOptions(locale).map((language) => ({
         value: language.value,
         label: language.label,
-        keywords: buildLanguageAliases(language.code, language.label),
+        // The English name stays searchable when the list is shown in another language.
+        keywords: [
+          language.englishLabel,
+          ...buildLanguageAliases(language.code, language.englishLabel),
+        ],
       })),
-    [],
+    [locale],
   );
+
+  const industryOptions = useMemo(() => getIndustryOptions(tCatalog, locale), [tCatalog, locale]);
 
   const countryOptions = useMemo(
     () =>
@@ -556,7 +561,7 @@ export function HeroForm({
                       form.setValue('industryCustom', '', { shouldValidate: true });
                     }
                   }}
-                  options={INDUSTRIES}
+                  options={industryOptions}
                   max={MAX_INDUSTRIES}
                   placeholder={t('buildProfile.industries.placeholder')}
                   searchPlaceholder={t('buildProfile.industries.searchPlaceholder')}

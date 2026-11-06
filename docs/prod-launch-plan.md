@@ -34,7 +34,9 @@
 - [ ] Хто адміністратор (роль staff) — призначимо вручну після першої реєстрації.
 - [ ] Індексація: зараз пошуковикам відкрита лише головна, решта `noindex`. Відкривати сторінки
       Майндсеттерів чи пізніше.
-- [ ] Юридичні тексти іспанською не перекладені — запускаємось з англійськими?
+- [~] Юридичні тексти іспанською — ✅ 06.11 перекладено (Privacy, Terms, Cookies у
+  `messages/es.json`), разом зі списками індустрій/інтересів/мов у профілі. Машинний переклад
+  розробки — **потрібна вичитка юристом / носієм** перед запуском.
 - [ ] Лист «ми запустились» шести людям зі списку очікування — вручну чи окремою задачею.
 
 ### 1. Код — перед продом (робимо ми)
@@ -52,33 +54,60 @@
 - [x] Експорт списку очікування (6 записів) — резервна копія. ✅ 06.11:
       `Desktop\work\mindsetis\backups\prod-2026-11-06\` (список очікування, ліди, розсилка — JSON,
       опис колонок; поза репозиторієм).
-- [ ] 18 міграцій (пробний запуск → застосування → перевірка).
-- [ ] Довідник країн/регіонів/міст (`npm run db:seed:geo`).
-- [ ] Функція `process-email-queue` + її секрети (ключ Resend, відправник, секрет черги) +
-      `email_queue_settings` — так само, як на деві.
+- [x] 18 міграцій (пробний запуск → застосування → перевірка). ✅ 06.11: усі 18, історія 50/50,
+      список очікування не змінився (звірено з копією), RLS на всіх таблицях.
+- [x] Довідник країн/регіонів/міст (`npm run db:seed:geo`). ✅ 06.11: 252 / 3865 / 170570.
+- [x] Функція `process-email-queue` + її секрети (ключ Resend, відправник, секрет черги) +
+      `email_queue_settings` — так само, як на деві. ✅ 06.11: функцію розгорнуто, секрети й
+      `email_queue_settings` заведено (власник); cron отримує 200 з 15:08 UTC.
+      Урок: перший секрет черги мав символ `£` → 401 на кожен виклик (заголовок HTTP іде
+      байтами UTF-8, функція читає Latin-1). Секрет черги — лише `0-9a-f`
+      (`encode(extensions.gen_random_bytes(32), 'hex')`).
 - [ ] Лого листів у `brand-assets` (якщо лишаємо там) або на сайті (крок 1).
 
 ### 3. Налаштування Supabase Auth на проді (власник у кабінеті або ми з токеном)
 
 - [x] URL Configuration: Site URL `https://mindsetis.com`, Redirect URLs `https://mindsetis.com/**`
       — уже так (перевірено 06.11).
-- [ ] **Критично:** власний SMTP через Resend (`no-reply@mindsetis.com`; хост `smtp.resend.com`,
+- [x] **Критично:** власний SMTP через Resend (`no-reply@mindsetis.com`; хост `smtp.resend.com`,
       порт 465, користувач `resend`, пароль — API-ключ Resend) — як на деві. Без нього реєстрація
-      «ляже» після двох листів на годину.
-- [ ] Після SMTP — підняти ліміт листів (`rate_limit_email_sent`, на деві 30/год).
-- [ ] 5 шаблонів листів (`supabase/templates/*.html`, уже з новим лого) — вставляються вручну в
-      кабінеті; там же теми листів.
+      «ляже» після двох листів на годину. ✅ 06.11 (власник), перевірено.
+- [x] Після SMTP — підняти ліміт листів (`rate_limit_email_sent`, на деві 30/год). ✅ 06.11: 30.
+- [x] 5 шаблонів листів (`supabase/templates/*.html`, уже з новим лого) — вставляються вручну в
+      кабінеті; там же теми листів. ✅ 06.11 (власник), теми збігаються.
 - [ ] Для перевірки на прев'ю-адресі (крок 5) тимчасово додати її в Redirect URLs.
 - [ ] (За бажанням) CAPTCHA на реєстрацію — зараз вимкнена.
 
 ### 4. Vercel, прод-проєкт `mindsetis` (власник — у мене немає прав)
 
-- [ ] Перевірити, що `NEXT_PUBLIC_SUPABASE_URL` і ключі — саме прод-бази `jyenqhxqbrsgngyixuqj`.
-- [ ] `NEXT_PUBLIC_SITE_URL=https://mindsetis.com`.
+> 06.11: власник почистив змінні; перевірено (лише читання) — пункти нижче ✅, крім позначених.
+
+- [x] Перевірити, що `NEXT_PUBLIC_SUPABASE_URL` і ключі — саме прод-бази `jyenqhxqbrsgngyixuqj`.
+      ✅ URL, `sb_publishable_Cc3…`, `sb_secret_9tMN…` — прод.
+- [x] `NEXT_PUBLIC_SITE_URL=https://mindsetis.com`. ✅ (`COMING_SOON_MODE=true` — для Production і
+      Preview; для перевірки на прев'ю перекрити в Preview, крок 5.)
+- [x] Upstash на проді: ✅ 06.11 окремий акаунт Upstash (Free), база `mindsetis-prod`, AWS
+      `eu-west-1`, Eviction увімкнено; `UPSTASH_REDIS_REST_URL` / `_TOKEN` заведено для Production і
+      Preview (URL перевірено за формою, токен — Sensitive, не читався). Перевірити вживу — на
+      прев'ю (4-та заявка з однієї пошти має відхилитися).
+- [x] Видалено: `SUPABASE_DB_PASSWORD`, `SUPABASE_ACCESS_TOKEN`, `RESEND_*`, `QUEUE_TRIGGER_SECRET`,
+      `STRIPE_*`, `OPENAI_API_KEY`, `GOOGLE_CALENDAR_*`, `SITE_AUTH_PASSWORD__`; `NOINDEX` немає.
+      Лишились невживані `SITE_AUTH_USER__`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+      `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF` (нешкідливі; service-role краще прибрати).
+      `SUPABASE_SECRET_KEY` не позначено Sensitive.
 - [ ] Upstash: окрема база для проду (безкоштовний тариф — одна база на акаунт), перевірити, що
-      `UPSTASH_REDIS_REST_*` справжні, а не заглушки.
+      `UPSTASH_REDIS_REST_*` справжні, а не заглушки. Неправильні значення ламають вхід,
+      реєстрацію та Help & Support (`lib/rate-limit.ts` не ловить помилку Redis); обидві порожні —
+      ліміти вимкнені, а на `/join` вимикається перевірка «акаунт уже існує».
+- [ ] Застосунок НЕ читає (можна прибрати): `RESEND_*`, `QUEUE_TRIGGER_SECRET` (живуть у секретах
+      функції Supabase), `STRIPE_*`, `OPENAI_API_KEY`, `GOOGLE_CALENDAR_*`, `SUPABASE_PROJECT_REF`,
+      legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`, `SITE_AUTH_*__`.
+      `NOINDEX` на проді — не `true`; `SITE_AUTH_PASSWORD` — відсутній.
 - [ ] Прибрати змінні, які застосунку не потрібні й лише ризикують: `SUPABASE_DB_PASSWORD`,
       `SUPABASE_ACCESS_TOKEN` (і решту, позначених «Needs Attention», позначити як Sensitive).
+- [ ] Регіон функцій Vercel = `iad1` (Вашингтон), а база Supabase — `eu-west-1` (Ірландія): кожен
+      запит до бази перетинає Атлантику. Поставити `dub1` (Dublin) у Settings → Functions → Function
+      Regions (діє з наступного деплою); Upstash для проду — теж `eu-west-1`.
 - [ ] Необов'язкові: `SUPPORT_EMAIL`, `MINDSETTER_AUTO_PUBLISH`; `NEXT_PUBLIC_EXAMPLE_PROFILE_URL` —
       коли на проді з'явиться сторінка клієнтки.
 

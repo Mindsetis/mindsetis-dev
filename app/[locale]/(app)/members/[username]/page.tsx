@@ -36,7 +36,7 @@ export const dynamic = 'force-dynamic';
  * never leaves this function: it can't reach `MemberProfileView`, let alone the client. Keep it
  * that way — don't spread the raw row into props.
  */
-const getProfileByUsername = cache(async (username: string) => {
+const getProfileByUsername = cache(async (username: string, locale: string) => {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from('profiles')
@@ -55,9 +55,13 @@ const getProfileByUsername = cache(async (username: string) => {
     industry_custom_status: industryCustomStatus,
     ...renderedProfile
   } = profile;
+  const tCatalog = await getTranslations({ locale, namespace: 'catalog' });
   return {
     ...renderedProfile,
-    industryLabels: resolveIndustryLabels({ industries, industryCustom, industryCustomStatus }),
+    industryLabels: resolveIndustryLabels(
+      { industries, industryCustom, industryCustomStatus },
+      tCatalog,
+    ),
   };
 });
 
@@ -102,8 +106,8 @@ async function isMindsetterPageVisible(
  * for free once the loading.tsx architecture is revisited.
  */
 export async function generateMetadata({ params }: PublicProfilePageProps) {
-  const { username } = await params;
-  const profile = await getProfileByUsername(username);
+  const { locale, username } = await params;
+  const profile = await getProfileByUsername(username, locale);
   if (!profile) notFound();
   return {
     title: [profile.full_name, profile.last_name].filter(Boolean).join(' ') || `@${username}`,
@@ -164,7 +168,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   // Already resolved (and notFound()-ed, if missing) by `generateMetadata` above — `cache()`
   // means this is a no-op re-read, not a second query.
-  const profile = await getProfileByUsername(username);
+  const profile = await getProfileByUsername(username, locale);
   if (!profile) {
     notFound();
   }

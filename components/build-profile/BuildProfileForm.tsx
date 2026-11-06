@@ -1,8 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { saveBuildProfile } from '@/app/[locale]/(app)/build-profile/actions';
@@ -23,8 +23,9 @@ import { type FormBanner, FormErrorAlert } from '@/components/ui/form-error-aler
 import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { useRouter } from '@/i18n/navigation';
+import { getIndustryOptions } from '@/lib/constants/catalog-labels';
 import type { IndustryValue } from '@/lib/constants/industries';
-import { INDUSTRIES, INDUSTRY_VALUES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
+import { INDUSTRY_VALUES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
 import {
   type BuildProfileInput,
   buildProfileSchema,
@@ -56,6 +57,9 @@ export function BuildProfileForm({
   initialIndustryCustom,
 }: BuildProfileFormProps) {
   const t = useTranslations('auth');
+  const tCatalog = useTranslations('catalog');
+  const locale = useLocale();
+  const industryOptions = useMemo(() => getIndustryOptions(tCatalog, locale), [tCatalog, locale]);
   const router = useRouter();
   const [formError, setFormError] = useState<FormBanner>(null);
 
@@ -187,7 +191,7 @@ export function BuildProfileForm({
                       form.setValue('industryCustom', '', { shouldValidate: true });
                     }
                   }}
-                  options={INDUSTRIES}
+                  options={industryOptions}
                   max={MAX_INDUSTRIES}
                   placeholder={t('buildProfile.industries.placeholder')}
                   searchPlaceholder={t('buildProfile.industries.searchPlaceholder')}

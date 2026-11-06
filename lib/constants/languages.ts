@@ -21,9 +21,10 @@
  * (`Intl.DisplayNames(['en'], { type: 'language' })`) rather than typed by hand — a wrong
  * two-letter code would surface as a wrong abbreviation on a public profile.
  *
- * Not run through next-intl: these are catalog values (like the `interests` table), not
- * translated UI copy — mirrors the "profile content isn't re-translated" convention, kept
- * here instead of the DB only because there's no seed table for languages.
+ * `label` is the English name (source/fallback). The picker shows the name in the viewer's
+ * locale, looked up by `code` in the static `LANGUAGE_NAMES` table (`languageLabel` in
+ * `lib/constants/catalog-labels.ts`) — no per-language dictionary keys. A new row here needs
+ * its Spanish name there too. The stored `value` is locale-independent.
  */
 export const SUPPORTED_LANGUAGES = [
   // — original fourteen, frozen, ordered by prevalence —
