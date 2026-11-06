@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { createAction } from '@/lib/api';
 import { ActionError } from '@/lib/api/errors';
 import { requireUser } from '@/lib/auth/guards';
+import { isMindsetterAutoPublishEnabled } from '@/lib/config/mindsetter-publication';
 import { fetchLinkPreview, type LinkPreview } from '@/lib/link-preview';
 import { firstMissingMindsetterStep } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
@@ -249,10 +250,11 @@ export type FinalizeMindsetterOnboardingResult = {
  * saving the REQUIRED steps (Roles → Superpowers → Help, i.e.
  * `mindsetter_profiles.onboarding_step >= HELP_STEP_ONBOARDING_STEP` with their data present —
  * the Shine picker and the blocks after it are optional since Release 4 П1) flips
- * `profiles.account_type` from `'member'` to `'mindsetter'`. This does NOT verify the account
- * and does NOT publish the profile — `mindsetter_profiles.is_public` is never touched here;
- * that stays `false` until staff verification (spec §5.7, a separate later stage). Also never
- * touches `verification_status`/`is_blocked`.
+ * `profiles.account_type` from `'member'` to `'mindsetter'`. This does NOT verify the account.
+ * Since 06.11.2026 it DOES publish the page (`mindsetter_profiles.is_public = true`) at that same
+ * flip, unless `MINDSETTER_AUTO_PUBLISH=false` — the owner's interim rule until the back office
+ * exists (see `lib/config/mindsetter-publication.ts`); the spec's "published after staff
+ * verification" (§5.7) returns with it. Never touches `verification_status`/`is_blocked`.
  *
  * `account_type` is one of the staff-only columns guarded by
  * `guard_profiles_protected_columns()` (onboarding doc section B) — a plain client update
@@ -300,7 +302,7 @@ async function promoteIfCoreWizardDone(
       .select('onboarding_step, roles, superpowers, help_with')
       .eq('id', userId)
       .maybeSingle(),
-    supabase.from('profiles').select('account_type').eq('id', userId).maybeSingle(),
+    supabase.from('profiles').select('account_type, is_blocked').eq('id', userId).maybeSingle(),
   ]);
 
   if (mindsetterProfileReadError || profileReadError) {
@@ -352,6 +354,25 @@ async function promoteIfCoreWizardDone(
       'internal_error',
       'Could not finalize your Mindsetter profile. Please try again.',
     );
+  }
+
+  // Publish the page at the same moment (owner's decision 06.11.2026, see
+  // `lib/config/mindsetter-publication.ts`). Same narrow service-role write — `is_public` is
+  // staff-only (`guard_mindsetter_profiles_is_public` lets only staff/service role change it) — on
+  // the caller's own row. Only here, at the member → mindsetter flip, so re-saving a step later
+  // never re-publishes a page staff unpublished. Not fatal: the caller IS a Mindsetter now, and a
+  // missed publish is a staff fix, not a reason to fail their save.
+  // A blocked account is never published (it would go public the day it's unblocked, without a
+  // staff decision) — same rule as the 20261106150000 backfill.
+  if (isMindsetterAutoPublishEnabled() && !profile?.is_blocked) {
+    const { error: publishError } = await service
+      .from('mindsetter_profiles')
+      .update({ is_public: true })
+      .eq('id', userId);
+
+    if (publishError) {
+      console.error('[mindsetter-onboarding] finalize: auto-publish failed:', publishError);
+    }
   }
 
   return { finalized: true, onboardingStep };
