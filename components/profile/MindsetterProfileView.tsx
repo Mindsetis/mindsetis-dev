@@ -2276,7 +2276,11 @@ export function MindsetterProfileView({
                   >
                     <div className={cn('relative', styles.wayYearBlock)}>
                       <span className={styles.wayYear}>
-                        {stage.yearFrom}–{stage.yearTo}
+                        {/* The end year is optional (06.11.2026): an ongoing stage shows the
+                            start year alone, without a dangling dash. */}
+                        {stage.yearTo?.trim()
+                          ? `${stage.yearFrom}–${stage.yearTo}`
+                          : stage.yearFrom}
                       </span>
                       <div className={styles.wayConnector} aria-hidden="true" />
                     </div>

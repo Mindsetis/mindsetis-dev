@@ -753,18 +753,19 @@ export const myWayStageSchema = z
       .min(1, vmsg('yearFromRequired'))
       .max(MAX_MY_WAY_YEAR_LENGTH, vmsg('yearFromMax', { max: MAX_MY_WAY_YEAR_LENGTH }))
       .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+    // Optional since 06.11.2026 (owner's request): an ongoing stage has no end year. Empty string
+    // = none; the profile then shows the start year alone.
     yearTo: z
       .string()
       .trim()
-      .min(1, vmsg('yearToRequired'))
       .max(MAX_MY_WAY_YEAR_LENGTH, vmsg('yearToMax', { max: MAX_MY_WAY_YEAR_LENGTH }))
       .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
   })
   .superRefine((stage, ctx) => {
     // Reversed-range guard (product fix, stage 1.9 follow-up): only fires once BOTH years are
-    // present and numeric — a non-numeric or missing year is already reported by the field's own
-    // `min`/`max` rules above, so this stays silent in that case rather than piling on a second,
-    // confusing error. Same year on both ends (a one-year project, e.g. "2020 – 2020") is
+    // present and numeric — a non-numeric or missing start year is already reported by its own
+    // `min`/`max` rules above, and a missing end year is allowed, so this stays silent in those
+    // cases rather than piling on a second, confusing error. Same year on both ends (a one-year project, e.g. "2020 – 2020") is
     // deliberately allowed — only a truly reversed range ("2016 – 2012") is rejected.
     if (!stage.yearFrom || !stage.yearTo) return;
     const from = Number(stage.yearFrom);
