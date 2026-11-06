@@ -77,8 +77,10 @@ const MINDSETTER_CONGRATS_PATH = '/mindsetter-onboarding/congrats';
 
 /**
  * Where a Member picks the Mindsetter wizard back up: the next unsaved required step, or
- * `/congrats` once all of them are saved (a caller promoted at `saveShine` never asks — they are
- * a Mindsetter already; this only catches someone who finished before that promotion existed).
+ * `/congrats` once all of them are saved (a caller promoted at `saveHelp` — Release 4 П1 — never
+ * asks, they are a Mindsetter already; this only catches someone who finished before that
+ * promotion existed, e.g. a Member who saved Help on an older build lands on `/shine`, whose
+ * Continue/Skip still promotes).
  * `null` means "never started" (no `mindsetter_profiles` row yet) and resolves to the first step.
  */
 export function mindsetterResumePath(step: number | null): string {

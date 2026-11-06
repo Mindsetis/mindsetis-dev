@@ -87,4 +87,24 @@ function DropdownMenuItem({
   );
 }
 
-export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger };
+/** Hairline between item groups — same `#2a2a2a` the account sheet's dividers use. */
+function DropdownMenuSeparator({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn('mx-3 my-1 h-px bg-[#2a2a2a]', className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+};

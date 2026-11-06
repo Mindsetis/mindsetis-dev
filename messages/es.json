@@ -2,13 +2,14 @@
   "nav": {
     "accountMenu": {
       "closeSheet": "Cerrar menú",
-      "editProfile": "Editar perfil",
+      "helpSupport": "Ayuda y soporte",
       "logOut": "Cerrar sesión",
+      "manageProfile": "Gestionar perfil",
       "settings": "Ajustes",
       "sheetTitle": "Menú de cuenta",
       "signingOut": "Cerrando sesión…",
       "trigger": "Menú de cuenta de {name}",
-      "viewPublicProfile": "Ver perfil público"
+      "viewProfile": "Ver perfil"
     },
     "brand": "Mindsetis",
     "createEvent": "Crear evento",
@@ -1000,6 +1001,7 @@
       },
       "continueFill": "Continuar completando ({count, plural, one {# sección} other {# secciones}})",
       "listHeading": "Qué puedes añadir",
+      "seeProfile": "Ver cómo se ve mi página de perfil",
       "skip": "Omitir — completar más tarde desde el panel",
       "subtitle": "Selecciona lo que quieres completar ahora. Todo lo demás — más tarde.",
       "title": "Haz brillar tu perfil."
@@ -1033,6 +1035,7 @@
         "cardTitle": "Número {index}",
         "labelLabel": "Etiqueta",
         "labelPlaceholder": "p. ej. Plataformas fundadas",
+        "layoutHint": "Para que tu perfil se vea mejor, te recomendamos añadir exactamente 4 cifras clave.",
         "removeNumber": "Quitar número",
         "title": "Números",
         "valueLabel": "Valor",
@@ -1049,11 +1052,21 @@
       "promo": {
         "errors": {
           "invalidType": "Sube un video MP4 o MOV.",
+          "thumbnailInvalidType": "Sube una imagen PNG, JPEG o WebP.",
+          "thumbnailTooLarge": "La miniatura debe pesar 5 MB o menos.",
+          "thumbnailUploadFailed": "No se pudo subir tu miniatura. Inténtalo de nuevo.",
           "tooLarge": "El video debe pesar 200MB o menos.",
           "uploadFailed": "No se pudo subir tu video. Inténtalo de nuevo."
         },
         "orDivider": "O",
         "removeVideo": "Quitar video",
+        "thumbnailAlt": "Vista previa de la miniatura del video promocional",
+        "thumbnailHint": "Es opcional, pero hará que tu perfil se vea mejor.",
+        "thumbnailLabel": "Miniatura del video promocional",
+        "thumbnailRemove": "Quitar miniatura",
+        "thumbnailSpecs": "PNG, JPEG o WebP · Máx. 5 MB",
+        "thumbnailUpload": "Subir miniatura",
+        "thumbnailUploading": "Subiendo…",
         "title": "Video promocional",
         "uploadHint": "MP4 o MOV · Máx. 200MB<br></br>Formato vertical (9:16)<br></br>recomendado",
         "uploading": "Subiendo…",
@@ -1138,6 +1151,7 @@
     "website": "Sitio web"
   },
   "mindsetterProfile": {
+    "backToSetup": "Volver a la configuración",
     "beyondBusiness": {
       "eyebrow": "MÁS ALLÁ DEL TRABAJO",
       "heading": "Lo que me importa más allá del trabajo"
@@ -1154,6 +1168,7 @@
     "ctaBanner2": {
       "heading": "¿Listo para hablar?"
     },
+    "edit": "Editar",
     "favorite": "Añadir a favoritos",
     "fckups": {
       "dialogTitle": "MI ERROR",
@@ -1205,33 +1220,6 @@
     "reviews": {
       "eyebrow": "RESEÑAS",
       "heading": "Lo que dicen los fundadores después de una sesión",
-      "items": [
-        {
-          "name": "Erin Glabets",
-          "quote": "Recientemente asistí a la sesión de Anastasia sobre Marketing de Eventos, y realmente superó mis expectativas. Tiene un talento poco común para desglosar estrategias complejas en pasos claros y accionables que puedes aplicar de inmediato. Tres meses después, sigo usando el marco de trabajo que compartió.",
-          "role": "Directora de Comunicación"
-        },
-        {
-          "name": "Daniel Kovalenko",
-          "quote": "Una de las horas más útiles que he invertido este año. Anastasia nos guió por todo el proceso de producción de conferencias — concepto, escenario, guion — y me fui con una lista que usé la semana siguiente.",
-          "role": "Fundador"
-        },
-        {
-          "name": "Mira Torres",
-          "quote": "Anastasia me preparó antes de mi primera keynote y cambió por completo mi forma de pensar sobre la presencia en el escenario. Sin relleno, solo comentarios prácticos y reales que marcaron una diferencia inmediata.",
-          "role": "Líder de Producto"
-        },
-        {
-          "name": "Oksana Petrenko",
-          "quote": "Llegué con una marca personal dispersa y me fui con un plan real. Anastasia hace las preguntas correctas y no te deja conformarte con respuestas genéricas. Justo lo que necesitaba antes de nuestra ronda de financiación.",
-          "role": "Directora de Marketing"
-        },
-        {
-          "name": "Lucas Meyer",
-          "quote": "Trabajar con Anastasia en la estrategia creativa para el lanzamiento de nuestro producto fue la mejor decisión que tomamos ese trimestre. Ella crea formatos con los que la gente realmente quiere interactuar, no otra campaña más que nadie recuerda.",
-          "role": "Cofundador"
-        }
-      ],
       "leaveReview": "Dejar una reseña",
       "readLess": "Leer menos",
       "readMore": "Leer más",
@@ -1398,8 +1386,8 @@
   "dashboard": {
     "header": {
       "completenessLabel": "Perfil completado",
-      "edit": "Editar",
       "verified": "Verificado",
+      "view": "Ver",
       "viewProfile": "Ver perfil"
     },
     "nav": {
@@ -1412,10 +1400,12 @@
       "items": {
         "bookings": "Reservas",
         "earnings": "Ingresos",
-        "myProfile": "Mi perfil",
+        "helpSupport": "Ayuda y soporte",
+        "manageProfile": "Gestionar perfil",
         "overview": "Resumen",
         "sessionsSetup": "Configuración de sesiones",
-        "settings": "Ajustes"
+        "settings": "Ajustes",
+        "viewProfile": "Ver perfil"
       }
     },
     "photoReminder": {
@@ -1632,6 +1622,19 @@
     "previewProfile": "Ver perfil",
     "continueSetup": "Continuar configuración"
   },
+  "support": {
+    "helpDialog": {
+      "emailLabel": "Tu correo electrónico",
+      "error": "Algo salió mal. Inténtalo de nuevo.",
+      "messageLabel": "¿Cómo podemos ayudarte?",
+      "messagePlaceholder": "Describe tu pregunta o problema. Si algo no funciona, cuéntanos qué intentabas hacer.",
+      "send": "Enviar mensaje",
+      "subtitle": "Cuéntanos qué pasa y te responderemos por correo electrónico.",
+      "success": "¡Gracias! Hemos recibido tu mensaje y responderemos a {email}.",
+      "title": "Ayuda y soporte",
+      "tooMany": "Has enviado varios mensajes recientemente. Inténtalo de nuevo un poco más tarde."
+    }
+  },
   "validation": {
     "aboutMax": "«Más sobre ti» no puede superar los {max} caracteres.",
     "authorMax": "El autor no puede superar los {max} caracteres.",
@@ -1687,6 +1690,7 @@
     "priceRequired": "Introduce un precio mayor que 0 $.",
     "projectMax": "El nombre del proyecto no puede superar los {max} caracteres.",
     "projectRequired": "El nombre del proyecto es obligatorio.",
+    "promoThumbnailType": "Solo se admiten imágenes PNG, JPEG o WebP.",
     "quoteMax": "La cita no puede superar los {max} caracteres.",
     "quoteRequired": "La cita es obligatoria.",
     "roleMax": "El cargo no puede superar los {max} caracteres.",
@@ -1698,7 +1702,10 @@
     "storyMax": "La historia no puede superar los {max} caracteres.",
     "storyRequired": "La historia es obligatoria.",
     "superpowersMax": "Puedes añadir hasta {max} superpoderes.",
-    "superpowersRequired": "Añade al menos un superpoder.",
+    "superpowersRequired": "Completa los 3 superpoderes.",
+    "supportEmailInvalid": "Introduce un correo electrónico válido.",
+    "supportMessageMax": "El mensaje debe tener como máximo {max} caracteres.",
+    "supportMessageRequired": "Escribe tu mensaje.",
     "timeInvalid": "Introduce una hora válida (HH:mm).",
     "timeRangeReversed": "La hora «hasta» debe ser posterior a la hora «desde».",
     "timeRangesMax": "Hasta {max} franjas horarias por día.",

@@ -7,14 +7,16 @@ import { useState } from 'react';
 
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
-import { MenuExternalIcon, MenuLogoutIcon } from '@/components/icons/account-menu-icons';
+import { MenuLogoutIcon } from '@/components/icons/account-menu-icons';
 import {
   BookingsIcon,
   CabinetSettingsIcon,
   EarningsIcon,
+  HelpIcon,
   MyProfileIcon,
   OverviewIcon,
   SessionsSetupIcon,
+  ViewProfileIcon,
 } from '@/components/icons/cabinet-nav-icons';
 import { AccountAvatar } from '@/components/layout/AccountAvatar';
 import {
@@ -36,6 +38,8 @@ export type AccountSheetProps = {
   publicProfileHref: string;
   onSignOut: () => void;
   isSigningOut: boolean;
+  /** Opens the Help & Support dialog (owned by `AccountMenu`, which renders it outside this sheet). */
+  onOpenHelp: () => void;
   /** The avatar button; rendered as the sheet's trigger. */
   trigger: ReactNode;
 };
@@ -160,6 +164,7 @@ export function AccountSheet({
   publicProfileHref,
   onSignOut,
   isSigningOut,
+  onOpenHelp,
   trigger,
 }: AccountSheetProps) {
   const t = useTranslations('nav.accountMenu');
@@ -211,8 +216,14 @@ export function AccountSheet({
           />
           <SheetRow
             icon={<MyProfileIcon active className={NAV_ICON} />}
-            label={tNav('items.myProfile')}
+            label={tNav('items.manageProfile')}
             href="/dashboard/profile"
+            closeSheet={closeSheet}
+          />
+          <SheetRow
+            icon={<ViewProfileIcon active className={NAV_ICON} />}
+            label={tNav('items.viewProfile')}
+            href={publicProfileHref}
             closeSheet={closeSheet}
           />
           <SheetRow
@@ -237,6 +248,11 @@ export function AccountSheet({
               />
             </>
           ) : null}
+
+          {/* Release 4 П10 (client mockup IMG_4800): a line separates the cabinet rows from
+              Settings / Help & Support / Log out. */}
+          <Divider />
+
           <SheetRow
             icon={<CabinetSettingsIcon active className={NAV_ICON} />}
             label={tNav('items.settings')}
@@ -244,13 +260,16 @@ export function AccountSheet({
             closeSheet={closeSheet}
           />
 
-          <Divider />
-
           <SheetRow
-            icon={<MenuExternalIcon className={NAV_ICON} />}
-            label={t('viewPublicProfile')}
-            href={publicProfileHref}
-            closeSheet={closeSheet}
+            icon={<HelpIcon active className={NAV_ICON} />}
+            label={tNav('items.helpSupport')}
+            // Not a navigation (the user stays on this page), so no unsaved-changes guard. The
+            // sheet closes first and the dialog opens a frame later: two Radix modals changing at
+            // once fight over `document.body`'s pointer-events (see `AccountMenu`'s Log out item).
+            onClick={() => {
+              closeSheet();
+              requestAnimationFrame(onOpenHelp);
+            }}
           />
           <SheetRow
             icon={<MenuLogoutIcon className={NAV_ICON} />}

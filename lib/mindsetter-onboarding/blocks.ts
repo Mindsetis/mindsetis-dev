@@ -51,6 +51,31 @@ export function blockRoute(slug: BlockSlug): string {
  */
 export const CONGRATS_ROUTE = '/mindsetter-onboarding/congrats';
 
+/** The "Make your profile shine" picker (step 4). */
+export const SHINE_ROUTE = '/mindsetter-onboarding/shine';
+
+/**
+ * Release 4 П1/П2 (06.11.2026): the picker's "See how looks my profile page" opens the caller's own
+ * public page with `?from=setup` (plus the blocks ticked so far), and only that marker makes the
+ * page show "← Back to setup" — which returns to the picker with the same blocks ticked. Nothing
+ * is persisted: like the block handoff above, the selection just rides along in the URL.
+ */
+export const SETUP_PREVIEW_PARAM = 'from';
+export const SETUP_PREVIEW_VALUE = 'setup';
+
+/** `/mindsetters/<username>?from=setup[&blocks=<...>]` — the picker's profile preview link. */
+export function buildSetupPreviewHref(username: string, picked: readonly BlockSlug[]): string {
+  const params = new URLSearchParams({ [SETUP_PREVIEW_PARAM]: SETUP_PREVIEW_VALUE });
+  if (picked.length > 0) params.set('blocks', picked.join(','));
+  return `/mindsetters/${encodeURIComponent(username)}?${params.toString()}`;
+}
+
+/** `/mindsetter-onboarding/shine[?blocks=<...>]` — "Back to setup", ticked blocks restored. */
+export function buildShineHref(picked: readonly BlockSlug[]): string {
+  if (picked.length === 0) return SHINE_ROUTE;
+  return `${SHINE_ROUTE}?${new URLSearchParams({ blocks: picked.join(',') }).toString()}`;
+}
+
 /** Builds `/mindsetter-onboarding/blocks/<slug>?blocks=<...>&i=<index>` for `blocks[index]`. */
 export function buildBlockHref(blocks: readonly BlockSlug[], index: number): string {
   const slug = blocks[index];

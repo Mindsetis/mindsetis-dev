@@ -6,13 +6,20 @@ import { MindsetterProfileView } from '@/components/profile/MindsetterProfileVie
 import { localePath } from '@/i18n/routing';
 import { getSessionContext, getStaffRole } from '@/lib/auth/guards';
 import { siteUrl } from '@/lib/auth/site-url';
+import {
+  buildShineHref,
+  parseBlocksParam,
+  SETUP_PREVIEW_VALUE,
+} from '@/lib/mindsetter-onboarding/blocks';
 import { resolveIndustryLabels } from '@/lib/profile/industry-labels';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
-import type { Expertise } from '@/lib/validation/mindsetter';
+import { type Expertise, PROMO_THUMBNAIL_PATH } from '@/lib/validation/mindsetter';
 
 type MindsetterProfilePageProps = {
   params: Promise<{ locale: string; username: string }>;
+  /** `?from=setup&blocks=` — the owner's preview from the Shine picker (Release 4 П2). */
+  searchParams: Promise<{ from?: string | string[]; blocks?: string | string[] }>;
 };
 
 // Forces per-request dynamic rendering — mirrors `/members/[username]` (cookies-based Supabase
@@ -140,7 +147,7 @@ const loadMindsetterProfile = cache(async (username: string) => {
  * the regular client instead.
  */
 async function resolveSignedUrls(
-  bucket: 'reel-life' | 'promo-video',
+  bucket: 'reel-life' | 'promo-video' | 'covers',
   paths: string[],
 ): Promise<Map<string, string>> {
   if (paths.length === 0) return new Map();
@@ -187,9 +194,13 @@ export async function generateMetadata({ params }: MindsetterProfilePageProps) {
  * Visibility is enforced by `loadMindsetterProfile` above (RLS-backed) rather than a login
  * redirect.
  */
-export default async function MindsetterProfilePage({ params }: MindsetterProfilePageProps) {
+export default async function MindsetterProfilePage({
+  params,
+  searchParams,
+}: MindsetterProfilePageProps) {
   const { locale, username } = await params;
   setRequestLocale(locale);
+  const query = await searchParams;
 
   const t = await getTranslations('mindsetterProfile');
 
@@ -207,6 +218,14 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
   // rather than from `window.location` client-side so it's correct even from a cached shell.
   const shareUrl = siteUrl(localePath(locale, `/mindsetters/${username}`));
 
+  // Release 4 П2: "← Back to setup" only for the OWNER who opened this from the Shine picker —
+  // anyone else following the same link just sees the page. The ticked blocks go back as they
+  // came, re-validated against the known slugs.
+  const fromSetup =
+    (Array.isArray(query.from) ? query.from[0] : query.from) === SETUP_PREVIEW_VALUE;
+  const setupBackHref =
+    isOwner && fromSetup ? buildShineHref(parseBlocksParam({ blocks: query.blocks }).blocks) : null;
+
   const roles = Array.isArray(mindsetterProfile?.roles) ? mindsetterProfile.roles : [];
   const superpowers = Array.isArray(mindsetterProfile?.superpowers)
     ? mindsetterProfile.superpowers
@@ -220,6 +239,9 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
     youtube?: string | null;
     vimeo?: string | null;
     videoPath?: string | null;
+    orientation?: 'horizontal' | 'vertical' | null;
+    thumbnailUrl?: string | null;
+    thumbnailPath?: string | null;
   } | null;
   const videoBlog = (mindsetterProfile?.video_blog ?? null) as {
     youtube?: string | null;
@@ -232,14 +254,30 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
   const promoVideoPath = promoVideo?.videoPath?.trim() || null;
   const videoBlogPath = videoBlog?.videoPath?.trim() || null;
 
-  const [reelLifeUrlMap, promoVideoUrlMap, videoBlogUrlMap] = await Promise.all([
-    resolveSignedUrls('reel-life', reelLifePaths),
-    resolveSignedUrls('promo-video', promoVideoPath ? [promoVideoPath] : []),
-    // `video_blog` reuses the `promo-video` bucket (same owner-scoped Storage policies already
-    // grant this) rather than adding a dedicated bucket + migration for what is, storage-wise,
-    // the same "one private video file per Mindsetter" shape as promo_video's own direct upload.
-    resolveSignedUrls('promo-video', videoBlogPath ? [videoBlogPath] : []),
-  ]);
+  // Custom promo thumbnail (private `covers` bucket). Signed with the service client like the rest,
+  // so the path must be a well-formed object in THIS profile's own folder — the jsonb is
+  // owner-writable, and a path into someone else's folder must never get a signed URL here.
+  const rawThumbnailPath = promoVideo?.thumbnailPath?.trim() || null;
+  const promoThumbnailPath =
+    rawThumbnailPath &&
+    rawThumbnailPath.startsWith(`${profile.id}/`) &&
+    PROMO_THUMBNAIL_PATH.test(rawThumbnailPath)
+      ? rawThumbnailPath
+      : null;
+
+  const [reelLifeUrlMap, promoVideoUrlMap, videoBlogUrlMap, promoThumbnailUrlMap] =
+    await Promise.all([
+      resolveSignedUrls('reel-life', reelLifePaths),
+      resolveSignedUrls('promo-video', promoVideoPath ? [promoVideoPath] : []),
+      // `video_blog` reuses the `promo-video` bucket (same owner-scoped Storage policies already
+      // grant this) rather than adding a dedicated bucket + migration for what is, storage-wise,
+      // the same "one private video file per Mindsetter" shape as promo_video's own direct upload.
+      resolveSignedUrls('promo-video', videoBlogPath ? [videoBlogPath] : []),
+      resolveSignedUrls('covers', promoThumbnailPath ? [promoThumbnailPath] : []),
+    ]);
+  const promoThumbnailUrl = promoThumbnailPath
+    ? (promoThumbnailUrlMap.get(promoThumbnailPath) ?? null)
+    : null;
   const reelLifePhotoUrls = reelLifePaths
     .map((path) => reelLifeUrlMap.get(path))
     .filter((url): url is string => Boolean(url));
@@ -250,6 +288,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
     <MindsetterProfileView
       shareUrl={shareUrl}
       isOwner={isOwner}
+      setupBackHref={setupBackHref}
       t={t}
       profile={{
         username: profile.username,
@@ -292,6 +331,7 @@ export default async function MindsetterProfilePage({ params }: MindsetterProfil
           .filter((title): title is string => Boolean(title?.trim())),
         reelLifePhotoUrls,
         promoVideoUrl,
+        promoThumbnailUrl,
         videoBlogUrl,
       }}
     />

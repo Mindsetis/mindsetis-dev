@@ -189,10 +189,10 @@ function SuperpowerCard({ control, index, onClear, id, draggable }: SuperpowerCa
 /**
  * Extended Mindsetter onboarding — step 2/5 "Your superpowers" form (see `page.tsx`). Mirrors
  * `RolesForm.tsx`'s structure (RHF + `zodResolver`, `applyFieldErrors`), but the card count is
- * fixed at `MAX_SUPERPOWERS` (3) instead of a `useFieldArray` list. `superpowerSchema` itself
- * tolerates wholly-empty slots (see its own doc comment) so `MIN_SUPERPOWERS`'s "at least 1 of
- * 3 filled" rule doesn't block submission — this form still filters empty slots out of what's
- * actually sent to `saveSuperpowers` below, just AFTER validation, not before.
+ * fixed at `MAX_SUPERPOWERS` (3) instead of a `useFieldArray` list. All three cards are required
+ * since Release 4 (client, 06.11.2026) — every blank title/description gets its own error on its
+ * own card (see `superpowerSchema`). The post-validation filter of empty slots below is kept as
+ * a harmless guard from when only one card was required.
  */
 export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: SuperpowersFormProps) {
   const router = useRouter();
@@ -238,9 +238,9 @@ export function SuperpowersForm({ initialSuperpowers, editMode, nextHref }: Supe
 
       router.push('/mindsetter-onboarding/help');
     },
-    // A fully-empty form (all 3 slots blank) fails `superpowersStepSchema`'s top-level
-    // "at least `MIN_SUPERPOWERS` filled" check with an error on the array itself (`superpowers`,
-    // not any one card's title/description). The resolver files that under `errors.superpowers.root`
+    // Any blank card fails both its own fields and `superpowersStepSchema`'s top-level "all
+    // `MIN_SUPERPOWERS` filled" check — the latter is an error on the array itself (`superpowers`,
+    // not one card's title/description), which the resolver files under `errors.superpowers.root`
     // — not `.message`, which this handler used to read, and found empty — so it is rendered by
     // the `FormArrayMessage` below the cards; all that is left to do here is take the visitor to it.
     revealOnInvalid,

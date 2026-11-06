@@ -6,6 +6,7 @@ import { PromoForm } from '@/components/mindsetter-onboarding/PromoForm';
 import { pageTitle } from '@/i18n/page-metadata';
 import { requireMindsetterCabinet } from '@/lib/profile/cabinet';
 import { nextSectionHref } from '@/lib/profile/completeness';
+import { getPromoThumbnailPreview } from '@/lib/profile/promo-thumbnail';
 import { createClient } from '@/lib/supabase/server';
 
 type SectionPageProps = {
@@ -42,11 +43,17 @@ export default async function DashboardPromoVideoSectionPage({ params }: Section
 
   const initialPromoVideo = mindsetterProfile?.promo_video as
     { youtube?: string | null; vimeo?: string | null } | null | undefined;
+  const initialThumbnail = await getPromoThumbnailPreview(
+    supabase,
+    cabinet.userId,
+    mindsetterProfile?.promo_video,
+  );
 
   return (
     <SectionEditorShell sectionKey="promoVideo" title={t('title')} description={t('editorHint')}>
       <PromoForm
         initialPromoVideo={initialPromoVideo}
+        initialThumbnail={initialThumbnail}
         nextHref={nextSectionHref(cabinet.completeness.sections, 'promoVideo')}
         editMode
       />

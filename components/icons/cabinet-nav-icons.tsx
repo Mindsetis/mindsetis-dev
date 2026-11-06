@@ -135,6 +135,63 @@ export function CabinetSettingsIcon({ active = false, className, ...props }: Nav
   );
 }
 
+/**
+ * "View profile" (eye) and "Help & Support" (question mark in a circle) — added 2026-11-06 with the
+ * account-menu reorder (client mockup: both are OUTLINED glyphs, unlike the filled ones above).
+ * Same model as the live rows above: `currentColor` + Tailwind opacity classes, so they follow the
+ * row's text color and lift on `group-hover`. 24×24 viewBox, drawn with a 2px stroke.
+ */
+export function ViewProfileIcon({ active = false, className, ...props }: NavIconProps) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={cn(
+        'opacity-45 transition-opacity group-hover:opacity-100',
+        active && 'opacity-100',
+        className,
+      )}
+      {...props}
+    >
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+export function HelpIcon({ active = false, className, ...props }: NavIconProps) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={cn(
+        'opacity-45 transition-opacity group-hover:opacity-100',
+        active && 'opacity-100',
+        className,
+      )}
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
 export function MyProfileIcon({ active = false, className, ...props }: NavIconProps) {
   return (
     <svg

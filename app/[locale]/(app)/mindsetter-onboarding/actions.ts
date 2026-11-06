@@ -22,6 +22,7 @@ import { fetchLinkPreview, type LinkPreview } from '@/lib/link-preview';
 import { firstMissingMindsetterStep } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@/lib/supabase/service';
+import { vmsg } from '@/lib/validation/messages';
 import {
   fckupsStepSchema,
   helpStepSchema,
@@ -29,7 +30,10 @@ import {
   myWayStepSchema,
   numbersStepSchema,
   philosophyStepSchema,
+  PROMO_THUMBNAIL_PATH,
   promoStepSchema,
+  promoThumbnailDeleteSchema,
+  promoThumbnailUploadSchema,
   reelLifePhotoDeleteSchema,
   reelLifePhotoUploadSchema,
   reelLifeStepSchema,
@@ -40,7 +44,7 @@ import {
   videoBlogStepSchema,
   winsStepSchema,
 } from '@/lib/validation/mindsetter';
-import { resolveVideoOrientation } from '@/lib/video-embed';
+import { resolveVideoMeta, resolveVideoOrientation } from '@/lib/video-embed';
 
 /**
  * `mindsetter_profiles.onboarding_step` (added by the stage-1.9 review-loop follow-up migration
@@ -55,8 +59,9 @@ import { resolveVideoOrientation } from '@/lib/video-embed';
  * "Personal session" left the wizard on 2026-08-13 — 1:1 settings moved to the cabinet
  * (`/dashboard/sessions`), where a Mindsetter can set them up whenever, instead of being a gate on
  * finishing signup. The flow is now roles(1) → superpowers(2) → help(3) → shine(4) → [optional
- * blocks] → congrats, so `SHINE_STEP_ONBOARDING_STEP` (4) is the "core wizard done" threshold
- * `finalizeMindsetterOnboarding` checks below — it used to be the session step's 5.
+ * blocks] → congrats. Since Release 4 П1 (06.11.2026) `HELP_STEP_ONBOARDING_STEP` (3) — the last
+ * REQUIRED step — is the "core wizard done" threshold `promoteIfCoreWizardDone` checks below; it
+ * was the Shine picker's 4 before that, and the session step's 5 before 2026-08-13.
  */
 const ROLES_STEP_ONBOARDING_STEP = 1;
 const SUPERPOWERS_STEP_ONBOARDING_STEP = 2;
@@ -194,6 +199,12 @@ export const saveHelp = createAction(helpStepSchema, async (input) => {
   }
 
   await advanceOnboardingStep(supabase, user.id, HELP_STEP_ONBOARDING_STEP);
+  // Help is the last REQUIRED step, so this is where the caller becomes a Mindsetter (Release 4
+  // П1, owner's call 06.11.2026): the "Shine" picker and the blocks after it are optional, and
+  // its new "See how looks my profile page" button must open a page that already exists. Before,
+  // the promotion waited for `saveShine`, so leaving from that preview kept a finished caller a
+  // Member.
+  await promoteIfCoreWizardDone(user.id);
 
   return { expertise: input.expertise };
 });
@@ -208,10 +219,10 @@ export const saveHelp = createAction(helpStepSchema, async (input) => {
  * (`ShineForm.tsx`), since reaching/leaving this step either way means the picker itself is done,
  * regardless of which (if any) optional blocks were picked.
  *
- * It is also where the caller becomes a Mindsetter (Release-2 П4, call of 28.10.2026: "the
- * status changes once the required fields are filled"). Every required step is saved by now, so
- * the promotion runs here instead of waiting for `/congrats` to render — before, closing the tab
- * during the optional blocks left someone who finished everything a Member.
+ * The promotion to Mindsetter normally happened one step earlier, in `saveHelp` (Release 4 П1).
+ * It still runs here too, idempotently, for a caller who saved Help before that change and is
+ * still a Member (Release-2 П4 put it here first: "the status changes once the required fields
+ * are filled").
  */
 export const saveShine = createAction(shineStepSchema, async () => {
   const user = await requireUser();
@@ -235,9 +246,9 @@ export type FinalizeMindsetterOnboardingResult = {
 
 /**
  * Onboarding doc section 8 / section B's resolved decision (D1, flagged for security review):
- * completing the 5-step CORE wizard (Roles → Superpowers → Help → Shine picker → [optional
- * blocks] → Personal session, reordered per decision D9, i.e.
- * `mindsetter_profiles.onboarding_step >= SHINE_STEP_ONBOARDING_STEP`) flips
+ * saving the REQUIRED steps (Roles → Superpowers → Help, i.e.
+ * `mindsetter_profiles.onboarding_step >= HELP_STEP_ONBOARDING_STEP` with their data present —
+ * the Shine picker and the blocks after it are optional since Release 4 П1) flips
  * `profiles.account_type` from `'member'` to `'mindsetter'`. This does NOT verify the account
  * and does NOT publish the profile — `mindsetter_profiles.is_public` is never touched here;
  * that stays `false` until staff verification (spec §5.7, a separate later stage). Also never
@@ -258,8 +269,8 @@ export type FinalizeMindsetterOnboardingResult = {
  * Idempotent: a caller who is already `'mindsetter'` (e.g. revisits `/congrats` later) gets
  * `{ finalized: true, ... }` back with no further write — never errors on a repeat call.
  *
- * Since Release-2 П4 the promotion normally happens earlier, in `saveShine`, through the same
- * `promoteIfCoreWizardDone`; this action stays as the `/congrats` safety net (and the repair path
+ * The promotion normally happens earlier, in `saveHelp` (Release 4 П1; `saveShine` before that,
+ * Release-2 П4), through the same `promoteIfCoreWizardDone`; this action stays as the `/congrats` safety net (and the repair path
  * `resolveOnboardingRedirect` sends a not-yet-promoted finisher down).
  */
 export const finalizeMindsetterOnboarding = createAction(
@@ -303,8 +314,9 @@ async function promoteIfCoreWizardDone(
     );
   }
 
+  // Help (3) is the last required step since Release 4 П1 — the Shine picker (4) is optional.
   const onboardingStep = mindsetterProfile?.onboarding_step ?? 0;
-  if (onboardingStep < SHINE_STEP_ONBOARDING_STEP) {
+  if (onboardingStep < HELP_STEP_ONBOARDING_STEP) {
     return { finalized: false, onboardingStep };
   }
 
@@ -363,8 +375,28 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
   // Shorts-style portrait). Resolved once here, at write time, rather than on every page render:
   // YouTube answers from the URL alone, Vimeo needs an oEmbed round trip we don't want in the
   // render path. Stored inside the existing `promo_video` jsonb, so no migration.
-  const orientation = await resolveVideoOrientation(input.youtube, input.vimeo);
+  // The same round trip also yields Vimeo's cover image (`thumbnailUrl`, a `*.vimeocdn.com` https
+  // URL — validated inside `resolveVideoMeta`), stored so the render path needs no network call.
+  const { orientation, thumbnailUrl } = await resolveVideoMeta(input.youtube, input.vimeo);
 
+  // Custom cover (Release 4 П7): only a path inside the caller's own folder is accepted.
+  const thumbnailPath = input.thumbnailPath?.trim() || null;
+  if (thumbnailPath && !thumbnailPath.startsWith(`${user.id}/`)) {
+    throw new ActionError('validation_error', 'Invalid photo.');
+  }
+
+  // The thumbnail currently stored, so it can be removed from Storage once it is replaced/cleared.
+  const { data: existing } = await supabase
+    .from('mindsetter_profiles')
+    .select('promo_video')
+    .eq('id', user.id)
+    .maybeSingle();
+  const previousThumbnailPath = (
+    existing?.promo_video as { thumbnailPath?: unknown } | null | undefined
+  )?.thumbnailPath;
+
+  // Keys are only written when set, so a row without a cover keeps the old shape (absent =
+  // none). `thumbnailUrl` = Vimeo's CDN cover; `thumbnailPath` = the member's own upload.
   const { error } = await supabase.from('mindsetter_profiles').upsert(
     {
       id: user.id,
@@ -372,6 +404,8 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
         youtube: input.youtube || null,
         vimeo: input.vimeo || null,
         orientation,
+        ...(thumbnailUrl ? { thumbnailUrl } : {}),
+        ...(thumbnailPath ? { thumbnailPath } : {}),
       },
     },
     { onConflict: 'id' },
@@ -382,7 +416,115 @@ export const savePromo = createAction(promoStepSchema, async (input) => {
     throw new ActionError('internal_error', 'Could not save your promo video. Please try again.');
   }
 
+  // Best-effort tidy-up AFTER the save succeeded (had it failed, the old object is still the live
+  // cover). A failure only leaves an orphan; the profile never references it.
+  if (
+    typeof previousThumbnailPath === 'string' &&
+    previousThumbnailPath !== thumbnailPath &&
+    previousThumbnailPath.startsWith(`${user.id}/`) &&
+    PROMO_THUMBNAIL_PATH.test(previousThumbnailPath)
+  ) {
+    const { error: removeError } = await supabase.storage
+      .from('covers')
+      .remove([previousThumbnailPath]);
+    if (removeError) {
+      console.error('[mindsetter-onboarding] previous promo thumbnail remove failed:', removeError);
+    }
+  }
+
   return { ...input };
+});
+
+// --- Promo thumbnail (private `covers` bucket) -----------------------------------------------
+// Same mechanics as the Reel Life photo above: uploaded by its own Server Action the moment the
+// file is picked (session client, owner-folder RLS), only the path is later sent to `savePromo`.
+
+/** Signed-URL lifetime for the just-uploaded preview; page loads mint fresh ones. */
+const PROMO_THUMBNAIL_SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+type DetectedImage = {
+  mime: 'image/png' | 'image/jpeg' | 'image/webp';
+  ext: 'png' | 'jpg' | 'webp';
+};
+
+/**
+ * Real image type from the file's leading bytes — `file.type` is client-declared and untrusted.
+ * PNG `89 50 4E 47 0D 0A 1A 0A`, JPEG `FF D8 FF`, WebP `RIFF????WEBP`; anything else is `null`.
+ */
+async function detectPromoThumbnailType(file: File): Promise<DetectedImage | null> {
+  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const at = (offset: number, bytes: number[]) => bytes.every((b, i) => head[offset + i] === b);
+
+  if (at(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return { mime: 'image/png', ext: 'png' };
+  }
+  if (at(0, [0xff, 0xd8, 0xff])) return { mime: 'image/jpeg', ext: 'jpg' };
+  if (at(0, [0x52, 0x49, 0x46, 0x46]) && at(8, [0x57, 0x45, 0x42, 0x50])) {
+    return { mime: 'image/webp', ext: 'webp' };
+  }
+  return null;
+}
+
+/**
+ * Uploads the optional promo cover into `covers/<uid>/promo-thumb-<ts>-<rand>.<ext>` and returns
+ * `{ path, url }` (short-lived signed URL for the preview). Not attached to the profile until
+ * `savePromo` receives the path. Needs the `covers_select_own` policy for `createSignedUrl`
+ * (migration `20261106130000`).
+ */
+export const uploadPromoThumbnail = createAction(
+  promoThumbnailUploadSchema,
+  async (input) => {
+    const user = await requireUser();
+    const supabase = await createClient();
+
+    const detected = await detectPromoThumbnailType(input.thumbnail);
+    if (!detected) throw new ActionError('validation_error', vmsg('promoThumbnailType'));
+
+    // The random part is alphanumeric only, so the name always matches `PROMO_THUMBNAIL_PATH`.
+    const random = crypto.randomUUID().replaceAll('-', '').slice(0, 12);
+    const path = `${user.id}/promo-thumb-${Date.now()}-${random}.${detected.ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('covers')
+      .upload(path, input.thumbnail, { contentType: detected.mime });
+
+    if (uploadError) {
+      console.error('[mindsetter-onboarding] promo thumbnail upload failed:', uploadError);
+      throw new ActionError('internal_error', 'Could not upload your thumbnail. Please try again.');
+    }
+
+    const { data: signed, error: signError } = await supabase.storage
+      .from('covers')
+      .createSignedUrl(path, PROMO_THUMBNAIL_SIGNED_URL_TTL_SECONDS);
+
+    if (signError || !signed) {
+      console.error('[mindsetter-onboarding] promo thumbnail signed URL failed:', signError);
+      throw new ActionError('internal_error', 'Could not load your thumbnail. Please try again.');
+    }
+
+    return { path, url: signed.signedUrl };
+  },
+  { rateLimit: { key: 'mindsetter-onboarding:promo-thumbnail-upload', limit: 30, window: '10 m' } },
+);
+
+/**
+ * Best-effort delete of a promo thumbnail object the caller uploaded but did not (or no longer
+ * wants to) save. Scoped to the caller's own folder. Never used for the currently SAVED cover —
+ * `savePromo` removes that one itself once the replacement/clear is persisted.
+ */
+export const deletePromoThumbnail = createAction(promoThumbnailDeleteSchema, async (input) => {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  if (!input.path.startsWith(`${user.id}/`)) {
+    throw new ActionError('validation_error', 'Invalid photo.');
+  }
+
+  const { error } = await supabase.storage.from('covers').remove([input.path]);
+  if (error) {
+    console.error('[mindsetter-onboarding] promo thumbnail delete failed:', error);
+  }
+
+  return {};
 });
 
 export const saveVideoBlog = createAction(videoBlogStepSchema, async (input) => {

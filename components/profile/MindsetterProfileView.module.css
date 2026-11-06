@@ -486,6 +486,17 @@
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
+/* Release 4 П4 (06.11.2026): the card now shows on phones too, which Figma never drew. The size
+   follows the viewport so "I conduct mentoring / sessions on these topics" stays on its two
+   forced lines: the second line measures ~10.4em, and the card's text column is the viewport
+   minus 72px (page gutter 2×16 + card padding 2×20) — 7.2vw leaves it ~6% spare from 320px up
+   (measured live: a flat 32px wrapped to three lines at 360 and 375). Capped at 32px. */
+@media (max-width: 767px) {
+  .topicsHeading {
+    font-size: min(32px, 7.2vw);
+    line-height: 1;
+  }
+}
 
 /* Figma gives each pill position a distinct color: a solid-ish colored border that reads as a
    soft gradient glow, and matching bold colored label text, on a `--color-card`-ish dark fill

@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { saveShine } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { CompletenessIcon } from '@/components/icons/onboarding-section-icons';
+import { ProfilePageIcon } from '@/components/icons/profile-page-icon';
 import {
   SHINE_BLOCK_ICONS,
   ShineOptionCheckedIcon,
@@ -17,11 +18,12 @@ import {
 } from '@/components/mindsetter-onboarding/StepActions';
 import { Button } from '@/components/ui/button';
 import { FormErrorAlert } from '@/components/ui/form-error-alert';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import {
   BLOCK_SLUGS,
   type BlockSlug,
   buildBlockHref,
+  buildSetupPreviewHref,
   CONGRATS_ROUTE,
 } from '@/lib/mindsetter-onboarding/blocks';
 import type { CompletenessTier } from '@/lib/profile/completeness';
@@ -32,6 +34,12 @@ type ShineFormProps = {
     percent: number;
     tier: CompletenessTier;
   };
+  /** Blocks to show as already ticked — "← Back to setup" on the profile preview hands back the
+   * ones picked before leaving (`?blocks=`, Release 4 П2). Empty on a first visit. */
+  initialSelected: readonly BlockSlug[];
+  /** The caller's username when their Mindsetter page already exists (they are promoted once the
+   * Help step is saved, Release 4 П1) — `null` hides the "See how looks my profile page" button. */
+  previewUsername: string | null;
 };
 
 /** "Continue fill (N section)" button icon (16×16) — provided verbatim by the designer,
@@ -73,11 +81,11 @@ const SHINE_BUTTON_CLASS =
  * `ShineOptionCheckedIcon` (product-supplied assets, 2026-07-19) rather than the shared
  * `Checkbox` component, since this screen's checked/unchecked look is bespoke.
  */
-export function ShineForm({ completeness }: ShineFormProps) {
+export function ShineForm({ completeness, initialSelected, previewUsername }: ShineFormProps) {
   const t = useTranslations('mindsetterOnboarding');
   const router = useRouter();
   const backHref = useOnboardingBackHref();
-  const [selected, setSelected] = useState<ReadonlySet<BlockSlug>>(new Set());
+  const [selected, setSelected] = useState<ReadonlySet<BlockSlug>>(() => new Set(initialSelected));
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -116,15 +124,33 @@ export function ShineForm({ completeness }: ShineFormProps) {
   }
 
   function handleContinue() {
-    const orderedSelected = BLOCK_SLUGS.filter((slug) => selected.has(slug));
     if (orderedSelected.length === 0) return;
     void advanceAndNavigate(buildBlockHref(orderedSelected, 0));
   }
 
   const selectedCount = selected.size;
+  const orderedSelected = BLOCK_SLUGS.filter((slug) => selected.has(slug));
 
   return (
     <div className="flex flex-col">
+      {/* Release 4 П1 (client mockup IMG_4774): a look at the public page BEFORE choosing what to
+          add — same button, icon and attention animation (`cta-hover-lift`) as the congrats
+          screen's. Same tab on purpose: the page shows "← Back to setup" for this visit only
+          (`?from=setup`) and brings the ticked blocks back with it. Nothing is saved by going. */}
+      {previewUsername ? (
+        <Button asChild variant="primary" size="lg" className="mb-6 w-full cta-hover-lift">
+          <Link href={buildSetupPreviewHref(previewUsername, orderedSelected)}>
+            <ProfilePageIcon />
+            {t('shine.seeProfile')}
+          </Link>
+        </Button>
+      ) : null}
+
+      <div className="mb-6 flex flex-col gap-1 md:gap-4">
+        <h1 className="font-display text-h1 text-foreground md:text-h3">{t('shine.title')}</h1>
+        <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
+      </div>
+
       {/* Sits above a long list while the pinned bar is at the bottom of the screen, so the banner
           scrolls itself into view — a failed `saveShine` otherwise looked like a dead button. */}
       <FormErrorAlert className="mb-6" messages={formError} />

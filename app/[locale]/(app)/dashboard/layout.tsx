@@ -39,10 +39,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   setRequestLocale(locale);
 
   const cabinet = await loadCabinetProfile();
+  const user = await getCurrentUser();
   if (!cabinet) {
     // No session → log in. A session WITHOUT a `profiles` row must not go to `/login`: the
     // middleware bounces signed-in visitors off it straight back here, forever.
-    const user = await getCurrentUser();
     redirect({ href: user ? HOME_PATH : LOGIN_PATH, locale });
     return null;
   }
@@ -88,7 +88,11 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             UNDER the header while scrolling — the header's `sticky top-0` pins it at 0-88px, so
             anything sticking at 24px ends up behind it during scroll. */}
         <div className="relative lg:sticky lg:top-[112px]">
-          <CabinetSidebar accountType={cabinet.accountType} />
+          <CabinetSidebar
+            accountType={cabinet.accountType}
+            username={cabinet.username}
+            email={user?.email ?? ''}
+          />
         </div>
       </aside>
 

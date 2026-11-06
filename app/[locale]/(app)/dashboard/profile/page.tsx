@@ -6,10 +6,13 @@ import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { loadCabinetProfile, type SectionSummary } from '@/lib/profile/cabinet';
 import type { ProfileSection } from '@/lib/profile/completeness';
+import { isReturnToProfile, withReturnToProfile } from '@/lib/profile/return-to-profile';
 import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
 
 type DashboardProfilePageProps = {
   params: Promise<{ locale: string }>;
+  /** `?from=profile` — opened from the public profile's "Edit" (Release 4 П2). */
+  searchParams: Promise<{ from?: string | string[] }>;
 };
 
 export async function generateMetadata({ params }: DashboardProfilePageProps) {
@@ -30,9 +33,15 @@ export async function generateMetadata({ params }: DashboardProfilePageProps) {
  * cards, the header's percentage, and the header's "Edit" target can never disagree about what
  * counts as a section or what order they're in.
  */
-export default async function DashboardProfilePage({ params }: DashboardProfilePageProps) {
+export default async function DashboardProfilePage({
+  params,
+  searchParams,
+}: DashboardProfilePageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
+  // Came from the public profile's "Edit": every card keeps the marker, so the editor it opens
+  // returns to the profile after saving (`useCabinetSaved`).
+  const returnToProfile = isReturnToProfile((await searchParams).from);
   const t = await getTranslations('dashboard.profile');
   // Reel Life's empty card reuses the hint the EDITOR shows under its own upload field, rather
   // than a second sentence of its own (2026-08-11) — same copy, one key, so the two can't drift.
@@ -104,7 +113,7 @@ export default async function DashboardProfilePage({ params }: DashboardProfileP
             ) : null}
             <ProfileSectionCard
               sectionKey={section.key}
-              href={section.href}
+              href={returnToProfile ? withReturnToProfile(section.href) : section.href}
               title={t(`sections.${section.key}.title`)}
               summary={summaryFor(section)}
             />
