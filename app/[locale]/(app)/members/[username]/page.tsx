@@ -132,7 +132,9 @@ export async function generateMetadata({ params }: PublicProfilePageProps) {
  * those accounts vanish from the platform for that whole window; instead they keep falling back
  * to this Member view — which is exactly what they still are until published. The OWNER is
  * always redirected (the owner branch of that page's gate never fails), which is the case that
- * motivated this change.
+ * motivated this change. Since 06.11.2026 a page is published at promotion
+ * (`MINDSETTER_AUTO_PUBLISH`, `lib/config/mindsetter-publication.ts`), so that window only opens
+ * again when staff unpublish a page or the switch is turned off.
  *
  * Self-view: there is no separate "my profile" route anymore (the old `/dashboard/profile` was
  * removed in the same pass) — the owner viewing their own username lands here like anyone else.

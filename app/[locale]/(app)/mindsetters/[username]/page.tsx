@@ -39,10 +39,11 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  *
  * Visibility gate (defense-in-depth on top of RLS — see the migrations' own policies for the
  * DB-level enforcement of the same rule): visible when `profiles.account_type = 'mindsetter'`
- * AND `mindsetter_profiles.is_public = true` AND `profiles.is_blocked = false` (the "published
- * after verification" public branch — `is_public` is staff-only-settable, guard-triggered in
- * `20260701100100_profiles.sql`, so this implicitly requires staff verification already), OR
- * the viewer is the profile owner (any verification state), OR the viewer is staff. Everyone
+ * AND `mindsetter_profiles.is_public = true` AND `profiles.is_blocked = false` (the published
+ * branch — `is_public` is staff/service-role-only, guard-triggered in
+ * `20260701100100_profiles.sql`; since 06.11.2026 the app sets it at promotion and the DB rule
+ * `is_public_mindsetter` no longer requires verification, see `20261106160000`), OR the viewer is
+ * the profile owner (any verification state), OR the viewer is staff. Everyone
  * else — or a nonexistent username, or a profile that isn't (yet) a Mindsetter at all —
  * resolves to `null` → `notFound()`.
  *
