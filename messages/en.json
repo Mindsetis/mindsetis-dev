@@ -1026,7 +1026,7 @@
         "title": "My Way",
         "yearFromLabel": "From",
         "yearFromPlaceholder": "e.g. 2016",
-        "yearToLabel": "To",
+        "yearToLabel": "To (optional)",
         "yearToPlaceholder": "e.g. 2020",
         "yearsLabel": "Years"
       },
@@ -1734,7 +1734,6 @@
     "yearRangeReversed": "\"To\" year cannot be earlier than the \"From\" year.",
     "yearRequired": "Year is required.",
     "yearToMax": "End year must be at most {max} characters.",
-    "yearToRequired": "End year is required.",
     "youtubeHost": "Enter a YouTube link (youtube.com or youtu.be).",
     "youtubeVideo": "Link to a single YouTube video (a watch, youtu.be or Shorts link) — not a channel or playlist."
   },

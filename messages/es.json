@@ -1026,7 +1026,7 @@
         "title": "Mi Camino",
         "yearFromLabel": "Desde",
         "yearFromPlaceholder": "p. ej. 2016",
-        "yearToLabel": "Hasta",
+        "yearToLabel": "Hasta (opcional)",
         "yearToPlaceholder": "p. ej. 2020",
         "yearsLabel": "Años"
       },
@@ -1734,7 +1734,6 @@
     "yearRangeReversed": "El año «hasta» no puede ser anterior al año «desde».",
     "yearRequired": "El año es obligatorio.",
     "yearToMax": "El año de fin no puede superar los {max} caracteres.",
-    "yearToRequired": "El año de fin es obligatorio.",
     "youtubeHost": "Introduce un enlace de YouTube (youtube.com o youtu.be).",
     "youtubeVideo": "Enlaza un único vídeo de YouTube (un enlace watch, youtu.be o Shorts), no un canal ni una lista de reproducción."
   },

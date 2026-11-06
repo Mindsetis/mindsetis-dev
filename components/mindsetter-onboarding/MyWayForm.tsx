@@ -70,7 +70,8 @@ type MyWayCardProps = {
 /** One "Stage N" card — Project name (40-char counter) + Description (auto-grow, 200-char
  * counter) + Years as two short inputs in a row with a "–" separator (example "2016 – 2020").
  * Wrapped in `CollapsibleCard` (stage 1.9 "collapse-on-blur") — collapses once
- * project+description+yearFrom+yearTo are filled AND the caller clicks outside it. */
+ * project+description+yearFrom are filled AND the caller clicks outside it. The end year is
+ * optional (06.11.2026 — an ongoing stage has none). */
 function MyWayCard({ control, index, onRemove, id, draggable }: MyWayCardProps) {
   const t = useTranslations('mindsetterOnboarding');
 
@@ -81,8 +82,7 @@ function MyWayCard({ control, index, onRemove, id, draggable }: MyWayCardProps) 
   const isFilled =
     projectValue.trim().length > 0 &&
     descriptionValue.trim().length > 0 &&
-    yearFromValue.trim().length > 0 &&
-    yearToValue.trim().length > 0;
+    yearFromValue.trim().length > 0;
 
   return (
     <CollapsibleCard
@@ -109,7 +109,7 @@ function MyWayCard({ control, index, onRemove, id, draggable }: MyWayCardProps) 
           ) : null}
           {yearFromValue || yearToValue ? (
             <p className="text-tiny font-bold tracking-[0.3em] text-white uppercase">
-              {yearFromValue} – {yearToValue}
+              {yearToValue.trim() ? `${yearFromValue} – ${yearToValue}` : yearFromValue}
             </p>
           ) : null}
         </div>
