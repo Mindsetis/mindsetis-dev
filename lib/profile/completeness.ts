@@ -125,13 +125,23 @@ function hasText(value: string | null): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+/** The keys of `promo_video` / `video_blog` that actually point at a video. */
+const VIDEO_SOURCE_KEYS = ['youtube', 'vimeo', 'videoPath'] as const;
+
 /**
- * `promo_video` / `video_blog` are stored as jsonb OBJECTS (`{ youtube, vimeo, videoPath }`), not
- * arrays — "filled" means at least one of those fields carries a non-empty string.
+ * `promo_video` / `video_blog` are stored as jsonb OBJECTS (`{ youtube, vimeo, videoPath, … }`),
+ * not arrays — "filled" means one of the VIDEO keys carries a non-empty string. Only those keys:
+ * the save actions always write metadata next to them (`orientation`, and for the promo
+ * `thumbnailUrl` / `thumbnailPath`), so checking "any string" counted a section whose links were
+ * cleared as filled (owner's report 06.11.2026 — the percentage stayed up with no video).
  */
-function hasAnyStringValue(value: Json | null): boolean {
+function hasVideoSource(value: Json | null): boolean {
   if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
-  return Object.values(value).some((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  const record = value as Record<string, Json | undefined>;
+  return VIDEO_SOURCE_KEYS.some((key) => {
+    const entry = record[key];
+    return typeof entry === 'string' && entry.trim().length > 0;
+  });
 }
 
 /**
@@ -236,7 +246,7 @@ export function computeProfileCompleteness(
       {
         key: 'promoVideo',
         href: `${SECTION_BASE_HREF}/promo-video`,
-        filled: hasAnyStringValue(mindsetter?.promoVideo ?? null),
+        filled: hasVideoSource(mindsetter?.promoVideo ?? null),
         optional: false,
       },
       {
@@ -278,7 +288,7 @@ export function computeProfileCompleteness(
       {
         key: 'videoBlog',
         href: `${SECTION_BASE_HREF}/video-blog`,
-        filled: hasAnyStringValue(mindsetter?.videoBlog ?? null),
+        filled: hasVideoSource(mindsetter?.videoBlog ?? null),
         optional: false,
       },
     );
