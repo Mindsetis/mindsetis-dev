@@ -14,6 +14,7 @@ import {
 } from '@react-email/components';
 import type { ReactNode } from 'react';
 
+import { siteUrl } from '@/lib/auth/site-url';
 import type { EmailTranslator } from '@/lib/email/i18n';
 
 /**
@@ -117,12 +118,15 @@ function Blend({ children }: { children: ReactNode }) {
  * read as one product (client request, 2026-09-29: the queue emails still had a plain-text
  * wordmark and a different footer after the auth ones got the logo).
  *
- * The logo lives in Supabase Storage with a content-hashed name: an email image needs a public
- * absolute URL, and mail proxies cache hard, so a new artwork means a new filename. 600×108 file
- * rendered at 300 wide (2× for retina).
+ * The logo is served by the site itself (`public/email/`) with a content-hashed name: an email
+ * image needs a public absolute URL, and mail proxies cache hard, so a new artwork means a new
+ * filename. 600×108 file rendered at 300 wide (2× for retina). Absolute via `siteUrl()`, so each
+ * environment's mail points at its own origin — it used to point at the TEST project's Storage,
+ * which made production mail depend on that project (moved 06.11.2026, prod launch prep). The
+ * middleware serves any path with a dot untouched, coming-soon mode included.
  */
+const LOGO_PATH = '/email/logo-4df59990.png';
 const LOGO = {
-  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-4df59990.png',
   width: 300,
   height: 54,
 } as const;
@@ -207,7 +211,7 @@ export function BaseLayout({ previewText, t, children }: BaseLayoutProps) {
                             readers have images blocked by default, and for them this line IS the
                             header. */}
                         <Img
-                          src={LOGO.url}
+                          src={siteUrl(LOGO_PATH)}
                           width={LOGO.width}
                           height={LOGO.height}
                           alt="Mindsetis"

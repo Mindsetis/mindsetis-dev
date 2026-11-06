@@ -72,19 +72,24 @@ const SUPPORT_EMAIL = 'support@mindsetis.com';
 /**
  * Brand lockup for the header (Release-1 I4, delivered 2026-09-23).
  *
- * Hosted in Supabase Storage rather than `public/` on purpose: an email image needs an
- * absolute HTTPS URL that anyone can fetch WITHOUT a session — the reader's mail client, or
- * Google's image proxy on their behalf, opens it cold. Storage is already live and its URL
- * does not move when Vercel redeploys or while production is still unbuilt.
+ * Served by the site itself — `public/email/logo-4df59990.png` — as
+ * `{{ .SiteURL }}/email/logo-4df59990.png`: each Supabase project fills in its own Site URL
+ * (Dashboard → Authentication → URL Configuration — set it WITHOUT a trailing slash), so dev
+ * mail shows dev's copy and prod mail prod's. An email image needs an absolute HTTPS URL that
+ * anyone can fetch without a session (the mail client, or Google's image proxy, opens it cold);
+ * the middleware serves any path with a dot untouched, coming-soon mode included. It used to
+ * live in the TEST project's Storage, which tied production mail to that project (moved
+ * 06.11.2026, prod launch prep). A project whose Site URL is `http://localhost:3000` (the test
+ * project) gets a broken logo — mail proxies can't reach localhost; acceptable for local testing.
  *
  * The filename carries a content hash. Mail proxies cache images hard and for a long time, so
  * a logo edited in place would keep showing the old artwork in inboxes for months. A new file
- * means a new URL means a new cache key — swap this constant, rebuild, re-paste, done.
+ * means a new URL means a new cache key — swap the file + this constant, rebuild, re-paste, done.
  *
  * The asset is 600×108 and rendered at 300 wide: 2× so it stays sharp on retina displays.
  */
 const LOGO = {
-  url: 'https://lslkbqoedrpnuwtqlvio.supabase.co/storage/v1/object/public/brand-assets/email/logo-4df59990.png',
+  url: '{{ .SiteURL }}/email/logo-4df59990.png',
   width: 300,
   height: 54,
 };
