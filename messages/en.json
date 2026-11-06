@@ -2,13 +2,14 @@
   "nav": {
     "accountMenu": {
       "closeSheet": "Close menu",
-      "editProfile": "Edit Profile",
+      "helpSupport": "Help & Support",
       "logOut": "Log out",
+      "manageProfile": "Manage profile",
       "settings": "Settings",
       "sheetTitle": "Account menu",
       "signingOut": "Signing out…",
       "trigger": "Account menu for {name}",
-      "viewPublicProfile": "View public profile"
+      "viewProfile": "View profile"
     },
     "brand": "Mindsetis",
     "createEvent": "Create Event",
@@ -1000,6 +1001,7 @@
       },
       "continueFill": "Continue fill ({count, plural, one {# section} other {# sections}})",
       "listHeading": "What you can add",
+      "seeProfile": "See how looks my profile page",
       "skip": "Skip — fill later from cabinet",
       "subtitle": "Select what you want to fill now. Everything else — later.",
       "title": "Make your profile shine."
@@ -1033,6 +1035,7 @@
         "cardTitle": "Number {index}",
         "labelLabel": "Label",
         "labelPlaceholder": "e.g. Platforms founded",
+        "layoutHint": "For the best visual layout, we recommend adding exactly 4 key numbers to your profile.",
         "removeNumber": "Remove number",
         "title": "Numbers",
         "valueLabel": "Value",
@@ -1049,11 +1052,21 @@
       "promo": {
         "errors": {
           "invalidType": "Please upload an MP4 or MOV video.",
+          "thumbnailInvalidType": "Please upload a PNG, JPEG or WebP image.",
+          "thumbnailTooLarge": "Thumbnail must be 5 MB or smaller.",
+          "thumbnailUploadFailed": "Could not upload your thumbnail. Please try again.",
           "tooLarge": "Video must be 200MB or smaller.",
           "uploadFailed": "Could not upload your video. Please try again."
         },
         "orDivider": "OR",
         "removeVideo": "Remove video",
+        "thumbnailAlt": "Promo video thumbnail preview",
+        "thumbnailHint": "This is optional, but it will make your profile look better.",
+        "thumbnailLabel": "Promo Video Thumbnail",
+        "thumbnailRemove": "Remove thumbnail",
+        "thumbnailSpecs": "PNG, JPEG or WebP · Max 5 MB",
+        "thumbnailUpload": "Upload thumbnail",
+        "thumbnailUploading": "Uploading…",
         "title": "Promo video",
         "uploadHint": "MP4 or MOV · Max 200MB<br></br>Vertical format (9:16)<br></br>recommended",
         "uploading": "Uploading…",
@@ -1138,6 +1151,7 @@
     "website": "Website"
   },
   "mindsetterProfile": {
+    "backToSetup": "Back to setup",
     "beyondBusiness": {
       "eyebrow": "BEYOND BUSINESS",
       "heading": "What I care about beyond work"
@@ -1154,6 +1168,7 @@
     "ctaBanner2": {
       "heading": "Ready to talk?"
     },
+    "edit": "Edit",
     "favorite": "Add to favorites",
     "fckups": {
       "dialogTitle": "MY F*CKUP",
@@ -1205,33 +1220,6 @@
     "reviews": {
       "eyebrow": "REVIEWS",
       "heading": "What founders say after a session",
-      "items": [
-        {
-          "name": "Erin Glabets",
-          "quote": "I recently attended Anastasia's session on Event Marketing, and it genuinely exceeded my expectations. She has a rare talent for breaking down complex strategies into clear, actionable steps you can apply right away. Three months later, I'm still using the framework she walked us through.",
-          "role": "Head of Communication"
-        },
-        {
-          "name": "Daniel Kovalenko",
-          "quote": "One of the most useful hours I've spent this year. Anastasia walked us through the entire conference production process — concept, staging, run of show — and I left with a checklist I used the very next week.",
-          "role": "Founder"
-        },
-        {
-          "name": "Mira Torres",
-          "quote": "Anastasia coached me before my first keynote and completely changed how I think about stage presence. No fluff, just real, practical feedback that made an immediate difference.",
-          "role": "Product Lead"
-        },
-        {
-          "name": "Oksana Petrenko",
-          "quote": "I came in with a scattered personal brand and left with an actual plan. Anastasia asks the right questions and doesn't let you settle for generic answers. Exactly what I needed before our funding round.",
-          "role": "Marketing Director"
-        },
-        {
-          "name": "Lucas Meyer",
-          "quote": "Working with Anastasia on creative strategy for our product launch was the best decision we made that quarter. She builds formats people actually want to engage with — not just another campaign nobody remembers a week later.",
-          "role": "Co-founder"
-        }
-      ],
       "leaveReview": "Leave a review",
       "readLess": "Read less",
       "readMore": "Read more",
@@ -1398,8 +1386,8 @@
   "dashboard": {
     "header": {
       "completenessLabel": "Profile completeness",
-      "edit": "Edit",
       "verified": "Verified",
+      "view": "View",
       "viewProfile": "View Profile"
     },
     "nav": {
@@ -1412,10 +1400,12 @@
       "items": {
         "bookings": "Bookings",
         "earnings": "Earnings",
-        "myProfile": "My Profile",
+        "helpSupport": "Help & Support",
+        "manageProfile": "Manage profile",
         "overview": "Overview",
-        "sessionsSetup": "Sessions Setup",
-        "settings": "Settings"
+        "sessionsSetup": "Sessions setup",
+        "settings": "Settings",
+        "viewProfile": "View profile"
       }
     },
     "photoReminder": {
@@ -1632,6 +1622,19 @@
     "previewProfile": "Preview Profile",
     "continueSetup": "Continue Setup"
   },
+  "support": {
+    "helpDialog": {
+      "emailLabel": "Your email",
+      "error": "Something went wrong. Please try again.",
+      "messageLabel": "How can we help?",
+      "messagePlaceholder": "Describe your question or issue. If something isn't working, tell us what you were trying to do.",
+      "send": "Send message",
+      "subtitle": "Tell us what's going on and we'll get back to you by email.",
+      "success": "Thanks! We've received your message and will reply to {email}.",
+      "title": "Help & Support",
+      "tooMany": "You've sent several messages recently. Please try again a little later."
+    }
+  },
   "validation": {
     "aboutMax": "More About You must be at most {max} characters.",
     "authorMax": "Author must be at most {max} characters.",
@@ -1687,6 +1690,7 @@
     "priceRequired": "Enter a price greater than $0.",
     "projectMax": "Project name must be at most {max} characters.",
     "projectRequired": "Project name is required.",
+    "promoThumbnailType": "Only PNG, JPEG or WebP images are allowed.",
     "quoteMax": "Quote must be at most {max} characters.",
     "quoteRequired": "Quote is required.",
     "roleMax": "Role must be at most {max} characters.",
@@ -1698,7 +1702,10 @@
     "storyMax": "Story must be at most {max} characters.",
     "storyRequired": "Story is required.",
     "superpowersMax": "You can add up to {max} superpowers.",
-    "superpowersRequired": "Add at least one superpower.",
+    "superpowersRequired": "Fill in all 3 superpowers.",
+    "supportEmailInvalid": "Please enter a valid email.",
+    "supportMessageMax": "Message must be at most {max} characters.",
+    "supportMessageRequired": "Please enter your message.",
     "timeInvalid": "Enter a valid time (HH:mm).",
     "timeRangeReversed": "\"To\" time must be later than the \"From\" time.",
     "timeRangesMax": "Up to {max} time ranges per day.",

@@ -1,8 +1,9 @@
-import { CheckCircle2, Link2, Play, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Link2, Play, User } from 'lucide-react';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
+import { EditPencilIcon } from '@/components/icons/cabinet-header-icons';
 import {
   BagIcon,
   FlashlightFillIcon,
@@ -48,6 +49,8 @@ import { VideoBlogPlayer } from '@/components/profile/VideoBlogPlayer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
+import { Link } from '@/i18n/navigation';
+import { MANAGE_PROFILE_FROM_PROFILE_HREF } from '@/lib/profile/return-to-profile';
 import { cn } from '@/lib/utils';
 import type {
   Expertise,
@@ -60,7 +63,12 @@ import type {
   WinColor,
 } from '@/lib/validation/mindsetter';
 import { MIN_REEL_LIFE_PHOTOS_TO_DISPLAY } from '@/lib/validation/mindsetter';
-import { toEmbedUrl, type VideoOrientation } from '@/lib/video-embed';
+import {
+  isVimeoCdnImageUrl,
+  toEmbedUrl,
+  type VideoOrientation,
+  youtubeThumbnailUrl,
+} from '@/lib/video-embed';
 
 import memberStyles from './MemberProfileView.module.css';
 import styles from './MindsetterProfileView.module.css';
@@ -74,6 +82,10 @@ type VideoJson = {
   videoPath?: string | null;
   /** Written by the save action, not by the user — see `resolveVideoOrientation`. */
   orientation?: VideoOrientation | null;
+  /** Promo only: Vimeo's CDN cover captured at save time (`resolveVideoMeta`). */
+  thumbnailUrl?: string | null;
+  /** Promo only: the member's own thumbnail object in the private `covers` bucket. */
+  thumbnailPath?: string | null;
 } | null;
 
 /** Trophy icon fill per win color (Figma `552:5078` "Frame 274", re-verified via literal SVG
@@ -356,6 +368,8 @@ export interface MindsetterProfile {
   topics: string[];
   reelLifePhotoUrls: string[];
   promoVideoUrl: string | null;
+  /** Signed URL of the member's own promo thumbnail (private `covers` bucket), or null. */
+  promoThumbnailUrl: string | null;
   videoBlogUrl: string | null;
 }
 
@@ -376,6 +390,12 @@ export interface MindsetterProfileViewProps {
    * a boolean crosses this boundary.
    */
   isOwner: boolean;
+  /**
+   * Release 4 П2: where "← Back to setup" goes — the Shine picker with the blocks the owner had
+   * ticked. Set by the page ONLY for the owner arriving from that picker (`?from=setup`); `null`
+   * (the default) renders no back link at all.
+   */
+  setupBackHref?: string | null;
   /**
    * The resolved `mindsetterProfile` namespace translator, passed through directly rather than
    * destructured into an individual `labels` object (the pattern `MemberProfileView` uses) —
@@ -684,8 +704,11 @@ export function MindsetterProfileView({
   profile,
   shareUrl,
   isOwner,
+  setupBackHref = null,
   t,
 }: MindsetterProfileViewProps) {
+  // Release 4 П2: "Edit" in the hero's badge row, for the owner only.
+  const editHref = isOwner ? MANAGE_PROFILE_FROM_PROFILE_HREF : null;
   const displayName = resolveDisplayName(profile);
   // "Правки 3.0" П11 (Members) extended to Mindsetters 31.10: on your OWN profile the Invite /
   // Book CTAs (hero + both banners) give way to this single Share control — same component and
@@ -754,13 +777,34 @@ export function MindsetterProfileView({
   const promoEmbedUrl = profile.promoVideoUrl
     ? null // direct upload — rendered via <video>, not an iframe embed
     : toEmbedUrl(profile.promoVideo?.youtube || profile.promoVideo?.vimeo || null);
+  /**
+   * Pre-play cover, by priority: the member's own thumbnail (already a signed URL) > Vimeo's
+   * stored `thumbnail_url` (re-checked to be https on `*.vimeocdn.com` — the jsonb is
+   * owner-writable) > YouTube's image derived from the link > none (plain dark panel). Follows the
+   * same `youtube || vimeo` precedence as the embed above, so the cover always matches the video
+   * that will play. No network calls here.
+   */
+  const promoPosterUrl =
+    profile.promoThumbnailUrl ||
+    (profile.promoVideo?.youtube
+      ? youtubeThumbnailUrl(profile.promoVideo.youtube)
+      : isVimeoCdnImageUrl(profile.promoVideo?.thumbnailUrl)
+        ? profile.promoVideo.thumbnailUrl
+        : null) ||
+    null;
   const hasVideoBlog = Boolean(
     profile.videoBlogUrl || profile.videoBlog?.youtube || profile.videoBlog?.vimeo,
   );
   const videoBlogEmbedUrl = profile.videoBlogUrl
     ? null // direct upload — rendered via <video>, not an iframe embed
     : toEmbedUrl(profile.videoBlog?.youtube || profile.videoBlog?.vimeo || null);
-  const reviews = t.raw('reviews.items') as { name: string; role: string; quote: string }[];
+  /**
+   * Release 4 П8 (06.11.2026): the cards used to be the same four sample reviews from the
+   * dictionary for every Mindsetter. Real reviews only exist once someone has had a session and
+   * left one — bookings aren't built — so there are none yet, and the section stays hidden until
+   * this is fed from real data (the client wants them to be the reward for free sessions).
+   */
+  const reviews: { name: string; role: string; quote: string }[] = [];
 
   /**
    * REEL LIFE's two staggered rows (stage 1.12, see that section's own JSX comment for the full
@@ -844,6 +888,18 @@ export function MindsetterProfileView({
       <div className="mx-auto w-full max-w-[1440px] px-4 pt-0 sm:px-6 lg:px-[70px]">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
           <div className="flex w-full flex-col gap-6 lg:max-w-[464px] lg:pt-[87px]">
+            {/* Release 4 П2: only when the owner opened this page from the Shine picker's "See
+                how looks my profile page" (`?from=setup`, resolved by the page) — back to that
+                step with the same blocks ticked. Desktop twin; the phone one sits on the photo. */}
+            {setupBackHref ? (
+              <Link
+                href={setupBackHref}
+                className="hidden w-fit items-center gap-2 text-base font-bold text-foreground transition-colors hover:text-primary lg:inline-flex"
+              >
+                <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
+                {t('backToSetup')}
+              </Link>
+            ) : null}
             <div className="flex flex-wrap items-center gap-2">
               {/* Release-1 G4: gated on the real verification status again — this used to be a
                   temporary, unconditional demo override ("Verified для демо виведи просто в
@@ -899,7 +955,21 @@ export function MindsetterProfileView({
                   that gets built.
 
                 31.10: NOT rendered for the owner — their CTA row below now holds the 44px Share
-                control (`ownerShare`), and two share icons in one hero would just be noise. */}
+                control (`ownerShare`), and two share icons in one hero would just be noise.
+
+                Release 4 П2: the owner gets "Edit" in that trailing slot instead — the cabinet's
+                own pencil + word (`EditPencilIcon`, same as the section cards), always shown, to
+                the owner only. It opens the section list with `?from=profile`, so saving a
+                section comes back here. */}
+              {editHref ? (
+                <Link
+                  href={editHref}
+                  className="ml-auto inline-flex items-center gap-[5px] text-sm text-foreground transition-colors hover:text-primary"
+                >
+                  <EditPencilIcon className="shrink-0" />
+                  {t('edit')}
+                </Link>
+              ) : null}
               {!isOwner && (
                 <ShareProfileButton
                   url={shareUrl}
@@ -1139,6 +1209,19 @@ export function MindsetterProfileView({
               </div>
             )}
 
+            {/* Release 4 П2, phone placement (client mockup): over the photo's top-left corner,
+                since the photo comes first on a phone. A dark translucent pill keeps it legible
+                on a light picture. Desktop renders its twin above the badge row instead. */}
+            {setupBackHref ? (
+              <Link
+                href={setupBackHref}
+                className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:text-primary sm:left-6 lg:hidden"
+              >
+                <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
+                {t('backToSetup')}
+              </Link>
+            ) : null}
+
             {hasPromoVideo && (
               // "Intro about me" — Figma `337:1292` "Frame 424" (re-verified this pass against
               // the dedicated preview mockup `383:4089`, same button, same position): a small
@@ -1233,13 +1316,18 @@ export function MindsetterProfileView({
           distinct border/text accent color — see `TOPIC_ITEM_STYLES`/`topicItemStyle` above),
           plus the heading's own dedicated gradient (`.topicsHeading`, with a forced line break
           after "mentoring" via `white-space: pre-line` — see `messages/en.json`).
-          STAGE 1.12: own top-level section wrapper now (`hidden`/`lg:block` unchanged — still
-          desktop-only). */}
+          STAGE 1.12: own top-level section wrapper now.
+          Release 4 П4 (owner's call 06.11.2026): shown on PHONES too — the client loves this
+          block and couldn't find it on her phone. Figma has no mobile frame for it, so the phone
+          version is the same card, tighter: 24px radius, 32/20px padding, 32px heading (CSS),
+          smaller pills. The pills are the Help step's card titles (see the page), so every
+          Mindsetter has them; on a phone they now repeat just above the "What can I help with"
+          accordion, same as on desktop. */}
       {profile.topics.length > 0 && (
-        <div className="mx-auto mt-20 hidden w-full max-w-[1440px] px-4 sm:px-6 lg:mt-[150px] lg:block lg:px-[70px]">
+        <div className="mx-auto mt-20 w-full max-w-[1440px] px-4 sm:px-6 lg:mt-[150px] lg:px-[70px]">
           <div
             className={cn(
-              'flex flex-col items-center gap-8 px-8 py-10 text-center lg:px-14 lg:py-14',
+              'flex flex-col items-center gap-6 rounded-[24px] px-5 py-8 text-center md:gap-8 md:rounded-[32px] md:px-8 md:py-10 lg:px-14 lg:py-14',
               styles.topicsCard,
             )}
           >
@@ -1253,7 +1341,7 @@ export function MindsetterProfileView({
                 return (
                   <span
                     key={topic}
-                    className="rounded-full border px-6 py-4 text-base font-bold"
+                    className="rounded-full border px-4 py-2.5 text-sm font-bold md:px-6 md:py-4 md:text-base"
                     style={{
                       background: itemStyle.gradient,
                       borderColor: itemStyle.accent,
@@ -1417,6 +1505,7 @@ export function MindsetterProfileView({
             <PromoVideoPlayer
               videoUrl={profile.promoVideoUrl}
               embedUrl={promoEmbedUrl}
+              posterUrl={promoPosterUrl}
               title={t('promo.heading')}
               clickToWatchLabel={t('promo.clickToWatch')}
               /* STAGE 1.12 mobile re-verification: `401:8072` "Frame 37" is 345×450 on mobile
@@ -1578,8 +1667,10 @@ export function MindsetterProfileView({
               <SectionEyebrow icon={<ReelLifeBlockIcon className="size-4" />}>
                 {t('reelLife.eyebrow')}
               </SectionEyebrow>
-              {/* Heading and quote are DESKTOP ONLY (2026-08-14 request): the mobile frames show
-                  the photo strip under the eyebrow alone, with no heading and no quote. */}
+              {/* The heading is DESKTOP ONLY (2026-08-14 request): the mobile frames show the photo
+                  strip under the eyebrow alone. The quote was too until Release 4 П11 (owner's
+                  call 06.11.2026) — the client filled "My Philosophy" on her phone and saw it
+                  nowhere, so it now shows on phones as well, straight under the eyebrow. */}
               <h2
                 className={cn(
                   'font-display text-h3 max-[600px]:hidden md:text-h2',
@@ -1595,7 +1686,7 @@ export function MindsetterProfileView({
                 // 583px block in the frame, centred on the same axis as the heading. The two
                 // decorative marks hang OUTSIDE it — top-left of the quote and bottom-right of the
                 // attribution — so they sit in the margin rather than pushing the text around.
-                <figure className="relative mx-auto w-full max-w-[583px] px-10 max-[600px]:hidden lg:px-0">
+                <figure className="relative mx-auto w-full max-w-[583px] px-10 lg:px-0">
                   <QuoteMarkIcon className="absolute -top-4 left-0 text-card lg:-left-14" />
                   <blockquote className="font-display text-[24px] leading-[1.31] text-foreground md:text-[32px]">
                     {philosophyQuote}
@@ -1746,44 +1837,49 @@ export function MindsetterProfileView({
           gap above this section to 214px. The responsive-spacing pass (150/100/80 tiers via
           `styles.paddingBottom150`) kept this asymmetric-padding shape rather than adopting the
           stage-1.12 `mt-20 lg:mt-[150px]` margin form, since this section's full-bleed carousel
-          (below) needs the outer `#reviews` div to stay a bare, max-width-less wrapper. */}
-      <div id="reviews" className={cn('scroll-mt-24 pt-16 md:pt-[86px]', styles.paddingBottom150)}>
-        {/* `px-4` (16px) is the unprefixed base tier here — already exactly the requested ≤600px
+          (below) needs the outer `#reviews` div to stay a bare, max-width-less wrapper.
+          Release 4 П8: rendered only when there are real reviews (see `reviews` above). */}
+      {reviews.length > 0 && (
+        <div
+          id="reviews"
+          className={cn('scroll-mt-24 pt-16 md:pt-[86px]', styles.paddingBottom150)}
+        >
+          {/* `px-4` (16px) is the unprefixed base tier here — already exactly the requested ≤600px
             side padding with no change needed (`sm:`/`lg:` only widen it above 640px/1024px). */}
-        <div className="mx-auto flex w-full max-w-[1440px] flex-col px-4 sm:px-6 lg:px-[70px]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-col gap-4 md:gap-8">
-              <SectionEyebrow icon={<ReviewChatIcon className="size-3 shrink-0" />}>
-                {t('reviews.eyebrow')}
-              </SectionEyebrow>
-              <h2
-                className={cn(
-                  'font-display text-h3 max-[600px]:hidden md:text-h2 md:max-w-[588px]',
-                  styles.gradientHeading,
-                  styles.reviewsHeading,
-                )}
-              >
-                {t('reviews.heading')}
-              </h2>
-            </div>
-            {/* Leaving a review has no backend yet (post-session review flow is a later stage). */}
-            {/* Full-width on phones (the heading row stacks there, so a 250px button floating
+          <div className="mx-auto flex w-full max-w-[1440px] flex-col px-4 sm:px-6 lg:px-[70px]">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col gap-4 md:gap-8">
+                <SectionEyebrow icon={<ReviewChatIcon className="size-3 shrink-0" />}>
+                  {t('reviews.eyebrow')}
+                </SectionEyebrow>
+                <h2
+                  className={cn(
+                    'font-display text-h3 max-[600px]:hidden md:text-h2 md:max-w-[588px]',
+                    styles.gradientHeading,
+                    styles.reviewsHeading,
+                  )}
+                >
+                  {t('reviews.heading')}
+                </h2>
+              </div>
+              {/* Leaving a review has no backend yet (post-session review flow is a later stage). */}
+              {/* Full-width on phones (the heading row stacks there, so a 250px button floating
                 on its own line reads as unfinished), natural width from `sm` up where it sits
                 beside the heading. The wrapper has to stretch too — it is the flex item. */}
-            <NotYetAvailable feature="reviews" className="w-full sm:w-auto">
-              <Button
-                type="button"
-                variant="primaryOutline"
-                disabled
-                className="w-full shadow-none disabled:opacity-50 sm:w-auto sm:min-w-[250px]"
-              >
-                <ReviewLeaveIcon className="size-4" />
-                {t('reviews.leaveReview')}
-              </Button>
-            </NotYetAvailable>
+              <NotYetAvailable feature="reviews" className="w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="primaryOutline"
+                  disabled
+                  className="w-full shadow-none disabled:opacity-50 sm:w-auto sm:min-w-[250px]"
+                >
+                  <ReviewLeaveIcon className="size-4" />
+                  {t('reviews.leaveReview')}
+                </Button>
+              </NotYetAvailable>
+            </div>
           </div>
-        </div>
-        {/* Cards live INSIDE the content grid, not full-bleed to the viewport (2026-08-06
+          {/* Cards live INSIDE the content grid, not full-bleed to the viewport (2026-08-06
             request: "slides should start at the left edge of the content grid").
             This mirrors My WINS above exactly, which already had the requested behaviour:
               · the same `max-w-[1440px]` + `px-4 sm:px-6 lg:px-[70px]` column, so the first card
@@ -1800,7 +1896,7 @@ export function MindsetterProfileView({
             target; embla positions slides by transform and would count a spacer as a real slide,
             throwing off both the slide count and the arrow-visibility test. Column padding
             achieves the same visual gutter without fighting the library. */}
-        {/* No `max-w-[1440px]` and no padding here, unlike every other section wrapper on this
+          {/* No `max-w-[1440px]` and no padding here, unlike every other section wrapper on this
             page — deliberately, and this is the whole fix for "the container clips slides above
             1440px" (2026-08-06). The track used to live inside the capped column and bleed back
             out of it with `-mx-[70px]`, which reaches the COLUMN's edge — 1440px wide, centred,
@@ -1808,8 +1904,8 @@ export function MindsetterProfileView({
             rather than at the window. This wrapper is now full-width so the track is too, and the
             content-grid gutter is handed back by the two spacers below (which grow past 1440 to
             follow the centred column) instead of by padding-plus-negative-margin. */}
-        <div className="mt-8 w-full md:mt-[50px]">
-          {/* `CardSlider`, not `EmblaCarousel` — deliberately switched on 2026-08-06.
+          <div className="mt-8 w-full md:mt-[50px]">
+            {/* `CardSlider`, not `EmblaCarousel` — deliberately switched on 2026-08-06.
               Removing the infinite loop exposed that embla was the wrong tool for THIS row:
               embla sizes slides as a fraction of its track, but these review cards are a fixed
               420px and `shrink-0`, so they overflow a track that stays at viewport width
@@ -1822,97 +1918,102 @@ export function MindsetterProfileView({
               scroll position. It is also the very component Superpowers uses, so the
               bleed-plus-spacer gutter below is now the identical technique rather than an
               approximation of it. */}
-          <CardSlider
-            prevLabel={t('carousel.prev')}
-            nextLabel={t('carousel.next')}
-            // One card per press at every width, desktop included (2026-08-06 request).
-            scrollStep="item"
-            // Gap only. The track already spans the window because its wrapper does (see the
-            // comment above it) — the previous negative-margin bleed is gone, since bleeding out
-            // of a `max-w-[1440px]` column only ever reached that column's edge, not the screen's.
-            // The gutter now comes from `scroll-padding` plus edge-card margins (`.reviewsTrack`),
-            // which is what the other three full-bleed sections use.
-            trackClassName={cn('gap-4', styles.reviewsTrack)}
-          >
-            {reviews.map((review, index) => (
-              <div
-                key={`${review.name}-${index}`}
-                className={cn(
-                  'shrink-0',
-                  'flex min-h-[330px] flex-col gap-4 p-6',
-                  styles.reviewCard,
-                  // EVERY card is a snap target, and always start-aligned. This replaced a
-                  // spacer-based setup (two `snap-start` gutter spacers, `snap-center` on phones,
-                  // both edge cards excluded from snapping) on 2026-08-06, because that left the
-                  // snap positions UNEVENLY spaced: the spacers' own points sat one gutter away
-                  // from the card grid, so a one-card press travelled 506px against a 436px card
-                  // pitch and parked middle cards flush against the window edge. Uniform
-                  // `snap-start` + the track's `scroll-padding` puts every stop exactly one pitch
-                  // apart AND every card on the content grid.
-                  // Resting positions are unchanged on phones: the card is `100% - 32px` there, so
-                  // start-aligning it behind a 16px scroll-padding lands it exactly where
-                  // centring used to.
-                  'snap-start',
-                  // The row's inset to the grid rides on the edge cards themselves — see
-                  // `.winsFirstCard` for why not spacer elements.
-                  index === 0 && styles.reviewsFirstCard,
-                  index === reviews.length - 1 && styles.reviewsLastCard,
-                  // NOTE: the last slide used to carry `mr-4` here. That was a `loop: true`-only
-                  // workaround (CSS `gap` never renders at the loop seam, because looping wraps
-                  // from the last item straight back to the first with no "next" item for the
-                  // gap to sit against). Looping is off as of 2026-08-06, so the margin no
-                  // longer patches anything — it just added 16px of empty scrollable space past
-                  // the final card, which is what left the "next" arrow live at the end and made
-                  // one more press nudge the row a little further. Removed deliberately; do not
-                  // reinstate it without turning `loop` back on.
-                )}
-              >
-                <span
+            <CardSlider
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              // One card per press at every width, desktop included (2026-08-06 request).
+              scrollStep="item"
+              // Gap only. The track already spans the window because its wrapper does (see the
+              // comment above it) — the previous negative-margin bleed is gone, since bleeding out
+              // of a `max-w-[1440px]` column only ever reached that column's edge, not the screen's.
+              // The gutter now comes from `scroll-padding` plus edge-card margins (`.reviewsTrack`),
+              // which is what the other three full-bleed sections use.
+              trackClassName={cn('gap-4', styles.reviewsTrack)}
+            >
+              {reviews.map((review, index) => (
+                <div
+                  key={`${review.name}-${index}`}
                   className={cn(
-                    'inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-tiny',
-                    styles.reviewBadge,
+                    'shrink-0',
+                    'flex min-h-[330px] flex-col gap-4 p-6',
+                    styles.reviewCard,
+                    // EVERY card is a snap target, and always start-aligned. This replaced a
+                    // spacer-based setup (two `snap-start` gutter spacers, `snap-center` on phones,
+                    // both edge cards excluded from snapping) on 2026-08-06, because that left the
+                    // snap positions UNEVENLY spaced: the spacers' own points sat one gutter away
+                    // from the card grid, so a one-card press travelled 506px against a 436px card
+                    // pitch and parked middle cards flush against the window edge. Uniform
+                    // `snap-start` + the track's `scroll-padding` puts every stop exactly one pitch
+                    // apart AND every card on the content grid.
+                    // Resting positions are unchanged on phones: the card is `100% - 32px` there, so
+                    // start-aligning it behind a 16px scroll-padding lands it exactly where
+                    // centring used to.
+                    'snap-start',
+                    // The row's inset to the grid rides on the edge cards themselves — see
+                    // `.winsFirstCard` for why not spacer elements.
+                    index === 0 && styles.reviewsFirstCard,
+                    index === reviews.length - 1 && styles.reviewsLastCard,
+                    // NOTE: the last slide used to carry `mr-4` here. That was a `loop: true`-only
+                    // workaround (CSS `gap` never renders at the loop seam, because looping wraps
+                    // from the last item straight back to the first with no "next" item for the
+                    // gap to sit against). Looping is off as of 2026-08-06, so the margin no
+                    // longer patches anything — it just added 16px of empty scrollable space past
+                    // the final card, which is what left the "next" arrow live at the end and made
+                    // one more press nudge the row a little further. Removed deliberately; do not
+                    // reinstate it without turning `loop` back on.
                   )}
                 >
-                  <CheckCircle2 className="size-3" aria-hidden="true" />
-                  {t('reviews.verifiedMember')}
-                </span>
-                <ReviewQuoteText
-                  quote={review.quote}
-                  readMoreLabel={t('reviews.readMore')}
-                  // The reviewer's own name is the most useful heading for the full quote.
-                  dialogTitle={review.name}
-                  closeLabel={t('closeDialog')}
-                />
-                <div className="mt-auto flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-white text-primary">
-                        {getReviewerInitials(review.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-bold">{review.name}</p>
-                      <p className="text-tiny text-foreground/60">{review.role}</p>
+                  <span
+                    className={cn(
+                      'inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-tiny',
+                      styles.reviewBadge,
+                    )}
+                  >
+                    <CheckCircle2 className="size-3" aria-hidden="true" />
+                    {t('reviews.verifiedMember')}
+                  </span>
+                  <ReviewQuoteText
+                    quote={review.quote}
+                    readMoreLabel={t('reviews.readMore')}
+                    // The reviewer's own name is the most useful heading for the full quote.
+                    dialogTitle={review.name}
+                    closeLabel={t('closeDialog')}
+                  />
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback className="bg-white text-primary">
+                          {getReviewerInitials(review.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-bold">{review.name}</p>
+                        <p className="text-tiny text-foreground/60">{review.role}</p>
+                      </div>
                     </div>
+                    <ReviewCompanyLogoIcon className="h-[42px] w-auto shrink-0 opacity-70" />
                   </div>
-                  <ReviewCompanyLogoIcon className="h-[42px] w-auto shrink-0 opacity-70" />
                 </div>
-              </div>
-            ))}
-          </CardSlider>
+              ))}
+            </CardSlider>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ============================== CTA BANNER #1 ==============================
           `max-w-[1440px]` + `lg:px-[70px]` is the standard content column (stage 1.12 fixed a
           prior `max-w-[1300px]` double-inset bug — Figma `552:4630` "Frame 58" is `x=70,
           width=1300` directly under the 1440-wide root, i.e. the SAME 70px-inset column every
           section uses). Bottom spacing uses this page's own responsive 150/100/80 tier
-          (`styles.spacingBottom150`) rather than stage-1.12's coarser `mt-20 lg:mt-[150px]`. */}
+          (`styles.spacingBottom150`) rather than stage-1.12's coarser `mt-20 lg:mt-[150px]`.
+          Its gap to the section above came from Reviews' own top padding; with Reviews hidden
+          (Release 4 П8) the banner takes that same `pt-16 md:pt-[86px]` itself, so the space
+          above it doesn't change. */}
       <div
         id="cta-banner-1"
         className={cn(
           'mx-auto w-full max-w-[1440px] scroll-mt-24 px-4 sm:px-6 lg:px-[70px]',
+          reviews.length === 0 && 'pt-16 md:pt-[86px]',
           styles.spacingBottom150,
         )}
       >

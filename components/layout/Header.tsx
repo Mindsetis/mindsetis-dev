@@ -138,6 +138,7 @@ export default async function Header({ variant = 'full' }: HeaderProps) {
                 avatarUrl={profile.avatar_url}
                 displayName={profile.full_name?.trim() || profile.username}
                 isVerified={profile.verification_status === 'verified'}
+                email={user?.email ?? ''}
               />
 
               {/* A4 "beacon" CTA — state from `lib/auth/cta-state.ts`, mapped to (label,

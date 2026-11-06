@@ -69,6 +69,8 @@ interface EmailMessageRow {
   subject: string;
   html_body: string;
   text_body: string | null;
+  /** Optional Reply-To (e.g. the Help & Support form: support answers the user directly). */
+  reply_to: string | null;
   attempts: number;
   max_attempts: number;
 }
@@ -228,6 +230,7 @@ async function sendViaResend(row: EmailMessageRow): Promise<string | null> {
       subject: row.subject,
       html: row.html_body,
       text: row.text_body ?? undefined,
+      reply_to: row.reply_to ?? undefined,
     }),
   });
 

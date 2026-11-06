@@ -1,18 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 
 import { ProfilePageIcon } from '@/components/icons/profile-page-icon';
-import { PromoVideoPlayer } from '@/components/profile/PromoVideoPlayer';
+import { WhatIsMindsetisVideo } from '@/components/marketing/main-page/WhatIsMindsetisVideo';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
-
-/**
- * PLACEHOLDER — swap for the real congrats video once that asset exists (the same test clip the
- * home hero embeds, `HeroSection.tsx`). A YouTube/Vimeo watch or share link should be run through
- * `toEmbedUrl` (`lib/video-embed.ts`) rather than pasted here directly; this constant is already
- * in `/embed/` form, which is what an `<iframe src>` needs.
- */
-const CONGRATS_VIDEO_EMBED_URL = 'https://www.youtube.com/embed/M7lc1UVf-VE';
 
 /** "Find Mindsetis event" icon (16×16, white) — provided verbatim by the designer, replacing
  * `lucide-react`'s `Search`. */
@@ -53,13 +45,9 @@ function InviteEventIcon() {
  * gap (`page.tsx`), since all three blocks here (button, video, row) sit that same 24px mobile /
  * 32px desktop apart per the Figma layer tree.
  *
- * Video block: reuses `PromoVideoPlayer`, so this behaves exactly like the profile's promo video
- * — a dark `rounded-2xl`/`bg-card` panel with a centered play triangle and a "Click for watching"
- * caption, which swaps for the real embed (muted autoplay) on click. Figma draws only the
- * pre-play state and names no source, so the embed URL is a placeholder constant above, to be
- * replaced when the real clip lands. Reusing the player rather than re-implementing it also means
- * a future switch to a direct-upload file needs no work here — that component already handles
- * both `embedUrl` and `videoUrl`.
+ * Video block: the home page's promo card (`WhatIsMindsetisVideo` — dimmed poster, play triangle,
+ * "Click for watching", then the native player with sound). Release 4 П6 put it here in place of
+ * a YouTube test clip; swap it for the dedicated congrats video once that exists.
  *
  * "Find event"/"Invite" row: side by side on desktop, evenly split, stacked full-width on
  * mobile with the OPPOSITE visual order (Invite first, Find second) — unchanged from before.
@@ -89,23 +77,12 @@ export async function MindsetterCongratsCtas({ username }: { username: string })
         </Link>
       </Button>
 
-      {/* `aspect-video`, not Figma's literal 350px height: the frame is 640×350 (1.83:1) but the
-          embed inside is a 16:9 player, so a fixed 350 letterboxed it with ~5px bars top and
-          bottom. 640×360 costs 10px against the mockup and removes them; the ratio also keeps
-          mobile correct for free, where the mockup's 343×200 had the same problem. */}
-      <div className="aspect-video w-full">
-        {/* `size-full` is NOT optional: `PromoVideoPlayer`'s post-click branch is a bare
-            `overflow-hidden rounded-2xl bg-card` div and takes its dimensions from `className`
-            alone. Without it the iframe's own `height: 100%` resolves against an auto-height
-            parent and collapses to the ~150px `<iframe>` default — the pre-play button looked
-            right regardless, since `size-full` is baked into that branch's own classes. */}
-        <PromoVideoPlayer
-          embedUrl={CONGRATS_VIDEO_EMBED_URL}
-          title={t('video.caption')}
-          clickToWatchLabel={t('video.caption')}
-          className="size-full"
-        />
-      </div>
+      {/* Release 4 П6 (client, 06.11.2026): the Mindsetis promo from the home page stands in
+          until the dedicated "welcome, you're a Mindsetter" video exists — the SAME component and
+          file (`WhatIsMindsetisVideo`, our own 1080p mp4 with its poster), not her YouTube link:
+          it starts with sound on the first click, iPhone included, and loads nothing until then.
+          `aspect-video` lives inside that component, so it needs no wrapper here. */}
+      <WhatIsMindsetisVideo watchLabel={t('video.caption')} />
 
       {/* Both route nowhere — event invites and the event catalog are unbuilt. Disabled buttons
           wrapped in `NotYetAvailable` (same treatment as `WelcomeCtas`). */}

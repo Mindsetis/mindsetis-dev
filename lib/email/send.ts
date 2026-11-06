@@ -23,6 +23,8 @@ export interface EnqueueEmailInput<K extends EmailTemplateKey = EmailTemplateKey
   props: EmailTemplatePropsMap[K];
   /** Optional idempotency key — see `enqueueEmailEnvelopeSchema` / the migration comment. */
   dedupKey?: string;
+  /** Optional Reply-To address (validated as an email). Omit for the usual no-reply behaviour. */
+  replyTo?: string;
 }
 
 export interface EnqueueEmailResult {
@@ -57,6 +59,7 @@ export async function enqueueEmail<K extends EmailTemplateKey>(
     toName: input.toName,
     locale: input.locale ?? 'en',
     dedupKey: input.dedupKey,
+    replyTo: input.replyTo,
   });
 
   const propsSchema = emailTemplatePropsSchema[input.templateKey];
@@ -76,6 +79,8 @@ export async function enqueueEmail<K extends EmailTemplateKey>(
     html_body: html,
     text_body: text,
     dedup_key: envelope.dedupKey ?? null,
+    // Only sent when set, so every other email still inserts even before the column exists.
+    ...(envelope.replyTo ? { reply_to: envelope.replyTo } : {}),
   };
 
   const service = createServiceClient();

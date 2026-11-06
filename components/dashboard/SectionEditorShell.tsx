@@ -2,7 +2,7 @@ import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import { GuardedLink } from '@/components/dashboard/GuardedLink';
+import { AllSectionsLink } from '@/components/dashboard/AllSectionsLink';
 import { SectionPreviewHint } from '@/components/dashboard/SectionPreviewHint';
 import { SECTION_ICONS } from '@/components/icons/profile-section-icons';
 import { loadCabinetProfile } from '@/lib/profile/cabinet';
@@ -55,14 +55,13 @@ export async function SectionEditorShell({
       {/* `GuardedLink`, not the plain `Link` this used before Release-1 C-continuation
           (2026-09-19): the primary way OFF a section editor, so it's the first exit path the
           "unsaved changes" guard has to cover. */}
-      <GuardedLink
-        href="/dashboard/profile"
-        className="inline-flex w-fit items-center gap-2 text-base font-medium text-foreground hover:text-primary lg:font-bold"
-      >
+      {/* `AllSectionsLink` = `GuardedLink` to the section list that keeps `?from=profile`
+          (Release 4 П2). */}
+      <AllSectionsLink className="inline-flex w-fit items-center gap-2 text-base font-medium text-foreground hover:text-primary lg:font-bold">
         <ChevronLeft className="size-[18px] lg:hidden" aria-hidden="true" />
         <ArrowLeft className="hidden size-4 lg:inline" aria-hidden="true" />
         {t('allSections')}
-      </GuardedLink>
+      </AllSectionsLink>
 
       {/* Same surface treatment as the section CARDS on the list (`ProfileSectionCard`): 16px
           radius (`rounded-xl` == `--radius-xl`), the exact #1a1a1a token, and the one-off

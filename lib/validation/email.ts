@@ -64,6 +64,8 @@ export const enqueueEmailEnvelopeSchema = z.object({
     .min(1, 'dedupKey cannot be empty.')
     .max(200, 'dedupKey is too long.')
     .optional(),
+  /** Optional Reply-To (`email_messages.reply_to`) — e.g. the user's address on a support request. */
+  replyTo: emailSchema.optional(),
 });
 export type EnqueueEmailEnvelope = z.infer<typeof enqueueEmailEnvelopeSchema>;
 
@@ -122,6 +124,21 @@ export const ambassadorApplicationEmailPropsSchema = z.object({
 export type AmbassadorApplicationEmailProps = z.infer<typeof ambassadorApplicationEmailPropsSchema>;
 
 /**
+ * `support_request` template props — the Help & Support dialog's message, sent to the TEAM's
+ * support mailbox (`submitHelpSupport`). `userAgent` is taken from the request headers server-side
+ * and `page` is the client-reported path; both are display-only context for whoever answers.
+ */
+export const supportRequestEmailPropsSchema = z.object({
+  userId: z.string().trim().min(1).max(100),
+  userEmail: emailSchema,
+  message: z.string().trim().min(1).max(5000),
+  page: z.string().trim().max(1000).optional(),
+  userAgent: z.string().trim().max(500).optional(),
+  uiLocale: localeSchema,
+});
+export type SupportRequestEmailProps = z.infer<typeof supportRequestEmailPropsSchema>;
+
+/**
  * `template_key` -> props-schema map. The single source of truth for which template
  * keys exist; `lib/email/registry.tsx` maps the same keys to renderers, and
  * `email_messages.template_key` (free text in the DB) is expected to only ever contain
@@ -133,6 +150,7 @@ export const emailTemplatePropsSchema = {
   generic: genericEmailPropsSchema,
   welcome: welcomeEmailPropsSchema,
   ambassador_application: ambassadorApplicationEmailPropsSchema,
+  support_request: supportRequestEmailPropsSchema,
 } as const;
 
 export type EmailTemplateKey = keyof typeof emailTemplatePropsSchema;

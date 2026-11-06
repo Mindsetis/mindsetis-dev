@@ -10,6 +10,7 @@ import {
 } from './templates/ambassador-application-email';
 import { GenericEmail, genericEmailSubject } from './templates/generic-email';
 import { PasswordResetEmail, passwordResetEmailSubject } from './templates/password-reset-email';
+import { SupportRequestEmail, supportRequestEmailSubject } from './templates/support-request-email';
 import { VerificationEmail, verificationEmailSubject } from './templates/verification-email';
 import { WelcomeEmail, welcomeEmailSubject } from './templates/welcome-email';
 
@@ -50,5 +51,9 @@ export const emailTemplateRegistry: { [K in EmailTemplateKey]: EmailTemplateDefi
   ambassador_application: {
     render: (props, locale) => <AmbassadorApplicationEmail {...props} locale={locale} />,
     subject: (_props, locale) => ambassadorApplicationEmailSubject(locale),
+  },
+  support_request: {
+    render: (props, locale) => <SupportRequestEmail {...props} locale={locale} />,
+    subject: (props) => supportRequestEmailSubject(props),
   },
 };

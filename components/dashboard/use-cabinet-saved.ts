@@ -1,9 +1,15 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { toast } from '@/components/ui/sonner';
 import { useRouter } from '@/i18n/navigation';
+import {
+  isReturnToProfile,
+  OWN_PUBLIC_PROFILE_HREF,
+  RETURN_TO_PROFILE_PARAM,
+} from '@/lib/profile/return-to-profile';
 
 /**
  * What a cabinet section editor does after a SUCCESSFUL save.
@@ -34,9 +40,16 @@ import { useRouter } from '@/i18n/navigation';
 export function useCabinetSaved(): (nextHref?: string) => void {
   const t = useTranslations('dashboard.profile');
   const router = useRouter();
+  // Release 4 П2: the owner came in through their public profile's "Edit" (`?from=profile`, see
+  // `lib/profile/return-to-profile.ts`), so a save takes them back there instead of onward.
+  const returnToProfile = isReturnToProfile(useSearchParams().get(RETURN_TO_PROFILE_PARAM));
 
   return (nextHref) => {
     toast.success(t('saved'));
+    if (returnToProfile) {
+      router.push(OWN_PUBLIC_PROFILE_HREF);
+      return;
+    }
     if (nextHref) {
       router.push(nextHref);
       return;

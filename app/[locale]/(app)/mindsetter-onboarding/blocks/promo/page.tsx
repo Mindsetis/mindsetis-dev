@@ -11,6 +11,7 @@ import {
   nextBlockHref,
   parseBlocksParam,
 } from '@/lib/mindsetter-onboarding/blocks';
+import { getPromoThumbnailPreview } from '@/lib/profile/promo-thumbnail';
 import { createClient } from '@/lib/supabase/server';
 
 type PromoBlockPageProps = {
@@ -58,6 +59,11 @@ export default async function MindsetterOnboardingPromoBlockPage({
     .maybeSingle();
   const initialPromoVideo = mindsetterProfile?.promo_video as
     { youtube?: string | null; vimeo?: string | null } | null | undefined;
+  const initialThumbnail = await getPromoThumbnailPreview(
+    supabase,
+    session.user.id,
+    mindsetterProfile?.promo_video,
+  );
 
   return (
     <BlockShell backHref={backHref} index={index} total={blocks.length}>
@@ -67,7 +73,11 @@ export default async function MindsetterOnboardingPromoBlockPage({
           {t('blocks.promo.title')}
         </h1>
       </div>
-      <PromoForm initialPromoVideo={initialPromoVideo} nextHref={nextHref} />
+      <PromoForm
+        initialPromoVideo={initialPromoVideo}
+        initialThumbnail={initialThumbnail}
+        nextHref={nextHref}
+      />
     </BlockShell>
   );
 }

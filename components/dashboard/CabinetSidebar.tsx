@@ -2,19 +2,23 @@
 
 import { useTranslations } from 'next-intl';
 import type { ComponentType } from 'react';
+import { useState } from 'react';
 
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import {
   BookingsIcon,
   CabinetSettingsIcon,
   EarningsIcon,
+  HelpIcon,
   MyProfileIcon,
   type NavIconProps,
   OverviewIcon,
   SessionsSetupIcon,
+  ViewProfileIcon,
 } from '@/components/icons/cabinet-nav-icons';
+import { HelpSupportDialog } from '@/components/support/HelpSupportDialog';
 import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
-import { usePathname } from '@/i18n/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /**
@@ -32,6 +36,10 @@ import { cn } from '@/lib/utils';
  */
 export type CabinetSidebarProps = {
   accountType: 'member' | 'mindsetter';
+  /** Public handle — the "View profile" row opens this account's own public page. */
+  username: string;
+  /** The account's email — prefills the Help & Support dialog. */
+  email: string;
 };
 
 /**
@@ -121,9 +129,14 @@ function NavItem({
   );
 }
 
-export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
+export function CabinetSidebar({ accountType, username, email }: CabinetSidebarProps) {
   const t = useTranslations('dashboard.nav');
   const pathname = usePathname();
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // Same rule as the cabinet header's "View Profile" button: one canonical page per account type.
+  const publicProfileHref =
+    accountType === 'mindsetter' ? `/mindsetters/${username}` : `/members/${username}`;
 
   // `usePathname` from `@/i18n/navigation` already returns the locale-STRIPPED path, so this
   // compares against the bare route. Every `/dashboard/profile/*` section editor keeps the
@@ -144,9 +157,21 @@ export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
         <NavItem
           href="/dashboard/profile"
           icon={MyProfileIcon}
-          label={t('items.myProfile')}
+          label={t('items.manageProfile')}
           active={isProfileActive}
         />
+
+        {/* NEW TAB, like the cabinet header's "View Profile" button: the user may be inside a dirty
+            section editor, and a new tab leaves it mounted, so there is nothing to guard. */}
+        <Link
+          href={publicProfileHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative flex w-full items-center gap-3 rounded-[10px] px-4 py-[14px] text-base font-normal text-foreground transition-colors hover:bg-white/[0.04]"
+        >
+          <ViewProfileIcon className="size-6 shrink-0" />
+          {t('items.viewProfile')}
+        </Link>
 
         <NotYetAvailableItem icon={BookingsIcon} label={t('items.bookings')} feature="bookings" />
       </div>
@@ -172,7 +197,19 @@ export function CabinetSidebar({ accountType }: CabinetSidebarProps) {
           label={t('items.settings')}
           active={pathname === '/dashboard/settings'}
         />
+
+        {/* A button, not a link: opens the dialog in place and never navigates. */}
+        <button
+          type="button"
+          onClick={() => setHelpOpen(true)}
+          className="group relative flex w-full cursor-pointer items-center gap-3 rounded-[10px] px-4 py-[14px] text-left text-base font-normal text-foreground transition-colors hover:bg-white/[0.04]"
+        >
+          <HelpIcon className="size-6 shrink-0" />
+          {t('items.helpSupport')}
+        </button>
       </div>
+
+      <HelpSupportDialog open={helpOpen} onOpenChange={setHelpOpen} email={email} />
     </nav>
   );
 }

@@ -121,30 +121,88 @@ export function toEmbedUrl(url: string | null | undefined): string | null {
  * problem; refusing to save someone's link over a third-party hiccup is not.
  */
 export async function fetchVimeoOrientation(url: string): Promise<VideoOrientation> {
+  return (await fetchVimeoMeta(url)).orientation;
+}
+
+/**
+ * True for an `https` URL on Vimeo's image CDN (`vimeocdn.com` and its subdomains, e.g.
+ * `i.vimeocdn.com`). The only host a stored Vimeo cover may point at — checked both when the URL
+ * is written (it comes from a third-party response) and when it is rendered (the jsonb is
+ * owner-writable through RLS, so it is never trusted blindly).
+ */
+export function isVimeoCdnImageUrl(url: unknown): url is string {
+  if (typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    return (
+      parsed.protocol === 'https:' && (host === 'vimeocdn.com' || host.endsWith('.vimeocdn.com'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * YouTube's own cover image for a stored link, or `null` for anything that isn't YouTube.
+ *
+ * `hqdefault.jpg` (480x360) exists for every video, unlike `maxresdefault.jpg`, which is missing
+ * for lower-resolution uploads and then answers 404 — so it is the safe default with no network
+ * call and no client-side fallback needed. Derived purely from the URL, in the render path.
+ */
+export function youtubeThumbnailUrl(url: string | null | undefined): string | null {
   const video = parseVideoUrl(url);
-  if (!video || video.provider !== 'vimeo') return 'horizontal';
+  return video?.provider === 'youtube' ? `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg` : null;
+}
+
+export type VimeoMeta = {
+  orientation: VideoOrientation;
+  /** Vimeo CDN cover image, or `null` when Vimeo didn't give a usable one. */
+  thumbnailUrl: string | null;
+};
+
+/**
+ * One Vimeo oEmbed round trip for both things the profile needs: the layout orientation and the
+ * cover image. Best-effort, see `fetchVimeoOrientation` — any failure yields horizontal / no cover.
+ * Run at SAVE time only; the render path never calls Vimeo.
+ */
+async function fetchVimeoMeta(url: string): Promise<VimeoMeta> {
+  const fallback: VimeoMeta = { orientation: 'horizontal', thumbnailUrl: null };
+  const video = parseVideoUrl(url);
+  if (!video || video.provider !== 'vimeo') return fallback;
 
   try {
     const endpoint = new URL('https://vimeo.com/api/oembed.json');
     endpoint.searchParams.set('url', `https://vimeo.com/${video.id}`);
+    // Ask for a large cover (oEmbed otherwise returns a ~295px one); the aspect ratio is unchanged.
+    endpoint.searchParams.set('width', '1280');
 
     const response = await fetch(endpoint, {
       // Same 5s ceiling `lib/link-preview.ts` holds its own outbound hops to.
       signal: AbortSignal.timeout(5000),
       headers: { accept: 'application/json' },
     });
-    if (!response.ok) return 'horizontal';
+    if (!response.ok) return fallback;
 
     const data: unknown = await response.json();
-    if (!data || typeof data !== 'object') return 'horizontal';
+    if (!data || typeof data !== 'object') return fallback;
 
-    const { width, height } = data as { width?: unknown; height?: unknown };
+    const {
+      width,
+      height,
+      thumbnail_url: thumbnail,
+    } = data as {
+      width?: unknown;
+      height?: unknown;
+      thumbnail_url?: unknown;
+    };
+    const thumbnailUrl = isVimeoCdnImageUrl(thumbnail) ? thumbnail : null;
     if (typeof width !== 'number' || typeof height !== 'number' || width <= 0 || height <= 0) {
-      return 'horizontal';
+      return { orientation: 'horizontal', thumbnailUrl };
     }
-    return height > width ? 'vertical' : 'horizontal';
+    return { orientation: height > width ? 'vertical' : 'horizontal', thumbnailUrl };
   } catch {
-    return 'horizontal';
+    return fallback;
   }
 }
 
@@ -156,8 +214,21 @@ export async function resolveVideoOrientation(
   youtube: string | null | undefined,
   vimeo: string | null | undefined,
 ): Promise<VideoOrientation> {
+  return (await resolveVideoMeta(youtube, vimeo)).orientation;
+}
+
+/**
+ * Orientation plus the Vimeo cover image for a promo entry. The same rule as
+ * `resolveVideoOrientation` (YouTube wins when it states its own orientation; otherwise Vimeo),
+ * but keeps the oEmbed result so one round trip serves both. `thumbnailUrl` is only ever set for a
+ * Vimeo-sourced entry — YouTube covers are derived from the URL at render time.
+ */
+export async function resolveVideoMeta(
+  youtube: string | null | undefined,
+  vimeo: string | null | undefined,
+): Promise<VimeoMeta> {
   const fromYoutube = parseVideoUrl(youtube);
-  if (fromYoutube?.orientation) return fromYoutube.orientation;
-  if (vimeo) return fetchVimeoOrientation(vimeo);
-  return 'horizontal';
+  if (fromYoutube?.orientation) return { orientation: fromYoutube.orientation, thumbnailUrl: null };
+  if (vimeo) return fetchVimeoMeta(vimeo);
+  return { orientation: 'horizontal', thumbnailUrl: null };
 }

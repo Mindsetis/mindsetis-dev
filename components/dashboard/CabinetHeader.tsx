@@ -1,7 +1,7 @@
+import { Eye } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
-import { EditPencilIcon } from '@/components/icons/cabinet-header-icons';
 import { CheckCircleFillIcon } from '@/components/icons/check-circle-fill-icon';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
@@ -9,12 +9,10 @@ import type { ProfileCompleteness } from '@/lib/profile/completeness';
 import { cn } from '@/lib/utils';
 
 /**
- * Interaction states for the "Edit" text link (2026-08-10 design ask; narrowed 2026-09-20,
- * Release-1 C4). This used to be shared with a second text link, "View public profile" — that
- * link is gone from this component (see the component doc comment below), so only "Edit" uses
- * this utility now. `EditPencilIcon` already renders `fill="currentColor"`
- * (`cabinet-header-icons.tsx`), so this single text-color utility recolors icon + label together
- * for every state below, no separate icon handling needed.
+ * Interaction states for the completeness row's text link (2026-08-10 design ask; narrowed
+ * 2026-09-20, Release-1 C4) — "Edit" until Release 4 П3, the phone-only "View" since. Both icons
+ * draw in `currentColor`, so this single text-color utility recolors icon + label together for
+ * every state below, no separate icon handling needed.
  *
  *   - Hover: `#fff` — the exact `--color-foreground` token, not a raw hex.
  *   - Pressed (`:active`): back to the DEFAULT `text-primary` (explicitly restated — otherwise a
@@ -23,8 +21,7 @@ import { cn } from '@/lib/utils';
  *   - Disabled: `#747474` (no matching semantic token — `--color-border`/`--color-input` happen
  *     to share this hex but are not text-color tokens, so this stays an arbitrary value).
  *
- * "Edit" has no live "disabled" trigger in this component today (`nextUnfilled` gates whether it
- * renders AT ALL rather than rendering it inert) — this targets `aria-disabled="true"` via
+ * The link has no live "disabled" trigger today — this targets `aria-disabled="true"` via
  * Tailwind's `aria-disabled:` variant so the state is ready the moment it gains one, and
  * `pointer-events-none` alongside it so hover/active can never fire while disabled.
  */
@@ -38,11 +35,9 @@ const LINK_STATE_CLASSES =
  *
  * Two pieces of behavior worth stating up front (the inline comments at each call site carry the
  * full history and frame IDs):
- *   - "Edit" (2026-08-10) appears ONLY below 100% and links to the first unfilled section in card
- *     order (`completeness.nextUnfilled`, computed in `lib/profile/completeness.ts`). Optional
- *     sections count too, so a profile only hits 100% — and only loses this link — once every
- *     card, optional ones included, is filled. Lives in the completeness row and renders at every
- *     width, including mobile.
+ *   - "View" (Release 4 П3, 06.11.2026) sits in the completeness row on PHONES ONLY and opens the
+ *     public profile, at any percentage. It replaced "Edit" → first unfilled section (2026-08-10),
+ *     which duplicated the section cards' own Edit. From `md` the right-hand button covers it.
  *   - "View Profile" (right-hand slot) — PRODUCT-OWNER DECISION, 2026-09-20 (Release-1 C4): this
  *     is now the SAME filled `primary` `Button` for BOTH roles, shown unconditionally (not gated
  *     on completeness), pointing at whichever page is canonical for the account — a Mindsetter's
@@ -237,25 +232,23 @@ export async function CabinetHeader({
             </div>
             <span className="text-tiny text-muted-foreground">{completeness.percent}%</span>
 
-            {/* ONE SLOT, ONE LINK (narrowed 2026-09-20, Release-1 C4 — used to be "one slot, two
-                links", swapping to "View public profile" for a complete Member; the owner's C4
-                decision moved that job to the right-hand "View Profile" button below, which now
-                renders unconditionally for both roles, so this cell no longer needs a second
-                link to cover it). This trailing cell holds ONLY "Edit", for both roles alike,
-                and only while the profile is incomplete — once `nextUnfilled` is `null` the cell
-                is simply empty. */}
-            {completeness.nextUnfilled ? (
-              // `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): this
-              // card renders on every cabinet screen, INCLUDING the section editor it can jump
-              // away from, so it's a real exit path for whatever section is currently dirty.
-              <GuardedLink
-                href={completeness.nextUnfilled.href}
-                className={cn('inline-flex items-center gap-[5px] text-tiny', LINK_STATE_CLASSES)}
-              >
-                <EditPencilIcon />
-                {t('edit')}
-              </GuardedLink>
-            ) : null}
+            {/* Release 4 П3 (client mockup IMG_4792, owner's call 06.11.2026): this cell used to
+                hold "Edit" → the first unfilled section, which duplicated every section card's
+                own Edit below and jumped somewhere arbitrary. It is now "View" → the public
+                profile, so the owner can see what their edits add up to. PHONE ONLY: from `md`
+                the right-hand "View Profile" button below already does this, so desktop shows no
+                link here at all. Same tab (the account sheet's "View profile" does the same); a
+                `GuardedLink`, since this card also renders above a possibly-dirty editor. */}
+            <GuardedLink
+              href={publicProfileHref}
+              className={cn(
+                'inline-flex items-center gap-[5px] text-tiny md:hidden',
+                LINK_STATE_CLASSES,
+              )}
+            >
+              <Eye className="size-4 shrink-0" aria-hidden="true" />
+              {t('view')}
+            </GuardedLink>
           </div>
         </div>
       </div>

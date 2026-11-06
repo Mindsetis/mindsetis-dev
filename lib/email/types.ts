@@ -21,4 +21,6 @@ export interface EmailMessageInsert {
   html_body: string;
   text_body: string | null;
   dedup_key: string | null;
+  /** Optional Reply-To (`20261106120000_email_messages_reply_to.sql`); `null` = none. */
+  reply_to?: string;
 }

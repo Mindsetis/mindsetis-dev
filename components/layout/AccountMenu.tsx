@@ -6,18 +6,16 @@ import { useRef, useState, useTransition } from 'react';
 import { signOut } from '@/app/[locale]/(app)/(auth)/actions';
 import { GuardedLink } from '@/components/dashboard/GuardedLink';
 import { useUnsavedChanges } from '@/components/dashboard/unsaved-changes';
-import {
-  MenuExternalIcon,
-  MenuLogoutIcon,
-  MenuSettingsIcon,
-} from '@/components/icons/account-menu-icons';
-import { EditPencilIcon } from '@/components/icons/cabinet-header-icons';
+import { MenuLogoutIcon, MenuSettingsIcon } from '@/components/icons/account-menu-icons';
+import { HelpIcon, MyProfileIcon, ViewProfileIcon } from '@/components/icons/cabinet-nav-icons';
 import { AccountAvatar } from '@/components/layout/AccountAvatar';
 import { AccountSheet } from '@/components/layout/AccountSheet';
+import { HelpSupportDialog } from '@/components/support/HelpSupportDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRouter } from '@/i18n/navigation';
@@ -32,6 +30,8 @@ export type AccountMenuProps = {
   displayName: string;
   /** Shown as a badge in the mobile sheet's header; the desktop dropdown has no such row. */
   isVerified: boolean;
+  /** The account's email — prefills the Help & Support dialog. */
+  email: string;
 };
 
 /**
@@ -41,7 +41,7 @@ export type AccountMenuProps = {
  * The item set is IDENTICAL for both account types — the Figma component has richer `Role=Member`
  * / `Role=Mindsetter` variants carrying Overview / Bookings / Sessions Setup / Earnings, but
  * neither header instance shows them (they sit outside the 152px panel), and those destinations
- * don't exist yet. Only the three visible rows are built: View public profile, Settings, Log out.
+ * don't exist yet. Only the visible rows are built: Manage profile, View profile, Settings, Help & Support, Log out.
  *
  * ALIGNMENT is chosen per open, not fixed. The design centers the panel on the avatar, which fits
  * there because the avatar is followed by a 199px "Create event" button — it sits ~270px from the
@@ -72,6 +72,7 @@ export function AccountMenu({
   avatarUrl,
   displayName,
   isVerified,
+  email,
 }: AccountMenuProps) {
   const t = useTranslations('nav.accountMenu');
   const router = useRouter();
@@ -79,6 +80,10 @@ export function AccountMenu({
   const [isSigningOut, startSignOut] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [align, setAlign] = useState<'center' | 'end'>('end');
+  // One Help & Support dialog serves both the mobile sheet and the desktop dropdown.
+  const [helpOpen, setHelpOpen] = useState(false);
+  /** Set by the "Help & Support" item so the menu's close skips returning focus to its trigger. */
+  const helpOpeningRef = useRef(false);
 
   // Resolved as the menu opens, when the trigger's real position is known. Runs per open rather
   // than once, so a resized window is accounted for without a listener that would only ever
@@ -134,6 +139,7 @@ export function AccountMenu({
           publicProfileHref={publicProfileHref}
           onSignOut={handleSignOut}
           isSigningOut={isSigningOut}
+          onOpenHelp={() => setHelpOpen(true)}
           trigger={
             <button
               type="button"
@@ -168,33 +174,58 @@ export function AccountMenu({
           <DropdownMenuContent
             align={align}
             collisionPadding={EDGE_PADDING}
+            // When "Help & Support" was picked the dialog takes focus itself; Radix returning it to
+            // the avatar trigger as the menu finishes closing would pull it straight back out of
+            // the dialog's message field (Release 4 П10: that blur marked the field as touched and
+            // showed "Please enter your message." the moment the dialog opened).
+            onCloseAutoFocus={(event) => {
+              if (helpOpeningRef.current) {
+                helpOpeningRef.current = false;
+                event.preventDefault();
+              }
+            }}
             // Inline width rather than a `w-[250px]` class so the value the layout uses and the
             // value the fits-or-not check above uses are literally the same constant.
             style={{ width: MENU_WIDTH }}
           >
             {/* `GuardedLink`, not a plain `Link` (Release-1 C-continuation, 2026-09-19): this
                 menu renders on every cabinet screen, including a dirty section editor. */}
+            {/* Order (client mockup, 2026-11-06): Manage profile, View profile, divider,
+                Settings, Help & Support, Log out. Manage profile is the desktop dropdown's only
+                way into the cabinet's profile tab — the mobile sheet has the full nav list. */}
             <DropdownMenuItem asChild>
-              <GuardedLink href={publicProfileHref}>
-                <MenuExternalIcon className="shrink-0 opacity-75" />
-                {t('viewPublicProfile')}
+              <GuardedLink href="/dashboard/profile">
+                <MyProfileIcon active className="size-[19px] shrink-0 opacity-75" />
+                {t('manageProfile')}
               </GuardedLink>
             </DropdownMenuItem>
 
-            {/* The desktop dropdown otherwise has no way into the cabinet's My Profile tab — the
-                mobile sheet reaches it through its full nav list, this doesn't. */}
             <DropdownMenuItem asChild>
-              <GuardedLink href="/dashboard/profile">
-                <EditPencilIcon className="size-[19px] shrink-0 opacity-75" />
-                {t('editProfile')}
+              <GuardedLink href={publicProfileHref}>
+                <ViewProfileIcon active className="size-[19px] shrink-0 opacity-75" />
+                {t('viewProfile')}
               </GuardedLink>
             </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
               <GuardedLink href="/dashboard/settings">
                 <MenuSettingsIcon className="shrink-0 opacity-75" />
                 {t('settings')}
               </GuardedLink>
+            </DropdownMenuItem>
+
+            {/* Not a navigation, so no `guard`. Opened a frame after the menu starts closing — the
+                same Radix pointer-events race the Log out item below documents. */}
+            <DropdownMenuItem
+              onSelect={() => {
+                helpOpeningRef.current = true;
+                requestAnimationFrame(() => setHelpOpen(true));
+              }}
+            >
+              <HelpIcon active className="size-[19px] shrink-0 opacity-75" />
+              {t('helpSupport')}
             </DropdownMenuItem>
 
             <DropdownMenuItem
@@ -221,6 +252,8 @@ export function AccountMenu({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <HelpSupportDialog open={helpOpen} onOpenChange={setHelpOpen} email={email} />
     </>
   );
 }

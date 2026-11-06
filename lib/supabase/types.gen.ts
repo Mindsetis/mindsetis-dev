@@ -177,6 +177,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           provider_message_id: string | null
+          reply_to: string | null
           status: string
           subject: string
           template_key: string
@@ -196,6 +197,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           provider_message_id?: string | null
+          reply_to?: string | null
           status?: string
           subject: string
           template_key: string
@@ -215,6 +217,7 @@ export type Database = {
           max_attempts?: number
           next_attempt_at?: string
           provider_message_id?: string | null
+          reply_to?: string | null
           status?: string
           subject?: string
           template_key?: string
@@ -918,6 +921,7 @@ export type Database = {
           max_attempts: number
           next_attempt_at: string
           provider_message_id: string | null
+          reply_to: string | null
           status: string
           subject: string
           template_key: string
@@ -968,6 +972,62 @@ export type Database = {
   }
   storage: {
     Tables: {
+      bucket_lifecycle_states: {
+        Row: {
+          bucket_id: string
+          claim_id: string | null
+          claim_until: string | null
+          continuation: Json | null
+          failure_count: number
+          generation: string | null
+          last_completed_at: string | null
+          last_error: Json | null
+          last_result: Json | null
+          last_started_at: string | null
+          last_success_at: string | null
+          next_run_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          bucket_id: string
+          claim_id?: string | null
+          claim_until?: string | null
+          continuation?: Json | null
+          failure_count?: number
+          generation?: string | null
+          last_completed_at?: string | null
+          last_error?: Json | null
+          last_result?: Json | null
+          last_started_at?: string | null
+          last_success_at?: string | null
+          next_run_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          claim_id?: string | null
+          claim_until?: string | null
+          continuation?: Json | null
+          failure_count?: number
+          generation?: string | null
+          last_completed_at?: string | null
+          last_error?: Json | null
+          last_result?: Json | null
+          last_started_at?: string | null
+          last_success_at?: string | null
+          next_run_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bucket_lifecycle_states_bucket_id_fkey"
+            columns: ["bucket_id"]
+            isOneToOne: true
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buckets: {
         Row: {
           allowed_mime_types: string[] | null
@@ -1067,6 +1127,30 @@ export type Database = {
           id?: string
           type?: Database["storage"]["Enums"]["buckettype"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      lifecycle_abandoned_artifacts: {
+        Row: {
+          attempted_at: string
+          bucket_id: string
+          key: string
+          name: string
+          version: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          bucket_id: string
+          key: string
+          name: string
+          version?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          bucket_id?: string
+          key?: string
+          name?: string
+          version?: string | null
         }
         Relationships: []
       }
@@ -1315,6 +1399,14 @@ export type Database = {
         Args: { bucketid: string; metadata: Json; name: string; owner: string }
         Returns: undefined
       }
+      delete_lifecycle_objects: {
+        Args: { object_ids: string[] }
+        Returns: {
+          id: string
+          is_delete_marker: boolean
+          metadata: Json
+        }[]
+      }
       extension: { Args: { name: string }; Returns: string }
       filename: { Args: { name: string }; Returns: string }
       foldername: { Args: { name: string }; Returns: string[] }
@@ -1373,6 +1465,10 @@ export type Database = {
         }[]
       }
       operation: { Args: never; Returns: string }
+      reconcile_lifecycle_state: {
+        Args: { policy_changed: boolean; target_bucket_id: string }
+        Returns: undefined
+      }
       search: {
         Args: {
           bucketname: string

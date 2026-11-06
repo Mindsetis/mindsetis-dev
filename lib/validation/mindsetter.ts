@@ -141,15 +141,15 @@ export type RolesStepInput = z.infer<typeof rolesStepSchema>;
 
 export const MAX_SUPERPOWER_TITLE_LENGTH = 40;
 export const MAX_SUPERPOWER_DESCRIPTION_LENGTH = 200;
-export const MIN_SUPERPOWERS = 1;
+/** All three are required since Release 4 (client, 06.11.2026) — it used to be "at least 1". */
+export const MIN_SUPERPOWERS = 3;
 export const MAX_SUPERPOWERS = 3;
 
 /**
  * True when at least one of a superpower card's two fields has non-whitespace content — i.e.
  * the card isn't one of `SuperpowersForm.tsx`'s 3 fixed, padded-empty slots. Shared by
- * `superpowerSchema`'s own per-slot leniency (below), `superpowersStepSchema`'s
- * "at least `MIN_SUPERPOWERS` filled" check, and the form's post-parse `handleSubmit` filter
- * (drops still-empty slots from what's actually sent to `saveSuperpowers`). Takes a plain shape
+ * `superpowersStepSchema`'s "at least `MIN_SUPERPOWERS` filled" check and the form's post-parse
+ * `handleSubmit` filter (a no-op since all three became required, kept as a guard). Takes a plain shape
  * rather than `Superpower` to avoid a circular reference — `Superpower` is inferred from
  * `superpowerSchema`, which this function is used inside of.
  */
@@ -159,51 +159,29 @@ export function isSuperpowerFilled(superpower: { title: string; description: str
 
 /**
  * Design fixes the "Your superpowers" step at exactly 3 cards with no "Add" button (section 3),
- * unlike Roles/Help's variable-length lists — but a brand-new caller hasn't filled all 3 yet,
- * and `MIN_SUPERPOWERS` only requires ONE of the 3 filled. Rather than making `title`/
- * `description` unconditionally required (which would block submission for any caller who
- * leaves even one of the 3 fixed slots blank — the bug this schema fixes), a wholly-empty slot
- * is valid here (silently dropped before `saveSuperpowers`, see `SuperpowersForm.tsx`'s
- * `handleSubmit`); a PARTIALLY filled slot (exactly one of the two fields has content) still
- * gets a normal "required" error on whichever field is missing. Validating the padded 3-slot
- * array in place like this (rather than filtering empties out before Zod runs) keeps every
- * error's array index aligned with the actual on-screen card — filtering first would shift
- * indices whenever an earlier slot is empty and a later one isn't, misattributing the error to
- * the wrong card.
+ * unlike Roles/Help's variable-length lists. Since Release 4 (client, 06.11.2026) all three are
+ * REQUIRED, so both fields of every card are required outright and each blank one gets its own
+ * "required" error on its own card. Before that only one card was required and a wholly-empty
+ * slot was valid (dropped before saving). The padded 3-slot array is still validated in place,
+ * so every error's index matches the on-screen card.
  */
-export const superpowerSchema = z
-  .object({
-    title: z
-      .string()
-      .trim()
-      .max(MAX_SUPERPOWER_TITLE_LENGTH, vmsg('titleMax', { max: MAX_SUPERPOWER_TITLE_LENGTH }))
-      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
-    description: z
-      .string()
-      .trim()
-      .max(
-        MAX_SUPERPOWER_DESCRIPTION_LENGTH,
-        vmsg('descriptionMax', { max: MAX_SUPERPOWER_DESCRIPTION_LENGTH }),
-      )
-      .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
-  })
-  .superRefine((slot, ctx) => {
-    if (!isSuperpowerFilled(slot)) return;
-    if (slot.title.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['title'],
-        message: vmsg('titleRequired'),
-      });
-    }
-    if (slot.description.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['description'],
-        message: vmsg('descriptionRequired'),
-      });
-    }
-  });
+export const superpowerSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, vmsg('titleRequired'))
+    .max(MAX_SUPERPOWER_TITLE_LENGTH, vmsg('titleMax', { max: MAX_SUPERPOWER_TITLE_LENGTH }))
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+  description: z
+    .string()
+    .trim()
+    .min(1, vmsg('descriptionRequired'))
+    .max(
+      MAX_SUPERPOWER_DESCRIPTION_LENGTH,
+      vmsg('descriptionMax', { max: MAX_SUPERPOWER_DESCRIPTION_LENGTH }),
+    )
+    .refine(isLatinOnly, LATIN_ONLY_MESSAGE),
+});
 
 export type Superpower = z.infer<typeof superpowerSchema>;
 
@@ -214,9 +192,9 @@ export const superpowersStepSchema = z
       .max(MAX_SUPERPOWERS, vmsg('superpowersMax', { max: MAX_SUPERPOWERS })),
   })
   .superRefine((data, ctx) => {
-    // Count of ACTUALLY filled cards, not raw array length — `SuperpowersForm.tsx` always
-    // submits (padded, pre-filter) or sends (post-filter) an array whose length alone doesn't
-    // tell you how many slots are real.
+    // Count of ACTUALLY filled cards, not raw array length — also guards the Server Action
+    // against a short array (the per-field "required" errors only exist for slots that are
+    // there). With `MIN_SUPERPOWERS` = 3 this is "all three".
     if (data.superpowers.filter(isSuperpowerFilled).length < MIN_SUPERPOWERS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -563,12 +541,54 @@ const vimeoUrlField = webUrlSchema({ allowEmpty: true })
  * Now structurally identical to `videoBlogStepSchema` below — kept separate because the two map
  * to different columns and are likely to diverge again.
  */
+/** `<uid>/promo-thumb-<ts>-<rand>.<ext>` — exactly what `uploadPromoThumbnail` generates. */
+export const PROMO_THUMBNAIL_PATH =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/promo-thumb-\d+-[a-z0-9]+\.(png|jpg|webp)$/;
+
 export const promoStepSchema = z.object({
   youtube: youtubeUrlField,
   vimeo: vimeoUrlField,
+  // Optional custom cover ("Promo Video Thumbnail", Release 4 П7). Only the object PATH in the
+  // private `covers` bucket travels here — the bytes go up through `uploadPromoThumbnail` the
+  // moment the file is picked. Empty / omitted = no custom cover. `savePromo` additionally checks
+  // the path sits in the caller's own `<uid>/` folder.
+  thumbnailPath: z
+    .string()
+    .trim()
+    .refine((value) => value === '' || PROMO_THUMBNAIL_PATH.test(value), vmsg('photoInvalid'))
+    .optional(),
 });
 
 export type PromoStepInput = z.infer<typeof promoStepSchema>;
+
+/** Promo thumbnail limits — client pre-check and the Server Action's file schema share them.
+ * The `covers` bucket itself allows 10 MB and a wider type list; this is the product's rule. */
+export const MAX_PROMO_THUMBNAIL_SIZE_BYTES = 5 * 1024 * 1024;
+export const ACCEPTED_PROMO_THUMBNAIL_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+] as const;
+
+export const promoThumbnailFileSchema = z
+  .instanceof(File, { message: vmsg('photoRequired') })
+  .refine((file) => file.size > 0, vmsg('photoRequired'))
+  .refine(
+    (file) => (ACCEPTED_PROMO_THUMBNAIL_MIME_TYPES as readonly string[]).includes(file.type),
+    vmsg('promoThumbnailType'),
+  )
+  .refine(
+    (file) => file.size <= MAX_PROMO_THUMBNAIL_SIZE_BYTES,
+    vmsg('imageMax', { max: MAX_PROMO_THUMBNAIL_SIZE_BYTES / (1024 * 1024) }),
+  );
+
+/** `uploadPromoThumbnail`'s Server Action input. */
+export const promoThumbnailUploadSchema = z.object({ thumbnail: promoThumbnailFileSchema });
+
+/** `deletePromoThumbnail`'s Server Action input — one already-uploaded object path. */
+export const promoThumbnailDeleteSchema = z.object({
+  path: z.string().trim().regex(PROMO_THUMBNAIL_PATH, vmsg('photoInvalid')),
+});
 
 // --- Video blog -> mindsetter_profiles.video_blog jsonb { youtube, vimeo } -----------------
 // Un-deferred from Phase 2 back into MVP scope (migration

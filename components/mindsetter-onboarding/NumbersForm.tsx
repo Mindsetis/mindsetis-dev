@@ -234,6 +234,10 @@ export function NumbersForm({ initialNumbers, nextHref, editMode }: NumbersFormP
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 md:gap-6">
         <FormErrorAlert messages={formError} />
 
+        {/* Release 4 П5: the profile lays Numbers out as a row of four, which nobody guesses
+            from an empty form — so say it up front, in onboarding and in the cabinet alike. */}
+        <p className="text-sm text-muted-foreground">{t('blocks.numbers.layoutHint')}</p>
+
         <SortableList ids={fields.map((field) => field.id)} onReorder={move}>
           <div className="flex flex-col gap-3 md:gap-4">
             {fields.map((field, index) => (

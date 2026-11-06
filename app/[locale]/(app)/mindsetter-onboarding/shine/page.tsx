@@ -1,15 +1,19 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 
+import { finalizeMindsetterOnboarding } from '@/app/[locale]/(app)/mindsetter-onboarding/actions';
 import { ShineForm } from '@/components/mindsetter-onboarding/ShineForm';
 import { OnboardingBack } from '@/components/mindsetter-onboarding/StepActions';
 import { redirect } from '@/i18n/navigation';
 import { pageTitle } from '@/i18n/page-metadata';
 import { getSessionContext } from '@/lib/auth/guards';
+import { parseBlocksParam } from '@/lib/mindsetter-onboarding/blocks';
 import { computeProfileCompleteness } from '@/lib/profile/completeness';
 import { createClient } from '@/lib/supabase/server';
 
 type ShinePageProps = {
   params: Promise<{ locale: string }>;
+  /** `?blocks=` — the ticks handed back by the profile preview's "← Back to setup" (Release 4 П2). */
+  searchParams: Promise<{ blocks?: string | string[] }>;
 };
 
 export async function generateMetadata({ params }: ShinePageProps) {
@@ -32,15 +36,28 @@ export async function generateMetadata({ params }: ShinePageProps) {
  * Requires a signed-in user — redirect to `/login` at the page level, same defense-in-depth as
  * `../session/page.tsx`/`../help/page.tsx`.
  */
-export default async function MindsetterOnboardingShinePage({ params }: ShinePageProps) {
+export default async function MindsetterOnboardingShinePage({
+  params,
+  searchParams,
+}: ShinePageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations('mindsetterOnboarding');
+  const { blocks: initialSelected } = parseBlocksParam(await searchParams);
 
   const session = await getSessionContext();
   if (!session?.profile) {
     redirect({ href: '/login', locale });
     return null;
+  }
+
+  // The profile preview needs a Mindsetter page to exist. Saving Help promotes the caller
+  // (Release 4 П1), so this is normally already true; someone who saved Help on an older build is
+  // promoted here by the same guarded, idempotent action `/congrats` runs on load — it refuses
+  // (`finalized: false`) when a required step's data is missing, and then the button stays hidden.
+  let canPreview = session.profile.account_type === 'mindsetter';
+  if (!canPreview) {
+    const finalized = await finalizeMindsetterOnboarding({});
+    canPreview = finalized.ok && finalized.data.finalized;
   }
 
   const supabase = await createClient();
@@ -65,8 +82,8 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
   ]);
 
   // `'mindsetter'` is passed explicitly rather than read from `profiles.account_type`: the caller
-  // is standing inside the Mindsetter wizard, but `account_type` only flips to `'mindsetter'` once
-  // this very step is saved (`saveShine`, Release-2 П4), so reading it here would score this screen
+  // is standing inside the Mindsetter wizard, and a caller whose promotion was refused above (a
+  // required step's data missing) is still a Member, so reading it here would score this screen
   // against the two-section Member set. The argument selects the section SET, not rights.
   const completeness = computeProfileCompleteness(
     'mindsetter',
@@ -102,18 +119,20 @@ export default async function MindsetterOnboardingShinePage({ params }: ShinePag
 
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 pb-20 sm:px-6 md:pt-6 md:pb-[150px] lg:px-[70px]">
-      {/* The band the top-left Back used to occupy, kept empty so the heading doesn't move: Back
-          sits in the form's bottom row, pinned next to "Save and continue" (`OnboardingBack`,
-          owner's call of 31.10.2026). */}
-      <div aria-hidden="true" className="h-14 md:h-[52px]" />
+      {/* The band the top-left Back used to occupy, kept empty so the heading lines up with the
+          other steps: Back sits in the form's bottom row, pinned next to "Save and continue"
+          (`OnboardingBack`, owner's call of 31.10.2026). When the profile preview button shows
+          (Release 4 П1) it takes this slot instead, above the heading — `ShineForm` renders both,
+          because the button's link carries the blocks ticked in that form. */}
+      {canPreview ? null : <div aria-hidden="true" className="h-14 md:h-[52px]" />}
 
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-        <div className="flex flex-col gap-1 md:gap-4">
-          <h1 className="font-display text-h1 text-foreground md:text-h3">{t('shine.title')}</h1>
-          <p className="text-base text-muted-foreground">{t('shine.subtitle')}</p>
-        </div>
+      <div className="mx-auto flex w-full max-w-[640px] flex-col">
         <OnboardingBack href="/mindsetter-onboarding/help">
-          <ShineForm completeness={completeness} />
+          <ShineForm
+            completeness={completeness}
+            initialSelected={initialSelected}
+            previewUsername={canPreview ? session.profile.username : null}
+          />
         </OnboardingBack>
       </div>
     </div>
