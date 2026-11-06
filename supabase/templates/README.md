@@ -120,9 +120,12 @@ back to `{{ .SiteURL }}` plus an explicit `next=`.
 - **Postal address.** `POSTAL_ADDRESS` in `build.mjs` is deliberately `null`. Not strictly
   required for transactional mail, but good for deliverability and mandatory the moment
   any of it turns promotional. Needs the client's registered address.
-- **Logo (task I4).** Delivered 2026-09-23 and hosted in Supabase Storage
-  (`brand-assets/email/logo-<hash>.png`, 600×81, transparent). The swap point is the `LOGO`
-  constant in `build.mjs` — a new artwork needs a new filename (mail proxies cache hard).
+- **Logo (task I4).** Delivered 2026-09-23. Since 06.11.2026 served by the site itself:
+  `public/email/logo-<hash>.png` (600×108, transparent), referenced as
+  `{{ .SiteURL }}/email/logo-<hash>.png`, so every project shows its own site's copy — set the
+  project's Site URL without a trailing slash. (It used to be the TEST project's Storage, which
+  tied production mail to that project.) The swap point is the file plus the `LOGO` constant in
+  `build.mjs` — a new artwork needs a new filename (mail proxies cache hard).
 - **Pasting after a design change.** The dashboard keeps its own copy of each template, so
   after `node supabase/templates/build.mjs` the five files must be re-pasted into **both**
   the dev and the prod project by hand (nothing deploys them).
