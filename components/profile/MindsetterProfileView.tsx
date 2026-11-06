@@ -1,4 +1,5 @@
 import { ArrowLeft, CheckCircle2, Link2, Play, User } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -733,7 +734,8 @@ export function MindsetterProfileView({
   const metaPills = [profile.company, profile.role].filter((value): value is string =>
     Boolean(value),
   );
-  const interestGroups = groupInterestsByCategory(profile.interests);
+  const tCatalog = useTranslations('catalog');
+  const interestGroups = groupInterestsByCategory(profile.interests, tCatalog);
   const socials = profile.socials;
   const socialEntries = SOCIAL_KEYS.filter((key) => isSafeHttpUrl(socials?.[key])).map((key) => ({
     key,
@@ -2556,7 +2558,7 @@ export function MindsetterProfileView({
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {interestGroups.map(({ category, items }) => (
+              {interestGroups.map(({ category, categoryLabel, items }) => (
                 <div key={category} className={styles.interestCard}>
                   <h3
                     className={cn(
@@ -2564,7 +2566,7 @@ export function MindsetterProfileView({
                       memberStyles.interestCardHeading,
                     )}
                   >
-                    {category}
+                    {categoryLabel}
                   </h3>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {items.map((item) => (

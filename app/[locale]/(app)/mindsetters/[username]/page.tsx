@@ -64,7 +64,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  * `session_settings_read_public`), so a row simply not coming back for a non-owner/non-staff
  * viewer of a non-public profile is expected, not an error.
  */
-const loadMindsetterProfile = cache(async (username: string) => {
+const loadMindsetterProfile = cache(async (username: string, locale: string) => {
   const supabase = await createClient();
   const { data: rawProfile } = await supabase
     .from('profiles')
@@ -91,7 +91,10 @@ const loadMindsetterProfile = cache(async (username: string) => {
   } = rawProfile;
   const profile = {
     ...rest,
-    industryLabels: resolveIndustryLabels({ industries, industryCustom, industryCustomStatus }),
+    industryLabels: resolveIndustryLabels(
+      { industries, industryCustom, industryCustomStatus },
+      await getTranslations({ locale, namespace: 'catalog' }),
+    ),
   };
 
   const session = await getSessionContext();
@@ -180,8 +183,8 @@ async function resolveSignedUrls(
  * whole app (broad blast radius), out of scope for this stage.
  */
 export async function generateMetadata({ params }: MindsetterProfilePageProps) {
-  const { username } = await params;
-  const data = await loadMindsetterProfile(username);
+  const { locale, username } = await params;
+  const data = await loadMindsetterProfile(username, locale);
   if (!data) notFound();
   const { full_name: fullName, last_name: lastName } = data.profile;
   return { title: [fullName, lastName].filter(Boolean).join(' ') || `@${username}` };
@@ -207,7 +210,7 @@ export default async function MindsetterProfilePage({
 
   // Already resolved (and notFound()-ed, if missing/not visible) by `generateMetadata` above —
   // `cache()` means this is a no-op re-read, not a second round-trip of queries.
-  const data = await loadMindsetterProfile(username);
+  const data = await loadMindsetterProfile(username, locale);
   if (!data) {
     notFound();
   }

@@ -1,4 +1,5 @@
 import { CheckCircle2, User } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ComponentType, SVGProps } from 'react';
 
 import type { SocialsJson } from '@/app/[locale]/(app)/member-profile/page';
@@ -21,6 +22,11 @@ import { IndustryPill } from '@/components/profile/IndustryPill';
 import { OwnerShareButton } from '@/components/profile/OwnerShareButton';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
+import {
+  type CatalogTranslator,
+  interestCategoryLabel,
+  interestLabel,
+} from '@/lib/constants/catalog-labels';
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
 import { languageDisplayCode, SUPPORTED_LANGUAGES } from '@/lib/constants/languages';
@@ -172,6 +178,8 @@ export function isSafeHttpUrl(value: string | undefined): value is string {
 
 export interface InterestGroup {
   category: (typeof INTEREST_CATEGORIES)[number];
+  /** `category` in the viewer's locale — render this, not `category`. */
+  categoryLabel: string;
   items: { value: string; label: string; emoji: string }[];
 }
 
@@ -181,17 +189,26 @@ export interface InterestGroup {
  * — categories with zero matches are dropped rather than rendered as empty cards. A slug no
  * longer present in the catalog (e.g. renamed/removed after this profile saved it) simply
  * doesn't match anything and is silently skipped, same defensive precedent as
- * `member-profile/page.tsx`'s `initialInterestIds` filter.
+ * `member-profile/page.tsx`'s `initialInterestIds` filter. Category and item labels are
+ * translated with `tCatalog` (`useTranslations('catalog')`); slugs stay locale-independent.
  */
-export function groupInterestsByCategory(interests: string[] | null): InterestGroup[] {
+export function groupInterestsByCategory(
+  interests: string[] | null,
+  tCatalog: CatalogTranslator,
+): InterestGroup[] {
   if (!interests || interests.length === 0) return [];
   const selected = new Set(interests);
 
   return INTEREST_CATEGORIES.map((category) => ({
     category,
+    categoryLabel: interestCategoryLabel(tCatalog, category),
     items: INTERESTS.filter(
       (interest) => interest.category === category && selected.has(interest.value),
-    ),
+    ).map((interest) => ({
+      value: interest.value,
+      label: interestLabel(tCatalog, interest.value),
+      emoji: interest.emoji,
+    })),
   })).filter((group) => group.items.length > 0);
 }
 
@@ -292,7 +309,8 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
   const metaPills = [profile.company, profile.role].filter((value): value is string =>
     Boolean(value),
   );
-  const interestGroups = groupInterestsByCategory(profile.interests);
+  const tCatalog = useTranslations('catalog');
+  const interestGroups = groupInterestsByCategory(profile.interests, tCatalog);
   const socials = profile.socials;
   const socialEntries = SOCIAL_KEYS.filter((key) => isSafeHttpUrl(socials?.[key])).map((key) => ({
     key,
@@ -627,7 +645,7 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
                 confirmed via both mobile "Verified Member Profile" frames (401:8282 preview,
                 48:567 public) stacking cards vertically full-width. */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {interestGroups.map(({ category, items }) => (
+              {interestGroups.map(({ category, categoryLabel, items }) => (
                 <div key={category} className={styles.interestCard}>
                   <h3
                     className={cn(
@@ -635,7 +653,7 @@ export function MemberProfileView({ profile, labels, isOwner, shareUrl }: Member
                       styles.interestCardHeading,
                     )}
                   >
-                    {category}
+                    {categoryLabel}
                   </h3>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {items.map((item) => (

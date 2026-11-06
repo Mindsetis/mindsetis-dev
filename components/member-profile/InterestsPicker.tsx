@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Chip } from '@/components/ui/chip';
-import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
+import { interestCategoryLabel, interestLabel } from '@/lib/constants/catalog-labels';
+import { INTEREST_CATEGORIES, type InterestCategory } from '@/lib/constants/interest-categories';
 import { INTERESTS } from '@/lib/constants/interests';
 import { MAX_INTERESTS } from '@/lib/validation/member-profile';
 
@@ -50,6 +52,7 @@ export function InterestsPicker({
   allCategoryLabel,
   disabled,
 }: InterestsPickerProps) {
+  const tCatalog = useTranslations('catalog');
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY);
 
   const visibleInterests =
@@ -86,7 +89,7 @@ export function InterestsPicker({
             onClick={() => setActiveCategory(category)}
             disabled={disabled}
           >
-            {category}
+            {interestCategoryLabel(tCatalog, category)}
           </Chip>
         ))}
       </div>
@@ -96,7 +99,9 @@ export function InterestsPicker({
             tag chips. When "All" is active there is no single category to name, so Figma
             shows no heading at all — only the tag row. */}
         {activeCategory !== ALL_CATEGORY && (
-          <p className="text-sm text-foreground">{activeCategory}</p>
+          <p className="text-sm text-foreground">
+            {interestCategoryLabel(tCatalog, activeCategory as InterestCategory)}
+          </p>
         )}
         <div className="flex flex-wrap gap-2">
           {visibleInterests.map((interest) => {
@@ -114,7 +119,7 @@ export function InterestsPicker({
               >
                 <span>
                   <span aria-hidden="true">{interest.emoji}</span>
-                  {interest.label}
+                  {interestLabel(tCatalog, interest.value)}
                 </span>
               </Chip>
             );

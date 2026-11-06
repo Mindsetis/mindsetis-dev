@@ -14,8 +14,10 @@
  * dedupes by `value` too, but the catalog itself should not rely on that as a matter of
  * course — keep each `value` to a single row.
  *
- * Not run through next-intl: these are catalog values (like `SUPPORTED_LANGUAGES`), not
- * translated UI copy — profile content stays in the author's `content_locale` convention.
+ * `label` is the English source/fallback. The displayed name is translated through the
+ * `catalog.interests.<value>` next-intl keys (`interestLabel` in
+ * `lib/constants/catalog-labels.ts`); the stored slug is locale-independent. Every `value`
+ * therefore needs a key in BOTH `messages/en.json` and `messages/es.json`.
  */
 import { INTEREST_CATEGORIES } from '@/lib/constants/interest-categories';
 

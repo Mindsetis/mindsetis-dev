@@ -1,9 +1,5 @@
-import { INDUSTRIES, OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
-
-/** Catalog slug → display label (`lib/constants/industries.ts`; same catalog the wizard uses). */
-const INDUSTRY_LABEL_BY_VALUE = new Map<string, string>(
-  INDUSTRIES.map((industry) => [industry.value, industry.label]),
-);
+import { type CatalogTranslator, getIndustryLabelMap } from '@/lib/constants/catalog-labels';
+import { OTHER_INDUSTRY_VALUE } from '@/lib/constants/industries';
 
 /**
  * `profiles.industries` (+ the free-text "Other") → the labels shown in the INDUSTRY pill, in the
@@ -23,18 +19,24 @@ const INDUSTRY_LABEL_BY_VALUE = new Map<string, string>(
  * A slug no longer present in the catalog (renamed/removed after the profile saved it) is
  * silently skipped, same defensive precedent as `groupInterestsByCategory`. Returns `[]` when
  * there is nothing to show.
+ *
+ * Catalog labels are translated into the viewer's locale with `tCatalog`
+ * (`getTranslations('catalog')` on the page). The free-text custom industry is user content and
+ * is shown verbatim, never translated.
  */
-export function resolveIndustryLabels(profile: {
-  industries: string[] | null;
-  industryCustom: string | null;
-  industryCustomStatus: string | null;
-}): string[] {
+export function resolveIndustryLabels(
+  profile: {
+    industries: string[] | null;
+    industryCustom: string | null;
+    industryCustomStatus: string | null;
+  },
+  tCatalog: CatalogTranslator,
+): string[] {
+  const labelByValue = getIndustryLabelMap(tCatalog);
   const customText =
     profile.industryCustomStatus === 'approved' ? (profile.industryCustom?.trim() ?? '') : '';
 
   return (profile.industries ?? [])
-    .map((value) =>
-      value === OTHER_INDUSTRY_VALUE ? customText : (INDUSTRY_LABEL_BY_VALUE.get(value) ?? ''),
-    )
+    .map((value) => (value === OTHER_INDUSTRY_VALUE ? customText : (labelByValue.get(value) ?? '')))
     .filter((label) => label.length > 0);
 }

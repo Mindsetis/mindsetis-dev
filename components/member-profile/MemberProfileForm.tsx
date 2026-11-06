@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
@@ -27,12 +27,9 @@ import { revealOnInvalid } from '@/components/ui/form-errors';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/navigation';
+import { getLanguageOptions } from '@/lib/constants/catalog-labels';
 import type { InterestValue } from '@/lib/constants/interests';
-import {
-  buildLanguageAliases,
-  type LanguageValue,
-  SUPPORTED_LANGUAGES,
-} from '@/lib/constants/languages';
+import { buildLanguageAliases, type LanguageValue } from '@/lib/constants/languages';
 import type { CountryOption } from '@/lib/geo/countries';
 import { appendAvatarToFormData } from '@/lib/media/avatar-framing';
 import {
@@ -103,6 +100,7 @@ export function MemberProfileForm({
   initialSocials,
 }: MemberProfileFormProps) {
   const t = useTranslations('auth');
+  const locale = useLocale();
   const router = useRouter();
   const [formError, setFormError] = useState<FormBanner>(null);
 
@@ -144,15 +142,20 @@ export function MemberProfileForm({
   const countryCodeValue = useWatch({ control: form.control, name: 'countryCode' }) ?? '';
   // Built once per mount rather than baked into the catalog constant: the aliases come from
   // `Intl.DisplayNames`, which is a runtime API, and keeping them out of
-  // `SUPPORTED_LANGUAGES` leaves that file a plain, reviewable data table.
+  // `SUPPORTED_LANGUAGES` leaves that file a plain, reviewable data table. Labels are shown in the
+  // viewer's locale (`getLanguageOptions`).
   const languageOptions = useMemo(
     () =>
-      SUPPORTED_LANGUAGES.map((language) => ({
+      getLanguageOptions(locale).map((language) => ({
         value: language.value,
         label: language.label,
-        keywords: buildLanguageAliases(language.code, language.label),
+        // The English name stays searchable when the list is shown in another language.
+        keywords: [
+          language.englishLabel,
+          ...buildLanguageAliases(language.code, language.englishLabel),
+        ],
       })),
-    [],
+    [locale],
   );
 
   const countryOptions = useMemo(
