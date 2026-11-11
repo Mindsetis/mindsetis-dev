@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { type CtaState, resolveCtaState } from '@/lib/auth/cta-state';
 import { MINDSETTER_FIRST_STEP_PATH } from '@/lib/auth/onboarding-progress';
 import {
@@ -23,8 +25,11 @@ import { createClient } from '@/lib/supabase/server';
  *
  * "Under review" / "rejected" states are intentionally not modelled (no moderation yet).
  * Returns `[state, href]`; the state is reused by the caller to pick the popup variant.
+ *
+ * Also behind "Apply to become a Mindsetter" in the Top Mindsetters popup (10.11.2026) — `cache`d
+ * so the two home-page sections that ask share one lookup per request.
  */
-export async function resolveBecomeMindsetterHref(): Promise<[CtaState, string]> {
+export const resolveBecomeMindsetterHref = cache(async (): Promise<[CtaState, string]> => {
   const state = await resolveCtaState();
 
   if (state === 'guest') return [state, '/join'];
@@ -52,4 +57,4 @@ export async function resolveBecomeMindsetterHref(): Promise<[CtaState, string]>
   }
   // memberIncomplete
   return [state, memberWizardPath(profile?.onboarding_step ?? null)];
-}
+});

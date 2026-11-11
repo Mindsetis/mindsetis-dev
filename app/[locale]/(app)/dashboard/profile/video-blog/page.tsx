@@ -41,7 +41,9 @@ export default async function DashboardVideoBlogSectionPage({ params }: SectionP
     .maybeSingle();
 
   const initialVideoBlog = mindsetterProfile?.video_blog as
-    { youtube?: string | null; vimeo?: string | null } | null | undefined;
+    | { youtube?: string | null; vimeo?: string | null; allInterviews?: string | null }
+    | null
+    | undefined;
 
   return (
     <SectionEditorShell sectionKey="videoBlog" title={t('title')} description={t('editorHint')}>

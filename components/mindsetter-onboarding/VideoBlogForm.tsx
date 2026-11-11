@@ -29,7 +29,11 @@ type VideoBlogFormProps = {
    * Omitted everywhere in the onboarding wizard, whose behavior is unchanged. */
   editMode?: boolean;
   /** Already-saved `video_blog` jsonb, when the caller revisits this block. */
-  initialVideoBlog?: { youtube?: string | null; vimeo?: string | null } | null;
+  initialVideoBlog?: {
+    youtube?: string | null;
+    vimeo?: string | null;
+    allInterviews?: string | null;
+  } | null;
   /** Where "Save and continue" navigates once saved — the next picked block, or Personal
    * session once every picked block is done (`nextBlockHref`, computed by the page from the
    * `?blocks=&i=` handoff). */
@@ -57,6 +61,7 @@ export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlo
     defaultValues: {
       youtube: initialVideoBlog?.youtube ?? '',
       vimeo: initialVideoBlog?.vimeo ?? '',
+      allInterviews: initialVideoBlog?.allInterviews ?? '',
     },
   });
 
@@ -124,6 +129,31 @@ export function VideoBlogForm({ initialVideoBlog, nextHref, editMode }: VideoBlo
                     {...field}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* "All interviews" — the Mindsetter's own playlist/channel ("Mindsetis. Super final",
+              10.11.2026). Optional; empty hides the profile's "All interviews" button. */}
+          <FormField
+            control={form.control}
+            name="allInterviews"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel variant="boldSpacing" className="mb-1 text-[#a5a5a5]">
+                  {t('blocks.videoBlog.allInterviewsLabel')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="url"
+                    placeholder={t('blocks.videoBlog.allInterviewsPlaceholder')}
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-sm text-muted-foreground">
+                  {t('blocks.videoBlog.allInterviewsHint')}
+                </p>
                 <FormMessage />
               </FormItem>
             )}
