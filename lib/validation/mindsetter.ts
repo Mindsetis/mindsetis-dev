@@ -600,6 +600,15 @@ export const promoThumbnailDeleteSchema = z.object({
 export const videoBlogStepSchema = z.object({
   youtube: youtubeUrlField,
   vimeo: vimeoUrlField,
+  /**
+   * "All interviews" link ("Mindsetis. Super final", 10.11.2026) — the Mindsetter's own playlist,
+   * channel or press page. Optional; any http(s) URL (interviews live on more than one platform).
+   * Empty = the profile shows no "All interviews" button at all.
+   */
+  allInterviews: webUrlSchema({ allowEmpty: true }).refine(
+    (value) => value.length <= 2048,
+    vmsg('urlInvalid'),
+  ),
 });
 
 export type VideoBlogStepInput = z.infer<typeof videoBlogStepSchema>;

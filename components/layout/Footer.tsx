@@ -10,6 +10,7 @@ import {
 } from '@/components/icons/social-icons';
 import { NotYetAvailable, type NotYetAvailableFeature } from '@/components/ui/not-yet-available';
 import { Link } from '@/i18n/navigation';
+import { SOCIAL_LINKS as BRAND_SOCIAL_LINKS } from '@/lib/config/brand-links';
 import { cn } from '@/lib/utils';
 
 import { FooterSoon } from './FooterSoon';
@@ -23,21 +24,19 @@ const SUPPORT_EMAIL = 'support@mindsetis.com';
  * Social networks in the design (Figma `1189:6332` "Frame 276": LinkedIn, Instagram, Threads,
  * YouTube — the design file also carries a hidden Facebook box that is NOT rendered).
  *
- * `href` is `null` for ALL of them: there is no real Mindsetis profile URL anywhere in the code or
- * the design (the old template shipped `https://facebook.com`-style placeholders, which linked
- * every visitor to the networks' home pages). Until a URL is set here the icon opens an
- * explanatory popup (`FooterSoon`) instead of linking nowhere; set the URL and it becomes a real
- * `target="_blank"` link with no other change. Never put a guessed handle in.
+ * The URLs come from the client (`lib/config/brand-links.ts`, 10.11.2026). An entry whose `href`
+ * is `null` opens an explanatory popup (`FooterSoon`) instead of linking nowhere; with a URL it is
+ * a real `target="_blank"` link. Never put a guessed handle in.
  */
 const SOCIAL_LINKS: readonly {
   key: 'linkedin' | 'instagram' | 'threads' | 'youtube';
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   href: string | null;
 }[] = [
-  { key: 'linkedin', Icon: LinkedinIcon, href: null },
-  { key: 'instagram', Icon: InstagramIcon, href: null },
-  { key: 'threads', Icon: ThreadsIcon, href: null },
-  { key: 'youtube', Icon: YoutubeIcon, href: null },
+  { key: 'linkedin', Icon: LinkedinIcon, href: BRAND_SOCIAL_LINKS.linkedin },
+  { key: 'instagram', Icon: InstagramIcon, href: BRAND_SOCIAL_LINKS.instagram },
+  { key: 'threads', Icon: ThreadsIcon, href: BRAND_SOCIAL_LINKS.threads },
+  { key: 'youtube', Icon: YoutubeIcon, href: BRAND_SOCIAL_LINKS.youtube },
 ];
 
 /**

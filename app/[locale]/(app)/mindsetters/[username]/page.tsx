@@ -251,6 +251,7 @@ export default async function MindsetterProfilePage({
     youtube?: string | null;
     vimeo?: string | null;
     videoPath?: string | null;
+    allInterviews?: string | null;
   } | null;
   const reelLifePaths = (
     Array.isArray(mindsetterProfile?.reel_life) ? mindsetterProfile.reel_life : []

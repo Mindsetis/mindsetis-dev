@@ -87,7 +87,21 @@ type VideoJson = {
   thumbnailUrl?: string | null;
   /** Promo only: the member's own thumbnail object in the private `covers` bucket. */
   thumbnailPath?: string | null;
+  /** Video blog only: the Mindsetter's own "all interviews" link (playlist/channel). */
+  allInterviews?: string | null;
 } | null;
+
+/** `value` as an absolute http(s) URL, or `null` — never anything an `href` could execute. */
+function toHttpUrl(value: string | null | undefined): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Trophy icon fill per win color (Figma `552:5078` "Frame 274", re-verified via literal SVG
  * export this session) — NOT the same as the card's other accent colors below; the trophy glyph
@@ -800,6 +814,11 @@ export function MindsetterProfileView({
   const videoBlogEmbedUrl = profile.videoBlogUrl
     ? null // direct upload — rendered via <video>, not an iframe embed
     : toEmbedUrl(profile.videoBlog?.youtube || profile.videoBlog?.vimeo || null);
+  // "All interviews" ("Mindsetis. Super final", 10.11.2026): each Mindsetter's OWN link (a
+  // playlist or channel, set in the Video blog block); no link → no button. Re-checked here as a
+  // plain http(s) URL because the jsonb is owner-writable outside the form's Zod schema — an
+  // `href` must never carry `javascript:` or the like.
+  const allInterviewsHref = toHttpUrl(profile.videoBlog?.allInterviews);
   /**
    * Release 4 П8 (06.11.2026): the cards used to be the same four sample reviews from the
    * dictionary for every Mindsetter. Real reviews only exist once someone has had a session and
@@ -2458,18 +2477,18 @@ export function MindsetterProfileView({
                   the button to be a sibling of the video (not nested in this text column) to
                   reorder via plain DOM order rather than fighting `flex` with `order` across two
                   different containers. */}
-              {/* No interview archive route exists yet. */}
-              <NotYetAvailable feature="interviews" className="hidden md:inline-flex">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled
-                  className="w-fit gap-2 disabled:opacity-50"
-                >
-                  {t('videoBlog.allInterviews')}
-                  <VideoBlogArrowIcon />
+              {allInterviewsHref ? (
+                <Button asChild variant="outline" className="hidden w-fit gap-2 md:inline-flex">
+                  <a
+                    href={allInterviewsHref}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow ugc"
+                  >
+                    {t('videoBlog.allInterviews')}
+                    <VideoBlogArrowIcon />
+                  </a>
                 </Button>
-              </NotYetAvailable>
+              ) : null}
             </div>
             {(profile.videoBlogUrl || videoBlogEmbedUrl) && (
               <div
@@ -2496,17 +2515,14 @@ export function MindsetterProfileView({
               </div>
             )}
             {/* Mobile twin of the desktop "All interviews" button above. */}
-            <NotYetAvailable feature="interviews" className="w-full md:hidden">
-              <Button
-                type="button"
-                variant="outline"
-                disabled
-                className="w-full gap-2 disabled:opacity-50"
-              >
-                {t('videoBlog.allInterviews')}
-                <VideoBlogArrowIcon />
+            {allInterviewsHref ? (
+              <Button asChild variant="outline" className="w-full gap-2 md:hidden">
+                <a href={allInterviewsHref} target="_blank" rel="noopener noreferrer nofollow ugc">
+                  {t('videoBlog.allInterviews')}
+                  <VideoBlogArrowIcon />
+                </a>
               </Button>
-            </NotYetAvailable>
+            ) : null}
           </div>
         )}
       </div>

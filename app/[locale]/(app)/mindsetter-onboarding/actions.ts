@@ -559,6 +559,7 @@ export const saveVideoBlog = createAction(videoBlogStepSchema, async (input) => 
         youtube: input.youtube || null,
         vimeo: input.vimeo || null,
         orientation: await resolveVideoOrientation(input.youtube, input.vimeo),
+        allInterviews: input.allInterviews || null,
       },
     },
     { onConflict: 'id' },

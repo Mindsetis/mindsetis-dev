@@ -57,7 +57,9 @@ export default async function MindsetterOnboardingVideoBlogBlockPage({
     .eq('id', session.user.id)
     .maybeSingle();
   const initialVideoBlog = mindsetterProfile?.video_blog as
-    { youtube?: string | null; vimeo?: string | null } | null | undefined;
+    | { youtube?: string | null; vimeo?: string | null; allInterviews?: string | null }
+    | null
+    | undefined;
 
   return (
     <BlockShell backHref={backHref} index={index} total={blocks.length}>

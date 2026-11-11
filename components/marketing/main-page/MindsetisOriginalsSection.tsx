@@ -4,7 +4,19 @@ import { ForwardEndFillIcon, PlayFillIcon } from '@/components/icons/main-page-i
 import { CardSlider } from '@/components/profile/CardSlider';
 import { Button } from '@/components/ui/button';
 import { NotYetAvailable } from '@/components/ui/not-yet-available';
+import { Link } from '@/i18n/navigation';
+import { FOUNDER_USERNAME, ORIGINALS_REALITY_SHOW_URL } from '@/lib/config/brand-links';
 import { cn } from '@/lib/utils';
+
+/**
+ * Cards with a real video ("Mindsetis. Super final", 10.11.2026): clicking the photo or "Watch"
+ * opens it on YouTube in a new tab. Only the first card (REALITY SHOW) has one so far; the other
+ * cards keep the "Mindsetis Originals is on the way" popup — the client's decision, same day.
+ */
+const VIDEO_URLS: readonly (string | null)[] = [ORIGINALS_REALITY_SHOW_URL, null, null];
+
+/** Every card's host avatar + name is the founder — it links to her public page. */
+const HOST_PROFILE_PATH = `/mindsetters/${FOUNDER_USERNAME}`;
 
 import { GRADIENT_HEADING_CLASSNAME } from './gradient-heading';
 import { SectionEyebrow } from './SectionEyebrow';
@@ -309,6 +321,8 @@ export async function MindsetisOriginalsSection() {
           {cards.map((card, index) => {
             const photo = PHOTOS[index];
             const avatarPhoto = AVATAR_PHOTOS[index];
+            const videoUrl = VIDEO_URLS[index] ?? null;
+            const watchLabel = `${t('watchCta')}: ${card.title.replace(/\s*\n\s*/g, ' ')}`;
             const isFirst = index === 0;
             const isLast = index === cards.length - 1;
             return (
@@ -329,7 +343,22 @@ export async function MindsetisOriginalsSection() {
                     whole, which was too tall to be worth it. Desktop is untouched — there the box
                     matches the asset exactly and nothing is cropped at all. */}
                 <div className="relative h-[260px] w-full shrink-0 bg-card md:h-full md:w-[309px]">
-                  {photo ? (
+                  {photo && videoUrl ? (
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={watchLabel}
+                      className="block h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- local static asset */}
+                      <img
+                        src={photo}
+                        alt=""
+                        className="h-full w-full object-cover object-top md:object-center"
+                      />
+                    </a>
+                  ) : photo ? (
                     // eslint-disable-next-line @next/next/no-img-element -- local static asset
                     <img
                       src={photo}
@@ -372,7 +401,10 @@ export async function MindsetisOriginalsSection() {
                   <div className="mt-auto flex flex-col gap-4">
                     <div className="hidden h-px w-full bg-[#2a2a2a] md:block" />
                     <div className="flex items-center justify-between gap-6">
-                      <div className="flex items-center gap-2 md:gap-3">
+                      <Link
+                        href={HOST_PROFILE_PATH}
+                        className="flex items-center gap-2 rounded-lg outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring md:gap-3"
+                      >
                         <div className="size-11 shrink-0 overflow-hidden rounded-full bg-card md:size-12">
                           {avatarPhoto ? (
                             // eslint-disable-next-line @next/next/no-img-element -- local static asset
@@ -382,10 +414,23 @@ export async function MindsetisOriginalsSection() {
                         <span className="whitespace-pre-line text-base leading-[22px] font-bold text-foreground">
                           {personName}
                         </span>
-                      </div>
-                      <NotYetAvailable feature="originals">
-                        <Button disabled>{t('watchCta')}</Button>
-                      </NotYetAvailable>
+                      </Link>
+                      {videoUrl ? (
+                        <Button asChild>
+                          <a
+                            href={videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={watchLabel}
+                          >
+                            {t('watchCta')}
+                          </a>
+                        </Button>
+                      ) : (
+                        <NotYetAvailable feature="originals">
+                          <Button disabled>{t('watchCta')}</Button>
+                        </NotYetAvailable>
+                      )}
                     </div>
                   </div>
                 </div>

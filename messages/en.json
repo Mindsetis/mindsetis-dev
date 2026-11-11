@@ -213,10 +213,49 @@
         "prevCta": "Previous mindsetter",
         "nextCta": "Next mindsetter",
         "sample": {
-          "name": "Anastasia Kondratska",
-          "title": "CEO, TechFlow Agency, Event Industry",
-          "location": "Tulum, Mexico",
+          "name": "Anastasiia Kondratska",
+          "title": "Founder, Mindsetis",
+          "location": "Kyiv, Ukraine",
           "languages": "EN / UA"
+        },
+        "people": [
+          {
+            "name": "Liam Vance",
+            "title": "Founder, Veloquix",
+            "location": "Austin, USA",
+            "languages": "EN"
+          },
+          {
+            "name": "Alex Moretti",
+            "title": "CTO, Zentryx",
+            "location": "Lisbon, Portugal",
+            "languages": "EN / PT / IT"
+          },
+          {
+            "name": "Sophie Laurent",
+            "title": "CEO, Lumivora",
+            "location": "Paris, France",
+            "languages": "EN / FR"
+          },
+          {
+            "name": "Tetiana Pikhota",
+            "title": "Founder, AXIS",
+            "location": "Miami, USA",
+            "languages": "EN / UA"
+          },
+          {
+            "name": "Maya Lindqvist",
+            "title": "COO, Nexaloom",
+            "location": "Stockholm, Sweden",
+            "languages": "EN / SV"
+          }
+        ],
+        "directoryDialog": {
+          "title": "Mindsetter Directory launches soon",
+          "lead": "We’re curating an exclusive network of top founders and C-level leaders.",
+          "body": "Want to be featured as a Mindsetter? Join Mindsetis as a member and submit your application. Full directory access opens right after profile moderation.",
+          "cta": "Apply to become a Mindsetter",
+          "close": "Got it"
         }
       },
       "events": {
@@ -311,8 +350,8 @@
         ],
         "cards": [
           {
-            "name": "Tatiana Pichota",
-            "title": "CEO, TechFlow Agency, Event Industry",
+            "name": "Tetiana Pikhota",
+            "title": "Founder, AXIS",
             "location": "USA, Miami",
             "languages": "EN / ES / FR / IT / UKR",
             "regions": ["usa", "northAmerica"],
@@ -1096,7 +1135,10 @@
         "vimeoLabel": "Vimeo URL",
         "vimeoPlaceholder": "vimeo.com/123456789",
         "youtubeLabel": "Youtube URL",
-        "youtubePlaceholder": "youtube.com/watch?v=…"
+        "youtubePlaceholder": "youtube.com/watch?v=…",
+        "allInterviewsLabel": "All your interviews (optional)",
+        "allInterviewsPlaceholder": "youtube.com/playlist?list=…",
+        "allInterviewsHint": "A playlist, channel or page with all your interviews. Your profile shows the “All interviews with Mindsetters” button next to your video above — only when both are filled in."
       },
       "wins": {
         "addWin": "Add win",
